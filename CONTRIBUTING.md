@@ -18,6 +18,10 @@ For a bug fix, add a focused regression test where practical. Record the result 
 
 ## Pull requests
 
+All contributions require approval from Pixflow. Ownership covers every path,
+including CI and ownership rules. See [maintainer approval](.github/MAINTAINER-APPROVAL.md)
+for the required checks and current GitHub enforcement prerequisites.
+
 Use the repository's pull-request template. Explain what users will see, the reason for the change, affected UI/CLI surfaces, validation and any migration considerations. Keep screenshots free of personal data. Commits must not include co-author metadata.
 
 Do not include API keys, credentials, licence values, customer captures, database exports or internal operational/security reports. Preserve upstream copyright and dependency licence notices. Report suspected security issues privately through Pixflow's official contact channel rather than posting exploit details in a public issue.

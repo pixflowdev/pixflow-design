@@ -1,7 +1,5 @@
 // Contract test for the prompts the plugin-folder card buttons send to the
-// agent. `install` uses the simple shared template; `contribute` drives the
-// `gh repo fork → branch → commit → gh pr create --web` flow against
-// `pixflowdev/pixflow-design`; `publish` drives `gh repo create / push` against the
+// agent. `install` uses the shared template; `publish` targets
 // author's own `plugin.repo` URL. The tests below lock the *shape* of each
 // prompt (keywords + folder interpolation) without coupling to exact wording,
 // so prose tweaks don't break the suite but accidental removal of a critical
@@ -73,55 +71,4 @@ describe('buildPluginFolderAgentActionPrompt', () => {
     });
   });
 
-  describe('contribute (PR-based flow)', () => {
-    const prompt = buildPluginFolderAgentActionPrompt(FOLDER, 'contribute');
-
-    it('delegates Pixflow Design PR creation to the deterministic plugin CLI helper', () => {
-      expect(prompt).toContain('pixflowdev/pixflow-design');
-      expect(prompt).toContain(`"$OD_NODE_BIN" "$OD_BIN" plugin open-design-pr ${FOLDER}`);
-    });
-
-    it('states the CLI-owned PR workflow instead of re-listing shell steps', () => {
-      expect(prompt).toContain('gh api user --jq .login');
-      expect(prompt).toContain('--owner');
-      expect(prompt).toMatch(/last-resort fallback/i);
-      expect(prompt).toMatch(/fork\/clone\/copy\/branch\/push/i);
-      expect(prompt).toContain('gh pr create --web');
-      // The legacy CLI is named in the prompt only as part of an explicit
-      // ban ("Do NOT call the legacy `od plugin publish --to open-design`")
-      // — verify the ban is in place, not the bare command.
-      expect(prompt).toMatch(/do not call the legacy `od plugin publish --to open-design`/i);
-    });
-
-    it('uses --web so the author confirms the PR in browser', () => {
-      // The "author keeps the final review click" invariant — preserved from
-      // 45f52d71's "We never POST anywhere" principle.
-      expect(prompt).toContain('--web');
-      expect(prompt).toMatch(/do not auto-submit/i);
-    });
-
-    it('hard-bans mid-turn clarification forms to avoid 600s stalls', () => {
-      // Regression guard for the stall we observed during e2e: agent paused
-      // mid-turn on a clarification waiting for a host answer the user never
-      // sent (they clicked the plugin-folder card instead).
-      expect(prompt).toContain('<question-form>');
-      expect(prompt).toMatch(/clarification UI that waits|fire-and-forget/i);
-    });
-
-    it('forbids the agent from installing tools or retrying failures', () => {
-      expect(prompt).toMatch(/do not try to install/i);
-      expect(prompt).toMatch(/do not retry/i);
-    });
-
-    it('interpolates the actual folder path into manifest and copy steps', () => {
-      // Sanity check that template-string interpolation didn't regress into
-      // literal `${folderPath}` substrings (we already shipped that bug once).
-      expect(prompt).toContain(`plugin open-design-pr ${FOLDER}`);
-      expect(prompt).not.toContain('${folderPath}');
-    });
-
-    it('ends by handing the PR URL back to chat', () => {
-      expect(prompt).toMatch(/PR URL|pull\/new|paste it into chat/);
-    });
-  });
 });

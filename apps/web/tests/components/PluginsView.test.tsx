@@ -5,14 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InstalledPluginRecord, PluginSourceKind, TrustTier } from '@open-design/contracts';
 import { PluginsView } from '../../src/components/PluginsView';
 import {
-  addPluginMarketplace,
   applyPlugin,
   installPluginSource,
   listPluginMarketplaces,
   listPlugins,
-  refreshPluginMarketplace,
-  removePluginMarketplace,
-  setPluginMarketplaceTrust,
   type PluginShareProjectOutcome,
   uploadPluginFolder,
   uploadPluginZip,
@@ -23,14 +19,10 @@ vi.mock('../../src/router', () => ({
 }));
 
 vi.mock('../../src/state/projects', () => ({
-  addPluginMarketplace: vi.fn(),
   applyPlugin: vi.fn(),
   installPluginSource: vi.fn(),
   listPluginMarketplaces: vi.fn(),
   listPlugins: vi.fn(),
-  refreshPluginMarketplace: vi.fn(),
-  removePluginMarketplace: vi.fn(),
-  setPluginMarketplaceTrust: vi.fn(),
   uninstallPlugin: vi.fn(),
   uploadPluginFolder: vi.fn(),
   uploadPluginZip: vi.fn(),
@@ -78,10 +70,6 @@ function makePlugin(
 const mockedListPlugins = vi.mocked(listPlugins);
 const mockedListMarketplaces = vi.mocked(listPluginMarketplaces);
 const mockedInstallPluginSource = vi.mocked(installPluginSource);
-const mockedAddMarketplace = vi.mocked(addPluginMarketplace);
-const mockedRefreshMarketplace = vi.mocked(refreshPluginMarketplace);
-const mockedRemoveMarketplace = vi.mocked(removePluginMarketplace);
-const mockedSetMarketplaceTrust = vi.mocked(setPluginMarketplaceTrust);
 const mockedApplyPlugin = vi.mocked(applyPlugin);
 const mockedUploadPluginFolder = vi.mocked(uploadPluginFolder);
 const mockedUploadPluginZip = vi.mocked(uploadPluginZip);
@@ -91,53 +79,7 @@ beforeEach(() => {
     makePlugin('official-plugin', 'bundled', 'bundled'),
     makePlugin('user-plugin', 'github', 'restricted'),
   ]);
-  mockedListMarketplaces.mockResolvedValue([
-    {
-      id: 'catalog-1',
-      url: 'https://example.com/open-design-marketplace.json',
-      trust: 'official',
-      manifest: {
-        name: 'Example Catalog',
-        version: '1.0.0',
-        plugins: [
-          {
-            name: 'remote-plugin',
-            title: 'Remote Plugin',
-            source: 'github:owner/repo',
-            version: '1.2.0',
-            description: 'Remote catalog plugin.',
-            tags: ['deck'],
-          },
-          {
-            name: 'open-design/official-plugin',
-            title: 'Official Plugin',
-            title_i18n: { 'zh-CN': '官方看板' },
-            source: 'github:nexu-io/open-design@main/plugins/_official/examples/official-plugin',
-            version: '1.0.0',
-            description: 'Bundled official plugin.',
-            description_i18n: { 'zh-CN': '内置官方插件。' },
-            tags: ['prototype', 'kanban'],
-          },
-        ],
-      },
-    },
-  ]);
-  mockedAddMarketplace.mockResolvedValue({
-    ok: true,
-    message: 'Marketplace source added.',
-  });
-  mockedRefreshMarketplace.mockResolvedValue({
-    ok: true,
-    message: 'Marketplace source refreshed.',
-  });
-  mockedRemoveMarketplace.mockResolvedValue({
-    ok: true,
-    message: 'Marketplace source removed.',
-  });
-  mockedSetMarketplaceTrust.mockResolvedValue({
-    ok: true,
-    message: 'Marketplace trust updated.',
-  });
+  mockedListMarketplaces.mockResolvedValue([]);
   mockedInstallPluginSource.mockResolvedValue({
     ok: true,
     plugin: makePlugin('new-plugin', 'github', 'restricted'),
@@ -205,108 +147,6 @@ describe('PluginsView', () => {
     expect(screen.queryByRole('dialog', { name: 'Import a plugin' })).toBeNull();
   });
 
-  it('shows installed plugins and available registry entries', async () => {
-    render(<PluginsView />);
-
-    expect(await screen.findByText('Installed plugins')).toBeTruthy();
-    expect(screen.getAllByText('User Plugin').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Official Plugin')).toBeNull();
-
-    const availableTab = screen.getByTestId('plugins-tab-available');
-    const sourcesTab = screen.getByTestId('plugins-tab-sources');
-    expect(availableTab.getAttribute('aria-disabled')).toBeNull();
-    expect(sourcesTab.getAttribute('aria-disabled')).toBeNull();
-
-    fireEvent.click(availableTab);
-    expect(await screen.findByText('Remote Plugin')).toBeTruthy();
-    expect(screen.getAllByText('Example Catalog').length).toBeGreaterThan(0);
-  });
-
-  it('keeps bundled official catalog entries available and uses the installed record', async () => {
-    const onUsePlugin = vi.fn();
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'official',
-        url: 'https://open-design.ai/marketplace/open-design-marketplace.json',
-        trust: 'official',
-        manifest: {
-          name: 'Pixflow Design Official',
-          version: '1.0.0',
-          plugins: [
-            {
-              name: 'open-design/official-plugin',
-              title: 'Official Plugin',
-              title_i18n: { 'zh-CN': '官方看板' },
-              source: 'github:nexu-io/open-design@main/plugins/_official/examples/official-plugin',
-              version: '1.0.0',
-              description: 'Bundled official plugin.',
-              description_i18n: { 'zh-CN': '内置官方插件。' },
-              tags: ['prototype', 'kanban'],
-            },
-          ],
-        },
-      },
-    ]);
-    render(<PluginsView onUsePlugin={onUsePlugin} />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    expect(await screen.findByText('官方看板')).toBeTruthy();
-
-    fireEvent.change(screen.getByLabelText('Search available plugins'), {
-      target: { value: '官方看板' },
-    });
-
-    expect(await screen.findByText('官方看板')).toBeTruthy();
-    expect(screen.queryByText('Remote Plugin')).toBeNull();
-
-    fireEvent.click(screen.getByTestId('plugins-available-install-open-design/official-plugin'));
-
-    expect(onUsePlugin).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'official-plugin',
-      sourceKind: 'bundled',
-    }), 'use');
-    expect(mockedInstallPluginSource).not.toHaveBeenCalled();
-  });
-
-  it('installs restricted catalog entries that collide with bundled official plugin names', async () => {
-    const onUsePlugin = vi.fn();
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'team-catalog',
-        url: 'https://team.example.com/open-design-marketplace.json',
-        trust: 'restricted',
-        manifest: {
-          name: 'Team Catalog',
-          version: '1.0.0',
-          plugins: [
-            {
-              name: 'open-design/official-plugin',
-              title: 'Team Official Plugin',
-              source: 'github:team/official-plugin',
-              version: '2.0.0',
-              description: 'Team-scoped plugin that intentionally shares the official entry name.',
-              tags: ['team'],
-            },
-          ],
-        },
-      },
-    ]);
-
-    render(<PluginsView onUsePlugin={onUsePlugin} />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    expect(await screen.findByText('Team Official Plugin')).toBeTruthy();
-
-    const install = screen.getByTestId('plugins-available-install-open-design/official-plugin');
-    expect(install.textContent).toBe('Install');
-    fireEvent.click(install);
-
-    await waitFor(() =>
-      expect(mockedInstallPluginSource).toHaveBeenCalledWith('open-design/official-plugin'),
-    );
-    expect(onUsePlugin).not.toHaveBeenCalled();
-  });
-
   it('shows all installed plugins by default on the Plugins page', async () => {
     const createPlugin = makePlugin('create-plugin', 'github', 'restricted', 'Create Plugin');
     const importPlugin = makePlugin('import-plugin', 'github', 'restricted', 'Import Plugin');
@@ -327,9 +167,6 @@ describe('PluginsView', () => {
         .map((item) => item.getAttribute('data-plugin-id'))
         .sort(),
     ).toEqual(['create-plugin', 'import-plugin']);
-    const summary = screen.getByLabelText('Plugin summary');
-    expect(within(summary).getByText('2')).toBeTruthy();
-    expect(within(summary).getByText('Installed')).toBeTruthy();
   });
 
   it('hands installed plugin Use actions to the host shell', async () => {
@@ -374,7 +211,7 @@ describe('PluginsView', () => {
     fireEvent.click(await screen.findByTestId('plugins-import-button'));
     expect(screen.getByRole('dialog', { name: 'Import a plugin' })).toBeTruthy();
     expect(screen.queryByText('Create from template')).toBeNull();
-    const source = 'github:nexu-io/open-design@garnet-hemisphere/plugins/community/registry-starter';
+    const source = 'github:owner/personal-recipes@main/my-plugin';
     fireEvent.change(screen.getByLabelText('GitHub, archive, or marketplace source'), {
       target: { value: source },
     });
@@ -386,307 +223,7 @@ describe('PluginsView', () => {
       ),
     );
     expect(await screen.findByText('Installed New Plugin.')).toBeTruthy();
-    expect(screen.getByTestId('plugins-tab-installed').getAttribute('aria-selected')).toBe('true');
     expect(screen.getAllByText('User Plugin').length).toBeGreaterThan(0);
-  });
-
-  it('installs an available marketplace entry by name', async () => {
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    fireEvent.click(await screen.findByTestId('plugins-available-install-remote-plugin'));
-
-    await waitFor(() =>
-      expect(mockedInstallPluginSource).toHaveBeenCalledWith('remote-plugin'),
-    );
-    expect(await screen.findByText('Installed New Plugin.')).toBeTruthy();
-    expect(screen.getByTestId('plugins-tab-installed').getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('opens details for available marketplace entries', async () => {
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    fireEvent.click(await screen.findByTestId('plugins-available-details-remote-plugin'));
-
-    const dialog = await screen.findByTestId('plugins-available-details-modal');
-    expect(within(dialog).getByText('Remote Plugin')).toBeTruthy();
-    expect(dialog.textContent).toContain('Remote catalog plugin.');
-    expect(dialog.textContent).toContain('github:owner/repo');
-
-    fireEvent.click(within(dialog).getByTestId('plugins-available-details-install-remote-plugin'));
-
-    await waitFor(() =>
-      expect(mockedInstallPluginSource).toHaveBeenCalledWith('remote-plugin@1.2.0'),
-    );
-    expect(await screen.findByText('Installed New Plugin.')).toBeTruthy();
-    await waitFor(() =>
-      expect(screen.queryByTestId('plugins-available-details-modal')).toBeNull(),
-    );
-  });
-
-  it('shows registry provenance, permissions, versions, and copyable install command in available details', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText },
-    });
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'official',
-        url: 'https://example.com/open-design-marketplace.json',
-        trust: 'official',
-        manifest: {
-          name: 'Official Registry',
-          version: '1.0.0',
-          plugins: [{
-            name: 'remote-plugin',
-            title: 'Remote Plugin',
-            source: 'github:owner/repo',
-            version: '1.2.0',
-            ref: 'v1.2.0',
-            integrity: 'sha256:latest',
-            description: 'Remote catalog plugin.',
-            permissions: ['prompt:inject', 'fs:read'],
-            capabilitiesSummary: ['Injects prompt context', 'Reads local design assets'],
-            versions: [
-              {
-                version: '1.2.0',
-                source: 'github:owner/repo',
-                ref: 'v1.2.0',
-                integrity: 'sha256:latest',
-              },
-              {
-                version: '1.1.0',
-                source: 'github:owner/repo',
-                ref: 'v1.1.0',
-                integrity: 'sha256:previous',
-              },
-            ],
-          }],
-        },
-      },
-    ]);
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    fireEvent.click(await screen.findByTestId('plugins-available-details-remote-plugin'));
-
-    const dialog = await screen.findByTestId('plugins-available-details-modal');
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .toContain('from Official Registry · official · github:owner/repo@v1.2.0 · sha256:latest');
-    expect(within(dialog).getByText('Permissions')).toBeTruthy();
-    expect(within(dialog).getByText('prompt:inject')).toBeTruthy();
-    expect(within(dialog).getByText('fs:read')).toBeTruthy();
-    expect(within(dialog).getByText('Capability summary')).toBeTruthy();
-    expect(within(dialog).getByText('Injects prompt context')).toBeTruthy();
-
-    fireEvent.change(within(dialog).getByLabelText('Plugin version'), {
-      target: { value: '1.1.0' },
-    });
-    expect(within(dialog).getByTestId('plugins-available-install-command').textContent)
-      .toContain('od plugin install remote-plugin@1.1.0');
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .toContain('github:owner/repo@v1.1.0 · sha256:previous');
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy install command' }));
-    await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith('od plugin install remote-plugin@1.1.0'),
-    );
-
-    fireEvent.click(within(dialog).getByTestId('plugins-available-details-install-remote-plugin'));
-    await waitFor(() =>
-      expect(mockedInstallPluginSource).toHaveBeenCalledWith('remote-plugin@1.1.0'),
-    );
-  });
-
-  it('does not inherit latest ref and integrity for older sparse available versions', async () => {
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'official',
-        url: 'https://example.com/open-design-marketplace.json',
-        trust: 'official',
-        manifest: {
-          name: 'Official Registry',
-          version: '1.0.0',
-          plugins: [{
-            name: 'remote-plugin',
-            title: 'Remote Plugin',
-            source: 'github:owner/repo',
-            version: '1.2.0',
-            ref: 'v1.2.0',
-            integrity: 'sha256:latest',
-            description: 'Remote catalog plugin.',
-            versions: [
-              { version: '1.2.0' },
-              { version: '1.1.0' },
-            ],
-          }],
-        },
-      },
-    ]);
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    fireEvent.click(await screen.findByTestId('plugins-available-details-remote-plugin'));
-
-    const dialog = await screen.findByTestId('plugins-available-details-modal');
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .toContain('github:owner/repo@v1.2.0 · sha256:latest');
-
-    fireEvent.change(within(dialog).getByLabelText('Plugin version'), {
-      target: { value: '1.1.0' },
-    });
-
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .toContain('from Official Registry · official · github:owner/repo');
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .not.toContain('v1.2.0');
-    expect(within(dialog).getByTestId('plugins-available-provenance').textContent)
-      .not.toContain('sha256:latest');
-    expect(within(dialog).queryByText('Ref')).toBeNull();
-    expect(within(dialog).queryByText('Integrity')).toBeNull();
-  });
-
-  it('filters available marketplace entries by source and search', async () => {
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'catalog-1',
-        url: 'https://example.com/open-design-marketplace.json',
-        trust: 'official',
-        manifest: {
-          name: 'Example Catalog',
-          version: '1.0.0',
-          plugins: [{
-            name: 'remote-plugin',
-            title: 'Remote Plugin',
-            source: 'github:owner/repo',
-            version: '1.2.0',
-            description: 'Remote catalog plugin.',
-            tags: ['deck'],
-          }],
-        },
-      },
-      {
-        id: 'catalog-2',
-        url: 'https://team.example.com/open-design-marketplace.json',
-        trust: 'restricted',
-        manifest: {
-          name: 'Team Catalog',
-          version: '1.0.0',
-          plugins: [{
-            name: 'figma-importer',
-            title: 'Figma Importer',
-            source: 'github:team/figma-importer',
-            version: '0.2.0',
-            description: 'Imports a Figma source.',
-            tags: ['figma', 'import'],
-          }],
-        },
-      },
-    ]);
-
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    expect(await screen.findByText('Remote Plugin')).toBeTruthy();
-    expect(screen.getByText('Figma Importer')).toBeTruthy();
-
-    fireEvent.change(screen.getByLabelText('Search available plugins'), {
-      target: { value: 'figma' },
-    });
-
-    expect(await screen.findByText('Figma Importer')).toBeTruthy();
-    expect(screen.queryByText('Remote Plugin')).toBeNull();
-
-    fireEvent.change(screen.getByLabelText('Source'), {
-      target: { value: 'catalog-1' },
-    });
-
-    expect(await screen.findByText('No available entries match your filters.')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear available plugin search' }));
-
-    expect(await screen.findByText('Remote Plugin')).toBeTruthy();
-    expect(screen.queryByText('Figma Importer')).toBeNull();
-  });
-
-  it('keeps non-bundled installed registry entries out of Available', async () => {
-    const marketplacePlugin = makePlugin(
-      'marketplace-plugin',
-      'marketplace',
-      'restricted',
-      'Marketplace Plugin',
-    );
-    marketplacePlugin.sourceMarketplaceId = 'official';
-    marketplacePlugin.sourceMarketplaceEntryName = 'open-design/official-plugin';
-    marketplacePlugin.sourceMarketplaceEntryVersion = '1.0.0';
-    marketplacePlugin.marketplaceTrust = 'official';
-    marketplacePlugin.manifest.od = { ...marketplacePlugin.manifest.od, hidden: true };
-    mockedListPlugins.mockImplementation(async (options?: { includeHidden?: boolean }) =>
-      options?.includeHidden ? [marketplacePlugin] : [],
-    );
-    mockedListMarketplaces.mockResolvedValue([
-      {
-        id: 'official',
-        url: 'https://open-design.ai/marketplace/open-design-marketplace.json',
-        trust: 'official',
-        manifest: {
-          name: 'Pixflow Design Official',
-          version: '0.1.0',
-          plugins: [{
-            name: 'open-design/official-plugin',
-            title: 'Official Plugin',
-            source: 'github:nexu-io/open-design@main/plugins/_official/scenarios/official-plugin',
-            version: '1.0.0',
-            description: 'Bundled official starter.',
-            tags: ['official'],
-          }],
-        },
-      },
-    ]);
-
-    render(<PluginsView />);
-
-    fireEvent.click(await screen.findByTestId('plugins-tab-available'));
-    expect(await screen.findByText(/Installed catalog entries are removed from Available/i)).toBeTruthy();
-    expect(screen.queryByText('Official Plugin')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Install' })).toBeNull();
-    expect(mockedListPlugins).toHaveBeenCalledWith({ includeHidden: true });
-    expect(mockedApplyPlugin).not.toHaveBeenCalled();
-  });
-
-  it('manages registry sources from the Sources tab', async () => {
-    render(<PluginsView />);
-
-    const sourceUrl =
-      'https://raw.githubusercontent.com/nexu-io/open-design/main/plugins/registry/community/open-design-marketplace.json';
-    fireEvent.click(await screen.findByTestId('plugins-tab-sources'));
-    fireEvent.change(screen.getByLabelText('Source URL'), {
-      target: { value: sourceUrl },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Add source' }));
-
-    await waitFor(() =>
-      expect(mockedAddMarketplace).toHaveBeenCalledWith({
-        url: sourceUrl,
-        trust: 'restricted',
-      }),
-    );
-    expect(await screen.findByText('Marketplace source added.')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
-    await waitFor(() => expect(mockedRefreshMarketplace).toHaveBeenCalledWith('catalog-1'));
-
-    fireEvent.change(screen.getByLabelText('Trust for Example Catalog'), {
-      target: { value: 'trusted' },
-    });
-    await waitFor(() =>
-      expect(mockedSetMarketplaceTrust).toHaveBeenCalledWith('catalog-1', 'trusted'),
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
-    await waitFor(() => expect(mockedRemoveMarketplace).toHaveBeenCalledWith('catalog-1'));
   });
 
   it('uploads zip and folder plugins from the import dialog', async () => {
@@ -717,20 +254,6 @@ describe('PluginsView', () => {
     mockedListPlugins.mockResolvedValue([
       makePlugin('official-plugin', 'bundled', 'bundled'),
       makePlugin('user-plugin', 'github', 'restricted'),
-      makePlugin(
-        'od-plugin-publish-github',
-        'bundled',
-        'bundled',
-        'Publish Plugin to GitHub',
-        'Creates a public GitHub repository for a local Pixflow Design plugin using the GitHub CLI.',
-      ),
-      makePlugin(
-        'od-plugin-contribute-open-design',
-        'bundled',
-        'bundled',
-        'Contribute Plugin to Pixflow Design',
-        'Opens a pull request that adds a local Pixflow Design plugin to the Pixflow Design community catalog.',
-      ),
     ]);
     const onCreatePluginShareProject = vi.fn(async (): Promise<PluginShareProjectOutcome> => ({
       ok: true as const,
@@ -745,8 +268,6 @@ describe('PluginsView', () => {
         metadata: { kind: 'prototype' },
       },
       conversationId: 'conversation-1',
-      appliedPluginSnapshotId: 'snapshot-1',
-      actionPluginId: 'od-plugin-publish-github',
       sourcePluginId: 'user-plugin',
       stagedPath: 'plugin-source/user-plugin',
       prompt: 'Publish it',
@@ -782,5 +303,14 @@ describe('PluginsView', () => {
     await waitFor(() =>
       expect(screen.queryByTestId('plugin-share-confirm-modal')).toBeNull(),
     );
+  });
+
+  it('does not expose retired discovery, registry management, or contribution actions', async () => {
+    render(<PluginsView />);
+    await screen.findByTestId('plugins-home-use-user-plugin');
+    expect(screen.queryByTestId('plugins-tab-available')).toBeNull();
+    expect(screen.queryByTestId('plugins-tab-sources')).toBeNull();
+    expect(screen.queryByTestId('plugins-home-contribute-open-design-user-plugin')).toBeNull();
+    expect(mockedListMarketplaces).not.toHaveBeenCalled();
   });
 });

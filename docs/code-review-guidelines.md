@@ -51,7 +51,7 @@ Governance documents — `AGENTS.md` files, contribution guides, review guidelin
 
 A fixture qualifies as first-party only when **all three** are true:
 
-1. It lives in `skills/`, `design-systems/`, `craft/`, the owning package's `tests/` directory, or `e2e/resources/`.
+1. It lives in maintained bundled `skills/` or `guidance/`, the owning package's `tests/` directory, or `e2e/resources/`. Personal resource examples may live in `docs/examples/` when they document a supported format.
 2. It is referenced by a maintained test or runtime path.
 3. The PR description names that consumer.
 
@@ -106,7 +106,7 @@ A PR is in scope when it passes the [Product relevance test](#1-product-relevanc
 - `tools/dev` — local development lifecycle control plane.
 - `tools/pack` — packaged build, install, start, stop, logs, release-artifact control plane.
 - `e2e` — user-level smoke tests, cross-app/cross-runtime checks, Playwright UI automation.
-- `skills/`, `design-systems/`, `craft/` — project resource and content updates within their documented responsibilities.
+- `skills/` and `guidance/` — maintained bundled Free guidance; generic personal-resource loading and format contracts remain in scope. Retired catalogues are not a destination for new content.
 
 **Multi-area changes** are in scope when they cross a public seam: an HTTP API, shared contract DTO, sidecar protocol, package primitive, command surface, persisted format, or resource format. The owning contract/protocol/primitive must change first, before app-specific behavior is wired against it.
 
@@ -167,29 +167,15 @@ For any change to `packages/contracts`, `packages/sidecar-proto`, persisted SQLi
 - A breaking persisted-format change ships with no migration and no compatibility window.
 - SSE event shapes, error shapes, or task shapes change in app code instead of in `packages/contracts`.
 
-### 4.3 Design-system additions (`design-systems/`)
+### 4.3 Personal design-system contracts and examples
 
-**Accept when:**
+Review `DESIGN.md` format changes and minimal fixtures against [the personal authoring guide](design-systems.md). Preserve saved identifiers, discovery behavior, readable metadata, existing personal files and optional runtime roots. Require tests for parser or migration changes. Retain upstream source, license and attribution for adapted examples.
 
-- The entry is a folder containing a `DESIGN.md`; no code changes, custom loaders, or special runtime handling required to appear after refresh.
-- The first H1 is the picker title; the next line uses the documented metadata shape when grouping is needed: `> Category: <Group>` followed by a short summary.
-- The category is an existing dropdown group from `design-systems/README.md`, or a deliberate new group with a clear reason.
-- Brand-inspired systems use normalized ASCII slugs (`linear.app` → `linear-app`, `x.ai` → `x-ai`).
-- Content covers the comparable `DESIGN.md` concerns used by existing systems (visual theme, color, typography, spacing/layout, component tone, interaction guidance, accessibility expectations).
-- Imported/bundled sets preserve their normalized shape (e.g. the 9-section `DESIGN.md` for sourced design skills).
-- Brand-inspired systems are framed as aesthetic inspirations, not official assets or endorsements.
-- Source, license, and attribution are documented when content is adapted from upstream.
-- New assets are minimal, license-safe, intentionally named, and referenced by the [first-party fixture rule](#first-party-fixture-rule).
+The bundled design-system catalogue is retired. Adding a new catalogue or importing a brand collection requires an explicit product decision; a personal resource format change does not authorize it.
 
-**Block when:**
+### 4.4 Maintained skills (`skills/`)
 
-- The "design system" is actually a customer/product page, marketing experiment, or unrelated visual collection.
-- It omits `DESIGN.md`, has malformed metadata, uses a non-normalized slug, or won't appear cleanly in the picker.
-- It deviates from existing entries' shape without updating the documented resource contract, importer flow, README, and validation.
-- It requires runtime behavior, custom loaders, or app-specific assumptions not part of the design-system resource model.
-- It imports official/proprietary brand assets, unclear-license material, or large unreferenced assets.
-
-### 4.4 Skill additions (`skills/`)
+The current Free bundle contains four maintained functional skills. Review updates against that scope; restoring the inherited skill/template catalogue requires an explicit product decision. Generic personal skill installation remains a supported runtime contract.
 
 **Accept when:**
 
@@ -206,24 +192,11 @@ For any change to `packages/contracts`, `packages/sidecar-proto`, persisted SQLi
 - It requires new daemon/runtime semantics without updating the skills protocol, resource contract, and validation.
 - It adds broad external integrations or credentials not necessary for a design-focused Pixflow Design workflow.
 
-### 4.5 Craft additions (`craft/`)
+### 4.5 Personal craft references
 
-For new or changed brand-agnostic craft references under `craft/`.
+Review craft loading, `od.craft.requires` and focused format examples as optional personal-resource contracts. Preserve configured directories and existing files; missing personal references may be skipped without restoring a bundled catalogue. A fixture must be minimal and have a maintained consumer.
 
-**Accept when:**
-
-- The reference is **universal** craft knowledge — true regardless of brand or design system (typography rules, color discipline, anti-AI-slop, motion principles).
-- It is a single dense rulebook on one craft dimension, sized like existing entries (`typography.md`, `color.md`, `animation-discipline.md`).
-- The slug is short and stable enough to be referenced by skills via `od.craft.requires`.
-- At least one shipping skill opts into it via `od.craft.requires`, OR the PR explains why the reference will be opted into in a follow-up and lists the candidate skills.
-- Content does not encode brand-specific tokens, colors, or typography choices that belong in `design-systems/`.
-
-**Block when:**
-
-- The reference is brand-specific or design-system-specific (belongs in `design-systems/`).
-- It is artifact-shape advice (belongs in `skills/`).
-- It duplicates an existing craft reference instead of extending it.
-- No skill references it and no follow-up consumer is named.
+The inherited `craft/` catalogue is retired. Brand-specific guidance belongs in a personal `DESIGN.md`; general craft references can remain user-managed data without becoming bundled product content.
 
 ## 5. Review priorities and checklist
 

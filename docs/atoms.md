@@ -1,6 +1,7 @@
-# First-party atom catalog
+# Pipeline atom reference
 
-> The atomic capabilities Pixflow Design exposes to plugins.
+> Stable atom identifiers exposed to personal and installed plugin manifests.
+> The inherited bundled atom-plugin catalogue is retired; this reference describes the runtime contract.
 > Spec: [`docs/plugins-spec.md`](plugins-spec.md) §10.
 > Source of truth: [`apps/daemon/src/plugins/atoms.ts`](../apps/daemon/src/plugins/atoms.ts).
 > Live discovery: `GET /api/atoms` (also reachable via `od atoms list --json` in a future PR).
@@ -52,22 +53,9 @@ daemon treats references as "doctor warning" rather than "unknown atom error".
 | `diff-review` | Render rewrite as a reviewable diff. | `code-migration`, `tune-collab` |
 | `handoff` | Push artifact to downstream surfaces (cli / cloud / desktop). | `tune-collab` |
 
-## How the daemon resolves an atom
+## Runtime ownership
 
-1. The plugin manifest's `od.pipeline.stages[*].atoms[]` is parsed into a
-   `PipelineStage[]` by `apps/daemon/src/plugins/pipeline.ts`.
-2. At run time, `apps/daemon/src/plugins/pipeline-runner.ts` walks the stages.
-   For each stage entry it:
-   - emits a `pipeline_stage_started` SSE event,
-   - asks the caller-supplied stage runner to execute the atom (today this is
-     a stub; Phase 4's atom migration into `plugins/_official/<atom>/SKILL.md`
-     makes this fully data-driven),
-   - persists one row into `run_devloop_iterations` for audit,
-   - emits a `pipeline_stage_completed` event with the resulting signals.
-3. The atom's prompt fragment / tool gating is currently inline in
-   `apps/daemon/src/prompts/system.ts`. Phase 4 patch 2 (spec §23.3.2) lifts
-   each fragment out into `plugins/_official/atoms/<atom>/SKILL.md` so the
-   prompt becomes fully data-driven.
+Plugin manifests reference atom identifiers through `od.pipeline.stages[*].atoms[]`. Parsing, validation, stage execution and prompt assembly remain runtime responsibilities in `apps/daemon/src/plugins/` and `apps/daemon/src/prompts/`. The removed `plugins/_official/atoms/` tree is not a current source or extension destination. Essential Home and Website Clone routers live in `guidance/`; package paths and saved plugin identifiers remain compatible.
 
 ## Atom signals + the `until` vocabulary
 
@@ -89,7 +77,7 @@ contract.
 1. Author the atom out-of-tree as a plugin (per spec §22.5 promotion path).
 2. Once the SKILL.md / MCP tool / pipeline shape stabilises, append the
    matching row to `FIRST_PARTY_ATOMS` in `apps/daemon/src/plugins/atoms.ts`.
-3. Update this document and the spec §10 / §21 / §23 tables in the same PR.
+3. Update this runtime reference, the manifest contract and focused validation in the same PR. A new bundled catalogue requires an explicit product decision.
 4. The atom is now reachable via:
    - `od.pipeline.stages[*].atoms[]` references in any plugin,
    - `GET /api/atoms` discovery,

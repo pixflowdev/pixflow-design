@@ -133,6 +133,14 @@ async function readSseUntilSuccess(resp: Response) {
 }
 
 describe('Plan §8 e2e-3 (entry slice) — headless install → project → run', () => {
+  it('starts with only essential guidance and no seeded inherited catalogues', async () => {
+    const marketplaces = await fetch(`${baseUrl}/api/marketplaces`);
+    expect((await marketplaces.json() as { marketplaces: unknown[] }).marketplaces).toEqual([]);
+    const plugins = await fetch(`${baseUrl}/api/plugins`);
+    const body = await plugins.json() as { plugins: Array<{ id: string; sourceKind: string }> };
+    expect(body.plugins.filter((plugin) => plugin.sourceKind === 'bundled').map((plugin) => plugin.id).sort()).toEqual(['example-web-clone', 'od-default']);
+  });
+
   it('walks install → project create → run start → status with snapshot pinned', async () => {
     // 1. Install a local fixture plugin via the SSE install endpoint.
     const installResp = await fetch(`${baseUrl}/api/plugins/install`, {
@@ -217,7 +225,7 @@ describe('Plan §8 e2e-3 (entry slice) — headless install → project → run'
     await fetch(`${baseUrl}/api/runs/${encodeURIComponent(runBody.runId)}/cancel`, { method: 'POST' });
   });
 
-  it('creates share projects for publishing and contributing a user plugin', async () => {
+  it('creates personal publishing projects without retired bundled action plugins', async () => {
     const installResp = await fetch(`${baseUrl}/api/plugins/install`, {
       method:  'POST',
       headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
@@ -238,15 +246,15 @@ describe('Plan §8 e2e-3 (entry slice) — headless install → project → run'
       project: { id: string; pendingPrompt?: string };
       conversationId: string;
       appliedPluginSnapshotId?: string;
-      actionPluginId: string;
+      actionPluginId?: string;
       sourcePluginId: string;
       stagedPath: string;
       prompt: string;
     };
     expect(shareBody.ok).toBe(true);
-    expect(shareBody.actionPluginId).toBe('od-plugin-publish-github');
+    expect(shareBody.actionPluginId).toBeUndefined();
     expect(shareBody.sourcePluginId).toBe('sample-plugin');
-    expect(shareBody.appliedPluginSnapshotId).toBeTruthy();
+    expect(shareBody.appliedPluginSnapshotId).toBeUndefined();
     expect(shareBody.stagedPath).toBe('plugin-source/sample-plugin');
     expect(shareBody.prompt).toContain('Publish the local Pixflow Design plugin');
     expect(shareBody.prompt).toContain('/api/projects/$OD_PROJECT_ID/plugins/publish-github');
@@ -262,41 +270,12 @@ describe('Plan §8 e2e-3 (entry slice) — headless install → project → run'
     expect(fileNames).toContain('plugin-source/sample-plugin/open-design.json');
     expect(fileNames).toContain('plugin-source/sample-plugin/SKILL.md');
 
-    const snapshotResp = await fetch(
-      `${baseUrl}/api/applied-plugins/${encodeURIComponent(shareBody.appliedPluginSnapshotId!)}`,
-    );
-    expect(snapshotResp.status).toBe(200);
-    const snapshot = (await snapshotResp.json()) as {
-      pluginId: string;
-      inputs?: Record<string, string | number | boolean>;
-    };
-    expect(snapshot.pluginId).toBe('od-plugin-publish-github');
-    expect(snapshot.inputs).toMatchObject({
-      source_plugin_id: 'sample-plugin',
-      plugin_context_path: 'plugin-source/sample-plugin',
-    });
-
     const contributeResp = await fetch(`${baseUrl}/api/plugins/sample-plugin/share-project`, {
       method:  'POST',
       headers: { 'content-type': 'application/json' },
       body:    JSON.stringify({ action: 'contribute-open-design', locale: 'en' }),
     });
-    expect(contributeResp.status).toBe(200);
-    const contributeBody = (await contributeResp.json()) as {
-      ok: boolean;
-      project: { id: string };
-      appliedPluginSnapshotId?: string;
-      actionPluginId: string;
-      sourcePluginId: string;
-      stagedPath: string;
-      prompt: string;
-    };
-    expect(contributeBody.ok).toBe(true);
-    expect(contributeBody.actionPluginId).toBe('od-plugin-contribute-open-design');
-    expect(contributeBody.sourcePluginId).toBe('sample-plugin');
-    expect(contributeBody.appliedPluginSnapshotId).toBeTruthy();
-    expect(contributeBody.stagedPath).toBe('plugin-source/sample-plugin');
-    expect(contributeBody.prompt).toContain('/api/projects/$OD_PROJECT_ID/plugins/contribute-open-design');
+    expect(contributeResp.status).toBe(400);
 
     const locator = process.platform === 'win32' ? 'where' : 'which';
     const realGit = ((await execFileP(locator, ['git'])).stdout as string)
@@ -407,21 +386,6 @@ process.exit(result.status ?? 0);
               expect(publishEndpointBody.ok).toBe(true);
               expect(publishEndpointBody.url).toBe('https://github.com/test-user/sample-plugin');
 
-              const contributeEndpointResp = await fetch(
-                `${baseUrl}/api/projects/${encodeURIComponent(contributeBody.project.id)}/plugins/contribute-open-design`,
-                {
-                  method: 'POST',
-                  headers: { 'content-type': 'application/json' },
-                  body: JSON.stringify({ path: contributeBody.stagedPath }),
-                },
-              );
-              expect(contributeEndpointResp.status).toBe(200);
-              const contributeEndpointBody = (await contributeEndpointResp.json()) as {
-                ok: boolean;
-                url?: string;
-              };
-              expect(contributeEndpointBody.ok).toBe(true);
-              expect(contributeEndpointBody.url).toBe('https://github.com/nexu-io/open-design/pull/123');
             },
           );
         },

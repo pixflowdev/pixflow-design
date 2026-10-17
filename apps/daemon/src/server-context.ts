@@ -17,10 +17,6 @@ export interface PathDeps {
   ARTIFACTS_DIR: string;
   BUNDLED_PETS_DIR: string;
   DESIGN_SYSTEMS_DIR: string;
-  // Bundled rendering catalogue (see specs/current/skills-and-design-templates.md).
-  // Distinct from SKILLS_DIR so the EntryView Templates surface and the
-  // Settings → Skills surface stay decoupled.
-  DESIGN_TEMPLATES_DIR: string;
   OD_BIN: string;
   PROJECT_ROOT: string;
   PROJECTS_DIR: string;
@@ -29,8 +25,7 @@ export interface PathDeps {
   RUNTIME_DATA_DIR_CANONICAL: string;
   SKILLS_DIR: string;
   USER_DESIGN_SYSTEMS_DIR: string;
-  // Mirror of USER_SKILLS_DIR rooted at DESIGN_TEMPLATES_DIR so user
-  // imports of templates do not collide with imports of functional skills.
+  // Personal templates remain available to saved projects.
   USER_DESIGN_TEMPLATES_DIR: string;
   USER_SKILLS_DIR: string;
 }

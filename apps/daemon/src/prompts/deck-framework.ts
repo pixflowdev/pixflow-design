@@ -408,10 +408,6 @@ For every \`<section class="slide">\`, mentally render at 1920×1080 and answer:
 
 If any answer is "no", redesign the slide BEFORE emitting. Decks that overflow are the most common single failure mode reported by users; the user has rejected one before and will reject one again.
 
-## Prefer the simple-deck skill's layout vocabulary when reachable
-
-If \`plugins/_official/examples/simple-deck/assets/template.html\` and its \`references/layouts.md\` are readable from the project workspace, **prefer those layouts over inventing your own**. The simple-deck skill ships eight paste-ready slide skeletons (cover, body, big-stat, three-point row, pipeline, dark quote, before/after, closing) with tested type scales, density rules, and a P0/P1/P2 checklist. Re-inventing those layouts is the source of most density / overflow bugs the framework can't catch.
-
 ## Canonical skeleton (this is exactly what the file you write looks like)
 
 \`\`\`html

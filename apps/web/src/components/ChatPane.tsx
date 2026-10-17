@@ -479,11 +479,6 @@ interface Props {
   ) => Promise<{ message?: string; url?: string } | void> | { message?: string; url?: string } | void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
-  // "Share to Pixflow Design" button on each completed assistant message —
-  // wired by ProjectView to handleSend with the bundled
-  // `od-share-to-community` scenario's trigger prompt.
-  onShareToOpenDesign?: (assistantMessageId: string) => void;
-  shareToOpenDesignBusyMessageId?: string | null;
   forceStreamingMessageIds?: Set<string>;
   // Live-only streaming tool-input partials keyed by tool-use id. Threaded to
   // AssistantMessage so an in-flight Write/Edit can render its code in real
@@ -693,8 +688,6 @@ export function ChatPane({
   onRequestPluginFolderAgentAction,
   activePluginActionPaths,
   hiddenPluginActionPaths,
-  onShareToOpenDesign,
-  shareToOpenDesignBusyMessageId,
   forceStreamingMessageIds,
   liveToolInput,
   initialDraft,
@@ -821,14 +814,12 @@ export function ChatPane({
     onAssistantFeedback,
     onArtifactShare,
     onForkFromMessage,
-    onShareToOpenDesign,
   });
   assistantCallbacksRef.current = {
     onContinueRemainingTasks,
     onAssistantFeedback,
     onArtifactShare,
     onForkFromMessage,
-    onShareToOpenDesign,
   };
   // Featured design-toolbox follow-up rows on the assistant "next step" card.
   // The toolbox left the "+" menu, so these route straight into the composer
@@ -1802,8 +1793,6 @@ export function ChatPane({
       onRequestPluginFolderAgentAction={onRequestPluginFolderAgentAction}
       activePluginActionPaths={activePluginActionPaths}
       hiddenPluginActionPaths={hiddenPluginActionPaths}
-      onShareToOpenDesign={onShareToOpenDesign}
-      shareToOpenDesignBusyMessageId={shareToOpenDesignBusyMessageId}
       forceStreamingMessageIds={forceStreamingMessageIds}
       lastAssistantId={lastAssistantId}
       firstUserMessageId={firstUserMessageId}
@@ -2089,7 +2078,6 @@ interface AssistantCallbacks {
     | undefined;
   onArtifactShare: ((fileName: string) => void) | undefined;
   onForkFromMessage: ((message: ChatMessage) => void) | undefined;
-  onShareToOpenDesign: ((assistantMessageId: string) => void) | undefined;
 }
 
 type ChatRenderItem = {
@@ -2115,8 +2103,6 @@ function ChatRows({
   onRequestPluginFolderAgentAction,
   activePluginActionPaths,
   hiddenPluginActionPaths,
-  onShareToOpenDesign,
-  shareToOpenDesignBusyMessageId,
   forceStreamingMessageIds,
   lastAssistantId,
   firstUserMessageId,
@@ -2156,8 +2142,6 @@ function ChatRows({
   onRequestPluginFolderAgentAction?: (relativePath: string, action: PluginFolderAgentAction) => void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
-  onShareToOpenDesign?: (assistantMessageId: string) => void;
-  shareToOpenDesignBusyMessageId?: string | null;
   forceStreamingMessageIds?: Set<string>;
   lastAssistantId: string | undefined;
   firstUserMessageId: string | undefined;
@@ -2260,12 +2244,6 @@ function ChatRows({
         onRequestPluginFolderAgentAction={onRequestPluginFolderAgentAction}
         activePluginActionPaths={activePluginActionPaths}
         hiddenPluginActionPaths={hiddenPluginActionPaths}
-        onShareToOpenDesign={
-          onShareToOpenDesign
-            ? () => assistantCallbacksRef.current.onShareToOpenDesign?.(m.id)
-            : undefined
-        }
-        shareToOpenDesignBusy={shareToOpenDesignBusyMessageId === m.id}
         isLast={m.id === lastAssistantId}
         errorCardOwnerId={errorCardOwnerId}
         nextUserContent={nextUserContentByAssistantId.get(m.id)}

@@ -76,6 +76,7 @@ describe('use-with-query send pulse gating', () => {
       <I18nProvider initial="en">
         <div className="entry-main--scroll">
           <HomeView
+            promptHandoff={{id: 1, source: 'plugin-use', pluginId: REQUIRED_INPUT_PLUGIN.id, action: 'use-with-query', focus: true}}
             projects={[]}
             onSubmit={() => undefined}
             onOpenProject={() => undefined}
@@ -86,13 +87,6 @@ describe('use-with-query send pulse gating', () => {
     );
     const scrollContainer = view.container.querySelector('.entry-main--scroll') as HTMLElement;
     scrollContainer.scrollTop = 240;
-
-    // Replicate-content is the primary CTA for query-bearing plugins; this
-    // plugin's required `topic` has no default, so the composer lands on
-    // the inputs form with Send disabled — pulsing it would point at a
-    // dead end.
-    fireEvent.click(await screen.findByTestId('plugins-home-details-required-input-plugin'));
-    fireEvent.click(await screen.findByTestId('plugin-details-use-required-input-plugin'));
 
     const submit = (await screen.findByTestId('home-hero-submit')) as HTMLButtonElement;
     await waitFor(() => {

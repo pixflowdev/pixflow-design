@@ -43,7 +43,7 @@ interface BackfillDatabase {
 }
 
 // better-sqlite3 is a native module owned by the daemon workspace; resolve it
-// from there (matching scripts/seed-test-projects.ts) rather than the root.
+// from there rather than the root.
 function loadBetterSqlite(): new (filename: string) => BackfillDatabase {
   const daemonRequire = createRequire(path.join(REPO_ROOT, 'apps', 'daemon', 'package.json'));
   return daemonRequire('better-sqlite3') as new (filename: string) => BackfillDatabase;

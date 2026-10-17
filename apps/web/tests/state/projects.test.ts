@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applyPlugin,
-  contributeGeneratedPluginToOpenDesign,
   createProject,
   createPluginShareProject,
   importClaudeDesignZip,
@@ -278,7 +277,7 @@ describe('generated plugin share actions', () => {
     vi.unstubAllGlobals();
   });
 
-  it('posts publish and contribute actions for project-relative plugin folders', async () => {
+  it('posts personal publish actions for project-relative plugin folders', async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => new Response(
       JSON.stringify({
         ok: true,
@@ -291,21 +290,11 @@ describe('generated plugin share actions', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const publish = await publishGeneratedPluginToGitHub('project-1', 'generated-plugin');
-    const contribute = await contributeGeneratedPluginToOpenDesign('project-1', 'generated-plugin');
 
     expect(publish).toMatchObject({ ok: true, message: 'Ready' });
-    expect(contribute).toMatchObject({ ok: true, message: 'Ready' });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       '/api/projects/project-1/plugins/publish-github',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ path: 'generated-plugin' }),
-      }),
-    );
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      '/api/projects/project-1/plugins/contribute-open-design',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ path: 'generated-plugin' }),
@@ -370,8 +359,8 @@ describe('createPluginShareProject', () => {
     const fetchMock = vi.fn<typeof fetch>(async () => new Response(
       JSON.stringify({
         ok: false,
-        code: 'share-action-plugin-missing',
-        message: 'Restart the daemon.',
+        code: 'publish-source-missing',
+        message: 'Source plugin is unavailable.',
       }),
       { status: 409, headers: { 'content-type': 'application/json' } },
     ));
@@ -379,13 +368,13 @@ describe('createPluginShareProject', () => {
 
     const outcome = await createPluginShareProject(
       'sample-plugin',
-      'contribute-open-design',
+      'publish-github',
     );
 
     expect(outcome).toEqual({
       ok: false,
-      code: 'share-action-plugin-missing',
-      message: 'Restart the daemon.',
+      code: 'publish-source-missing',
+      message: 'Source plugin is unavailable.',
     });
   });
 });

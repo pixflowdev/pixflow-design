@@ -24,7 +24,6 @@ import {
   createPixflowPromptProvenance,
   type OpenDesignGithubLatestReleaseResponse,
   type OpenDesignGithubRepoResponse,
-  PLUGIN_SHARE_ACTION_PLUGIN_IDS,
   isTodoWriteToolName,
   stopReasonIsTruncation,
   todoItemsFromTodoWriteInput,
@@ -232,10 +231,6 @@ import {
   startSnapshotGc,
   uninstallPlugin,
 } from './plugins/index.js';
-import {
-  marketplaceManifestUrlForRegistry,
-  marketplaceRegistryIdFromUrl,
-} from './plugins/marketplaces.js';
 import {
   getSurface,
   listSurfacesForProject,
@@ -1569,9 +1564,8 @@ const DAEMON_RESOURCE_ROOT = resolveDaemonResourceRoot();
 // when this project shipped with Vite; the daemon serves whatever the
 // frontend toolchain emits, no further config needed.
 const STATIC_DIR = path.join(PROJECT_ROOT, 'apps', 'web', 'out');
-// Baked plugin preview clips (scripts/bake-plugin-previews.mjs). Served at
-// PLUGIN_PREVIEWS_ROUTE; their manifest rewrites html plugins' previews to a
-// cheap poster + hover-play video in the home gallery.
+// Optional saved plugin preview clips are served at PLUGIN_PREVIEWS_ROUTE.
+// Personal manifests can attach poster and video metadata to installed plugins.
 const PLUGIN_PREVIEWS_DIR = resolveDaemonPluginPreviewsDir({
   resourceRoot: DAEMON_RESOURCE_ROOT,
   projectRoot: PROJECT_ROOT,
@@ -1589,20 +1583,6 @@ const DESIGN_SYSTEMS_DIR = resolveDaemonResourceDir(
   path.join(PROJECT_ROOT, 'design-systems'),
 );
 configureComposioSkillRoot(SKILLS_DIR);
-// Renderable templates pulled out of `skills/` by the skills/design-templates
-// split (PR #955) so the EntryView Templates tab gets the large rendering
-// catalogue and Settings → Skills only carries functional skills the agent
-// invokes mid-task. See specs/current/skills-and-design-templates.md.
-const DESIGN_TEMPLATES_DIR = resolveDaemonResourceDir(
-  DAEMON_RESOURCE_ROOT,
-  'design-templates',
-  path.join(PROJECT_ROOT, 'design-templates'),
-);
-const CRAFT_DIR = resolveDaemonResourceDir(
-  DAEMON_RESOURCE_ROOT,
-  'craft',
-  path.join(PROJECT_ROOT, 'craft'),
-);
 // User-installed skills and design systems live under the runtime data dir
 // so they respect OD_DATA_DIR overrides (test isolation, packaged runs).
 // Defined after RUNTIME_DATA_DIR is resolved below.
@@ -1630,14 +1610,6 @@ const BUNDLED_PLUGINS_DIR = resolveDaemonResourceDir(
   path.join('plugins', '_official'),
   defaultBundledRoot(PROJECT_ROOT),
 );
-const PLUGIN_REGISTRY_DIR = resolveDaemonResourceDir(
-  DAEMON_RESOURCE_ROOT,
-  'plugins/registry',
-  path.join(PROJECT_ROOT, 'plugins', 'registry'),
-);
-const OFFICIAL_MARKETPLACE_ID = 'official';
-const OFFICIAL_PLUGIN_SOURCE_REPO = 'github:pixflowdev/pixflow-design@main';
-
 function resolvePixflowBricksHandoffCliPath(): string | null {
   const candidates = [
     path.join(PROJECT_ROOT, 'tools', 'pixflow-design-bridge', 'bricks-handoff-cli.mjs'),
@@ -1676,79 +1648,6 @@ export function registerStaticSpaFallback(app, staticDir) {
     if (indexPath == null) return next();
     res.sendFile(indexPath);
   });
-}
-
-function defaultMarketplaceSeedConfig(id) {
-  return {
-    trust: id === OFFICIAL_MARKETPLACE_ID ? 'official' : 'restricted',
-    url:   marketplaceManifestUrlForRegistry(id),
-  };
-}
-
-function bundledPluginRegistrySource(sourcePath) {
-  if (isPathWithin(BUNDLED_PLUGINS_DIR, sourcePath)) {
-    const rel = path.relative(BUNDLED_PLUGINS_DIR, sourcePath).split(path.sep).join('/');
-    return `${OFFICIAL_PLUGIN_SOURCE_REPO}/plugins/_official/${rel}`;
-  }
-  const rel = path.relative(PROJECT_ROOT, sourcePath).split(path.sep).join('/');
-  if (!rel || rel.startsWith('..')) return sourcePath;
-  return `${OFFICIAL_PLUGIN_SOURCE_REPO}/${rel}`;
-}
-
-function mergeMarketplaceEntries(manifestText, entries) {
-  try {
-    const parsed = JSON.parse(manifestText);
-    const plugins = Array.isArray(parsed.plugins) ? parsed.plugins : [];
-    const seen = new Set(plugins.map((entry) => String(entry?.name ?? '').toLowerCase()));
-    const generated = entries.filter((entry) => {
-      const key = String(entry.name ?? '').toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    return JSON.stringify({
-      ...parsed,
-      metadata: {
-        ...(parsed.metadata && typeof parsed.metadata === 'object' ? parsed.metadata : {}),
-        bundledPreinstallCount: entries.length,
-      },
-      plugins: [...plugins, ...generated],
-    });
-  } catch {
-    return manifestText;
-  }
-}
-
-async function marketplaceSeedManifestText(id, bundledMarketplaceEntries) {
-  const manifestPath = path.join(PLUGIN_REGISTRY_DIR, id, 'open-design-marketplace.json');
-  if (!fs.existsSync(manifestPath)) return null;
-  let manifestText = await fs.promises.readFile(manifestPath, 'utf8');
-  if (id === OFFICIAL_MARKETPLACE_ID && bundledMarketplaceEntries.length > 0) {
-    manifestText = mergeMarketplaceEntries(manifestText, bundledMarketplaceEntries);
-  }
-  return manifestText;
-}
-
-function createMarketplaceFetcher(seedId, bundledMarketplaceEntries) {
-  return async (url) => {
-    const registryId = marketplaceRegistryIdFromUrl(url);
-    if (registryId && (!seedId || registryId === seedId)) {
-      const manifestText = await marketplaceSeedManifestText(registryId, bundledMarketplaceEntries);
-      if (manifestText != null) {
-        return {
-          ok:     true,
-          status: 200,
-          text:   async () => manifestText,
-        };
-      }
-    }
-    const response = await fetch(url, { redirect: 'follow' });
-    return {
-      ok:     response.ok,
-      status: response.status,
-      text:   () => response.text(),
-    };
-  };
 }
 
 export function resolveDataDir(raw, projectRoot, options = {}) {
@@ -1836,10 +1735,10 @@ const PLUGIN_REGISTRY_ROOTS = registryRootsForDataDir(RUNTIME_DATA_DIR);
 const pluginAssetCache = createPluginAssetCache({
   cacheDir: path.join(RUNTIME_DATA_DIR, 'plugin-asset-cache'),
 });
-// User-imported design templates mirror USER_SKILLS_DIR but are scanned
-// against DESIGN_TEMPLATES_DIR rather than SKILLS_DIR so the EntryView
-// Templates surface and the Settings → Skills surface stay decoupled.
+// Retain personal templates for saved projects; no inherited catalogue is bundled.
 const USER_DESIGN_TEMPLATES_DIR = path.join(RUNTIME_DATA_DIR, 'design-templates');
+// Craft is optional personal context; inherited bundled craft is retired.
+const CRAFT_DIR = path.join(RUNTIME_DATA_DIR, 'craft');
 // Multi-root tuples used everywhere the daemon resolves a skill / template
 // id without knowing which surface it came from. SKILL_ROOTS drives
 // Settings → Skills; DESIGN_TEMPLATE_ROOTS drives the EntryView Templates
@@ -1847,12 +1746,11 @@ const USER_DESIGN_TEMPLATES_DIR = path.join(RUNTIME_DATA_DIR, 'design-templates'
 // composition and the orbit template resolver, where stored project ids
 // can resolve to either root after the split.
 const SKILL_ROOTS = [USER_SKILLS_DIR, SKILLS_DIR];
-const DESIGN_TEMPLATE_ROOTS = [USER_DESIGN_TEMPLATES_DIR, DESIGN_TEMPLATES_DIR];
+const DESIGN_TEMPLATE_ROOTS = [USER_DESIGN_TEMPLATES_DIR];
 const ALL_SKILL_LIKE_ROOTS = [
   USER_SKILLS_DIR,
   USER_DESIGN_TEMPLATES_DIR,
   SKILLS_DIR,
-  DESIGN_TEMPLATES_DIR,
 ];
 fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 for (const dir of [USER_SKILLS_DIR, USER_DESIGN_SYSTEMS_DIR, USER_DESIGN_TEMPLATES_DIR, PLUGIN_REGISTRY_ROOTS.userPluginsRoot]) {
@@ -2704,7 +2602,6 @@ function githubRepoNameFromPluginName(name) {
 
 const PLUGIN_SHARE_ACTION_LABELS = {
   'publish-github': 'Publish to GitHub',
-  'contribute-open-design': 'Contribute to Pixflow Design',
 };
 
 const USER_PLUGIN_SOURCE_KINDS = new Set([
@@ -2742,9 +2639,7 @@ const PLUGIN_CONTEXT_SKIP_FILES = new Set([
 
 function normalizePluginShareAction(input) {
   const value = typeof input === 'string' ? input.trim() : '';
-  return Object.prototype.hasOwnProperty.call(PLUGIN_SHARE_ACTION_PLUGIN_IDS, value)
-    ? value
-    : null;
+  return value === 'publish-github' ? value : null;
 }
 
 function renderPluginSharePrompt({ action, sourcePlugin, stagedPath }) {
@@ -2767,22 +2662,7 @@ function renderPluginSharePrompt({ action, sourcePlugin, stagedPath }) {
       'Do not rewrite the plugin unless publishing requires a small metadata fix. If you make any fix, explain it before publishing.',
     ].join('\n');
   }
-  return [
-    `Open a pull request to add the local Pixflow Design plugin "${title}" to the Pixflow Design repository.`,
-    '',
-    `The plugin source files have been copied into this project at \`${stagedPath}\`.`,
-    'Use the local daemon share endpoint so the contribution flow runs through Pixflow Design\'s validated GitHub path:',
-    '',
-    '```bash',
-    `curl -sS -X POST "$OD_DAEMON_URL/api/projects/$OD_PROJECT_ID/plugins/contribute-open-design" \\`,
-    `  -H 'content-type: application/json' \\`,
-    `  -d '${JSON.stringify({ path: stagedPath })}'`,
-    '```',
-    '',
-    'Read the JSON response. If `ok` is true, report the PR URL, branch, and any validation/log summary. If it fails, report the `message`, `code`, and the useful log lines. The endpoint checks `gh` auth, forks/clones, pushes, and opens the PR; do not hand-roll a second GitHub flow unless you are explaining a daemon endpoint failure.',
-    '',
-    'Keep the PR focused on this plugin. Report the PR URL and any validation you ran.',
-  ].join('\n');
+  throw new Error('Unsupported plugin share action');
 }
 
 async function copyPluginFolderForProjectContext(sourceRoot, destRoot) {
@@ -4619,13 +4499,7 @@ function pluginShareActionToCli(action) {
       failureCode: 'publish-repo-failed',
     };
   }
-  return {
-    argv: ['plugin', 'open-design-pr'],
-    title: 'Pixflow Design PR',
-    command: 'od plugin open-design-pr',
-    successMessage: 'Opened Pixflow Design PR flow.',
-    failureCode: 'open-design-pr-failed',
-  };
+  throw new Error('Unsupported plugin share action');
 }
 
 function pluginShareProgressPlan(action) {
@@ -4637,12 +4511,7 @@ function pluginShareProgressPlan(action) {
       'Return the repository URL',
     ];
   }
-  return [
-    'Ensure the Pixflow Design fork exists',
-    'Clone the fork and prepare a branch',
-    'Copy the plugin into plugins/community',
-    'Push the branch and open the PR form',
-  ];
+  throw new Error('Unsupported plugin share action');
 }
 
 async function runPluginShareTask(task, folder) {
@@ -4657,7 +4526,7 @@ async function runPluginShareTask(task, folder) {
     ...share.argv,
     folder,
     '--json',
-  ], { timeout: task.action === 'publish-github' ? 240_000 : 300_000 });
+  ], { timeout: 240_000 });
   let payload = null;
   try {
     payload = result.stdout ? JSON.parse(result.stdout) : null;
@@ -4684,9 +4553,7 @@ async function runPluginShareTask(task, folder) {
   task.status = 'done';
   task.result = {
     message: url
-      ? (task.action === 'publish-github'
-          ? `Published plugin to ${url}.`
-          : `Opened Pixflow Design PR flow at ${url}.`)
+      ? `Published plugin to ${url}.`
       : share.successMessage,
     ...(url ? { url } : {}),
     log: stepLog,
@@ -9972,10 +9839,9 @@ export async function startServer({
     console.log('[od] Codex plugins disabled via OD_CODEX_DISABLE_PLUGINS=1');
   }
 
-  let bundledMarketplaceEntries = [];
   // Plan §3.I3 / spec §23.3.5 — register every plugin under
   // <resourceRoot>/plugins/_official/** in packaged runs, or
-  // <projectRoot>/plugins/_official/** in workspace runs, as bundled plugins. The walker
+  // <projectRoot>/guidance/** in workspace runs, as bundled guidance. The walker
   // is idempotent (upserts on every boot) so a daemon upgrade rotates
   // the bundled set in lockstep with the code. ENOENT is silent —
   // running the daemon outside the dev tree just skips this step.
@@ -9983,28 +9849,9 @@ export async function startServer({
     const result = await registerBundledPlugins({
       db,
       bundledRoot: BUNDLED_PLUGINS_DIR,
-      marketplaceProvenance: {
-        sourceMarketplaceId: OFFICIAL_MARKETPLACE_ID,
-        marketplaceTrust:    'official',
-        entryNamePrefix:     'open-design',
-      },
+      // Retiring bundled resources must preserve installed metadata and saved work.
+      pruneMissing: false,
     });
-    bundledMarketplaceEntries = result.registered.map((plugin) => ({
-      name:        `open-design/${plugin.id}`,
-      title:       plugin.title,
-      title_i18n:  plugin.manifest.title_i18n,
-      description: plugin.manifest.description,
-      description_i18n: plugin.manifest.description_i18n,
-      version:     plugin.version,
-      source:      bundledPluginRegistrySource(plugin.source),
-      publisher:   { id: 'open-design', url: 'https://pixflow.dev' },
-      homepage:    plugin.manifest.homepage,
-      license:     plugin.manifest.license,
-      tags:        plugin.manifest.tags,
-      capabilitiesSummary: Array.isArray(plugin.manifest.od?.capabilities)
-        ? plugin.manifest.od.capabilities
-        : undefined,
-    }));
     if (result.registered.length > 0) {
       console.log(`[plugins] registered ${result.registered.length} bundled plugin(s)`);
     }
@@ -10013,34 +9860,6 @@ export async function startServer({
     }
   } catch (err) {
     console.warn(`[plugins] bundled registration failed: ${(err)?.message ?? err}`);
-  }
-
-  try {
-    const seedDirs = await fs.promises.readdir(PLUGIN_REGISTRY_DIR, { withFileTypes: true }).catch((err) => {
-      if (err?.code === 'ENOENT') return [];
-      throw err;
-    });
-    const { ensureMarketplaceManifest } = await import('./plugins/marketplaces.js');
-    for (const dirent of seedDirs) {
-      if (!dirent.isDirectory()) continue;
-      const id = dirent.name;
-      const manifestText = await marketplaceSeedManifestText(id, bundledMarketplaceEntries);
-      if (!manifestText) continue;
-      const configured = defaultMarketplaceSeedConfig(id);
-      const result = ensureMarketplaceManifest(db, {
-        id,
-        url: configured.url,
-        trust: configured.trust,
-        manifestText,
-      });
-      if (result.ok) {
-        console.log(`[plugins] seeded ${id} registry source (${result.row.manifest.plugins.length} plugin(s))`);
-      } else {
-        console.warn(`[plugins] ${id} registry seed failed: ${result.message}`);
-      }
-    }
-  } catch (err) {
-    console.warn(`[plugins] registry seed failed: ${(err)?.message ?? err}`);
   }
 
   // Plan §3.A5 / spec §16 Phase 5 / PB2: periodic snapshot GC. Disabled
@@ -10934,7 +10753,6 @@ export async function startServer({
     RUNTIME_DATA_DIR_CANONICAL,
     DESIGN_SYSTEMS_DIR,
     USER_DESIGN_SYSTEMS_DIR,
-    DESIGN_TEMPLATES_DIR,
     USER_DESIGN_TEMPLATES_DIR,
     SKILLS_DIR,
     USER_SKILLS_DIR,
@@ -12670,20 +12488,9 @@ export async function startServer({
       const body = req.body && typeof req.body === 'object' ? req.body : {};
       const action = normalizePluginShareAction(body.action);
       if (!action) {
-        sendApiError(res, 400, 'BAD_REQUEST', 'action must be publish-github or contribute-open-design');
+        sendApiError(res, 400, 'BAD_REQUEST', 'action must be publish-github');
         return;
       }
-      const actionPluginId = PLUGIN_SHARE_ACTION_PLUGIN_IDS[action];
-      const actionPlugin = getInstalledPlugin(db, actionPluginId);
-      if (!actionPlugin) {
-        res.status(409).json({
-          ok: false,
-          code: 'share-action-plugin-missing',
-          message: `The bundled action plugin "${actionPluginId}" is not installed. Restart the daemon so bundled plugins are registered.`,
-        });
-        return;
-      }
-
       const now = Date.now();
       const id = randomId();
       const cid = randomId();
@@ -12715,31 +12522,6 @@ export async function startServer({
         updatedAt: now,
       });
 
-      const registry = await loadPluginRegistryView();
-      const connectorProbe = buildConnectorProbe(connectorService);
-      const resolved = resolvePluginSnapshot({
-        db,
-        body: {
-          pluginId: actionPluginId,
-          pluginInputs: {
-            source_plugin_id: sourcePlugin.id,
-            source_plugin_title: sourcePlugin.title || sourcePlugin.id,
-            source_plugin_version: sourcePlugin.version,
-            source_plugin_path: sourcePlugin.fsPath,
-            plugin_context_path: stagedPath,
-          },
-          locale: typeof body.locale === 'string' ? body.locale : undefined,
-        },
-        projectId: id,
-        conversationId: cid,
-        registry,
-        connectorProbe,
-      });
-      if (resolved && !resolved.ok) {
-        res.status(resolved.status).json(resolved.body);
-        return;
-      }
-
       const project = getProject(db, id);
       if (!project) {
         sendApiError(res, 500, 'INTERNAL_ERROR', 'created project could not be loaded');
@@ -12749,8 +12531,6 @@ export async function startServer({
         ok: true,
         project,
         conversationId: cid,
-        ...(resolved?.ok ? { appliedPluginSnapshotId: resolved.snapshotId } : {}),
-        actionPluginId,
         sourcePluginId: sourcePlugin.id,
         stagedPath,
         prompt,
@@ -13505,10 +13285,6 @@ export async function startServer({
       const result = await addMarketplace(db, {
         url,
         trust,
-        fetcher: createMarketplaceFetcher(
-          marketplaceRegistryIdFromUrl(url),
-          bundledMarketplaceEntries,
-        ),
       });
       if (!result.ok) {
         return res.status(result.status).json({
@@ -13545,13 +13321,10 @@ export async function startServer({
 
   app.post('/api/marketplaces/:id/refresh', async (req, res) => {
     try {
-      const { getMarketplace, refreshMarketplace } = await import('./plugins/marketplaces.js');
-      const row = getMarketplace(db, req.params.id);
-      const seedId = row ? marketplaceRegistryIdFromUrl(row.url) ?? req.params.id : req.params.id;
+      const { refreshMarketplace } = await import('./plugins/marketplaces.js');
       const result = await refreshMarketplace(
         db,
         req.params.id,
-        createMarketplaceFetcher(seedId, bundledMarketplaceEntries),
       );
       if (!result.ok) {
         return res.status(result.status).json({
@@ -15036,7 +14809,7 @@ export async function startServer({
         return;
       }
       const body = req.body && typeof req.body === 'object' ? req.body : {};
-      const action = body.action === 'publish-github' || body.action === 'contribute-open-design'
+      const action = body.action === 'publish-github'
         ? body.action
         : null;
       if (!action) {
@@ -15088,45 +14861,6 @@ export async function startServer({
     }
   });
 
-  app.post('/api/projects/:id/plugins/contribute-open-design', async (req, res) => {
-    try {
-      const project = getProject(db, req.params.id);
-      if (!project) {
-        sendApiError(res, 404, 'PROJECT_NOT_FOUND', 'project not found');
-        return;
-      }
-      const body = req.body && typeof req.body === 'object' ? req.body : {};
-      const relativePath = normalizeProjectPluginFolderPath(body.path);
-      const projectRoot = resolveProjectDir(PROJECTS_DIR, req.params.id, project.metadata);
-      const folder = await resolveProjectChildDirectory(projectRoot, relativePath);
-      const result = await execCommandViaLoginShell(OD_NODE_BIN, [
-        OD_BIN,
-        'plugin',
-        'open-design-pr',
-        folder,
-        '--json',
-      ], { timeout: 300_000 });
-      const payload = result.stdout ? JSON.parse(result.stdout) : null;
-      if (!result.ok || !payload?.ok) {
-        res.status(500).json({
-          ok: false,
-          code: payload?.error?.label || 'open-design-pr-failed',
-          message: payload?.error?.stderr || payload?.error?.stdout || 'Pixflow Design PR creation failed.',
-          log: payload?.steps?.map((step) => step.stderr || step.stdout || step.command).filter(Boolean) ?? [result.stderr || result.stdout || 'open-design-pr failed'],
-        });
-        return;
-      }
-      res.json({
-        ok: true,
-        message: payload.prUrl ? `Opened Pixflow Design PR flow at ${payload.prUrl}.` : 'Opened Pixflow Design PR flow.',
-        ...(payload.prUrl ? { url: payload.prUrl } : {}),
-        log: payload.steps?.map((step) => step.stderr || step.stdout || step.command).filter(Boolean) ?? [],
-      });
-    } catch (err) {
-      res.status(400).json({ ok: false, message: String(err?.message || err), log: [] });
-    }
-  });
-
   app.post('/api/projects/:id/plugins/share-tasks', async (req, res) => {
     if (!isLocalSameOrigin(req, resolvedPort)) {
       return res.status(403).json({ error: 'cross-origin request rejected' });
@@ -15138,7 +14872,7 @@ export async function startServer({
         return;
       }
       const body = req.body && typeof req.body === 'object' ? req.body : {};
-      const action = body.action === 'publish-github' || body.action === 'contribute-open-design'
+      const action = body.action === 'publish-github'
         ? body.action
         : null;
       if (!action) {
@@ -16090,8 +15824,8 @@ export async function startServer({
     // `OD_DESIGN_TOKEN_CHANNEL=0` is the kill switch: it forces the
     // daemon back to the pre-PR-C DESIGN.md-only path for every brand,
     // including the structured ones. Any other value (unset, `1`,
-    // `true`, etc.) keeps the new default. Drift on prose-only brands
-    // is pinned by `scripts/check-design-system-flag-parity.ts`.
+    // `true`, etc.) keeps the default. Generic asset and flag behavior is
+    // covered by the daemon design-system assets tests.
     let designSystemUsageMd;
     let designSystemTokensCss;
     let designSystemComponentsManifest;

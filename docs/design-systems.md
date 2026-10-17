@@ -2,7 +2,7 @@
 
 **Parent:** [`spec.md`](spec.md) · **Siblings:** [`architecture.md`](architecture.md) · [`skills-protocol.md`](skills-protocol.md) · [`agent-adapters.md`](agent-adapters.md)
 
-This guide covers everything a contributor needs to submit a design system that passes review the first time. If you are adding a design system to `design-systems/<slug>/DESIGN.md`, read this document before opening a PR.
+This guide describes authoring personal `DESIGN.md` resources. The inherited bundled design-system catalogue is retired. Keep personal resources in your configured runtime resource directory or install them through the supported resource workflow; source cleanup does not remove existing personal systems. The [sample design system](examples/DESIGN.sample.md) demonstrates the format.
 
 ---
 
@@ -50,7 +50,7 @@ Is the file structurally valid and machine-processable? Failing Lens A is blocki
 **Checks:**
 - All 9 section headings present and in order
 - Color tokens are real hex codes (`#RRGGBB` or `#RGB`), not `#REPLACE_ME`, `currentColor`, or CSS variable names
-- No duplicate folder names in `design-systems/`
+- Use stable, distinct folder names in your personal resource directory
 - CSS variables wrapped in `:root {}` blocks (not bare in the document)
 - Font labels for catalog extraction present (see Section 3 below)
 - `prefers-reduced-motion` targets specific elements, not a global `*` selector
@@ -108,19 +108,19 @@ Use `[data-theme="dark"]` to override tokens for dark mode:
 
 Do not create separate CSS blocks for light and dark without using the `[data-theme="dark"]` selector — it breaks the semantic token system.
 
-### Font labels for catalog extraction
+### Font labels for resource discovery
 
 Include this block in the Typography section for the daemon's parser regexes:
 
 ```
-Font labels for catalog extraction:
+Font labels for resource discovery:
 
 Display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif
 Body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif
 Mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace
 ```
 
-Labels must be `Display:`, `Body:`, `Mono:` with a colon, followed by the full font stack. The daemon reads these to populate the design-system catalog.
+Labels must be `Display:`, `Body:`, `Mono:` with a colon, followed by the full font stack. The daemon reads these when presenting available design systems.
 
 ---
 
@@ -248,29 +248,9 @@ Match easing to purpose: `ease-in` for entering, `ease-out` for leaving, `linear
 
 ---
 
-## 7. Locale Coverage Requirements
+## 7. Personal resource metadata
 
-When adding a new design system, include complete English catalog metadata in `design-systems/<id>/DESIGN.md`. Locales use translated summaries when present and otherwise derive the runtime fallback from the English source fields.
-
-### Which localized dictionaries need updating?
-
-Use this decision tree to decide whether to add dictionary copy:
-
-**Does a localized summary already exist for this design system?**
-- **Yes** → Add it to the matching `*_DESIGN_SYSTEM_SUMMARIES` dictionary.
-- **No** (no translation yet) → Keep the English `summary` and `category` metadata complete in `DESIGN.md`; the localized runtime renders those fields through the default fallback path.
-
-| Locale | File to update | Array |
-|--------|---------------|-------|
-| German | `apps/web/src/i18n/content.ts` | `DE_DESIGN_SYSTEM_SUMMARIES` when localized copy exists |
-| French | `apps/web/src/i18n/content.fr.ts` | `FR_DESIGN_SYSTEM_SUMMARIES` when localized copy exists |
-| Russian | `apps/web/src/i18n/content.ru.ts` | `RU_DESIGN_SYSTEM_SUMMARIES` when localized copy exists |
-
-The default English fallback path is automatic. Add localized summary dictionaries only when translated copy exists.
-
-### Test behavior
-
-The `e2e/tests/localized-content.test.ts` test verifies that every `design-systems/*/DESIGN.md` on disk is discoverable and renders a non-empty localized summary through either translated dictionary copy or the English fallback fields.
+Use a descriptive title and summary in `DESIGN.md`. Retain stable identifiers when updating an existing personal resource. Personal systems do not need entries in source-owned catalogue dictionaries. Localized UI labels remain governed by the application's i18n contract.
 
 ---
 
@@ -295,9 +275,9 @@ Bad anti-patterns are vague:
 
 ---
 
-## 9. Pre-submission Checklist
+## 9. Authoring Checklist
 
-Before opening a PR, verify:
+Before using or sharing a resource, verify:
 
 - [ ] All 9 section headings present in order
 - [ ] No `#REPLACE_ME` or placeholder hex codes
@@ -311,7 +291,7 @@ Before opening a PR, verify:
 - [ ] Anti-patterns are specific and bounded, not vague prose
 - [ ] Dark mode section explicitly states the design intent if dark-only
 - [ ] No duplicate CSS block definitions (check for `.panel` appearing twice)
-- [ ] Category choice confirmed against existing category list
+- [ ] Category and summary describe this resource clearly
 
 ---
 
@@ -325,4 +305,4 @@ A well-documented design system is typically 300–600 lines. Being too brief (u
 - Visual Theme: 30–40 lines (atmosphere + use cases + prior art)
 - Anti-patterns: 8–15 lines (one per key mistake to avoid)
 
-The mission-control design system (`design-systems/mission-control/DESIGN.md`) is a good reference — tight scope (3 primary colors, dark only, 6 components).
+Use the [sample design system](examples/DESIGN.sample.md) as a format reference and keep the scope specific enough to guide actual output.

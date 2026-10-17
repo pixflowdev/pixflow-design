@@ -43,7 +43,7 @@ try {
     file_put_contents(PIXFLOW_DESIGN_PLUGIN_DIR.'resources/bundled-skills/agent-browser/SKILL.md', $body);
     $router = PIXFLOW_DESIGN_PLUGIN_DIR.'resources/bundled-plugins/_official/scenarios/od-default';
     mkdir($router, 0700, true);
-    foreach (['SKILL.md', 'open-design.json'] as $file) copy(dirname(__DIR__, 2).'/plugins/_official/scenarios/od-default/'.$file, $router.'/'.$file);
+    foreach (['SKILL.md', 'open-design.json'] as $file) copy(dirname(__DIR__, 2).'/guidance/scenarios/od-default/'.$file, $router.'/'.$file);
     $legacy = ABSPATH.'uploads/pixflow-design/resource-packs/custom/private.html';
     file_put_contents($legacy, '<h1>Preserved user reference</h1>');
     $before = serialize($options);

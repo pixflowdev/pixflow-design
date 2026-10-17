@@ -24,7 +24,7 @@ This file is the single source of truth for agents entering this repository. Rea
 
 - Workspace packages come from `pnpm-workspace.yaml`: `apps/*`, `packages/*`, `tools/*`, and `e2e`.
 - Optional Pro skill library: maintained in the Pro repository; read its `skill-library/AGENTS.md` before adding or updating downloadable skills, research, credits or packages.
-- Top-level content directories: `skills/` (functional skills the agent invokes mid-task — utilities, briefs, packagers; see `skills/AGENTS.md`), `design-templates/` (rendering catalogue: decks, prototypes, image/video/audio templates; see `design-templates/AGENTS.md` and `specs/current/skills-and-design-templates.md`), `design-systems/` (brand `DESIGN.md` files), `craft/` (universal brand-agnostic craft rules a skill can opt into via `od.craft.requires`), `mocks/` (replay-based mock CLIs for `opencode`/`claude`/`codex`/`gemini`/`cursor-agent`/`deepseek`/`qwen`/`grok`, the ACP family `devin`/`hermes`/`kilo`/`kimi`/`kiro`/`vibe`, and the AMR `vela` CLI (login + models + ACP), built from anonymized Langfuse traces — PATH-overlay drop-in for tests and self-validation; see `mocks/README.md`).
+- Top-level content: `skills/` holds essential Free guidance; `guidance/` holds router metadata. `design-systems/_schema/` retains shared validation for saved/personal resources. `mocks/` holds replay CLIs for regression checks. See the retirement rule below.
 - `apps/web` is the Next.js 16 App Router + React 18 web runtime; do not restore `apps/nextjs`.
 - `apps/daemon` is the local privileged daemon and `od` bin. It owns `/api/*`, agent spawning, skills, design systems, artifacts, and static serving.
 - `apps/desktop` is the Electron shell; it discovers the web URL through sidecar IPC.
@@ -306,3 +306,7 @@ Run `pnpm install` after changing package manifests, workspace layout, command e
 ## Can I use Node 22 instead of Node 24?
 
 No. `package.json#engines` specifies `node: "~24"`, which is the only supported runtime. The current lockfile pins `better-sqlite3@13.0.3`, using its bundled Node-API prebuilds (see the Windows native section). Older Node versions are not tested and may hit lockfile or dependency incompatibilities.
+
+## Retired bundled catalogues
+
+`skills/` contains only essential Free guidance. `guidance/` owns the default router and Web Clone metadata; compatible packaged paths and IDs are preserved. The bundled `plugins/`, `craft/`, and `design-templates/` catalogues are retired. `design-systems/_schema/` remains a shared validation dependency for existing and personal resources. Do not recreate retired content or its automatic catalogue registration/community publishing paths. Personal skills, installed resources, chats and settings are never cleanup targets. Pro implementations and downloadable skills stay in the separate Pro repository.

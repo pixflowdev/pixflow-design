@@ -4,19 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { checkCrossAppImports } from "./check-cross-app-imports.ts";
-import { checkDesignSystemManifests } from "./check-design-system-manifests.ts";
-import { checkDesignSystemPackageQuality } from "./check-design-system-package-quality.ts";
-import { checkDesignSystemComponentFixtureReport } from "./check-components-fixtures.ts";
-import { checkDesignSystemFlagParity } from "./check-design-system-flag-parity.ts";
-import { checkComponentsManifestExtraction } from "./check-components-manifest-extraction.ts";
-import {
-  checkDesignSystemA1RequiredTokens,
-  checkDesignSystemA2DefaultsParity,
-  checkDesignSystemA2RequiredTokens,
-  checkDesignSystemBSlotRequiredTokens,
-  checkDesignSystemTokenFixtureSync,
-  checkDesignSystemUnknownTokens,
-} from "./check-tokens-fixture-sync.ts";
+import { checkBundledGuidance } from "./check-bundled-guidance.ts";
 import { collectCssHardcodedColorMatches, cssWideAndSpecialColorKeywords, realNamedColors } from "./style-policy.ts";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
@@ -89,7 +77,6 @@ const residualAllowedExactPaths = new Set([
   "scripts/build-pixflow-design-bridge-package.mjs",
   "scripts/build-wordpress-local.mjs",
   "scripts/build-wordpress-plugin.mjs",
-  "scripts/build-wordpress-resource-packs.mjs",
   "scripts/build-wordpress-web.mjs",
   "scripts/pixflow-upstream-status.mjs",
   "scripts/start-pixflow-bridge-dev.mjs",
@@ -104,7 +91,6 @@ const residualAllowedExactPaths = new Set([
   // CI-only plugin-preview renderer. Kept .mjs and run directly by Node so its
   // runtime deps (puppeteer-core + a headless Chrome + ffmpeg) are provided by
   // the CI environment and never pulled into the daemon/web TS build or bundle.
-  "scripts/bake-plugin-previews.mjs",
   "scripts/scaffold-html-ppt-skills.mjs",
   "scripts/sync-hyperframes-skill.mjs",
   "scripts/verify-media-models.mjs",
@@ -143,16 +129,6 @@ const residualAllowedPathPrefixes = [
   "e2e/ui/reports/playwright-html-report/",
   "e2e/ui/reports/test-results/",
   "e2e/ui/test-results/",
-  // Vendored upstream HyperFrames helper scripts (design template).
-  "design-templates/hyperframes/scripts/",
-  // Vendored upstream Web Clone skill utilities are portable Node scripts
-  // executed from the generated project workspace and intentionally remain
-  // directly runnable `.mjs` files.
-  "skills/web-clone/scripts/",
-  // Vendored upstream Last30Days runtime helper used by the engine (design template).
-  "design-templates/last30days/scripts/lib/vendor/",
-  // Vendored upstream html-ppt runtime assets (lewislulu/html-ppt-skill, design template).
-  "design-templates/html-ppt/assets/",
   // Replay-based mock CLIs that impersonate the agent CLIs OD spawns
   // (opencode/claude/codex/gemini/cursor-agent + ACP family). Need to
   // be directly executable via Node so `child_process.spawn` from test
@@ -176,20 +152,7 @@ const residualAllowedPathPrefixes = [
   "wordpress-pro/assets/",
 ];
 
-const residualAllowedPathPatterns: RegExp[] = [
-  // Vendored upstream Zara template runtimes — one design template per template,
-  // name prefix `html-ppt-zhangzara-` (zarazhangrui/beautiful-html-templates).
-  // Only the vendored deck-stage runtime asset is allowlisted; any other
-  // JavaScript under these design-template directories must still be converted
-  // to TypeScript or explicitly listed in `residualAllowedExactPaths`.
-  /^design-templates\/html-ppt-zhangzara-[^/]+\/assets\/deck-stage\.js$/,
-  // Bundled example/skill plugins copy the upstream skill's `assets/`
-  // and `references/` directories verbatim so the daemon's preview
-  // surface can render the baked HTML without staging detours. Those
-  // assets are vendored runtime, never project-owned code, and must
-  // not be retypecasted to TypeScript.
-  /^plugins\/_official\/examples\/[^/]+\/(assets|references)\/.+$/,
-];
+const residualAllowedPathPatterns: RegExp[] = [];
 
 function isResidualAllowedPath(repositoryPath: string): boolean {
   if (residualAllowedExactPaths.has(repositoryPath)) return true;
@@ -565,15 +528,13 @@ const productNeutralityCheckedPathPrefixes = [
   "apps/daemon/src/",
   "apps/web/app/",
   "apps/web/src/",
-  "craft/",
   "design-systems/",
-  "design-templates/",
   "docs/",
   "e2e/",
   "mocks/",
   "packages/",
   "packages/contracts/src/",
-  "plugins/",
+  "guidance/",
   "scripts/",
   "skills/",
   "specs/",
@@ -1145,17 +1106,7 @@ const checks: GuardCheck[] = [
   { name: "web test layout", run: checkWebTestLayout },
   { name: "tools layout", run: checkToolsLayout },
   { name: "style policy", run: checkStylePolicy },
-  { name: "design system manifests", run: checkDesignSystemManifests },
-  { name: "design system package quality", run: checkDesignSystemPackageQuality },
-  { name: "design system component fixture report", run: checkDesignSystemComponentFixtureReport },
-  { name: "design system token-fixture sync", run: checkDesignSystemTokenFixtureSync },
-  { name: "design system A1 required tokens", run: checkDesignSystemA1RequiredTokens },
-  { name: "design system A2 required tokens", run: checkDesignSystemA2RequiredTokens },
-  { name: "design system B-slot required tokens", run: checkDesignSystemBSlotRequiredTokens },
-  { name: "design system unknown token allowlist", run: checkDesignSystemUnknownTokens },
-  { name: "design system A2 defaults parity", run: checkDesignSystemA2DefaultsParity },
-  { name: "design system flag parity", run: checkDesignSystemFlagParity },
-  { name: "design system component manifest extraction", run: checkComponentsManifestExtraction },
+  { name: "essential guidance ownership", run: checkBundledGuidance },
 ];
 
 async function runChecks(): Promise<boolean> {

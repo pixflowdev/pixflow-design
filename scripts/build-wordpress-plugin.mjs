@@ -57,14 +57,6 @@ const vendorFiles = [];
 // namespace, so generated Composer paths never enter the release package.
 const composerVendorPaths = [];
 const optionalPaths = [];
-const dlcCandidatePaths = [
-  'skills',
-  'prompt-templates',
-];
-const excludedDlcPaths = [
-  'design-templates',
-  'design-systems',
-];
 const excludedSegments = new Set([
   '.git',
   '.github',
@@ -152,71 +144,6 @@ async function addDirectoryToZip(zip, absoluteDir, zipDir) {
     if (entry.isFile()) {
       zip.file(zipPathname, await readFile(absolutePath));
     }
-  }
-}
-
-async function directorySize(absolutePath) {
-  const entryStat = await stat(absolutePath);
-  if (entryStat.isFile()) return entryStat.size;
-  if (!entryStat.isDirectory()) return 0;
-
-  let total = 0;
-  const entries = await readdir(absolutePath, { withFileTypes: true });
-  for (const entry of entries) {
-    total += await directorySize(join(absolutePath, entry.name));
-  }
-
-  return total;
-}
-
-function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-async function reportDlcCandidateSizes() {
-  const records = [];
-  for (const relativePath of dlcCandidatePaths) {
-    const absolutePath = join(pluginDir, relativePath);
-    if (!existsSync(absolutePath)) continue;
-    records.push({
-      path: relativePath,
-      size: await directorySize(absolutePath),
-    });
-  }
-
-  if (records.length === 0) return;
-
-  const total = records.reduce((sum, record) => sum + record.size, 0);
-  console.log('DLC candidate resources currently bundled in the WordPress plugin:');
-  for (const record of records) {
-    console.log(`- ${record.path}: ${formatBytes(record.size)}`);
-  }
-  console.log(`DLC candidate total: ${formatBytes(total)}`);
-
-  const strict = process.env.PIXFLOW_DESIGN_STRICT_DLC_PACKAGING === '1';
-  if (strict && total > 0) {
-    throw new Error('DLC candidate resources are still bundled. Disable strict mode or move them to resource packs.');
-  }
-}
-
-async function reportExcludedDlcSizes() {
-  const records = [];
-  for (const relativePath of excludedDlcPaths) {
-    const absolutePath = join(root, relativePath);
-    if (!existsSync(absolutePath)) continue;
-    records.push({
-      path: relativePath,
-      size: await directorySize(absolutePath),
-    });
-  }
-
-  if (records.length === 0) return;
-
-  console.log('DLC resources excluded from the WordPress plugin:');
-  for (const record of records) {
-    console.log(`- ${record.path}: ${formatBytes(record.size)}`);
   }
 }
 
@@ -370,11 +297,12 @@ for (const skill of skillEditions.skills) {
     await copyBundledWordPressGuidance(join(root, 'skills', skill.folder), join(pluginDir, 'resources/bundled-skills', skill.folder));
   }
 }
-for (const [source, target] of [
-  ['plugins/_official/examples/web-clone', 'plugins/_official/examples/web-clone'],
+const bundledGuidance = [
+  ['guidance/examples/web-clone', 'plugins/_official/examples/web-clone'],
   // The hidden Home router is required even before optional resource packs.
-  ['plugins/_official/scenarios/od-default', 'plugins/_official/scenarios/od-default'],
-]) {
+  ['guidance/scenarios/od-default', 'plugins/_official/scenarios/od-default'],
+];
+for (const [source, target] of bundledGuidance) {
   await addDirectoryToZip(library, join(root, source), target);
   await copyBundledWordPressGuidance(join(root, source), join(pluginDir, 'resources/bundled-plugins', target.slice('plugins/'.length)));
 }
@@ -387,8 +315,8 @@ if (directoryBuild) {
       await copyBundledWordPressGuidance(join(root, 'skills', skill.folder), join(pluginDir, 'resources/bundled-library/skills', skill.folder));
     }
   }
-  for (const folder of ['plugins/_official/examples/web-clone', 'plugins/_official/scenarios/od-default']) {
-    await copyBundledWordPressGuidance(join(root, folder), join(pluginDir, 'resources/bundled-library', folder));
+  for (const [source, target] of bundledGuidance) {
+    await copyBundledWordPressGuidance(join(root, source), join(pluginDir, 'resources/bundled-library', target));
   }
 } else {
   await writeFile(join(pluginDir, 'resources/bundled-library.zip'), await library.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
@@ -396,8 +324,6 @@ if (directoryBuild) {
 
 await validatePackagedPlugin();
 await createZipArchive();
-await reportExcludedDlcSizes();
-await reportDlcCandidateSizes();
 
 const zipStat = await stat(zipPath);
 const displayPath = relative(root, zipPath).replaceAll('\\', '/');

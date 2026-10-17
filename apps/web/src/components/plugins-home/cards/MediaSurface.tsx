@@ -6,8 +6,7 @@ import { useT as usePixflowUiTranslation } from '../../../i18n';
 // plugins the `<video>` only mounts on hover, so an idle gallery just fetches
 // posters.
 //
-// Baked plugin previews (the home gallery's html plugins, pre-rendered by
-// scripts/bake-plugin-previews.mjs) carry a `loopHoldMs`: the clip leads with a
+// Previously saved plugin previews can carry a `loopHoldMs`: the clip leads with a
 // `[0, holdMs]` in-place-animation span, then pans top->bottom. We treat those
 // as a cheap stand-in for the old live hover-pan iframe — the `<video>` mounts
 // as soon as the tile is on-screen and loops the in-place span while idle

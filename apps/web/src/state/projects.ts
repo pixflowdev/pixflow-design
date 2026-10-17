@@ -914,7 +914,7 @@ export interface PluginShareOutcome {
 
 export interface PluginShareTaskStart {
   taskId: string;
-  action: 'publish-github' | 'contribute-open-design';
+  action: 'publish-github';
   path: string;
   status: 'queued' | 'running' | 'done' | 'failed';
   startedAt: number;
@@ -934,7 +934,7 @@ export interface PluginShareTaskError {
 
 export interface PluginShareTaskSnapshot {
   taskId: string;
-  action: 'publish-github' | 'contribute-open-design';
+  action: 'publish-github';
   path: string;
   status: 'queued' | 'running' | 'done' | 'failed';
   startedAt: number;
@@ -952,17 +952,10 @@ export async function publishGeneratedPluginToGitHub(
   return postGeneratedPluginShareAction(projectId, relativePath, 'publish-github');
 }
 
-export async function contributeGeneratedPluginToOpenDesign(
-  projectId: string,
-  relativePath: string,
-): Promise<PluginShareOutcome> {
-  return postGeneratedPluginShareAction(projectId, relativePath, 'contribute-open-design');
-}
-
 export async function startGeneratedPluginShareTask(
   projectId: string,
   relativePath: string,
-  action: 'publish-github' | 'contribute-open-design',
+  action: 'publish-github',
 ): Promise<PluginShareTaskStart> {
   const resp = await fetch(
     `/api/projects/${encodeURIComponent(projectId)}/plugins/share-tasks`,
@@ -1072,7 +1065,7 @@ export async function createPluginShareProject(
 async function postGeneratedPluginShareAction(
   projectId: string,
   relativePath: string,
-  action: 'publish-github' | 'contribute-open-design',
+  action: 'publish-github',
 ): Promise<PluginShareOutcome> {
   try {
     const resp = await fetch(

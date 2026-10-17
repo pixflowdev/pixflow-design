@@ -24,7 +24,14 @@ export function resolveBridgeWorkflowSources(sourceRoot, { proRoot, requirePro =
   }
   return BRIDGE_BUNDLED_WORKFLOW_PATHS.flatMap(relativePath => {
     const paid = relativePath.startsWith('skills/');
-    const source = paid && privateRoot ? join(privateRoot, relativePath) : join(sourceRoot, relativePath);
+    // New source checkouts keep essential routers outside the retired catalogue.
+    // Installed archives retain their original paths for saved workflow IDs.
+    const guidancePath = relativePath.replace('plugins/_official/', 'guidance/');
+    const source = paid && privateRoot
+      ? join(privateRoot, relativePath)
+      : !paid && existsSync(join(sourceRoot, guidancePath))
+        ? join(sourceRoot, guidancePath)
+        : join(sourceRoot, relativePath);
     if (existsSync(source)) return [{ relativePath, source }];
     if (paid && !privateRoot && !requirePro) return [];
     throw new Error(`Bridge workflow ${relativePath} is missing. Supply PIXFLOW_DESIGN_PRO_ROOT or --pro-root for the complete Pro runtime.`);

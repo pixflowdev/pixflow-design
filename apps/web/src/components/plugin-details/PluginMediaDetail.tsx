@@ -25,7 +25,7 @@ import {
   type PreviewView,
 } from '../PreviewModal';
 import { PluginMetaSections } from './PluginMetaSections';
-import { buildPluginShareUrl, PluginShareMenu } from './PluginShareMenu';
+import { PluginShareMenu } from './PluginShareMenu';
 import { buildPluginUseMenu, pluginUsePrimaryAction } from './pluginUseMenu';
 import type { PluginUseAction } from '../plugins-home/useActions';
 
@@ -229,7 +229,7 @@ export function PluginMediaDetail({
       shareTarget={{
         title: record.title,
         description: description || undefined,
-        url: buildPluginShareUrl(record),
+        url: null,
       }}
       onClose={onClose}
       sidebar={{

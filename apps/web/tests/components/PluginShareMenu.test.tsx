@@ -13,7 +13,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { InstalledPluginRecord } from '@open-design/contracts';
 
 import {
-  buildPluginShareUrl,
   PluginShareMenu,
 } from '../../src/components/plugin-details/PluginShareMenu';
 import { I18nProvider, type Locale } from '../../src/i18n';
@@ -128,14 +127,14 @@ describe('PluginShareMenu', () => {
         id: 'mp-plugin',
         sourceKind: 'github',
         source: 'github:open-design/plugins/mp-plugin',
-        marketplaceId: 'official',
-        marketplaceEntryName: 'open-design/mp-plugin',
+        marketplaceId: 'personal',
+        marketplaceEntryName: 'personal/mp-plugin',
       }),
     );
     openPopover();
     clickItem('Copy install command');
     await Promise.resolve();
-    expect(writes).toContain('od plugin install open-design/mp-plugin');
+    expect(writes).toContain('od plugin install personal/mp-plugin');
   });
 
   it('copies the github source string for github-installed plugins', async () => {
@@ -169,29 +168,12 @@ describe('PluginShareMenu', () => {
     expect(writes).toContain('agentic-ds');
   });
 
-  it('copies a README badge that links back to the marketplace detail page', async () => {
-    renderMenu(make({
-      id: 'badge-plugin',
-      title: 'Badge Plugin',
-      marketplaceId: 'official',
-      marketplaceEntryName: 'open-design/badge-plugin',
-    }));
-    openPopover();
-    clickItem('Copy README badge');
-    await Promise.resolve();
-    expect(writes.some((value) => (
-      value.includes('Badge Plugin') &&
-      value.includes('https://pixflow.dev/plugins/badge-plugin')
-    ))).toBe(true);
-  });
-
   it('does not expose public share artifacts for local-only plugins', () => {
     const localOnly = make({
       id: 'local-plugin',
       sourceKind: 'local',
       source: '/tmp/local-plugin',
     });
-    expect(buildPluginShareUrl(localOnly)).toBeNull();
 
     renderMenu(localOnly);
     openPopover();
@@ -209,7 +191,6 @@ describe('PluginShareMenu', () => {
       marketplaceId: 'private',
       marketplaceEntryName: 'private/private-plugin',
     });
-    expect(buildPluginShareUrl(privateMarketplace)).toBeNull();
 
     renderMenu(privateMarketplace);
     openPopover();
@@ -225,8 +206,8 @@ describe('PluginShareMenu', () => {
         id: 'zh-plugin',
         sourceKind: 'github',
         source: 'github:owner/repo',
-        marketplaceId: 'official',
-        marketplaceEntryName: 'open-design/zh-plugin',
+        marketplaceId: 'personal',
+        marketplaceEntryName: 'personal/zh-plugin',
         homepage: 'https://example.test/plugin-home',
       }),
       'zh-CN',
@@ -237,96 +218,11 @@ describe('PluginShareMenu', () => {
     ).map((item) => item.textContent ?? '');
     expect(labels).toContain('复制安装命令');
     expect(labels).toContain('复制插件 ID');
-    expect(labels).toContain('复制 README 徽章');
+    expect(labels).not.toContain('复制 README 徽章');
     expect(labels).toContain('在 GitHub 打开源码');
     expect(labels).toContain('打开项目主页');
-    expect(labels).toContain('在插件市场打开');
+    expect(labels).not.toContain('在插件市场打开');
     expect(labels.some((label) => label.includes('Copy install command'))).toBe(false);
-  });
-
-  it('points Open in marketplace at the public open-design.ai page for bundled plugins', () => {
-    renderMenu(make({ id: 'plain' }));
-    openPopover();
-    const items = Array.from(
-      container.querySelectorAll('.plugin-share-item'),
-    ) as HTMLButtonElement[];
-    expect(items.some((b) => b.textContent?.includes('Open in marketplace'))).toBe(
-      true,
-    );
-    const marketplaceLink = Array.from(
-      container.querySelectorAll<HTMLAnchorElement>('a.plugin-share-item'),
-    ).find((link) => link.textContent?.includes('Open in marketplace'));
-    // Bundled plugins have a public detail page, so the link is the public
-    // open-design.ai URL — not a local /marketplace path.
-    expect(marketplaceLink?.getAttribute('href')).toBe(
-      'https://pixflow.dev/plugins/plain/',
-    );
-  });
-
-  it('builds a public open-design.ai share link for bundled plugins', () => {
-    expect(buildPluginShareUrl(make({ id: 'simple-deck' }))).toBe(
-      'https://pixflow.dev/plugins/simple-deck/',
-    );
-  });
-
-  it('builds a public open-design.ai share link for community marketplace plugins', () => {
-    // Community manifest names carry a `community-` prefix, but the landing
-    // page routes are keyed on the folder name via routeId=`community/<folder>`.
-    // buildPluginShareUrl must use sourceMarketplaceEntryName so pluginDetailSlug
-    // takes the last segment and matches the generated page slug.
-    expect(
-      buildPluginShareUrl(
-        make({
-          id: 'community-registry-starter',
-          sourceKind: 'marketplace',
-          source: 'community/registry-starter',
-          marketplaceId: 'community',
-          marketplaceEntryName: 'community/registry-starter',
-        }),
-      ),
-    ).toBe('https://pixflow.dev/plugins/registry-starter/');
-  });
-
-  it('copies a README badge for community marketplace plugins', async () => {
-    renderMenu(
-      make({
-        id: 'community-registry-starter',
-        title: 'Community Registry Starter',
-        sourceKind: 'marketplace',
-        source: 'community/registry-starter',
-        marketplaceId: 'community',
-        marketplaceEntryName: 'community/registry-starter',
-      }),
-    );
-    openPopover();
-    clickItem('Copy README badge');
-    await Promise.resolve();
-    expect(
-      writes.some(
-        (value) =>
-          value.includes('Community Registry Starter') &&
-          value.includes('https://pixflow.dev/plugins/registry-starter/'),
-      ),
-    ).toBe(true);
-  });
-
-  it('points Open in marketplace at the public page for community marketplace plugins', () => {
-    renderMenu(
-      make({
-        id: 'community-registry-starter',
-        sourceKind: 'marketplace',
-        source: 'community/registry-starter',
-        marketplaceId: 'community',
-        marketplaceEntryName: 'community/registry-starter',
-      }),
-    );
-    openPopover();
-    const marketplaceLink = Array.from(
-      container.querySelectorAll<HTMLAnchorElement>('a.plugin-share-item'),
-    ).find((link) => link.textContent?.includes('Open in marketplace'));
-    expect(marketplaceLink?.getAttribute('href')).toBe(
-      'https://pixflow.dev/plugins/registry-starter/',
-    );
   });
 
   it('surfaces the GitHub source link when sourceKind is github', () => {
@@ -390,7 +286,16 @@ describe('PluginShareMenu', () => {
     expect(
       repoLinks.some((link) => link.textContent?.includes('Open source on GitHub')),
     ).toBe(true);
+  });  it('does not advertise retired catalogue pages or publishing badges', () => {
+    renderMenu(make({id: 'old-community-entry', sourceKind: 'marketplace', marketplaceId: 'community', marketplaceEntryName: 'community/old-entry'}));
+    openPopover();
+    const labels = container.textContent;
+    expect(labels).not.toContain('Open in marketplace');
+    expect(labels).not.toContain('Copy README badge');
+    expect(labels).not.toContain('Copy install command');
+    expect(container.querySelector('a[href*="/plugins/"]')).toBeNull();
   });
+
 });
 
 // Downloadable locales are installed explicitly by localized rendering fixtures.

@@ -28,7 +28,7 @@ The standalone daemon defaults to `.od/`, including SQLite, projects, artifacts 
 
 WordPress projects and installed resource packs use private storage outside served directories. Database paths and saved identifiers retain compatibility during migration. Backups include the database and private file trees. See [storage and recovery](private-project-storage.md).
 
-Built-in skills, templates, design systems, plugins and prompt catalogues are filesystem resources consumed by the shared runtime and packaging. Minimal WordPress ZIP selection is governed separately by product edition/resource manifests. Unbundled repository resources can still be active Bridge or developer inputs.
+Free bundles four functional skills from `skills/` and essential Home/Website Clone routers from `guidance/`. Packages retain the routers' existing `plugins/_official/...` paths for saved workflow compatibility. The inherited plugin, craft, design-template and design-system catalogues are retired. Personal skills, design systems, craft references and installed plugins remain supported runtime data; cleanup of bundled sources must not remove them. The Pro Bridge workflow is supplied only through an explicitly configured compatible Pro checkout.
 
 ## Lifecycle and validation
 

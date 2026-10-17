@@ -31,12 +31,10 @@ import { useAnalytics } from '../analytics/provider';
 import { prepareResourceDraft } from '../pixflow/resource-draft';
 import { isPixflowWordPressEmbed } from '../pixflow/license';
 import {
-  trackCommunityGalleryClick,
   trackHomeChatComposerClick,
   trackPageView,
   trackPluginDetailModalClick,
   trackPluginDetailModalSharePopoverClick,
-  trackPluginDetailModalSurfaceView,
   trackPluginReplacementModalClick,
   trackPluginReplacementModalSurfaceView,
   trackPluginReplacementResult,
@@ -91,8 +89,6 @@ import {
 import { probePixflowOptionalBridge } from '../pixflow/optional-bridge';
 import { usePixflowBridgeUpdateRequired } from '../pixflow/bridge-update-gate';
 import { PluginDetailsModal } from './PluginDetailsModal';
-import { HomeTemplatesReveal } from './HomeTemplatesReveal';
-import { PluginsHomeSection } from './PluginsHomeSection';
 import type { PluginLoopSubmit } from './PluginLoopHome';
 import { localizePluginTitle } from './plugins-home/localization';
 import type { PluginUseAction } from './plugins-home/useActions';
@@ -331,45 +327,6 @@ export function HomeView({
       area: 'plugin_replacement_modal',
     });
   }, [pendingReplacement, analytics.track]);
-  // Community gallery analytics. Opening a tile fires both a ui_click on
-  // the card (the funnel's denominator) and a surface_view on the detail
-  // modal it reveals (the numerator); the ↗ that jumps straight to the
-  // real example page is its own ui_click so "go to the finished thing"
-  // stays distinct from "open the detail modal". plugin_id / plugin_type
-  // mirror PluginsView so the two surfaces join on the same keys.
-  const handleCommunityOpenDetails = useCallback(
-    (record: InstalledPluginRecord) => {
-      const pluginId = record.sourceMarketplaceEntryName ?? record.id;
-      const pluginType = record.marketplaceTrust ?? 'official';
-      trackCommunityGalleryClick(analytics.track, {
-        page_name: 'home',
-        area: 'community_gallery',
-        element: 'card',
-        plugin_id: pluginId,
-        plugin_type: pluginType,
-      });
-      trackPluginDetailModalSurfaceView(analytics.track, {
-        page_name: 'home',
-        area: 'plugin_detail_modal',
-        plugin_id: pluginId,
-        plugin_type: pluginType,
-      });
-      setDetailsRecord(record);
-    },
-    [analytics.track],
-  );
-  const handleCommunityOpenExternal = useCallback(
-    (record: InstalledPluginRecord) => {
-      trackCommunityGalleryClick(analytics.track, {
-        page_name: 'home',
-        area: 'community_gallery',
-        element: 'card_open_external',
-        plugin_id: record.sourceMarketplaceEntryName ?? record.id,
-        plugin_type: record.marketplaceTrust ?? 'official',
-      });
-    },
-    [analytics.track],
-  );
   const inputRef = useRef<HomeHeroHandle | null>(null);
   const homeViewRef = useRef<HTMLDivElement | null>(null);
   const consumedHandoffIdRef = useRef<number | null>(null);
@@ -600,7 +557,7 @@ export function HomeView({
     if (!active.explicitPick && active.chipId) {
       const defaultPluginId = defaultPluginIdForChip(active.chipId);
       const chip = findChip(active.chipId);
-      if (chip && (defaultPluginId === null || defaultPluginId === active.record.id)) {
+      if (chip && (defaultPluginId === null || defaultPluginId === active.record.id || active.record.id === DEFAULT_UNSELECTED_SCENARIO_PLUGIN_ID)) {
         return { title: homeHeroChipLabelForId(chip.id, t), isExplicitPlugin: false };
       }
     }
@@ -914,14 +871,6 @@ export function HomeView({
       catch (reason) { setError(reason instanceof Error ? reason.message : translateUi("ui.homeView.feedback47")); }
       return;
     }
-    trackCommunityGalleryClick(analytics.track, {
-      page_name: 'home',
-      area: 'community_gallery',
-      element: 'use_plugin',
-      plugin_id: record.sourceMarketplaceEntryName ?? record.id,
-      plugin_type: record.marketplaceTrust ?? 'official',
-      action: action === 'use-with-query' ? 'use_with_query' : 'use',
-    });
     if (action === 'use-with-query') {
       // "Replicate this content" seeds the composer with the SAME human-friendly
       // text the Home example-prompt cards use (examplePresetSeedPrompt), NOT the
@@ -1287,7 +1236,7 @@ export function HomeView({
   useEffect(() => {
     if (!pendingAuthoringChipId || pluginsLoading) return;
     const authoringRecord = plugins.find((plugin) => plugin.id === 'od-plugin-authoring');
-    const record = authoringRecord ?? plugins.find((plugin) => plugin.id === 'od-new-generation');
+    const record = authoringRecord ?? plugins.find((plugin) => plugin.id === DEFAULT_UNSELECTED_SCENARIO_PLUGIN_ID);
     setPendingAuthoringChipId(null);
     if (!record) {
       setPendingChipId(null);
@@ -1333,7 +1282,10 @@ export function HomeView({
       case 'apply-scenario':
       case 'apply-figma-migration': {
         const targetId = chip.action.pluginId;
-        let record = plugins.find((p) => p.id === targetId);
+        let record = plugins.find((p) => p.id === targetId)
+          ?? (chip.group === 'create'
+            ? plugins.find((plugin) => plugin.id === DEFAULT_UNSELECTED_SCENARIO_PLUGIN_ID)
+            : undefined);
         // Website Clone is a core entry point. If the builder mounted while a
         // WordPress plugin/resource update was still replacing the catalog,
         // recover the canonical record directly instead of trapping the user
@@ -1740,22 +1692,6 @@ export function HomeView({
         }}
       />}
 
-      {!hasPixflowWordPressContext() && <HomeTemplatesReveal
-        enabled={!projectsLoading && projects.length === 0}
-      >
-        <PluginsHomeSection
-          plugins={plugins}
-          loading={pluginsLoading}
-          activePluginId={active?.record.id ?? null}
-          pendingApplyId={pendingApplyId}
-          onUse={(record, action) => void routePluginUse(record, action)}
-          onOpenDetails={handleCommunityOpenDetails}
-          onOpenExternal={handleCommunityOpenExternal}
-          onBrowseRegistry={onBrowseRegistry}
-          preferDefaultFacet={false}
-          cardLayout="gallery"
-        />
-      </HomeTemplatesReveal>}
 
       <AnimatePresence>
         {detailsRecord ? (
@@ -1911,7 +1847,8 @@ export function shouldShowActivePluginChip(active: ActivePlugin | null): boolean
   if (!active.chipId) return true;
   // Otherwise a type chip whose default plugin IS this record stands in for the
   // task chip and suppresses a separate plugin chip.
-  return active.record.id !== defaultPluginIdForChip(active.chipId);
+  return active.record.id !== DEFAULT_UNSELECTED_SCENARIO_PLUGIN_ID
+    && active.record.id !== defaultPluginIdForChip(active.chipId);
 }
 
 function homeHeroChipLabelForId(chipId: string, t: ReturnType<typeof useI18n>['t']): string {

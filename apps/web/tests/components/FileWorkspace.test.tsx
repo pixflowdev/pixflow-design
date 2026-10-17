@@ -1099,15 +1099,11 @@ describe('DesignFilesPanel plugin folders', () => {
       '[data-testid="design-plugin-folder-contribute-generated-plugin"]',
     );
     expect(publish).toBeTruthy();
-    expect(contribute).toBeTruthy();
+    expect(contribute).toBeNull();
     await act(async () => {
       publish?.click();
     });
     expect(onPluginFolderAgentAction).toHaveBeenCalledWith('generated-plugin', 'publish');
-    await act(async () => {
-      contribute?.click();
-    });
-    expect(onPluginFolderAgentAction).toHaveBeenCalledWith('generated-plugin', 'contribute');
     expect(container.textContent).not.toContain(
       'Sent to the agent. The CLI run will continue in chat.',
     );

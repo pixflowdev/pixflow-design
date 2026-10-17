@@ -1,4 +1,4 @@
-// Baked plugin preview clips — the daemon side of scripts/bake-plugin-previews.mjs.
+// Optional pre-rendered preview clips for saved or personally installed plugins.
 //
 // The home gallery renders html plugins as live, scaled hover-pan iframes, which
 // is GPU-expensive at scale. When a plugin has a pre-baked preview (a small VP9
@@ -9,8 +9,8 @@
 // untouched and keep the live-iframe path as the fallback.
 //
 // Files + a `manifest.json` live under `<dir>` (OD_PLUGIN_PREVIEWS_DIR, default
-// `<project>/.od/plugin-previews`). CI bakes them and uploads to R2; the daemon
-// serves whatever is present locally at `/api/plugin-previews/<file>`.
+// `<project>/data/plugin-previews`). The daemon reads existing manifests and
+// serves local files at `/api/plugin-previews/<file>`; it does not produce a catalogue.
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -38,9 +38,8 @@ export interface BakedPreviewBlock {
 export function resolvePluginPreviewsDir(projectRoot: string): string {
   const env = process.env.OD_PLUGIN_PREVIEWS_DIR;
   if (env) return path.isAbsolute(env) ? env : path.resolve(projectRoot, env);
-  // Default to the checked-in manifest dir (CI commits manifest.json here; the
-  // clips themselves live on R2). Local dev overrides OD_PLUGIN_PREVIEWS_DIR to
-  // a freshly-baked dir that also holds the mp4/poster files for local serving.
+  // Retain the historical directory for existing manifests. Personal installs
+  // can override OD_PLUGIN_PREVIEWS_DIR with their own preview directory.
   return path.join(projectRoot, 'data', 'plugin-previews');
 }
 

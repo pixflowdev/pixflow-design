@@ -58,9 +58,6 @@ interface Props {
   skills?: SkillSummary[];
   // Resolved `@skill` names per featured action, shown in the hover detail.
   toolboxSkillNames?: Partial<Record<DesignToolboxActionId, string | null>>;
-  // Contribute the artifact to the Pixflow Design community gallery.
-  onShareToOpenDesign?: () => void;
-  shareToOpenDesignBusy?: boolean;
   // Embedded/narrow surfaces can append a workflow-specific action after the
   // canonical featured rows without forking the Next step card.
   extraFeaturedActions?: NextStepExtraFeaturedAction[];
@@ -121,8 +118,6 @@ export function NextStepActions({
   onPickSkill,
   skills = [],
   toolboxSkillNames,
-  onShareToOpenDesign,
-  shareToOpenDesignBusy = false,
   extraFeaturedActions = [],
   morePresentation = 'flyout',
 }: Props) {
@@ -144,7 +139,7 @@ export function NextStepActions({
   //   featured row  → detail card (skill summary)
   //   More          → [Design toolbox, Share]   (level 2)
   //   Design toolbox → search + non-featured actions + global resources (level 3)
-  //   Share          → Share / Download / Contribute (level 3)
+  //   Share          → Share / Download (level 3)
   // A single close timer with hover-intent keeps the whole path open while the
   // cursor travels between levels; entering any panel cancels the pending close.
   const [detail, setDetail] = useState<{ id: DesignToolboxActionId } & Anchor | null>(null);
@@ -235,13 +230,6 @@ export function NextStepActions({
     closeAll();
   }, [closeAll, fileName, onDownload, track]);
 
-  const handleContribute = useCallback(() => {
-    if (!onShareToOpenDesign || shareToOpenDesignBusy) return;
-    track('share_to_open_design');
-    onShareToOpenDesign();
-    closeAll();
-  }, [closeAll, onShareToOpenDesign, shareToOpenDesignBusy, track]);
-
   const handleToolboxAction = useCallback(
     (id: DesignToolboxActionId) => {
       track('toolbox_action', id);
@@ -290,8 +278,7 @@ export function NextStepActions({
   // Share group is available whenever any of its three actions can fire.
   const canShare = !!(fileName && onShare);
   const canDownload = !!(fileName && onDownload);
-  const canContribute = !!onShareToOpenDesign;
-  const hasShareGroup = canShare || canDownload || canContribute;
+  const hasShareGroup = canShare || canDownload;
   const hasMore = !!onToolboxAction || hasShareGroup;
   const showToolbox = !!onToolboxAction;
   const overlayTarget = getWorkspaceOverlayTarget();
@@ -433,7 +420,6 @@ export function NextStepActions({
                     </div>
                     {canShare ? <button type="button" className={styles.flyoutRow} onClick={handleShare}>{t('nextStep.share')}</button> : null}
                     {canDownload ? <button type="button" className={styles.flyoutRow} onClick={handleDownload}>{t('nextStep.download')}</button> : null}
-                    {canContribute ? <button type="button" className={styles.flyoutRow} disabled={shareToOpenDesignBusy} onClick={handleContribute}>{t('nextStep.contribute')}</button> : null}
                   </div>
                 ) : null}
               </div>
@@ -582,7 +568,7 @@ export function NextStepActions({
           )
             : null}
 
-          {/* Level 3b: Share / Download / Contribute */}
+          {/* Level 3b: Share / Download */}
           {sub?.kind === 'share'
             ? (
             <div
@@ -614,22 +600,7 @@ export function NextStepActions({
                   <span className={styles.toolboxRowTitle}>{t('nextStep.download')}</span>
                 </button>
               ) : null}
-              {canContribute ? (
-                <button
-                  type="button"
-                  className={styles.flyoutRow}
-                  data-testid="next-step-share-contribute"
-                  disabled={shareToOpenDesignBusy}
-                  onClick={handleContribute}
-                >
-                  <Icon
-                    name={shareToOpenDesignBusy ? 'spinner' : 'globe'}
-                    size={14}
-                    className={shareToOpenDesignBusy ? 'icon-spin' : styles.toolboxRowIcon}
-                  />
-                  <span className={styles.toolboxRowTitle}>{t('nextStep.contribute')}</span>
-                </button>
-              ) : null}
+
             </div>
           )
             : null}

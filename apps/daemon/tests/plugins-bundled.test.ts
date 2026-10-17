@@ -1,14 +1,14 @@
 // Phase 4 / spec §23.3.5 — bundled plugin boot walker.
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { migratePlugins } from '../src/plugins/persistence.js';
 import { listInstalledPlugins, upsertInstalledPlugin } from '../src/plugins/registry.js';
 import type { InstalledPluginRecord } from '@open-design/contracts';
-import { registerBundledPlugins } from '../src/plugins/bundled.js';
+import { defaultBundledRoot, registerBundledPlugins } from '../src/plugins/bundled.js';
 
 let db: Database.Database;
 let tmpRoot: string;
@@ -41,6 +41,29 @@ afterEach(async () => {
   await rm(tmpRoot, { recursive: true, force: true });
 });
 
+describe('defaultBundledRoot', () => {
+  it('prefers source guidance when a legacy catalogue directory also exists', async () => {
+    const workspace = path.join(tmpRoot, 'source');
+    const guidance = path.join(workspace, 'guidance');
+    await mkdir(guidance, { recursive: true });
+    await mkdir(path.join(workspace, 'plugins', '_official'), { recursive: true });
+    expect(defaultBundledRoot(workspace)).toBe(guidance);
+  });
+
+  it('registers retained workflow metadata in a fresh installed Bridge layout', async () => {
+    const workspace = path.join(tmpRoot, 'installed-bridge');
+    const installedRoot = path.join(workspace, 'plugins', '_official');
+    const workflow = path.join(installedRoot, 'examples', 'web-clone');
+    await mkdir(workflow, { recursive: true });
+    await writeFile(path.join(workflow, 'open-design.json'), SAMPLE_MANIFEST('example-web-clone'));
+    await writeFile(path.join(workflow, 'SKILL.md'), SAMPLE_SKILL('example-web-clone'));
+    expect(defaultBundledRoot(workspace)).toBe(installedRoot);
+    const result = await registerBundledPlugins({ db, bundledRoot: defaultBundledRoot(workspace), pruneMissing: false });
+    expect(result.registered.map((record) => record.id)).toEqual(['example-web-clone']);
+    expect(result.warnings).toEqual([]);
+  });
+});
+
 describe('registerBundledPlugins', () => {
   it('registers every <bundledRoot>/<tier>/<id>/ folder under source_kind=bundled', async () => {
     // Build a layout with one atom + one scenario:
@@ -63,34 +86,6 @@ describe('registerBundledPlugins', () => {
       expect(row.sourceKind).toBe('bundled');
       expect(row.trust).toBe('bundled');
     }
-  });
-
-  it('can stamp official registry provenance on bundled preinstalls', async () => {
-    const folder = path.join(tmpRoot, 'scenarios', 'starter');
-    await mkdir(folder, { recursive: true });
-    await writeFile(path.join(folder, 'open-design.json'), SAMPLE_MANIFEST('starter'));
-    await writeFile(path.join(folder, 'SKILL.md'), SAMPLE_SKILL('starter'));
-
-    const result = await registerBundledPlugins({
-      db,
-      bundledRoot: tmpRoot,
-      marketplaceProvenance: {
-        sourceMarketplaceId: 'official',
-        marketplaceTrust: 'official',
-        entryNamePrefix: 'open-design',
-      },
-    });
-
-    expect(result.registered[0]?.sourceKind).toBe('bundled');
-    expect(result.registered[0]?.sourceMarketplaceId).toBe('official');
-    expect(result.registered[0]?.sourceMarketplaceEntryName).toBe('open-design/starter');
-    expect(result.registered[0]?.sourceMarketplaceEntryVersion).toBe('0.1.0');
-    expect(result.registered[0]?.marketplaceTrust).toBe('official');
-    expect(result.registered[0]?.resolvedSource).toBe(folder);
-
-    const [row] = listInstalledPlugins(db);
-    expect(row?.sourceMarketplaceId).toBe('official');
-    expect(row?.sourceMarketplaceEntryName).toBe('open-design/starter');
   });
 
   it('also registers a direct <bundledRoot>/<plugin-id>/ folder', async () => {
@@ -170,6 +165,24 @@ describe('registerBundledPlugins', () => {
       'keep',
       'user-plugin',
     ]);
+  });
+
+  it('preserves historical installed records and bytes when a runtime retires resources', async () => {
+    const legacy = path.join(tmpRoot, 'legacy-guidance', 'saved-workflow');
+    await mkdir(legacy, { recursive: true });
+    await writeFile(path.join(legacy, 'open-design.json'), SAMPLE_MANIFEST('saved-workflow'));
+    const savedBody = SAMPLE_SKILL('saved-workflow');
+    await writeFile(path.join(legacy, 'SKILL.md'), savedBody);
+    await registerBundledPlugins({ db, bundledRoot: path.join(tmpRoot, 'legacy-guidance') });
+    const installedBefore = listInstalledPlugins(db);
+    const newRoot = path.join(tmpRoot, 'new-guidance');
+    await mkdir(newRoot);
+
+    const result = await registerBundledPlugins({ db, bundledRoot: newRoot, pruneMissing: false });
+
+    expect(result.pruned).toEqual([]);
+    expect(listInstalledPlugins(db)).toEqual(installedBefore);
+    expect(await readFile(path.join(legacy, 'SKILL.md'), 'utf8')).toBe(savedBody);
   });
 
   it('does not prune bundled rows when the bundled root itself is missing', async () => {

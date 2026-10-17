@@ -18,6 +18,7 @@ async function main() {
   const workflowSources = resolveBridgeWorkflowSources(sourceRoot, {
     proRoot: typeof flags['pro-root'] === 'string' ? flags['pro-root'] : process.env.PIXFLOW_DESIGN_PRO_ROOT,
   });
+  const runtimeSources = await resolveRuntimeCopySources(sourceRoot, workflowSources);
   let appRoot = path.join(installRoot, 'app');
   const binRoot = path.join(installRoot, 'bin');
   const dataDir = path.join(installRoot, 'data');
@@ -32,7 +33,7 @@ async function main() {
   await migrateLegacyOdDataDir({ legacyDir: path.join(appRoot, '.od'), odDataDir });
   appRoot = await prepareAppRootForInstall(appRoot, installRoot, flags);
   logStep(1, 5, 'Preparing Pixflow Design Local CLI bridge runtime...');
-  await copyRuntime(sourceRoot, appRoot, workflowSources);
+  await copyRuntime(runtimeSources, appRoot);
   await fs.mkdir(binRoot, { recursive: true });
   await writeLaunchers({ installRoot, appRoot, binRoot });
 
@@ -190,7 +191,10 @@ function resolveSourceRoot(flags) {
   return PACKAGE_ROOT;
 }
 
-async function copyRuntime(sourceRoot, targetRoot, workflowSources) {
+/** Resolve and validate every selected source before the installer stops or
+ * replaces an existing runtime. The partial-bundle marker is package output,
+ * never a required source-tree resource. */
+export async function resolveRuntimeCopySources(sourceRoot, workflowSources) {
   const required = [
     'package.json',
     'pnpm-lock.yaml',
@@ -205,8 +209,8 @@ async function copyRuntime(sourceRoot, targetRoot, workflowSources) {
     'tools/pack',
     'tools/serve',
     'tools/pixflow-design-bridge',
-    'plugins/_official/.partial',
   ];
+  const sources = [];
   for (const relativePath of required) {
     const source = path.join(sourceRoot, relativePath);
     if (!existsSync(source)) {
@@ -215,17 +219,29 @@ async function copyRuntime(sourceRoot, targetRoot, workflowSources) {
       }
       throw new Error(`Bridge runtime source is missing ${relativePath} in ${sourceRoot}`);
     }
-    await fs.cp(source, path.join(targetRoot, relativePath), {
-      recursive: true,
-      force: true,
-      filter: (entry) => shouldCopyRuntimePath(entry),
-    });
+    sources.push({ relativePath, source });
   }
-  for (const { relativePath, source } of workflowSources) {
+  sources.push(...workflowSources);
+  for (const { relativePath, source } of sources) {
+    const info = await fs.stat(source);
+    const expectsFile = ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'].includes(relativePath);
+    if (expectsFile ? !info.isFile() : !info.isDirectory()) {
+      throw new Error(`Bridge runtime source ${relativePath} must be a ${expectsFile ? 'file' : 'directory'}: ${source}`);
+    }
+    await fs.access(source);
+  }
+  return sources;
+}
+
+export async function copyRuntime(runtimeSources, targetRoot) {
+  for (const { relativePath, source } of runtimeSources) {
     await fs.cp(source, path.join(targetRoot, relativePath), {
       recursive: true, force: true, filter: entry => shouldCopyRuntimePath(entry),
     });
   }
+  const bundledRoot = path.join(targetRoot, 'plugins', '_official');
+  await fs.mkdir(bundledRoot, { recursive: true });
+  await fs.writeFile(path.join(bundledRoot, '.partial'), 'Pixflow Design Bridge bundles only required workflow resources.\n', 'utf8');
 }
 
 async function prepareAppRootForInstall(primaryAppRoot, installRoot, flags = {}) {
@@ -603,7 +619,9 @@ function progressBar(percent) {
   return `${'#'.repeat(filled)}${'-'.repeat(width - filled)}`;
 }
 
-main().catch((error) => {
-  process.stderr.write(`Pixflow Design Bridge installer failed: ${error instanceof Error ? error.message : String(error)}\n`);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    process.stderr.write(`Pixflow Design Bridge installer failed: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.exit(1);
+  });
+}

@@ -57,7 +57,6 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
     PROJECT_ROOT,
     DESIGN_SYSTEMS_DIR,
     USER_DESIGN_SYSTEMS_DIR,
-    DESIGN_TEMPLATES_DIR,
     USER_DESIGN_TEMPLATES_DIR,
     SKILLS_DIR,
     USER_SKILLS_DIR,
@@ -221,7 +220,7 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
     }
   });
 
-  // Design templates — the rendering catalogue. Same shape as /api/skills
+  // Personal design templates. Same shape as /api/skills
   // (so the web client can reuse SkillSummary types) but rooted at
   // DESIGN_TEMPLATE_ROOTS so the listing stays focused on template-style
   // entries without bleeding functional skills into the EntryView gallery.

@@ -102,8 +102,8 @@ function readPreview(record: InstalledPluginRecord): PreviewBlock | null {
   return od.preview as PreviewBlock;
 }
 
-// Pre-baked hover-pan clip attached by the daemon (scripts/bake-plugin-previews.mjs),
-// kept separate from `od.preview` so only gallery tiles use it.
+// Previously saved hover-pan clips remain separate from `od.preview` so
+// installed-resource tiles can continue rendering existing personal previews.
 function readBakedPreview(
   record: InstalledPluginRecord,
 ): { poster: string; video: string; holdMs: number | null } | null {

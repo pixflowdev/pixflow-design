@@ -17,7 +17,6 @@ import {
   type SkillExampleResult,
 } from '../../providers/registry';
 import { PreviewModal, type PreviewSharePopoverItem } from '../PreviewModal';
-import { buildPluginShareUrl } from './PluginShareMenu';
 import { PluginMetaSections } from './PluginMetaSections';
 import { buildPluginUseMenu, pluginUsePrimaryAction } from './pluginUseMenu';
 import type { PluginUseAction } from '../plugins-home/useActions';
@@ -121,7 +120,7 @@ export function PluginExampleDetail({
       shareTarget={{
         title: localizedTitle,
         description: description || undefined,
-        url: buildPluginShareUrl(record),
+        url: null,
       }}
       onClose={onClose}
       sidebar={{

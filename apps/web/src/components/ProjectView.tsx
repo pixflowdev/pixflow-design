@@ -209,7 +209,6 @@ import { ChatExportButton } from '../pixflow/ChatExportButton';
 import {
   type PluginFolderAgentAction,
 } from './design-files/pluginFolderActions';
-import { SHARE_TO_COMMUNITY_PROMPT } from './share-to-community/shareToCommunityPrompt';
 import { WorkspaceLoading } from './WorkspaceLoading';
 import type { SettingsSection } from './SettingsDialog';
 import { Toast } from './Toast';
@@ -5057,7 +5056,7 @@ export function ProjectView({
         return { message: outcome.message };
       }
       const conversationId = activeConversationId;
-      const shareAction = action === 'publish' ? 'publish-github' : 'contribute-open-design';
+      const shareAction = 'publish-github';
       setActivePluginActionPaths((prev) => new Set(prev).add(relativePath));
       let taskStart;
       try {
@@ -5276,34 +5275,6 @@ export function ProjectView({
       replaceConversationMessage,
     ],
   );
-
-  // "Share to Pixflow Design" — kicks off the bundled `od-share-to-community`
-  // scenario in the active conversation. We just inject the trigger prompt
-  // through the standard chat-send path; the agent then loads SKILL.md and
-  // drives the rest. Keep this preparing state alive for the resulting chat
-  // run so the action reads as async packaging instead of instant sharing.
-  const [shareToOpenDesignBusyMessageId, setShareToOpenDesignBusyMessageId] = useState<string | null>(null);
-  const shareToOpenDesignBusyMessageIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!shareToOpenDesignBusyMessageIdRef.current || currentConversationBusy) return;
-    shareToOpenDesignBusyMessageIdRef.current = null;
-    setShareToOpenDesignBusyMessageId(null);
-  }, [currentConversationBusy]);
-  const handleShareToOpenDesign = useCallback((assistantMessageId: string) => {
-    if (currentConversationActionDisabled || shareToOpenDesignBusyMessageIdRef.current) return;
-    shareToOpenDesignBusyMessageIdRef.current = assistantMessageId;
-    setShareToOpenDesignBusyMessageId(assistantMessageId);
-    void Promise.resolve(handleSend(SHARE_TO_COMMUNITY_PROMPT, [], []))
-      .then((started) => {
-        if (started) return;
-        shareToOpenDesignBusyMessageIdRef.current = null;
-        setShareToOpenDesignBusyMessageId(null);
-      })
-      .catch(() => {
-        shareToOpenDesignBusyMessageIdRef.current = null;
-        setShareToOpenDesignBusyMessageId(null);
-      });
-  }, [currentConversationActionDisabled, handleSend]);
 
   const sentDesignSystemReviewTaskKeysRef = useRef<Set<string>>(new Set());
   const persistDesignSystemReviewEntry = useCallback((
@@ -6648,30 +6619,20 @@ function latestDesignSystemActivityEvents(messages: ChatMessage[]): AgentEvent[]
   return [];
 }
 
-function pluginWorkflowTitle(action: PluginFolderAgentAction): string {
-  return action === 'publish' ? 'Publish repo' : 'Pixflow Design PR';
+function pluginWorkflowTitle(_action: PluginFolderAgentAction): string {
+  return 'Publish repo';
 }
 
-function pluginWorkflowCliCommand(action: PluginFolderAgentAction, relativePath: string): string {
-  return action === 'publish'
-    ? `od plugin publish-repo ${relativePath}`
-    : `od plugin open-design-pr ${relativePath}`;
+function pluginWorkflowCliCommand(_action: PluginFolderAgentAction, relativePath: string): string {
+  return `od plugin publish-repo ${relativePath}`;
 }
 
-function pluginWorkflowPlannedSteps(action: PluginFolderAgentAction): string[] {
-  if (action === 'publish') {
-    return [
-      'Resolve GitHub owner and validate plugin metadata',
-      'Create or update the GitHub repository',
-      'Push plugin files and tags',
-      'Return the repository URL',
-    ];
-  }
+function pluginWorkflowPlannedSteps(_action: PluginFolderAgentAction): string[] {
   return [
-    'Ensure the Pixflow Design fork exists',
-    'Clone the fork and prepare a branch',
-    'Copy the plugin into plugins/community',
-    'Push the branch and open the PR form',
+    'Resolve GitHub owner and validate plugin metadata',
+    'Create or update the GitHub repository',
+    'Push plugin files and tags',
+    'Return the repository URL',
   ];
 }
 

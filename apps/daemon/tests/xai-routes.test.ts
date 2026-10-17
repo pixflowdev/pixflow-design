@@ -96,7 +96,6 @@ async function startTestApp(projectRoot: string): Promise<TestApp> {
     ARTIFACTS_DIR: '',
     BUNDLED_PETS_DIR: '',
     DESIGN_SYSTEMS_DIR: '',
-    DESIGN_TEMPLATES_DIR: '',
     OD_BIN: '',
     PROJECT_ROOT: projectRoot,
     PROJECTS_DIR: '',

@@ -1,9 +1,9 @@
 import { cp, mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import { hashJson, hashPath, ToolPackCache } from "../cache.js";
 import type { ToolPackConfig } from "../config.js";
-import { copyBundledResourceTrees, winResources } from "../resources.js";
+import { BUNDLED_RESOURCE_TREES, copyBundledResourceTrees, winResources } from "../resources.js";
 import {
   copyOptionalVelaCliBinary,
   resolveOptionalVelaCliBinary,
@@ -11,7 +11,7 @@ import {
 } from "../vela-cli.js";
 import type { WinPaths, ResourceTreeCacheMetadata } from "./types.js";
 
-const RESOURCE_TREE_CACHE_SCHEMA_VERSION = 7;
+const RESOURCE_TREE_CACHE_SCHEMA_VERSION = 8;
 
 async function createResourceTreeCacheKey(config: ToolPackConfig): Promise<string> {
   const velaCliBin = await resolveOptionalVelaCliBinary({
@@ -22,21 +22,16 @@ async function createResourceTreeCacheKey(config: ToolPackConfig): Promise<strin
       ? null
       : await resolveOptionalVelaCliOpenCodeCompanionTree(velaCliBin);
   return hashJson({
-    assetsCommunityPets: await hashPath(join(config.workspaceRoot, "assets", "community-pets")),
-    assetsFrames: await hashPath(join(config.workspaceRoot, "assets", "frames")),
-    craft: await hashPath(join(config.workspaceRoot, "craft")),
-    designSystems: await hashPath(join(config.workspaceRoot, "design-systems")),
-    designTemplates: await hashPath(join(config.workspaceRoot, "design-templates")),
+    bundledResources: await Promise.all(BUNDLED_RESOURCE_TREES.map(async entry => ({
+      from: entry.from,
+      to: entry.to,
+      hash: await hashPath(join(config.workspaceRoot, entry.from)),
+    }))),
     node: "win.resource-tree",
-    pluginOfficial: await hashPath(join(config.workspaceRoot, "plugins", "_official")),
-    pluginPreviews: await hashPath(join(config.workspaceRoot, "data", "plugin-previews")),
-    pluginRegistry: await hashPath(join(config.workspaceRoot, "plugins", "registry")),
-    promptTemplates: await hashPath(join(config.workspaceRoot, "prompt-templates")),
     schemaVersion: RESOURCE_TREE_CACHE_SCHEMA_VERSION,
-    skills: await hashPath(join(config.workspaceRoot, "skills")),
-    toolsPixflowDesignBridge: await hashPath(
-      join(config.workspaceRoot, "tools", "pixflow-design-bridge"),
-    ),
+    proWebClone: process.env.PIXFLOW_DESIGN_PRO_ROOT
+      ? await hashPath(join(resolve(process.env.PIXFLOW_DESIGN_PRO_ROOT), "skills", "web-clone"))
+      : null,
     sevenZipDll: await hashPath(winResources.sevenZipDll),
     sevenZipExe: await hashPath(winResources.sevenZipExe),
     requireVelaCli: config.requireVelaCli,

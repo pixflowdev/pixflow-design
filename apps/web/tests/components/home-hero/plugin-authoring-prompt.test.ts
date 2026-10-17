@@ -62,28 +62,11 @@ describe('PLUGIN_AUTHORING_PROMPT_TEMPLATE', () => {
     expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('od plugin install --source');
   });
 
-  it('bans freeform publish / repo CLI suggestions in the summary turn', () => {
-    // The agent transcript in #2332 had the agent recommending
-    // `od plugin publish --to open-design`, `gh repo create
-    // lefarcen/<name>`, and `git init && git push` in its summary —
-    // recreating the exact flows the plugin-folder card buttons own.
-    // The ban list must name those workarounds explicitly so the agent
-    // can't drift back into them.
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toMatch(
-      /Do NOT.*suggest follow-up CLI commands/i,
-    );
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('od plugin publish --to open-design');
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('gh repo create');
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('git push');
-  });
-
-  it('points the user at the plugin-folder card buttons instead', () => {
+  it('offers personal install and publishing without a retired catalogue contribution', () => {
     expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('Add to My plugins');
     expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('Publish repo');
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toContain('Pixflow Design PR');
-    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).toMatch(
-      /Point the user at whichever button|Tell the user to click whichever button/i,
-    );
+    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).not.toContain('Pixflow Design PR');
+    expect(PLUGIN_AUTHORING_PROMPT_TEMPLATE).not.toContain('community catalog');
   });
 
   it('warns against assuming standalone jq is installed', () => {

@@ -19,9 +19,12 @@ test('Every bundled Free skill and supporting reference is self-contained plain 
         assert.deepEqual(await readFile(join(destination, relative)), await readFile(join(source, relative)));
       }
     }
-    for (const router of ['plugins/_official/scenarios/od-default', 'plugins/_official/examples/web-clone']) {
-      await copyBundledWordPressGuidance(router, join(target, router));
-      assert.deepEqual(await readFile(join(target, router, 'open-design.json')), await readFile(join(router, 'open-design.json')));
+    for (const [source, packaged] of [
+      ['guidance/scenarios/od-default', 'plugins/_official/scenarios/od-default'],
+      ['guidance/examples/web-clone', 'plugins/_official/examples/web-clone'],
+    ] as const) {
+      await copyBundledWordPressGuidance(source, join(target, packaged));
+      assert.deepEqual(await readFile(join(target, packaged, 'open-design.json')), await readFile(join(source, 'open-design.json')));
     }
     for (const name of ['unsafe.php', 'unsafe.php.md', 'unsafe.html', 'unsafe.mjs', 'unsafe.svg', '.htaccess']) {
       const source = join(target, 'rejected-' + name);

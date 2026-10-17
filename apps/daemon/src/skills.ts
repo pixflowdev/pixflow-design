@@ -474,7 +474,7 @@ async function dirHasAttachments(dir: string): Promise<boolean> {
   }
 }
 
-// Craft sections live at <projectRoot>/craft/<name>.md. We accept any
+// Craft sections live at <runtimeDataDir>/craft/<name>.md. We accept any
 // alphanumeric+dash slug here so adding a new section is as simple as
 // dropping a file in craft/ and listing its name in the skill — no
 // daemon-side allowlist to keep in sync. The compose path checks the

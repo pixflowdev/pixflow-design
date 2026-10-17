@@ -34,7 +34,7 @@ export function PluginDetailView(props: Props) {
 
   const onBack = () => {
     trackPluginDetailClick(analytics.track, { page_name: 'plugins', area: 'plugin_detail', element: 'back', plugin_id: props.pluginId });
-    navigate({ kind: 'marketplace' });
+    navigate({ kind: 'home', view: 'plugins' });
   };
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function PluginDetailView(props: Props) {
     return (
       <div className="plugin-detail" data-testid="plugin-detail">
         <button type="button" onClick={onBack}>
-          {translateUi("ui.pluginDetailView.marketplace")} </button>
+          {translateUi("entry.navPlugins")} </button>
         <div role="alert">{translateUi("ui.pluginDetailView.failedToLoadPlugin")} {error}</div>
       </div>
     );
@@ -117,7 +117,7 @@ export function PluginDetailView(props: Props) {
         className="plugin-detail__back"
         onClick={onBack}
       >
-        {translateUi("ui.pluginDetailView.marketplace")} </button>
+        {translateUi("entry.navPlugins")} </button>
 
       <header className="plugin-detail__header">
         <h1>{localizedTitle}</h1>

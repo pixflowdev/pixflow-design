@@ -459,14 +459,8 @@ describe('Design System Project manifest runtime consumption', () => {
   });
 });
 
-// Reviewer feedback (nettee, PR-D #1544): the parity guard at
-// `scripts/check-design-system-flag-parity.ts` exercises the prompt
-// composer directly and therefore does NOT cover the server-layer env
-// gate that PR-D actually flipped — a future regression that restored
-// `=== '1'`, used a typo'd env name, or stopped reading assets when
-// the var is unset would still let the guard pass green. These tests
-// pin the predicate that wraps the gate so the default-on flip itself
-// is locked into the test suite.
+// Pin the server-layer token-channel predicate so saved design systems keep
+// their default asset behavior independently of prompt-composer coverage.
 describe('isDesignTokenChannelEnabled (PR-D env gate)', () => {
   it('is true when OD_DESIGN_TOKEN_CHANNEL is unset (PR-D default-on)', () => {
     expect(isDesignTokenChannelEnabled({})).toBe(true);

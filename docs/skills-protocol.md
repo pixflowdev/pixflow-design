@@ -1,8 +1,8 @@
 # Skills Protocol
 
-**Parent:** [`spec.md`](spec.md) · **Siblings:** [`skills-contributing.md`](skills-contributing.md) · [`architecture.md`](architecture.md) · [`agent-adapters.md`](agent-adapters.md) · [`modes.md`](modes.md)
+**Parent:** [`spec.md`](spec.md) · **Siblings:** [`architecture.md`](architecture.md) · [`agent-adapters.md`](agent-adapters.md) · [`modes.md`](modes.md)
 
-> Want to ship a skill upstream rather than read the protocol spec? See [`skills-contributing.md`](skills-contributing.md) — quick start, merge bar, PR template, common rejections. This file is the **what** (frontmatter grammar, discovery rules, mode semantics); that file is the **how** (clone to merged PR).
+This document describes portable skill files and personal runtime resources. Free bundles four maintained functional skills; the inherited contribution catalogue and rendering templates are retired. See [contribution boundaries](../CONTRIBUTING.md) for repository changes and [references and credits](references.md) for upstream provenance.
 
 A **Skill** is the atomic unit of design capability in OD. We adopt Claude Code's `SKILL.md` convention verbatim as the base format, then add optional fields for design-specific features (preview type, input schema, slider parameters). A skill written for plain Claude Code runs in OD. An OD skill that doesn't use our extensions runs in plain Claude Code.
 
@@ -231,11 +231,10 @@ Example: [`docs/examples/DESIGN.sample.md`](examples/DESIGN.sample.md).
 
 Some craft knowledge is **universal** — true regardless of brand. ALL CAPS always needs ≥0.06em letter-spacing; `var(--accent)` should appear at most 2 times per screen; `#6366f1` is always the AI-default tell. These rules don't belong in any one `DESIGN.md` because they apply across every brand.
 
-OD ships these as a third axis at `<projectRoot>/craft/`:
+Personal craft references remain an optional third axis. `CRAFT_DIR` selects their directory; no craft catalogue ships with Pixflow. A user-managed directory may look like:
 
 ```
 craft/
-├── README.md
 ├── typography.md
 ├── color.md
 └── anti-ai-slop.md
@@ -252,7 +251,7 @@ od:
 Resolution at compose time:
 
 1. `apps/daemon/src/skills.ts` reads `od.craft.requires` from front-matter and surfaces it on the skill record.
-2. `apps/daemon/src/craft.ts` reads each `<slug>.md` from `CRAFT_DIR`. Missing files are dropped silently — a skill can forward-reference `craft/motion.md` before we ship it. See [`craft/README.md`](../craft/README.md) for the canonical slug list and the rationale behind the silent-fallback choice.
+2. `apps/daemon/src/craft.ts` reads each `<slug>.md` from `CRAFT_DIR`. Missing personal craft files are skipped. Craft is optional runtime data; Pixflow does not bundle a craft catalogue.
 3. `apps/daemon/src/prompts/system.ts` injects the concatenated craft body **between** the active DESIGN.md and the skill body. Brand tokens in DESIGN.md win on conflict; craft rules cover everything DESIGN.md does not override.
 
 The split keeps DESIGN.md authors free of universal-craft duplication and keeps craft authors free of brand-specific drift.

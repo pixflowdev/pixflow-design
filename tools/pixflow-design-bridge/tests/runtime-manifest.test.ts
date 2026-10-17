@@ -12,8 +12,10 @@ describe('Pixflow Design Bridge runtime manifest', () => {
     expect(BRIDGE_BUNDLED_WORKFLOW_PATHS).not.toContain('skills/build-in-bricks-html-first');
     const root = await mkdtemp(path.join(tmpdir(), 'pixflow-free-bridge-workflows-'));
     try {
-      await mkdir(path.join(root, 'plugins/_official/examples/web-clone'), { recursive: true });
-      expect(resolveBridgeWorkflowSources(root).map(item => item.relativePath)).toEqual(['plugins/_official/examples/web-clone']);
+      await mkdir(path.join(root, 'guidance/examples/web-clone'), { recursive: true });
+      const sources = resolveBridgeWorkflowSources(root);
+      expect(sources.map(item => item.relativePath)).toEqual(['plugins/_official/examples/web-clone']);
+      expect(sources.find(item => item.relativePath.endsWith('web-clone'))?.source).toBe(path.join(root, 'guidance/examples/web-clone'));
       expect(() => resolveBridgeWorkflowSources(root, { requirePro: true })).toThrow(/PIXFLOW_DESIGN_PRO_ROOT/);
     } finally { await rm(root, { recursive: true, force: true }); }
   });

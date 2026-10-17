@@ -72,7 +72,6 @@ import {
 } from '../i18n/content';
 import { PreviewSurface } from './plugins-home/cards/PreviewSurface';
 import { readHomeGuideStage, writeHomeGuideStage } from './home-hero/firstRunGuide';
-import { curatedPluginPriorityForChip } from './plugins-home/curatedPriority';
 import { sortByVisualAppeal } from './plugins-home/visualScore';
 import { applyFacetSelection } from './plugins-home/facets';
 import { inferPluginPreview } from './plugins-home/preview';
@@ -2804,6 +2803,7 @@ function homeHeroChipTitle(chip: HomeHeroChip, t: ReturnType<typeof useT>): stri
 // up pre-selected when a media mode is entered.
 const EXAMPLE_PRESET_HIDDEN_PLUGIN_IDS = new Set<string>([
   'od-media-generation',
+  'od-default',
   // The base Website Clone scenario is the capability router, not a visual
   // preset. Its source-URL starter is rendered from HOME_PROMPT_EXAMPLES.
   'example-web-clone',
@@ -2816,14 +2816,8 @@ export function homeHeroExamplePluginsForChip(
 ): InstalledPluginRecord[] {
   const presets = plugins
     .filter((plugin) => !EXAMPLE_PRESET_HIDDEN_PLUGIN_IDS.has(plugin.id))
-    .filter((plugin) => (
-      pluginMatchesExampleChip(plugin, chipId) ||
-      curatedPluginPriorityForChip(plugin, chipId) !== null
-    ))
-    .filter((plugin) => (
-      Boolean(pluginPresetQuery(plugin, locale)) ||
-      curatedPluginPriorityForChip(plugin, chipId) !== null
-    ))
+    .filter((plugin) => pluginMatchesExampleChip(plugin, chipId))
+    .filter((plugin) => Boolean(pluginPresetQuery(plugin, locale)))
     .sort((a, b) => comparePluginPresetOrder(a, b, chipId))
     .slice(0, 18);
   if (chipId === 'image') {
@@ -2837,13 +2831,6 @@ function comparePluginPresetOrder(
   b: InstalledPluginRecord,
   chipId: string,
 ): number {
-  const aCurated = curatedPluginPriorityForChip(a, chipId);
-  const bCurated = curatedPluginPriorityForChip(b, chipId);
-  if (aCurated !== null || bCurated !== null) {
-    if (aCurated !== null && bCurated === null) return -1;
-    if (aCurated === null && bCurated !== null) return 1;
-    if (aCurated !== bCurated) return (aCurated ?? 0) - (bCurated ?? 0);
-  }
   const rankDelta = pluginPresetRank(b, chipId) - pluginPresetRank(a, chipId);
   if (rankDelta !== 0) return rankDelta;
   return (a.title || a.id).localeCompare(b.title || b.id);
@@ -2882,7 +2869,7 @@ export function pluginMatchesExampleChip(record: InstalledPluginRecord, chipId: 
     case 'hyperframes':
       return hasPart('hyperframes', 'hyperframe');
     case 'live-artifact':
-      return has('live-artifact') || hasPart('live-artifact');
+      return has('live-artifact', 'live-artifacts', 'live-dashboard') || hasPart('live-artifact');
     case 'image':
       return (has('image') || hasPart('image-template')) && !hasPart('video', 'audio', 'live-artifact');
     case 'video':

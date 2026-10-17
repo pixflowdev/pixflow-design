@@ -7,7 +7,7 @@ export default {
       deps: {
         // Exercise the standalone Node compatibility entry unchanged, without
         // Vite rewriting its embedded CLI templates or dynamic imports.
-        external: [/bricks-handoff-cli\.mjs$/],
+        external: [/(?:bricks-handoff-cli|install)\.mjs$/],
       },
     },
   },

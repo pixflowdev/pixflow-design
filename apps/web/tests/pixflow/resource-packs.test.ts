@@ -15,7 +15,6 @@ const appSource = readFileSync(resolve(repoRoot, 'apps/web/src/App.tsx'), 'utf8'
 const onboardingSource = readFileSync(resolve(repoRoot, 'apps/web/src/components/OnboardingView.tsx'), 'utf8');
 const settingsSource = readFileSync(resolve(repoRoot, 'apps/web/src/components/SettingsDialog.tsx'), 'utf8');
 const workspaceArtifactsCss = readFileSync(resolve(repoRoot, 'apps/web/src/styles/workspace/artifacts.css'), 'utf8');
-const resourceBuildSource = readFileSync(resolve(repoRoot, 'scripts/build-wordpress-resource-packs.mjs'), 'utf8');
 
 function catalog(): PixflowResourcePackCatalog {
   return {
@@ -100,11 +99,5 @@ describe('Pixflow resource-pack lifecycle', () => {
     expect(en['ui.entryShell.frameworksExtraResourcesMediaProvidersAndDictation']).toBe('Frameworks, extra resources, media providers and dictation can be set up later in Settings.');
   });
 
-  it('builds resource revisions independently from the plugin release version', () => {
-    expect(resourceBuildSource).toContain('wordpress/resource-packs-release.json');
-    expect(resourceBuildSource).toContain('contentRevision');
-    expect(resourceBuildSource).not.toContain(
-      'const version = process.env.PIXFLOW_DESIGN_RESOURCE_VERSION || releaseVersion;',
-    );
-  });
+
 });

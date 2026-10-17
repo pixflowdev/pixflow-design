@@ -244,7 +244,7 @@ describe('HomeHero intent rail', () => {
     );
   });
 
-  it('orders curated example presets first for the selected artifact type', () => {
+  it('orders imported example presets by their own metadata', () => {
     const ordinaryDeck = makePlugin('example-ordinary-deck', 'deck', 'Ordinary deck');
     const capsule = makePlugin(
       'example-html-ppt-zhangzara-capsule',
@@ -263,35 +263,10 @@ describe('HomeHero intent rail', () => {
 
     const presets = screen.getAllByTestId('home-hero-plugin-preset');
     expect(presets.map((preset) => preset.getAttribute('data-plugin-id'))).toEqual([
-      'example-html-ppt-zhangzara-creative-mode',
       'example-html-ppt-zhangzara-capsule',
+      'example-html-ppt-zhangzara-creative-mode',
       'example-ordinary-deck',
     ]);
-  });
-
-  it('keeps curated presets even when they rely on fallback prompt text', () => {
-    const otakuDance = makePlugin(
-      'image-template-infographic-otaku-dance-choreography-breakdown-gokurakujodo-16-panels',
-      'image',
-      'Infographic - Otaku Dance Choreography Breakdown (Gokuraku Jodo, 16 Panels)',
-      ['image-template'],
-      { query: null },
-    );
-    const ordinaryImage = makePlugin(
-      'image-template-ordinary',
-      'image',
-      'Ordinary image',
-      ['image-template'],
-    );
-    renderHero({
-      activeChipId: 'image',
-      pluginOptions: [ordinaryImage, otakuDance],
-    });
-
-    const presets = screen.getAllByTestId('home-hero-plugin-preset');
-    expect(presets[0]?.getAttribute('data-plugin-id')).toBe(
-      'image-template-infographic-otaku-dance-choreography-breakdown-gokurakujodo-16-panels',
-    );
   });
 
   it('keeps Hatch Pet at the end of the image example presets', () => {
@@ -366,13 +341,13 @@ describe('HomeHero intent rail', () => {
     });
 
     presets = screen.getAllByTestId('home-hero-plugin-preset');
-    expect(presets.map((preset) => preset.getAttribute('data-plugin-id'))).toEqual([
+    expect(presets.map((preset) => preset.getAttribute('data-plugin-id')).sort()).toEqual([
       'example-live-dashboard',
       'image-template-notion-team-dashboard-live-artifact',
       'example-social-media-matrix-tracker-template',
       'example-trading-analysis-dashboard-template',
       'example-live-artifact',
-    ]);
+    ].sort());
   });
 
   it('disables every visible chip while a plugin apply is in flight', () => {

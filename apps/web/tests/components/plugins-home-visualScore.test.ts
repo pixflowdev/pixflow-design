@@ -122,7 +122,7 @@ describe('sortByVisualAppeal', () => {
     expect(sorted[sorted.length - 1]).toBe('plain');
   });
 
-  it('puts curated home picks before generic featured media', () => {
+  it('uses manifest metadata rather than retired catalogue ID priorities', () => {
     const records = [
       fixture({
         id: 'featured-video',
@@ -139,7 +139,7 @@ describe('sortByVisualAppeal', () => {
       }),
     ];
     const sorted = sortByVisualAppeal(records).map((r) => r.id);
-    expect(sorted[0]).toBe('example-open-design-landing');
+    expect(sorted[0]).toBe('featured-video');
   });
 
   it('keeps numeric featured rank ahead of media bonuses', () => {

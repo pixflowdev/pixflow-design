@@ -186,3 +186,8 @@ These "don'ts" are what keep the MVP achievable in 6–8 weeks.
 ## Living references
 
 This file is maintained. When we add an adapter or borrow a pattern from a new upstream, add it here with the same three-question format. When upstream licensing or direction changes materially, flag it here and cross-link from [`spec.md`](spec.md).
+
+
+## Retired catalogue provenance
+
+The inherited skill, craft, plugin and design-template catalogues are no longer bundled source. Their removal does not change upstream authorship or licences. Historical presentation material adapted from [op7418/guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) retains its original MIT attribution to [op7418](https://github.com/op7418). [Claude Code's skill convention](https://docs.anthropic.com/en/docs/claude-code/skills) informed the portable `SKILL.md` format; [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) remains an upstream design-system reference. See also the repository [third-party notices](../THIRD-PARTY-NOTICES.md).

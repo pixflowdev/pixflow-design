@@ -12,7 +12,7 @@ const { DISCOVERY_AND_PHILOSOPHY: apiDiscovery } = await import(new URL('../../p
 const { DISCOVERY_AND_PHILOSOPHY: cliDiscovery } = await import(new URL('../../apps/daemon/src/prompts/discovery.ts', import.meta.url).href) as { DISCOVERY_AND_PHILOSOPHY: string };
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const routerPath = `${root}/plugins/_official/scenarios/od-default/`;
+const routerPath = `${root}/guidance/scenarios/od-default/`;
 const skill = readFileSync(`${routerPath}SKILL.md`, 'utf8');
 const manifest = JSON.parse(readFileSync(`${routerPath}open-design.json`, 'utf8'));
 const options = [
@@ -36,7 +36,7 @@ describe('Pixflow fallback router across packaged resources and API/CLI prompts'
     expect(manifest.od.capabilities).toEqual(['prompt:inject', 'genui:choice']);
     expect(manifest.od.pipeline.stages.flatMap((stage: { atoms: string[] }) => stage.atoms)).toEqual([]);
     expect(taskOptions(skill)).toEqual(options);
-    expect(skill).not.toMatch(/Pixflow Design|OD media generation|HyperFrames/);
+    expect(skill).not.toMatch(/Open Design|OD media generation|HyperFrames/);
   });
 
   for (const [surface, compose, discovery] of [['API', apiPrompt, apiDiscovery], ['CLI', cliPrompt, cliDiscovery]] as const) {

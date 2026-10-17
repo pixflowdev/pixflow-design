@@ -35,12 +35,7 @@ export const PLUGIN_AUTHORING_PROMPT_TEMPLATE = [
   '',
   'When the work above is done, write a single summary turn covering: files created, `od plugin validate` status, local install / run status, and `od plugin pack` output. Then STOP.',
   '',
-  '**Do NOT** suggest follow-up CLI commands such as `od plugin publish`, `od plugin publish --to open-design`, `gh repo create`, `git init` / `git remote add` / `git push`, or any other publish / repo wiring. The plugin-folder card under Design Files already exposes three buttons whose prompts drive those flows end-to-end with the right auth gates, fallbacks, and retry rules baked in:',
-  '- **Add to My plugins** — already satisfied by this turn\'s `od plugin install --source` step.',
-  '- **Publish repo** — creates / updates the author\'s `plugin.repo` GitHub repo through a gh + git sequence the agent is told exactly how to run.',
-  '- **Pixflow Design PR** — opens a draft PR against `pixflowdev/pixflow-design` for the community catalog.',
-  '',
-  'Point the user at whichever button they want next; do NOT recreate those flows as freeform shell suggestions in this summary. Recreating them drifts from the button prompts\' guarantees and is the source of the bug that closed #2332.',
+  'After local validation, the plugin-folder card offers Add to My plugins and Publish repo for the author\'s own repository.',
   '',
   '**Do NOT** assume the standalone `jq` binary is installed (it is not part of the OD agent runtime baseline and is missing from default macOS / Windows shells). When you need to read the manifest, prefer your built-in file-reading tool, then `cat generated-plugin/open-design.json` followed by manual JSON parsing, then `node -e \'console.log(JSON.parse(require("fs").readFileSync("generated-plugin/open-design.json","utf8")))\'`. The `gh ... --jq` flag is fine because gh ships its own embedded library; the brew-installed standalone `jq` is NOT.',
 ].join('\n');

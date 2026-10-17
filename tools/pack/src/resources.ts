@@ -56,31 +56,18 @@ export const linuxResources = {
   desktopTemplate: join(resourcesRoot, "linux", "open-design.desktop.template"),
 } as const;
 
-const BUNDLED_RESOURCE_TREES = [
-  { from: "skills", to: "skills" },
-  // After the skills/design-templates split (specs/current/skills-and-design-templates.md)
-  // the rendering catalogue lives under its own root and the daemon
-  // resolves it via DESIGN_TEMPLATES_DIR. Bundle it like any other
-  // first-class resource so packaged builds carry the full template set.
-  { from: "design-templates", to: "design-templates" },
-  { from: "design-systems", to: "design-systems" },
-  { from: "craft", to: "craft" },
-  { from: join("plugins", "_official"), to: join("plugins", "_official") },
-  { from: join("plugins", "registry"), to: join("plugins", "registry") },
+// Source guidance is intentionally separate from the retired catalogue. Keep
+// package paths stable for saved workflow identifiers and installed runtimes.
+export const BUNDLED_RESOURCE_TREES = [
+  ...["agent-browser", "export-download-debugging", "web-design-guidelines", "writing-guidelines"]
+    .map(name => ({ from: join("skills", name), to: join("skills", name) })),
+  { from: join("guidance", "scenarios", "od-default"), to: join("plugins", "_official", "scenarios", "od-default") },
+  { from: join("guidance", "examples", "web-clone"), to: join("plugins", "_official", "examples", "web-clone") },
   { from: join("assets", "frames"), to: "frames" },
   { from: join("assets", "community-pets"), to: "community-pets" },
   { from: "prompt-templates", to: "prompt-templates" },
-  // Pixflow-owned: the packaged bridge daemon shells out to this runner for
-  // Bricks Ask/Design, HTML-to-Bricks, and Pixflow Library handoff flows.
-  // Keep it in the same relative tools/ path the dev daemon uses so packaged
-  // installs do not silently lose the CLI runner.
+  // The Bridge daemon uses the same relative runner path in source and packages.
   { from: join("tools", "pixflow-design-bridge"), to: join("tools", "pixflow-design-bridge") },
-  // Baked plugin-preview manifest. The gallery's pre-rendered hover-pan clips
-  // live on R2; the daemon needs this checked-in manifest to map each plugin to
-  // its clip (it serves clips from R2 when the files aren't on disk, which is the
-  // packaged case). Without it the packaged daemon reads an empty manifest and the
-  // gallery falls back to live, GPU-expensive iframes instead of the baked clips.
-  { from: join("data", "plugin-previews"), to: join("data", "plugin-previews") },
 ] as const;
 
 export async function copyBundledResourceTrees({
@@ -98,8 +85,8 @@ export async function copyBundledResourceTrees({
     });
   }
   if (proRoot) {
-    const source = join(resolve(proRoot), 'skills');
+    const source = join(resolve(proRoot), 'skills', 'web-clone');
     if (!existsSync(source)) throw new Error(`The paired Pro checkout is missing Bridge workflow skills: ${source}`);
-    await cp(source, join(resourceRoot, 'skills'), { recursive: true });
+    await cp(source, join(resourceRoot, 'skills', 'web-clone'), { recursive: true });
   }
 }

@@ -6,6 +6,8 @@ GitHub Enterprise, S3/R2, or any HTTPS host.
 
 ## Static Catalog Shape
 
+This is an example layout for an external, user-managed registry. Pixflow does not ship the inherited repository registry catalogue.
+
 ```text
 plugins/registry/
   official/open-design-marketplace.json

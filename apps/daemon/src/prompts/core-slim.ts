@@ -9,7 +9,7 @@
  *
  * What deliberately does NOT live here (and must not creep back):
  * - The od-default task-type router form — it ships inside
- *   `plugins/_official/scenarios/od-default/SKILL.md` and arrives via the
+ *   `guidance/scenarios/od-default/SKILL.md` and arrives via the
  *   `## Active skill` section when that router is active.
  * - Per-platform delivery contracts (frames, breakpoints, per-target
  *   files) — `renderPlatformContractsBlock()` below, injected only for

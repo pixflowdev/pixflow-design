@@ -140,7 +140,7 @@ function SkillPluginCandidateCard({
 }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
-  const [busy, setBusy] = useState<null | "draft" | "contribute">(null);
+  const [busy, setBusy] = useState<null | "draft">(null);
   const [notice, setNotice] = useState<ActionNotice | null>(null);
   const disabled = !projectId || busy !== null;
   const description =
@@ -201,25 +201,6 @@ function SkillPluginCandidateCard({
     }
   }
 
-  async function share(action: "contribute-open-design") {
-    if (!projectId) return;
-    setBusy("contribute");
-    setNotice(null);
-    try {
-      const data = await post(
-        `/api/projects/${encodeURIComponent(projectId)}/plugin-candidates/${encodeURIComponent(block.candidateId)}/share-tasks`,
-        { action },
-      );
-      setNotice({
-        message: `Pixflow Design contribution task started for ${data?.path ?? "the draft"}.`,
-      });
-    } catch (err) {
-      setNotice({ message: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setBusy(null);
-    }
-  }
-
   return (
     <div className="plugin-action-panel" data-testid={`skill-plugin-candidate-${block.candidateId}`}>
       <div className="plugin-action-card">
@@ -232,15 +213,7 @@ function SkillPluginCandidateCard({
             {description}
           </p>
           <div className="plugin-action-card__actions">
-            <button
-              type="button"
-              className="plugin-action-button plugin-action-button--primary"
-              disabled={disabled}
-              onClick={() => void share("contribute-open-design")}
-            >
-              <Icon name={busy === "contribute" ? "spinner" : "share"} size={13} />
-              <span>{busy === "contribute" ? translateUi("ui.assistantMessage.starting") : t("skillPluginCandidate.contributeToMain")}</span>
-            </button>
+
             <button
               type="button"
               className="plugin-action-button"
@@ -292,11 +265,6 @@ interface Props {
   ) => Promise<{ message?: string; url?: string } | void> | { message?: string; url?: string } | void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
-  // Click handler for the post-completion "Share to Pixflow Design" submission
-  // action. ProjectView wires this to handleSend with the bundled
-  // `od-share-to-community` trigger prompt.
-  onShareToOpenDesign?: () => void;
-  shareToOpenDesignBusy?: boolean;
   // True only for the most recent assistant message.
   isLast?: boolean;
   // Assistant message id whose run-failure error is rendered as ChatPane's
@@ -368,7 +336,6 @@ const ASSISTANT_MESSAGE_COMPARED_PROPS: Array<keyof Props> = [
   'nextUserContent',
   'forking',
   'footerAction',
-  'shareToOpenDesignBusy',
   'suppressDirectionForms',
   'hasDesignSystemContext',
   // Memoized + stable from ChatPane; compared so a late skill-list load
@@ -423,8 +390,6 @@ function AssistantMessageImpl({
   onRequestPluginFolderAgentAction,
   activePluginActionPaths = new Set(),
   hiddenPluginActionPaths = new Set(),
-  onShareToOpenDesign,
-  shareToOpenDesignBusy = false,
   isLast,
   errorCardOwnerId = null,
   nextUserContent,
@@ -637,11 +602,9 @@ function AssistantMessageImpl({
     !!copyMarkdown ||
     canFork ||
     !!footerAction;
-  const canShowOpenDesignSubmission = !!onShareToOpenDesign && showFeedback && runSucceeded;
-  const showOpenDesignSubmission =
-    canShowOpenDesignSubmission && (!!isLast || shareToOpenDesignBusy);
+
   // "Next step" only makes sense once there is a deliverable to act on. Anchor
-  // the whole card (toolbox cascade + Share + Contribute) on a previewable HTML
+  // the whole card (toolbox cascade + Share) on a previewable HTML
   // artifact — produced this turn or earlier in the project. A pure
   // clarifying-questions / summary turn that emitted no HTML must not surface
   // the card (issue: card appeared after a question-only turn with no artifact).
@@ -651,7 +614,7 @@ function AssistantMessageImpl({
     runSucceeded &&
     !containsQuestionForm &&
     !!nextStepArtifactName &&
-    ((!!isLast && !!onToolboxAction) || showOpenDesignSubmission);
+    (!!isLast && !!onToolboxAction);
   // Pre-output vs working: before any real content (text / thinking / tools /
   // files) the footer shimmers "Preparing…"; the moment content lands it
   // flips to "Working". The elapsed clock stays anchored to the persisted run
@@ -890,8 +853,6 @@ function AssistantMessageImpl({
             onDownload={isLast && nextStepArtifactName ? onArtifactDownload : undefined}
             skills={isLast ? nextStepSkills : undefined}
             toolboxSkillNames={isLast ? toolboxSkillNames : undefined}
-            onShareToOpenDesign={showOpenDesignSubmission ? onShareToOpenDesign : undefined}
-            shareToOpenDesignBusy={shareToOpenDesignBusy}
           />
         ) : null}
       </div>
@@ -2016,23 +1977,7 @@ function PluginActionPanel({
                     {actionBusy && busyKey === `publish:${folder.path}` ? translateUi("chat.annotationSending") : translateUi("ui.assistantMessage.publishRepo")}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className="plugin-action-button"
-                  data-testid={`assistant-plugin-contribute-${folder.path}`}
-                  disabled={actionBusy || busyKey !== null || !onRequestPluginFolderAgentAction}
-                  onClick={() => void runAction(folder, "contribute")}
-                >
-                  <Icon
-                    name={actionBusy && busyKey === `contribute:${folder.path}` ? "spinner" : "share"}
-                    size={13}
-                  />
-                  <span>
-                    {actionBusy && busyKey === `contribute:${folder.path}`
-                      ? translateUi("chat.annotationSending")
-                      : translateUi("ui.assistantMessage.pixflowDesignPr")}
-                  </span>
-                </button>
+
                 {onRequestOpenFile ? (
                   <button
                     type="button"

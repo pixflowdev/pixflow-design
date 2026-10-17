@@ -110,7 +110,7 @@ describe('AssistantMessage next-step affordance', () => {
     expect(screen.queryByTestId('next-step-actions')).toBeNull();
   });
 
-  it('reaches Contribute (share to Pixflow Design) through the More → Share cascade', async () => {
+  it('does not expose retired Community contribution actions', async () => {
     const onShareToOpenDesign = vi.fn();
     render(
       <AssistantMessage
@@ -119,14 +119,13 @@ describe('AssistantMessage next-step affordance', () => {
         projectId="proj-1"
         isLast
         onFeedback={vi.fn()}
-        onShareToOpenDesign={onShareToOpenDesign}
         {...handlers()}
       />,
     );
     fireEvent.mouseEnter(screen.getByTestId('next-step-toolbox-more'));
     fireEvent.mouseEnter(await screen.findByTestId('next-step-more-share'));
-    fireEvent.click(screen.getByTestId('next-step-share-contribute'));
-    expect(onShareToOpenDesign).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('next-step-share-contribute')).toBeNull();
+
   });
 
   it('does not render the card when the turn produced no previewable HTML artifact', () => {

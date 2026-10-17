@@ -1,12 +1,10 @@
 // Phase 4 / spec §23.3.5 — bundled plugin boot walker.
 //
-// On daemon startup, scan `<repo-root>/plugins/_official/**` for
+// On daemon startup, scan `<repo-root>/guidance/**` for
 // folders that look like installable plugin manifests (a SKILL.md
 // + open-design.json pair) and register every match into the
 // `installed_plugins` table under `source_kind='bundled'` /
-// `trust='bundled'`. Bundled plugins are the preinstalled cache of the
-// official registry source: they can carry marketplace provenance while
-// their bytes stay inside the runtime image for offline first-run use.
+// `trust='bundled'`. Guidance bytes stay inside the image for offline use.
 // They never enter the user's home install root; their fs_path stays
 // inside the repo so a daemon upgrade rotates them in lockstep with the
 // daemon code.
@@ -21,7 +19,7 @@
 // daemon upgrade".
 
 import path from 'node:path';
-import { promises as fsp } from 'node:fs';
+import { existsSync, promises as fsp } from 'node:fs';
 import type Database from 'better-sqlite3';
 import {
   deleteInstalledPlugin,
@@ -29,24 +27,21 @@ import {
   upsertInstalledPlugin,
   type RegistryRoots,
 } from './registry.js';
-import type { InstalledPluginRecord, MarketplaceTrust } from '@open-design/contracts';
+import type { InstalledPluginRecord } from '@open-design/contracts';
 
 type SqliteDb = Database.Database;
 
 export interface RegisterBundledPluginsInput {
   db: SqliteDb;
-  // Absolute path to `<repo-root>/plugins/_official`. The walker
+  // Absolute path to the bundled guidance root. The walker
   // recurses one level down (`atoms/<atom>`, `scenarios/<scenario>`,
   // `bundles/<bundle>`) so the layout matches spec §23.3.5.
   bundledRoot: string;
   // Optional registry roots override; bundled plugins do not write to
   // userPluginsRoot but the installer code path expects one anyway.
   roots?: RegistryRoots;
-  marketplaceProvenance?: {
-    sourceMarketplaceId: string;
-    marketplaceTrust: MarketplaceTrust;
-    entryNamePrefix: string;
-  };
+  // Resource retirement may keep historical installed metadata for saved work.
+  pruneMissing?: boolean;
 }
 
 export interface RegisterBundledPluginsResult {
@@ -83,10 +78,10 @@ export async function registerBundledPlugins(
   for (const tier of topLevel) {
     if (!tier.isDirectory()) continue;
     // Two layouts are supported:
-    //   - plugins/_official/<plugin-id>/        — direct plugin
-    //   - plugins/_official/atoms/<atom>/       — atom subtree
-    //   - plugins/_official/scenarios/<id>/     — scenario subtree
-    //   - plugins/_official/bundles/<id>/       — bundle subtree
+    //   - guidance/<plugin-id>/        — direct plugin
+    //   - guidance/atoms/<atom>/       — atom subtree
+    //   - guidance/scenarios/<id>/     — scenario subtree
+    //   - guidance/bundles/<id>/       — bundle subtree
     // We try the direct shape first, then recurse one level if the
     // tier directory itself isn't a manifest folder.
     const tierAbs = path.join(input.bundledRoot, tier.name);
@@ -117,7 +112,9 @@ export async function registerBundledPlugins(
   // subset from being mistaken for a complete daemon image and pruning every
   // catalog row that will be refreshed separately.
   const partialBundle = await pathExists(path.join(input.bundledRoot, '.partial'));
-  const pruned = partialBundle ? [] : pruneRemovedBundledPlugins(input.db, seenFolderIds);
+  const pruned = partialBundle || input.pruneMissing === false
+    ? []
+    : pruneRemovedBundledPlugins(input.db, seenFolderIds);
   return { registered: out, pruned, warnings };
 }
 
@@ -173,25 +170,10 @@ async function registerOne(args: {
     args.warnings.push(`bundled plugin ${args.folderId} failed to parse: ${probe.errors.join('; ')}`);
     return;
   }
-  const record = withMarketplaceProvenance(probe.record, args.input.marketplaceProvenance);
+  const record = probe.record;
   upsertInstalledPlugin(args.input.db, record);
   args.seenFolderIds.add(record.id);
   args.out.push(record);
-}
-
-function withMarketplaceProvenance(
-  record: InstalledPluginRecord,
-  provenance: RegisterBundledPluginsInput['marketplaceProvenance'],
-): InstalledPluginRecord {
-  if (!provenance) return record;
-  return {
-    ...record,
-    sourceMarketplaceId:           provenance.sourceMarketplaceId,
-    sourceMarketplaceEntryName:    `${provenance.entryNamePrefix}/${record.id}`,
-    sourceMarketplaceEntryVersion: record.version,
-    marketplaceTrust:              provenance.marketplaceTrust,
-    resolvedSource:                record.source,
-  };
 }
 
 async function pathExists(p: string): Promise<boolean> {
@@ -203,11 +185,13 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-// Default bundled root resolution. The daemon ships its `dist/` next to
-// the repo, but the canonical bundled location is the repo root's
-// `plugins/_official/` directory. We resolve that by walking up from
-// the daemon binary's location until we find a `package.json` whose
-// name matches the workspace root, or fall back to a sensible default.
+// Source checkouts own guidance/. Installed Bridge archives retain their
+// historical plugins/_official layout and may not set OD_RESOURCE_ROOT.
+// Prefer guidance whenever it exists so a source checkout cannot rediscover
+// the retired catalogue through the compatibility path.
 export function defaultBundledRoot(workspaceRoot: string): string {
-  return path.join(workspaceRoot, 'plugins', '_official');
+  const guidanceRoot = path.join(workspaceRoot, 'guidance');
+  if (existsSync(guidanceRoot)) return guidanceRoot;
+  const installedRoot = path.join(workspaceRoot, 'plugins', '_official');
+  return existsSync(installedRoot) ? installedRoot : guidanceRoot;
 }

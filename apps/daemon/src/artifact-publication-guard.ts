@@ -15,8 +15,8 @@
 // here together with a fixture that proves they cannot appear in
 // finished output.
 //
-// Pairs with `od.inputs` on `plugins/_official/examples/html-ppt-pitch-deck/
-// open-design.json`. The inputs gate is the primary contract — this guard
+// Applies to plugin `od.inputs` requirements and generated deck artifacts.
+// The inputs gate is the primary contract — this guard
 // is the defense-in-depth invariant that catches agents that bypassed the
 // structured contract (e.g. routed through `od-default`) but still tried
 // to publish a placeholder-laden HTML/deck artifact.

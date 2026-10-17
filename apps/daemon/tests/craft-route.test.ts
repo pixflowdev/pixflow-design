@@ -5,6 +5,8 @@
 // drift from the daemon contract.
 
 import type http from 'node:http';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startServer } from '../src/server.js';
 
@@ -29,6 +31,27 @@ afterAll(async () => {
 });
 
 describe('GET /api/craft', () => {
+  it('does not load inherited bundled craft by default', async () => {
+    const response = await fetch(`${baseUrl}/api/craft`);
+    expect(await response.json()).toEqual({ craft: [] });
+  });
+
+  it('loads personal craft without changing its source bytes', async () => {
+    const craftRoot = path.join(process.env.OD_DATA_DIR!, 'craft');
+    const sourcePath = path.join(craftRoot, 'customer-style.md');
+    const body = '# Customer style\n\nKeep the customer brand rules.\n';
+    await mkdir(craftRoot, { recursive: true });
+    await writeFile(sourcePath, body);
+    try {
+      const response = await fetch(`${baseUrl}/api/craft/customer-style`);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ id: 'customer-style', body });
+      expect(await readFile(sourcePath, 'utf8')).toBe(body);
+    } finally {
+      await unlink(sourcePath);
+    }
+  });
+
   it('returns a craft array of { id, label, bytes }', async () => {
     const resp = await fetch(`${baseUrl}/api/craft`);
     expect(resp.status).toBe(200);

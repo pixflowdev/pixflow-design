@@ -1061,17 +1061,7 @@ export function DesignFilesPanel({
                           >
                             {sharingFolder === `publish:${folder.path}` ? translateUi("chat.comments.sending") : translateUi("ui.assistantMessage.publishRepo")}
                           </button>
-                          <button
-                            type="button"
-                            className="df-plugin-install"
-                            data-testid={`design-plugin-folder-contribute-${folder.path}`}
-                            disabled={actionBusy || installingFolder !== null || sharingFolder !== null}
-                            onClick={() =>
-                              void handlePluginFolderAgentAction(folder.path, 'contribute')
-                            }
-                          >
-                            {sharingFolder === `contribute:${folder.path}` ? translateUi("chat.comments.sending") : translateUi("ui.assistantMessage.pixflowDesignPr")}
-                          </button>
+
                         </div>
                       ) : null}
                     </div>

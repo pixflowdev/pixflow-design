@@ -314,22 +314,7 @@ export function PluginCard({
                 />
                 <span>{sharePendingAction === 'publish-github' ? translateUi("pluginCard.starting") : translateUi("pluginCard.publish")}</span>
               </button>
-              <button
-                type="button"
-                className="plugins-home__action plugins-home__action--secondary plugins-home__action--compact"
-                onClick={() => onShareAction(record, 'contribute-open-design')}
-                disabled={pendingAny || shareBusy}
-                aria-busy={sharePendingAction === 'contribute-open-design' ? 'true' : undefined}
-                aria-label={translateUi("ui.pluginCard.contributeToPixflowDesign", { value1: title })}
-                title={translateUi("pluginCard.contributeTitle")}
-                data-testid={`plugins-home-contribute-open-design-${record.id}`}
-              >
-                <Icon
-                  name={sharePendingAction === 'contribute-open-design' ? 'spinner' : 'share'}
-                  size={12}
-                />
-                <span>{sharePendingAction === 'contribute-open-design' ? translateUi("pluginCard.starting") : translateUi("pluginCard.contribute")}</span>
-              </button>
+
             </div>
           ) : null}
         </div>

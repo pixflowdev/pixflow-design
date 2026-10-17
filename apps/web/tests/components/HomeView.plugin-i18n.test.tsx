@@ -75,7 +75,7 @@ describe('HomeView plugin i18n', () => {
     cleanup();
   });
 
-  it('routes the plugin card Use action as the active driver without hydrating the query', async () => {
+  it('routes a personal plugin handoff as the active driver without hydrating the query', async () => {
     const fetchMock = vi.fn<typeof fetch>(async (url) => {
       if (typeof url === 'string' && (url === '/api/plugins' || url === '/api/plugins?view=summary')) {
         return new Response(JSON.stringify({ plugins: [PLUGIN_ROW] }), {
@@ -97,6 +97,7 @@ describe('HomeView plugin i18n', () => {
       <I18nProvider initial="zh-CN">
         <div className="entry-main--scroll">
           <HomeView
+            promptHandoff={{id: 1, source: 'plugin-use', pluginId: PLUGIN_ROW.id, action: 'use', focus: true}}
             projects={[]}
             onSubmit={() => undefined}
             onOpenProject={() => undefined}
@@ -107,14 +108,6 @@ describe('HomeView plugin i18n', () => {
     );
     const scrollContainer = view.container.querySelector('.entry-main--scroll') as HTMLElement;
     scrollContainer.scrollTop = 240;
-
-    // Home Community renders gallery tiles with no inline Use button — the
-    // plugin is used from its detail modal. For query-bearing plugins the
-    // primary CTA is now "Replicate this content"; plain structure-only Use
-    // lives behind the caret menu.
-    fireEvent.click(await waitFor(() => screen.getByTestId('plugins-home-details-localized-plugin')));
-    fireEvent.click(await screen.findByTestId('plugin-details-use-localized-plugin-menu'));
-    fireEvent.click(await screen.findByTestId('plugin-details-use-option-localized-plugin'));
 
     // Plain "Use" now routes the plugin as the active driver (so its own
     // pipeline + context apply on submit) and applies it, surfacing the

@@ -143,7 +143,7 @@ function unquoteYamlScalar(value: string): string {
   return trimmed;
 }
 
-async function readSkillRootResources(rootName: 'skills' | 'design-templates'): Promise<SkillResource[]> {
+async function readSkillRootResources(rootName: 'skills'): Promise<SkillResource[]> {
   const skillsRoot = path.join(repoRoot, rootName);
   await assertDirectory(skillsRoot, rootName);
 
@@ -175,11 +175,7 @@ async function readSkillRootResources(rootName: 'skills' | 'design-templates'): 
 }
 
 async function readSkillResources(): Promise<SkillResource[]> {
-  const [skills, designTemplates] = await Promise.all([
-    readSkillRootResources('skills'),
-    readSkillRootResources('design-templates'),
-  ]);
-  return [...skills, ...designTemplates].sort((a, b) => a.id.localeCompare(b.id));
+  return readSkillRootResources('skills');
 }
 
 async function readDesignSystemResources(): Promise<DesignSystemResource[]> {
@@ -332,8 +328,8 @@ describe('localized display content coverage', () => {
     expect(uniqueSorted(skills.map((skill) => skill.id)), 'Expected discovered skills to be readable').not.toEqual([]);
     expect(
       uniqueSorted(designSystems.map((system) => system.id)),
-      'Expected discovered design systems to be readable',
-    ).not.toEqual([]);
+      'Bundled design-system catalogue is retired',
+    ).toEqual([]);
     expect(
       uniqueSorted(promptTemplates.map((template) => template.id)),
       'Expected discovered prompt templates to be readable',
@@ -385,7 +381,7 @@ describe('localized display content coverage', () => {
       expect(localized.summary).toBe(' English summary from source ');
       expect(localized.category).toBe('Untranslated Category');
       expect(localized.tags[0]).toBe('untranslated-tag');
-      expect(normalizeText(localized.tags[1] ?? ''), `${locale} should still localize known tags`).not.toEqual(
+      expect(normalizeText(localized.tags[1] ?? ''), `${locale} preserves untranslated tag identifiers`).toEqual(
         '3d',
       );
     });

@@ -128,7 +128,7 @@ describe('AssistantMessage feedback gate', () => {
     expect(onForkFromMessage).toHaveBeenCalledTimes(1);
   });
 
-  it('reaches Contribute (share to Pixflow Design) through the More -> Share cascade', async () => {
+  it('does not expose retired Community contribution actions', async () => {
     const onShare = vi.fn();
 
     render(
@@ -137,8 +137,9 @@ describe('AssistantMessage feedback gate', () => {
         streaming={false}
         projectId="proj-1"
         isLast
+        onToolboxAction={vi.fn()}
+        onArtifactShare={vi.fn()}
         onFeedback={vi.fn()}
-        onShareToOpenDesign={onShare}
       />,
     );
 
@@ -147,9 +148,9 @@ describe('AssistantMessage feedback gate', () => {
     // submit, replacing the old always-visible disabled button.
     fireEvent.mouseEnter(screen.getByTestId('next-step-toolbox-more'));
     fireEvent.mouseEnter(await screen.findByTestId('next-step-more-share'));
-    fireEvent.click(screen.getByTestId('next-step-share-contribute'));
+    expect(screen.queryByTestId('next-step-share-contribute')).toBeNull();
 
-    expect(onShare).toHaveBeenCalledTimes(1);
+
   });
 
   it('does not show the fork action while the assistant is streaming', () => {
@@ -734,4 +735,3 @@ describe('AssistantMessage recovered produced files', () => {
     expect(screen.getByText('agent-sketch.sketch.json')).toBeTruthy();
   });
 });
-

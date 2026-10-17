@@ -401,8 +401,6 @@ function printRootHelp() {
       Discover, install, and apply plugins through the local daemon.
   od plugin publish-repo <folder>
       Create/update the author's GitHub repo for a local plugin folder.
-  od plugin open-design-pr <folder>
-      Push a community-catalog branch and open the Pixflow Design PR form.
 
   od wp-admin <site-tool|access-mode|context|capabilities|capability|approve|execute|operation|audit|rollback|pairings> [args]
       Use the same WP Admin capability, approval, audit, and rollback contracts
@@ -1459,10 +1457,7 @@ async function runPlugin(args) {
     case 'login':    return runPluginLogin(rest);
     case 'whoami':   return runPluginWhoami(rest);
     case 'export':   return runPluginExport(rest);
-    case 'publish':  return runPluginPublish(rest);
     case 'publish-repo': return runPluginPublishRepo(rest);
-    case 'open-design-pr': return runPluginOpenDesignPr(rest);
-    case 'yank':     return runPluginYank(rest);
     default:
       console.error(`unknown subcommand: od plugin ${sub}`);
       printPluginHelp();
@@ -1706,7 +1701,7 @@ async function runPluginLogin(rest) {
     console.log(`Usage:
   od plugin login [--host github.com]
 
-Wraps GitHub CLI auth for Pixflow Design registry publishing. The token stays in gh.`);
+Wraps GitHub CLI auth for Pixflow Design personal plugin repository publishing. The token stays in gh.`);
     return;
   }
   const host = typeof flags.host === 'string' ? flags.host : 'github.com';
@@ -1728,7 +1723,7 @@ async function runPluginWhoami(rest) {
     console.log(`Usage:
   od plugin whoami [--host github.com] [--json]
 
-Shows the GitHub account gh will use for Pixflow Design registry publishing.`);
+Shows the GitHub account gh will use for Pixflow Design personal plugin repository publishing.`);
     return;
   }
   const host = typeof flags.host === 'string' ? flags.host : 'github.com';
@@ -3626,132 +3621,6 @@ Lists and formalizes persisted skill-to-plugin candidates.`);
   process.exit(2);
 }
 
-// Phase 4 / spec §14.1 — `od plugin publish --to <catalog>`.
-//
-// Reads the installed plugin's manifest metadata (or the snapshot's
-// frozen view via --snapshot-id) and prints the catalog submission URL
-// + PR body. With `--open` the CLI auto-launches the system browser
-// against the URL so the author lands on the catalog's submission form
-// in one step. We never POST anywhere — the upstream review flow is
-// always under the author's control.
-async function runPluginPublish(rest) {
-  const flags = parseFlags(rest, {
-    string: new Set(['daemon-url', 'to', 'snapshot-id', 'repo', 'catalog']),
-    boolean: new Set(['help', 'h', 'json', 'open']),
-  });
-  if (rest.length === 0 || flags.help || flags.h) {
-    console.log(`Usage:
-  od plugin publish <pluginId> --to open-design|anthropics-skills|awesome-agent-skills|clawhub|skills-sh
-                    [--repo <github-url>] [--snapshot-id <id>] [--open] [--json]
-  od plugin publish <pluginId> --to marketplace-json --catalog ./open-design-marketplace.json --repo <github-url>
-
-The CLI prints the catalog's submission URL + a pre-filled PR body.
-Pass --open to auto-launch the system browser. Use --snapshot-id to
-publish from a frozen run snapshot rather than the live installed copy.`);
-    process.exit(rest.length === 0 ? 2 : 0);
-  }
-  const id = rest.find((a) => !a.startsWith('-')
-    && a !== flags.to
-    && a !== flags.repo
-    && a !== flags['snapshot-id']);
-  const target = String(flags.to ?? '');
-  if (!id) {
-    console.error('Usage: od plugin publish <pluginId> --to <catalog>');
-    process.exit(2);
-  }
-  if (!target) {
-    console.error('--to <catalog> is required (one of: open-design, anthropics-skills, awesome-agent-skills, clawhub, skills-sh)');
-    process.exit(2);
-  }
-  const base = (await pluginDaemonUrl(flags)).replace(/\/$/, '');
-  // Pull the plugin metadata from the daemon. We do this through the
-  // existing /api/plugins/:id endpoint so the CLI never needs a direct
-  // SQLite handle; everything stays loopback-mediated.
-  let meta = { pluginId: id, pluginVersion: '0.0.0' };
-  try {
-    const resp = await fetch(`${base}/api/plugins/${encodeURIComponent(id)}`);
-    if (resp.ok) {
-      const row = await resp.json();
-      // The daemon's plugin row carries a stored `version` plus the full
-      // manifest. For project-local plugins (`generated-plugin/`, snapshots,
-      // freshly imported folders) the stored `version` is `'0.0.0'` until
-      // the registry handshake runs, but the manifest's `version` is the
-      // real value the author wrote. Mirror `plugins/marketplaces.ts:298,328`
-      // and prefer the manifest version when the stored row reads as the
-      // pre-handshake sentinel. Closes #1765.
-      const storedVersion = typeof row.version === 'string' && row.version.length > 0
-        ? row.version
-        : null;
-      const manifestVersion = typeof row.manifest?.version === 'string' && row.manifest.version.length > 0
-        ? row.manifest.version
-        : null;
-      const resolvedVersion = (storedVersion && storedVersion !== '0.0.0')
-        ? storedVersion
-        : (manifestVersion ?? storedVersion ?? '0.0.0');
-      meta = {
-        pluginId:          row.id ?? id,
-        pluginVersion:     resolvedVersion,
-        ...(row.title              ? { pluginTitle: row.title }                       : {}),
-        ...(row.manifest?.description ? { pluginDescription: row.manifest.description } : {}),
-      };
-    }
-  } catch {
-    // Best-effort; if the daemon isn't reachable we still try to build
-    // a link from the user's flags so the author doesn't need a daemon
-    // to publish.
-  }
-  if (typeof flags.repo === 'string' && flags.repo.length > 0) {
-    meta.repoUrl = flags.repo;
-  }
-  if (target === 'marketplace-json') {
-    if (typeof flags.catalog !== 'string' || flags.catalog.length === 0) {
-      console.error('--catalog <path> is required for --to marketplace-json');
-      process.exit(2);
-    }
-    if (!meta.repoUrl) {
-      console.error('--repo <github-url> is required for --to marketplace-json so the source can be reproduced');
-      process.exit(2);
-    }
-    const outcome = await publishToMarketplaceJson({
-      catalogPath: flags.catalog,
-      meta,
-    });
-    if (flags.json) {
-      process.stdout.write(JSON.stringify(outcome, null, 2) + '\n');
-    } else {
-      console.log(`[publish] updated ${outcome.catalogPath}`);
-      console.log(`[publish] ${outcome.entry.name}@${outcome.entry.version} -> ${outcome.entry.source}`);
-    }
-    return;
-  }
-  const { buildPublishLink, PublishError } = await import('./plugins/publish.js');
-  let link;
-  try {
-    link = buildPublishLink({ catalog: target, meta });
-  } catch (err) {
-    if (err instanceof PublishError) {
-      console.error(`[publish] ${err.message}`);
-      process.exit(2);
-    }
-    throw err;
-  }
-  if (flags.json) {
-    process.stdout.write(JSON.stringify(link, null, 2) + '\n');
-  } else {
-    console.log(`[publish] ${link.catalogLabel}`);
-    console.log(link.url);
-    console.log('---');
-    console.log(link.prBody);
-  }
-  if (flags.open) {
-    const opener = process.platform === 'darwin' ? 'open'
-      : process.platform === 'win32' ? 'start'
-      : 'xdg-open';
-    const { spawn } = await import('node:child_process');
-    spawn(opener, [link.url], { detached: true, stdio: 'ignore' }).unref();
-  }
-}
-
 async function runPluginPublishRepo(rest) {
   const flags = parseFlags(rest, {
     string: new Set(['host', 'owner']),
@@ -3914,165 +3783,6 @@ GitHub API as a last resort. It never publishes to placeholder owners.`);
   });
 }
 
-async function runPluginOpenDesignPr(rest) {
-  const flags = parseFlags(rest, {
-    string: new Set(['host', 'owner']),
-    boolean: new Set(['help', 'h', 'json', 'dry-run']),
-  });
-  if (rest.length === 0 || flags.help || flags.h) {
-    console.log(`Usage:
-  od plugin open-design-pr <folder> [--host github.com] [--owner github-login-or-fork-owner] [--dry-run] [--json]
-
-Copies a local plugin folder into plugins/community/<name>/ on the author's
-fork of pixflowdev/pixflow-design, pushes a branch, and opens the PR form with --web.`);
-    process.exit(rest.length === 0 ? 2 : 0);
-  }
-  const folder = rest.find((a) => !a.startsWith('-') && a !== flags.host && a !== flags.owner);
-  if (!folder) {
-    console.error('Usage: od plugin open-design-pr <folder>');
-    process.exit(2);
-  }
-  const [{ resolve, join }, fsp, os] = await Promise.all([
-    import('node:path'),
-    import('node:fs/promises'),
-    import('node:os'),
-  ]);
-  const absFolder = resolve(process.cwd(), folder);
-  const manifestPath = resolve(absFolder, 'open-design.json');
-  const manifest = JSON.parse(await fsp.readFile(manifestPath, 'utf8'));
-  const host = typeof flags.host === 'string' ? flags.host : 'github.com';
-  const target = await resolvePluginGithubTarget({ host, owner: flags.owner, manifest, purpose: 'open-design-pr' });
-  const name = String(manifest.name ?? '').trim();
-  if (!name) {
-    console.error('[open-design-pr] manifest.name is required');
-    process.exit(2);
-  }
-  const title = String(manifest.title ?? name).trim();
-  const branch = `plugin/${name}-${Math.floor(Date.now() / 1000)}`;
-  const tmpRoot = await fsp.mkdtemp(join(os.tmpdir(), 'od-open-design-pr-'));
-  const checkout = join(tmpRoot, 'open-design');
-  const steps = [];
-  const run = async (label, command, args, opts = {}) => {
-    steps.push({ label, command: [command, ...args].join(' ') });
-    if (flags['dry-run']) return { ok: true, stdout: '', stderr: '' };
-    const result = await (command === 'gh'
-      ? execGhBuffered(args, { cwd: opts.cwd ?? process.cwd(), timeout: opts.timeout ?? 180_000 })
-      : execFileBuffered(command, args, { cwd: opts.cwd ?? process.cwd(), timeout: opts.timeout ?? 180_000 }));
-    steps[steps.length - 1].ok = result.ok;
-    steps[steps.length - 1].stdout = result.stdout;
-    steps[steps.length - 1].stderr = result.stderr;
-    if (!result.ok && !opts.tolerate?.(result)) {
-      emitPluginWorkflowResult(flags, {
-        ok: false,
-        action: 'open-design-pr',
-        folder: absFolder,
-        login: target.login,
-        owner: target.owner,
-        ownerSource: target.ownerSource,
-        apiRateLimited: target.apiRateLimited,
-        branch,
-        steps,
-        error: { label, stdout: result.stdout, stderr: result.stderr, code: result.code },
-      });
-      process.exit(1);
-    }
-    return result;
-  };
-
-  await run('fork', 'gh', ['repo', 'fork', 'pixflowdev/pixflow-design'], {
-    tolerate: (r) => /already exists|existing fork/i.test(`${r.stdout}\n${r.stderr}`),
-  });
-  await run('clone fork', 'git', [
-    'clone',
-    '--depth', '1',
-    '--single-branch',
-    '--branch', 'main',
-    '--filter=blob:none',
-    '--sparse',
-    `https://github.com/${target.owner}/open-design.git`,
-    checkout,
-  ], { timeout: 240_000 });
-  await run('sparse checkout', 'git', ['sparse-checkout', 'set', 'plugins/community'], { cwd: checkout });
-  await run('checkout branch', 'git', ['checkout', '-b', branch], { cwd: checkout });
-  const dest = join(checkout, 'plugins', 'community', name);
-  if (!flags['dry-run']) {
-    await fsp.rm(dest, { recursive: true, force: true });
-    await fsp.mkdir(dest, { recursive: true });
-    await fsp.cp(absFolder, dest, { recursive: true, force: true, filter: (src) => !src.includes(`${absFolder}/.git`) });
-  }
-  await run('git add', 'git', ['add', `plugins/community/${name}`], { cwd: checkout });
-  await run('git commit', 'git', ['commit', '-m', `Add ${title} plugin`], { cwd: checkout });
-  await run('git push branch', 'git', ['push', '-u', 'origin', branch], { cwd: checkout });
-  const body = [
-    `Add ${title} (${name}) plugin.`,
-    '',
-    `Version: ${manifest.version ?? '0.0.0'}`,
-    manifest.description ? `Description: ${manifest.description}` : '',
-  ].filter(Boolean).join('\n');
-  const pr = await run('open PR form', 'gh', [
-    'pr', 'create',
-    '--repo', 'pixflowdev/pixflow-design',
-    '--head', `${target.owner}:${branch}`,
-    '--base', 'main',
-    '--title', `Add ${title} plugin`,
-    '--body', body,
-    '--web',
-  ], { cwd: checkout });
-  const prUrl = extractFirstUrl(pr.stdout || pr.stderr) ?? `https://github.com/${target.owner}/open-design/pull/new/${branch}`;
-  emitPluginWorkflowResult(flags, {
-    ok: true,
-    action: 'open-design-pr',
-    folder: absFolder,
-    login: target.login,
-    owner: target.owner,
-    ownerSource: target.ownerSource,
-    apiRateLimited: target.apiRateLimited,
-    branch,
-    prUrl,
-    checkout,
-    steps,
-  });
-}
-
-async function publishToMarketplaceJson({ catalogPath, meta }) {
-  const [{ dirname, resolve }, { mkdir, readFile, writeFile }, { PublishError, upsertMarketplaceJsonEntry }] = await Promise.all([
-    import('node:path'),
-    import('node:fs/promises'),
-    import('./plugins/publish.js'),
-  ]);
-  const resolvedPath = resolve(process.cwd(), catalogPath);
-  let existing = null;
-  try {
-    existing = JSON.parse(await readFile(resolvedPath, 'utf8'));
-  } catch (err) {
-    if (err?.code !== 'ENOENT') {
-      throw err;
-    }
-  }
-  let outcome;
-  try {
-    outcome = upsertMarketplaceJsonEntry({ manifest: existing, meta });
-  } catch (err) {
-    if (err instanceof PublishError) {
-      console.error(`[publish] ${err.message}`);
-      process.exit(2);
-    }
-    throw err;
-  }
-  await mkdir(dirname(resolvedPath), { recursive: true });
-  await writeFile(resolvedPath, `${JSON.stringify(outcome.manifest, null, 2)}\n`, 'utf8');
-  return {
-    catalogPath: resolvedPath,
-    inserted: outcome.inserted,
-    entry: outcome.entry,
-    manifest: {
-      name: outcome.manifest.name,
-      version: outcome.manifest.version,
-      plugins: outcome.manifest.plugins.length,
-    },
-  };
-}
-
 async function resolvePluginGithubTarget({ host = 'github.com', owner, manifest, purpose }) {
   const version = await execGhBuffered(['--version'], { timeout: 10_000 });
   if (!version.ok) {
@@ -4117,14 +3827,12 @@ async function resolvePluginGithubTarget({ host = 'github.com', owner, manifest,
     console.error(`[plugin github] could not resolve the GitHub owner for ${purpose}.`);
     if (apiError?.stderr || apiError?.stdout) console.error(apiError.stderr || apiError.stdout);
     if (apiError && isGhApiRateLimit(apiError)) {
-      const ownerHint = purpose === 'open-design-pr' ? '<github-login-or-fork-owner>' : '<github-login-or-org>';
+      const ownerHint = '<github-login-or-org>';
       console.error(`GitHub API is rate limited. Re-run with --owner ${ownerHint}, or authenticate/refresh gh and retry.`);
     } else {
       console.error('Run: gh auth refresh -h github.com -s repo,workflow');
       console.error('Or:  gh auth login -h github.com -s repo,workflow');
-      console.error(purpose === 'open-design-pr'
-        ? 'If the fork owner differs from your auth login, pass --owner <github-login-or-fork-owner>.'
-        : 'If this is an org-owned plugin, pass --owner <github-org>.');
+      console.error('If this is an org-owned plugin, pass --owner <github-org>.');
     }
     process.exit(1);
   }
@@ -4251,12 +3959,6 @@ function emitPluginWorkflowResult(flags, payload) {
     if (payload.manifestRewritten) console.log('[publish-repo] manifest repo fields were normalized before publishing.');
     return;
   }
-  if (payload.action === 'open-design-pr') {
-    if (payload.ownerSource) console.log(`[open-design-pr] owner resolved from ${payload.ownerSource}: ${payload.owner}`);
-    if (payload.apiRateLimited) console.log('[open-design-pr] GitHub API was rate limited; continued with the locally resolved owner.');
-    console.log(`Open this URL and click Create to file the PR: ${payload.prUrl}`);
-    return;
-  }
   console.log(JSON.stringify(payload, null, 2));
 }
 
@@ -4267,79 +3969,6 @@ function safeJson(raw) {
 function extractFirstUrl(text) {
   const match = /https?:\/\/\S+/i.exec(String(text ?? ''));
   return match ? match[0].replace(/[)\].,]+$/, '') : null;
-}
-
-async function runPluginYank(rest) {
-  const flags = parseFlags(rest, {
-    string: new Set(['daemon-url', 'reason', 'to']),
-    boolean: new Set(['help', 'h', 'json', 'open']),
-  });
-  if (rest.length === 0 || flags.help || flags.h) {
-    console.log(`Usage:
-  od plugin yank <vendor/plugin-name>@<version> --reason "<why>" [--to open-design] [--json]
-
-Yanking never deletes metadata or bytes. It opens the registry review flow that
-marks a version unresolvable for new installs while preserving lockfile replay.`);
-    process.exit(rest.length === 0 ? 2 : 0);
-  }
-  const spec = rest.find((a) => !a.startsWith('-') && a !== flags.reason && a !== flags.to);
-  const reason = typeof flags.reason === 'string' ? flags.reason.trim() : '';
-  const parsed = parseCliPluginSpecifier(spec);
-  if (!parsed.name || !parsed.range) {
-    console.error('Usage: od plugin yank <vendor/plugin-name>@<version> --reason "<why>"');
-    process.exit(2);
-  }
-  if (!reason) {
-    console.error('--reason is required for yanking');
-    process.exit(2);
-  }
-  const target = flags.to ?? 'open-design';
-  if (target !== 'open-design') {
-    console.error('Only --to open-design is supported in this v1 GitHub-backed yank flow.');
-    process.exit(2);
-  }
-  const title = `Yank ${parsed.name}@${parsed.range}`;
-  const body = [
-    `## Yank ${parsed.name}@${parsed.range}`,
-    '',
-    `Reason: ${reason}`,
-    '',
-    'Expected registry patch:',
-    '',
-    '```json',
-    JSON.stringify({
-      name: parsed.name,
-      version: parsed.range,
-      yanked: true,
-      yankReason: reason,
-    }, null, 2),
-    '```',
-    '',
-    'Generated by `od plugin yank`.',
-  ].join('\n');
-  const params = new URLSearchParams({ title, body });
-  const payload = {
-    catalog: 'open-design',
-    name: parsed.name,
-    version: parsed.range,
-    reason,
-    url: `https://github.com/pixflowdev/pixflow-design/issues/new?${params.toString()}`,
-    body,
-  };
-  if (flags.json) {
-    process.stdout.write(JSON.stringify(payload, null, 2) + '\n');
-  } else {
-    console.log(`[yank] ${payload.url}`);
-    console.log('---');
-    console.log(body);
-  }
-  if (flags.open) {
-    const opener = process.platform === 'darwin' ? 'open'
-      : process.platform === 'win32' ? 'start'
-      : 'xdg-open';
-    const { spawn } = await import('node:child_process');
-    spawn(opener, [payload.url], { detached: true, stdio: 'ignore' }).unref();
-  }
 }
 
 async function runPluginDoctor(rest) {
@@ -4766,11 +4395,7 @@ function printPluginHelp() {
                                           List persisted skill-to-plugin candidates.
   od plugin publish-repo <folder>         Create/update the author's public
                                           GitHub repo for a plugin folder.
-  od plugin open-design-pr <folder>       Push a community-catalog branch and
-                                          open the pixflowdev/pixflow-design PR form.
-  od plugin publish <folder> --to open-design|anthropics-skills|awesome-agent-skills|clawhub|skills-sh
-                                          Prepare a registry submission link.
-  od plugin login [--host github.com]      Authenticate registry publishing via gh.
+  od plugin login [--host github.com]      Authenticate personal plugin repository publishing via gh.
   od plugin whoami [--host github.com]     Show the gh account used for publishing.
 
 Common options:

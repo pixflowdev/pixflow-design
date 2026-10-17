@@ -159,16 +159,15 @@ describe("copyResourceTree", () => {
       const config = makeConfig(root);
       const paths = resolveMacPaths(config);
       const resourceNames = [
-        "skills",
-        "design-templates",
-        "design-systems",
-        "craft",
-        "plugins/_official",
-        "plugins/registry",
+        "skills/agent-browser",
+        "skills/export-download-debugging",
+        "skills/web-design-guidelines",
+        "skills/writing-guidelines",
+        "guidance/scenarios/od-default",
+        "guidance/examples/web-clone",
         "assets/frames",
         "assets/community-pets",
         "prompt-templates",
-        "data/plugin-previews",
         "tools/pixflow-design-bridge",
       ];
 

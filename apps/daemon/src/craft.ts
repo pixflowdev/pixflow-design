@@ -1,6 +1,6 @@
 // Craft references loader. The active skill declares which sections it
 // needs via `od.craft.requires`; this module reads the matching files
-// from <projectRoot>/craft/<slug>.md and returns a single concatenated
+// from <runtimeDataDir>/craft/<slug>.md and returns a single concatenated
 // body ready to splice into the system prompt. Missing files are
 // dropped silently — a skill that lists `motion` before we ship a
 // motion.md should still work, just without the motion section.

@@ -29,150 +29,54 @@ async function writeFakeOpenCodeCompanion(
 }
 
 describe("copyBundledResourceTrees", () => {
-  it("includes daemon resource trees", async () => {
-    const root = await mkdtemp(join(tmpdir(), "open-design-tools-pack-"));
+  it("bundles essential guidance at compatible targets without copying retired catalogues or personal data", async () => {
+    const root = await mkdtemp(join(tmpdir(), "pixflow-tools-pack-resources-"));
     const workspaceRoot = join(root, "workspace");
     const resourceRoot = join(root, "resources");
-
+    const essential = [
+      ["skills/agent-browser/SKILL.md", "skills/agent-browser/SKILL.md"],
+      ["skills/export-download-debugging/SKILL.md", "skills/export-download-debugging/SKILL.md"],
+      ["skills/web-design-guidelines/SKILL.md", "skills/web-design-guidelines/SKILL.md"],
+      ["skills/writing-guidelines/SKILL.md", "skills/writing-guidelines/SKILL.md"],
+      ["guidance/scenarios/od-default/open-design.json", "plugins/_official/scenarios/od-default/open-design.json"],
+      ["guidance/examples/web-clone/open-design.json", "plugins/_official/examples/web-clone/open-design.json"],
+      ["assets/frames/sample.txt", "frames/sample.txt"],
+      ["assets/community-pets/sample/pet.json", "community-pets/sample/pet.json"],
+      ["prompt-templates/image/sample.json", "prompt-templates/image/sample.json"],
+      ["tools/pixflow-design-bridge/bricks-handoff-cli.mjs", "tools/pixflow-design-bridge/bricks-handoff-cli.mjs"],
+    ];
+    const excluded = ["craft/sample.md", "design-templates/sample/SKILL.md", "design-systems/sample/DESIGN.md",
+      "plugins/_official/sample/open-design.json", "plugins/registry/community/manifest.json",
+      "data/plugin-previews/manifest.json", "skills/retired/SKILL.md", ".od/app.sqlite", ".od/projects/customer/content.md"];
     try {
-      const promptTemplatePath = join(
-        workspaceRoot,
-        "prompt-templates",
-        "image",
-        "sample.json",
-      );
-      const designTemplatePath = join(
-        workspaceRoot,
-        "design-templates",
-        "orbit-general",
-        "SKILL.md",
-      );
-      const communityPetPath = join(
-        workspaceRoot,
-        "assets",
-        "community-pets",
-        "sample",
-        "pet.json",
-      );
-      const communityRegistryPath = join(
-        workspaceRoot,
-        "plugins",
-        "registry",
-        "community",
-        "open-design-marketplace.json",
-      );
-      await mkdir(join(workspaceRoot, "skills", "sample"), { recursive: true });
-      // The skills/design-templates split (see specs/current/
-      // skills-and-design-templates.md) added a separate top-level
-      // `design-templates/` tree that copyBundledResourceTrees now also
-      // bundles. Create it in the fixture so the recursive copy does not
-      // fail with ENOENT before reaching the prompt-templates assertion.
-      await mkdir(join(workspaceRoot, "design-templates", "orbit-general"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "design-systems", "sample"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "craft", "sample"), { recursive: true });
-      await mkdir(join(workspaceRoot, "plugins", "_official", "sample"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "plugins", "registry", "community"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "assets", "frames"), { recursive: true });
-      await mkdir(join(workspaceRoot, "assets", "community-pets", "sample"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "prompt-templates", "image"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "tools", "pixflow-design-bridge"), {
-        recursive: true,
-      });
-      await mkdir(join(workspaceRoot, "data", "plugin-previews"), {
-        recursive: true,
-      });
-      await writeFile(promptTemplatePath, "{\"id\":\"sample\"}\n", "utf8");
-      await writeFile(
-        join(workspaceRoot, "tools", "pixflow-design-bridge", "bricks-handoff-cli.mjs"),
-        "#!/usr/bin/env node\n",
-        "utf8",
-      );
-      await writeFile(
-        join(workspaceRoot, "data", "plugin-previews", "manifest.json"),
-        "{\"previews\":{}}\n",
-        "utf8",
-      );
-      await writeFile(designTemplatePath, "# Orbit General\n", "utf8");
-      await writeFile(communityPetPath, "{\"name\":\"sample\"}\n", "utf8");
-      await writeFile(
-        join(workspaceRoot, "plugins", "_official", "sample", "open-design.json"),
-        "{\"id\":\"sample\"}\n",
-        "utf8",
-      );
-      await writeFile(communityRegistryPath, "{\"plugins\":[]}\n", "utf8");
-
-      await copyBundledResourceTrees({ workspaceRoot, resourceRoot, proRoot: '' });
-
-      await expect(
-        readFile(
-          join(resourceRoot, "prompt-templates", "image", "sample.json"),
-          "utf8",
-        ),
-      ).resolves.toBe("{\"id\":\"sample\"}\n");
-      // The baked plugin-preview manifest must land under data/plugin-previews so
-      // the packaged daemon can map plugins to their R2 clips; without it the
-      // gallery silently falls back to live iframes.
-      await expect(
-        readFile(
-          join(resourceRoot, "data", "plugin-previews", "manifest.json"),
-          "utf8",
-        ),
-      ).resolves.toBe("{\"previews\":{}}\n");
-      await expect(
-        readFile(
-          join(resourceRoot, "design-templates", "orbit-general", "SKILL.md"),
-          "utf8",
-        ),
-      ).resolves.toBe("# Orbit General\n");
-      await expect(
-        readFile(
-          join(resourceRoot, "tools", "pixflow-design-bridge", "bricks-handoff-cli.mjs"),
-          "utf8",
-        ),
-      ).resolves.toBe("#!/usr/bin/env node\n");
-      await expect(
-        readFile(
-          join(resourceRoot, "community-pets", "sample", "pet.json"),
-          "utf8",
-        ),
-      ).resolves.toBe("{\"name\":\"sample\"}\n");
-      await expect(
-        readFile(
-          join(resourceRoot, "plugins", "_official", "sample", "open-design.json"),
-          "utf8",
-        ),
-      ).resolves.toBe("{\"id\":\"sample\"}\n");
-      await expect(
-        readFile(
-          join(
-            resourceRoot,
-            "plugins",
-            "registry",
-            "community",
-            "open-design-marketplace.json",
-          ),
-          "utf8",
-        ),
-      ).resolves.toBe("{\"plugins\":[]}\n");
-      const proRoot = join(root, 'private-checkout');
-      await mkdir(join(proRoot, 'skills/web-clone'), { recursive: true });
-      await writeFile(join(proRoot, 'skills/web-clone/SKILL.md'), '# Private clone workflow\n');
-      await expect(access(join(resourceRoot, 'skills/web-clone/SKILL.md'))).rejects.toThrow();
+      for (const [source] of essential) {
+        await mkdir(dirname(join(workspaceRoot, source)), { recursive: true });
+        await writeFile(join(workspaceRoot, source), source);
+      }
+      for (const source of excluded) {
+        await mkdir(dirname(join(workspaceRoot, source)), { recursive: true });
+        await writeFile(join(workspaceRoot, source), source);
+      }
+      await mkdir(join(resourceRoot, ".od"), { recursive: true });
+      await writeFile(join(resourceRoot, ".od/app.sqlite"), "existing customer data");
+      await copyBundledResourceTrees({ workspaceRoot, resourceRoot, proRoot: "" });
+      for (const [source, target] of essential) {
+        await expect(readFile(join(resourceRoot, target), "utf8")).resolves.toBe(source);
+        await expect(readFile(join(workspaceRoot, source), "utf8")).resolves.toBe(source);
+      }
+      for (const source of excluded) {
+        if (source !== ".od/app.sqlite") await expect(access(join(resourceRoot, source))).rejects.toThrow();
+        await expect(readFile(join(workspaceRoot, source), "utf8")).resolves.toBe(source);
+      }
+      await expect(readFile(join(resourceRoot, ".od/app.sqlite"), "utf8")).resolves.toBe("existing customer data");
+      const proRoot = join(root, "private-checkout");
+      for (const skill of ["web-clone", "retired"]) {
+        await mkdir(join(proRoot, "skills", skill), { recursive: true });
+        await writeFile(join(proRoot, "skills", skill, "SKILL.md"), skill);
+      }
       await copyBundledResourceTrees({ workspaceRoot, resourceRoot, proRoot });
-      await expect(readFile(join(resourceRoot, 'skills/web-clone/SKILL.md'), 'utf8')).resolves.toBe('# Private clone workflow\n');
-      await expect(readFile(promptTemplatePath, 'utf8')).resolves.toBe('{"id":"sample"}\n');
+      await expect(readFile(join(resourceRoot, "skills/web-clone/SKILL.md"), "utf8")).resolves.toBe("web-clone");
+      await expect(access(join(resourceRoot, "skills/retired/SKILL.md"))).rejects.toThrow();
     } finally {
       await rm(root, { force: true, recursive: true });
     }

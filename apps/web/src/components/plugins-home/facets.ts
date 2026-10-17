@@ -19,7 +19,6 @@
 // catalog is shaped.
 
 import { resolveLocalizedText, type InstalledPluginRecord } from '@open-design/contracts';
-import { CURATED_LIVE_ARTIFACT_PLUGIN_IDS } from './curatedPriority';
 import { localizedText } from './localization';
 
 export type FacetAxis = 'category' | 'subcategory';
@@ -133,7 +132,7 @@ function isVideoPlugin(record: InstalledPluginRecord): boolean {
 }
 
 function isLiveArtifactPlugin(record: InstalledPluginRecord): boolean {
-  return (CURATED_LIVE_ARTIFACT_PLUGIN_IDS as readonly string[]).includes(record.id);
+  return byAnySlug('live-artifact', 'live-artifacts', 'live-dashboard')(record);
 }
 
 // Curated artifact-kind list. Keep this aligned with the Home creation

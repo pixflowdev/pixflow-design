@@ -1,0 +1,334 @@
+/* WP Admin host: intentionally separate from the Bricks shell selectors. */
+#pixflow-admin-workspace {
+  position: fixed;
+  inset: var(--wp-admin--admin-bar--height, 32px) 0 0;
+  z-index: 100150;
+  background: var(--bg, #1f1f1f);
+}
+
+#pixflow-admin-workspace[hidden] { display: none; }
+#pixflow-admin-workspace > #pixflow-design-root { height: 100%; width: 100%; }
+body.pixflow-admin-workspace-open { overflow: hidden; }
+body.pixflow-admin-workspace-open #pixflow-wp-admin-agent-shell { visibility: hidden; }
+
+:is(#wp-admin-bar-pixflow-design, #wp-admin-bar-pixflow-design-menu) > .ab-item .ab-icon::before {
+  content: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+}
+
+#wpadminbar #wp-admin-bar-pixflow-design.is-open > .ab-item {
+  background: var(--selected, #2563eb);
+}
+
+#wpadminbar :is(#wp-admin-bar-pixflow-design, #wp-admin-bar-pixflow-design-menu) > .ab-item {
+  display: flex;
+  width: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+:is(#wp-admin-bar-pixflow-design, #wp-admin-bar-pixflow-design-menu) > .ab-item .pixflow-design-admin-bar__icon {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+:is(#wp-admin-bar-pixflow-design, #wp-admin-bar-pixflow-design-menu) > .ab-item .pixflow-design-admin-bar__icon img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+
+:is(#wp-admin-bar-pixflow-design, #wp-admin-bar-pixflow-design-menu) > .ab-item .ab-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#pixflow-wp-admin-agent-shell {
+  position: fixed;
+  z-index: 100100;
+  display: none;
+  min-width: min(380px, calc(100vw - 24px));
+  min-height: min(560px, calc(100vh - 64px));
+  overflow: hidden;
+  color: var(--od-text, #172033);
+  background: var(--od-surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--od-border, #d9deea) 86%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28), 0 4px 18px rgba(15, 23, 42, 0.16);
+}
+
+#pixflow-wp-admin-agent-shell.is-open {
+  display: block;
+}
+
+#pixflow-wp-admin-agent-shell .pixflow-agent-surface-shell,
+#pixflow-wp-admin-agent-shell .pixflow-wp-admin-agent-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.pixflow-wp-admin-agent-frame {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--od-surface, #fff);
+}
+
+.pixflow-wp-admin-agent__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 8px 10px 8px 12px;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--od-border, #d9deea) 78%, transparent);
+}
+
+.pixflow-wp-admin-agent__header:active {
+  cursor: grabbing;
+}
+
+.pixflow-wp-admin-agent__identity,
+.pixflow-wp-admin-agent__actions,
+.pixflow-wp-admin-agent__context,
+.pixflow-wp-admin-agent__modebar {
+  display: flex;
+  align-items: center;
+}
+
+.pixflow-wp-admin-agent__identity {
+  gap: 8px;
+  min-width: 0;
+}
+
+.pixflow-wp-admin-agent__identity strong,
+.pixflow-wp-admin-agent__identity small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixflow-wp-admin-agent__identity strong {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.pixflow-wp-admin-agent__identity small {
+  margin-top: 2px;
+  color: var(--od-muted, #6b7280);
+  font-size: 10px;
+}
+
+.pixflow-wp-admin-agent__mark {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: #fff;
+  background: var(--od-accent, #146ef5);
+  border-radius: 8px;
+}
+
+.pixflow-wp-admin-agent__actions {
+  gap: 4px;
+}
+
+.pixflow-wp-admin-agent__actions button,
+.pixflow-wp-admin-agent__context button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.pixflow-wp-admin-agent__actions button:hover,
+.pixflow-wp-admin-agent__context button:hover {
+  background: color-mix(in srgb, var(--od-border, #d9deea) 38%, transparent);
+}
+
+.pixflow-wp-admin-agent__context {
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  color: var(--od-muted, #5f6879);
+  font-size: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--od-border, #d9deea) 58%, transparent);
+}
+
+.pixflow-wp-admin-agent__context > span:nth-child(2) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixflow-wp-admin-agent__context-icon {
+  color: var(--od-accent, #146ef5);
+}
+
+.pixflow-wp-admin-agent__context-status {
+  color: var(--od-muted, #6b7280);
+  font-size: 9px;
+}
+
+.pixflow-wp-admin-agent__context-status.is-error {
+  color: #b42318;
+}
+
+.pixflow-wp-admin-agent__modebar {
+  gap: 3px;
+  padding: 6px 10px 2px;
+}
+
+.pixflow-wp-admin-agent__modebar button {
+  flex: 1;
+  min-height: 26px;
+  padding: 4px 8px;
+  color: var(--od-muted, #6b7280);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pixflow-wp-admin-agent__modebar button:hover,
+.pixflow-wp-admin-agent__modebar button.is-active {
+  color: var(--od-text, #172033);
+  background: color-mix(in srgb, var(--od-accent, #146ef5) 10%, transparent);
+  border-color: color-mix(in srgb, var(--od-accent, #146ef5) 34%, transparent);
+}
+
+.pixflow-wp-admin-agent-frame .chat-log-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pixflow-wp-admin-agent-frame .chat-log {
+  padding: 8px 10px 6px;
+}
+
+.pixflow-wp-admin-agent__empty {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  padding: 42px 20px;
+  color: var(--od-muted, #6b7280);
+  text-align: center;
+  font-size: 11px;
+}
+
+.pixflow-wp-admin-agent__empty svg {
+  color: var(--od-accent, #146ef5);
+}
+
+.pixflow-wp-admin-agent__empty strong {
+  color: var(--od-text, #172033);
+  font-size: 12px;
+}
+
+.pixflow-wp-admin-agent__composer {
+  flex: 0 0 auto;
+  padding: 5px 8px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--od-border, #d9deea) 70%, transparent);
+}
+
+.pixflow-wp-admin-agent__composer .composer-shell {
+  margin: 0;
+}
+
+.pixflow-wp-admin-agent__resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  opacity: 0.45;
+}
+
+.pixflow-wp-admin-agent__resize::after {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 8px;
+  height: 8px;
+  content: '';
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+}
+
+@media (max-width: 680px) {
+  #pixflow-wp-admin-agent-shell {
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+  }
+}
+
+/* Pixflow-owned parity layer: the WP Admin host now mounts the same panel
+   chrome and inner React surface as the Bricks floating panel. Keep the
+   admin-only stylesheet limited to host geometry and the typed action review
+   card above; do not restyle the shared chat. */
+#pixflow-wp-admin-agent-shell.pixflow-bricks-agent-shell {
+  color: var(--text, #1a1916);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+#pixflow-wp-admin-agent-shell .pixflow-bricks-agent-panel {
+  width: 100%;
+  height: 100%;
+}
+
+#pixflow-wp-admin-agent-shell .pixflow-wp-admin-agent-root,
+#pixflow-wp-admin-agent-shell .pixflow-agent-surface-shell {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+#pixflow-wp-admin-agent-shell .pixflow-wp-admin-agent-root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#pixflow-wp-admin-agent-shell .pixflow-bricks-agent-react__composer-dock {
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+body.pixflow-wp-admin-panel-moving,
+body.pixflow-wp-admin-panel-moving * { cursor: grabbing !important; user-select: none !important; }
+body.pixflow-wp-admin-panel-moving iframe { pointer-events: none !important; }

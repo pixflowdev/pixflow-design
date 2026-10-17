@@ -1,0 +1,11 @@
+.notice { display: flex; align-items: flex-start; gap: 10px; margin: 8px 12px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 14px; background: var(--composer-surface, var(--bg-elevated)); color: var(--text); }
+@supports (corner-shape: squircle) { .notice { corner-shape: squircle; } }
+.icon { flex: 0 0 16px; margin-top: 2px; color: var(--text-muted); }
+.body { min-width: 0; flex: 1; }
+.title { display: block; font-size: 12px; font-weight: 550; line-height: 1.5; }
+.notice .message { margin: 4px 0 0; padding: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); overflow-wrap: anywhere; }
+.details { margin-top: 8px; font-size: 11px; line-height: 1.5; color: var(--text-muted); }
+.details summary { cursor: pointer; width: fit-content; border-radius: 4px; }
+.details summary:hover { color: var(--text); }
+.details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.notice .details p { margin: 6px 0 0; font-size: inherit; line-height: inherit; overflow-wrap: anywhere; }

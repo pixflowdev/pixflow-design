@@ -1,0 +1,107 @@
+# Generated from the typed Pixflow language catalogues. Edit the source catalogues.
+msgid ""
+msgstr "Project-Id-Version: pixflow-design 2.0.4\nLanguage: ko_KR\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
+
+#: wordpress/src/Modules/ModuleHost.php:54
+msgid "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available."
+msgstr "Pixflow 추가 기능을 시작하지 못했습니다. Pixflow 플러그인의 호환성을 확인한 후 새로고침하세요. 다른 기능은 계속 사용할 수 있습니다."
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Activate Pro"
+msgstr "Pro 활성화"
+
+#: wordpress/src/License/LicenseService.php:336
+msgid "Automatic trial verification requires a public HTTPS website. Local testing remains available within your trial."
+msgstr "체험판 자동 확인에는 공개적으로 접근 가능한 HTTPS 사이트가 필요합니다. 체험 기간 동안 로컬 테스트는 계속 사용할 수 있습니다."
+
+#: wordpress/src/License/LicenseService.php:340
+msgid "Automatic website verification could not finish. Retry activation. Your saved content is unchanged."
+msgstr "사이트 자동 확인을 완료하지 못했습니다. 활성화를 다시 시도하세요. 저장된 콘텐츠는 변경되지 않았습니다."
+
+#: wordpress/src/License/ProUpgradeNotice.php:34
+msgid "Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro."
+msgstr "Pro 추가 기능으로 프리미엄 도구를 복원하세요. 라이선스, 콘텐츠, 저장된 설정은 유지됩니다. Bricks 2단계 인증을 사용했다면 Pro 활성화 후 설정에서 다시 켜세요."
+
+#: wordpress/src/License/ProUpgradeNotice.php:44
+msgid "Build in your favourite builder. Add annotations, voice, design systems and image generation to your workflow."
+msgstr "즐겨 쓰는 빌더에서 제작하세요. 워크플로에 주석, 음성, 디자인 시스템 및 이미지 생성을 추가하세요."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Check Pro trial"
+msgstr "Pro 체험 확인"
+
+#: wordpress/src/License/ProUpgradeNotice.php:97
+msgid "Could not save dismissal. Please try again."
+msgstr "닫기 상태를 저장하지 못했습니다. 다시 시도하세요."
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss"
+msgstr "닫기"
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss Pixflow Pro banner"
+msgstr "Pixflow Pro 배너 닫기"
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Download Pro"
+msgstr "Pro 다운로드"
+
+#: wordpress/src/License/ProUpgradeNotice.php:43
+msgid "More possibilities with Pixflow Design Pro"
+msgstr "Pixflow Design Pro로 더 많은 가능성"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:40 wordpress/src/Admin/WpAdminFloatingPanel.php:41
+msgid "Open Pixflow Design"
+msgstr "Pixflow Design 열기"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:50 wordpress/src/Admin/WpAdminFloatingPanel.php:54 wordpress/src/Admin/WpAdminFloatingPanel.php:55
+msgid "Open settings"
+msgstr "설정 열기"
+
+#: wordpress/src/License/LicenseService.php:337
+msgid "Pixflow could not reach this website to verify it. Check HTTPS and any firewall or password protection, then retry activation."
+msgstr "Pixflow가 확인을 위해 이 사이트에 연결하지 못했습니다. HTTPS와 방화벽 또는 비밀번호 보호 설정을 확인한 후 활성화를 다시 시도하세요."
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:36
+msgid "Pixflow Design"
+msgstr "Pixflow Design"
+
+#: wordpress/src/License/LicenseService.php:339
+msgid "Please wait a few minutes before retrying trial activation."
+msgstr "몇 분 기다린 후 체험판 활성화를 다시 시도하세요."
+
+#: wordpress/src/License/ProUpgradeNotice.php:92
+msgid "Refresh this page and try again."
+msgstr "이 페이지를 새로고친 후 다시 시도하세요."
+
+#: wordpress/src/License/ProUpgradeNotice.php:65
+msgid "Start your 7-day Pro trial"
+msgstr "7일 Pro 체험 시작"
+
+#: wordpress/src/License/LicenseService.php:334
+msgid "This domain and its subdomains have already used a Pro trial. View pricing or contact Pixflow support. Your saved content is unchanged."
+msgstr "이 도메인과 하위 도메인에서는 이미 Pro 체험판을 사용했습니다. 요금을 확인하거나 Pixflow 지원팀에 문의하세요. 저장된 콘텐츠는 변경되지 않았습니다."
+
+#: wordpress/src/License/LicenseService.php:335
+msgid "This website needs a trial history review. Contact Pixflow support; your saved content is unchanged."
+msgstr "이 사이트의 체험판 사용 기록을 검토해야 합니다. Pixflow 지원팀에 문의하세요. 저장된 콘텐츠는 변경되지 않았습니다."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Try Pro for 7 days"
+msgstr "7일 동안 Pro 체험"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Upgrade to Pro"
+msgstr "Pro로 업그레이드"
+
+#: wordpress/src/License/ProUpgradeNotice.php:88 wordpress/src/License/ProUpgradeNotice.php:105
+msgid "You cannot dismiss this notice."
+msgstr "이 알림을 닫을 수 없습니다."
+
+#: wordpress/src/License/ProUpgradeNotice.php:33
+msgid "Your Pixflow plan includes Pro"
+msgstr "Pixflow 요금제에 Pro가 포함되어 있습니다"
+
+#: wordpress/src/License/LicenseService.php:338
+msgid "Your Pro trial has expired. Free remains available and your saved content is unchanged."
+msgstr "Pro 체험 기간이 만료되었습니다. Free는 계속 사용할 수 있으며 저장된 콘텐츠는 변경되지 않았습니다."

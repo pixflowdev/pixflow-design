@@ -1,0 +1,30 @@
+export type PixflowBricksCompatibilityContext = Record<string, any> & {
+  schema: string;
+  version: 1;
+  profileVersion: string;
+  profileId: string;
+  status: 'supported' | 'partial' | 'unknown' | 'incompatible';
+  bricksVersion: string | null;
+  fallbackUsed: boolean;
+  fallbackReason: string;
+  breakpoints: Array<{ key: string; label: string; width: number; base: boolean }>;
+  pseudoStates: string[];
+  provenance: { nativeConverterConsulted: false };
+};
+
+export const PIXFLOW_BRICKS_COMPATIBILITY_SCHEMA: string;
+export const PIXFLOW_BRICKS_PROFILE_VERSION: string;
+export function resolvePixflowBricksCompatibilityContext(snapshot?: unknown): PixflowBricksCompatibilityContext;
+export function getPixflowBricksElementCapability(elementName: unknown, context?: unknown): Record<string, any>;
+export function resolvePixflowBricksCssMapping(cssProperty: unknown, context?: unknown): Record<string, any>;
+export function validatePixflowBricksNativeSettings(input?: Record<string, any>): Record<string, any>;
+export function buildPixflowBricksGlobalClass(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksPalette(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksVariable(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksThemeStyle(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksPageFoundationThemeStyle(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksPageSettings(input: unknown, context?: unknown): Record<string, any>;
+export function buildPixflowBricksContentElement(input: unknown, context?: unknown): Record<string, any>;
+export function validatePixflowBricksPayload(payload?: unknown, context?: unknown): Record<string, any>;
+export function validatePixflowBricksGlobalReferences(input?: Record<string, any>): Record<string, any>;
+export function pixflowBricksControlRegistrySnapshot(): Record<string, any>;

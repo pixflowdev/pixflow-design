@@ -1,0 +1,107 @@
+# Generated from the typed Pixflow language catalogues. Edit the source catalogues.
+msgid ""
+msgstr "Project-Id-Version: pixflow-design 2.0.4\nLanguage: es_ES\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
+
+#: wordpress/src/Modules/ModuleHost.php:54
+msgid "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available."
+msgstr "Un complemento de Pixflow no ha podido iniciarse. Comprueba que tus plugins de Pixflow sean compatibles y recarga. Puede que otras funciones sigan disponibles."
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Activate Pro"
+msgstr "Activar Pro"
+
+#: wordpress/src/License/LicenseService.php:336
+msgid "Automatic trial verification requires a public HTTPS website. Local testing remains available within your trial."
+msgstr "La verificación automática de la prueba requiere un sitio HTTPS accesible públicamente. Las pruebas locales siguen disponibles durante tu periodo de prueba."
+
+#: wordpress/src/License/LicenseService.php:340
+msgid "Automatic website verification could not finish. Retry activation. Your saved content is unchanged."
+msgstr "No se ha podido completar la verificación automática del sitio. Vuelve a intentar la activación. Tu contenido guardado no se ha modificado."
+
+#: wordpress/src/License/ProUpgradeNotice.php:34
+msgid "Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro."
+msgstr "Recupera tus herramientas premium con el complemento Pro. Se conservan tu licencia, contenido y ajustes guardados. Si usabas la autenticación de dos factores de Bricks, reactívala en los ajustes después de activar Pro."
+
+#: wordpress/src/License/ProUpgradeNotice.php:44
+msgid "Build in your favourite builder. Add annotations, voice, design systems and image generation to your workflow."
+msgstr "Crea con tu constructor favorito. Añade anotaciones, voz, sistemas de diseño y generación de imágenes a tu flujo de trabajo."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Check Pro trial"
+msgstr "Comprobar prueba Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:97
+msgid "Could not save dismissal. Please try again."
+msgstr "No se ha podido guardar el cierre. Inténtalo de nuevo."
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss"
+msgstr "Cerrar"
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss Pixflow Pro banner"
+msgstr "Cerrar banner de Pixflow Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Download Pro"
+msgstr "Descargar Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:43
+msgid "More possibilities with Pixflow Design Pro"
+msgstr "Más posibilidades con Pixflow Design Pro"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:40 wordpress/src/Admin/WpAdminFloatingPanel.php:41
+msgid "Open Pixflow Design"
+msgstr "Abrir Pixflow Design"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:50 wordpress/src/Admin/WpAdminFloatingPanel.php:54 wordpress/src/Admin/WpAdminFloatingPanel.php:55
+msgid "Open settings"
+msgstr "Abrir ajustes"
+
+#: wordpress/src/License/LicenseService.php:337
+msgid "Pixflow could not reach this website to verify it. Check HTTPS and any firewall or password protection, then retry activation."
+msgstr "Pixflow no ha podido acceder a este sitio para verificarlo. Revisa HTTPS y cualquier protección de cortafuegos o contraseña y vuelve a intentar la activación."
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:36
+msgid "Pixflow Design"
+msgstr "Pixflow Design"
+
+#: wordpress/src/License/LicenseService.php:339
+msgid "Please wait a few minutes before retrying trial activation."
+msgstr "Espera unos minutos antes de volver a intentar activar la prueba."
+
+#: wordpress/src/License/ProUpgradeNotice.php:92
+msgid "Refresh this page and try again."
+msgstr "Actualiza esta página e inténtalo de nuevo."
+
+#: wordpress/src/License/ProUpgradeNotice.php:65
+msgid "Start your 7-day Pro trial"
+msgstr "Iniciar tu prueba Pro de 7 días"
+
+#: wordpress/src/License/LicenseService.php:334
+msgid "This domain and its subdomains have already used a Pro trial. View pricing or contact Pixflow support. Your saved content is unchanged."
+msgstr "Este dominio y sus subdominios ya han utilizado una prueba de Pro. Consulta los precios o contacta con el soporte de Pixflow. Tu contenido guardado no se ha modificado."
+
+#: wordpress/src/License/LicenseService.php:335
+msgid "This website needs a trial history review. Contact Pixflow support; your saved content is unchanged."
+msgstr "Es necesario revisar el historial de pruebas de este sitio. Contacta con el soporte de Pixflow; tu contenido guardado no se ha modificado."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Try Pro for 7 days"
+msgstr "Probar Pro durante 7 días"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Upgrade to Pro"
+msgstr "Mejorar a Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:88 wordpress/src/License/ProUpgradeNotice.php:105
+msgid "You cannot dismiss this notice."
+msgstr "No puedes cerrar este aviso."
+
+#: wordpress/src/License/ProUpgradeNotice.php:33
+msgid "Your Pixflow plan includes Pro"
+msgstr "Tu plan de Pixflow incluye Pro"
+
+#: wordpress/src/License/LicenseService.php:338
+msgid "Your Pro trial has expired. Free remains available and your saved content is unchanged."
+msgstr "Tu prueba de Pro ha caducado. Free sigue disponible y tu contenido guardado no se ha modificado."

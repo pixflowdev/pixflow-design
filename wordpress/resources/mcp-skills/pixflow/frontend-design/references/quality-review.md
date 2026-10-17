@@ -1,0 +1,11 @@
+# Rendered quality
+
+Choose evidence appropriate to the change and use it to refine the result within the request. These are review considerations, not a prerequisite checklist or required sequence of calls.
+
+- Look at actual foregrounds and visible backgrounds of headings, copy, captions, links and controls. Nested surfaces and inherited link styles can differ from a section's declared colours. Image-backed text needs visual judgement across crops; an unknown contrast measurement is not a pass.
+- Review relevant narrow and wide layouts for overflow, clipped glyphs, wrapping, content order and reachable controls. Open navigation and interactive states when part of the work. Preserve visible keyboard focus and useful reduced-motion behaviour.
+- Reuse classes according to their actual declarations and the new element hierarchy. A two-column class on both a wrapper and its child divides the available width twice; a familiar class name is not evidence that it belongs on both. Rendered widths, line wrapping and image dimensions reveal these composition errors more reliably than the existence of the class in saved data. Fix local composition with an appropriate class or modifier rather than changing a shared class across unrelated pages.
+- Check that imagery loads and communicates its intended subject, with suitable crop, alt text and required attribution. Loading, failure and empty states should truthfully describe what happened.
+- Follow intended actions: links need meaningful destinations, forms need expected feedback, and controls should perform their advertised action. A visual mockup does not prove an integration works.
+- Compare relevant saved frontend regions with the active editor. Bricks palette aliases and framework styles, Etch stylesheet order, and Elementor Kit/widget defaults can resolve differently between the canvas and frontend. Existing resource identity does not guarantee a readable colour pairing. Use the current builder's live-editing reference for operational details.
+- Match verification claims to pages, regions and states actually examined after the last relevant change. A valid native tree or screenshot capture alone does not establish visual quality. State remaining uncertainty plainly.

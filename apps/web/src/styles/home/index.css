@@ -1,0 +1,11 @@
+/* ============================================================
+   Home redesign — bundled CSS for the centered-hero entry layout.
+
+   Keeping these styles in a separate folder (and out of the main
+   `src/index.css`) makes it easier to rebase/merge with upstream
+   `index.css` changes — the new layout's footprint stays in one
+   self-contained tree.
+   ============================================================ */
+@import './entry-layout.css';
+@import './plus-menu.css';
+@import './pixflow-mcp.css';

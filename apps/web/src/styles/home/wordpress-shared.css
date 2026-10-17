@@ -1,0 +1,4 @@
+/* Free settings/onboarding and shared composer popovers; Workspace home styles live in Pro. */
+@import './shared-entry.css';
+@import './plus-menu.css';
+@import './pixflow-mcp.css';

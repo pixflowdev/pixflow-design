@@ -1,0 +1,17 @@
+.card { display: grid; gap: 18px; padding: 20px; border: 1px solid var(--border-soft); border-radius: 18px; corner-shape: squircle; background: var(--settings-surface, var(--bg-elevated)); color: var(--text); }
+.card h3, .card p, .card dl, .card dd { margin: 0; }
+.card h3 { font-size: 15px; font-weight: 600; }
+.card p { margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--text-muted); }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.header > button { flex: none; min-height: 32px; border-radius: 999px; font-size: 12px; }
+.overview { display: grid; gap: 5px; padding-block: 4px 6px; }
+.overview strong { font-size: 28px; line-height: 1.2; font-weight: 550; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
+.overview > span { font-size: 13px; }
+.overview small { font-size: 12px; color: var(--text-muted); }
+.metrics { display: grid; gap: 12px; padding-block: 16px; border-block: 1px solid var(--border-soft); font-size: 12px; }
+.metrics > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.metrics dt { color: var(--text-muted); }
+.metrics dd { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; text-align: end; font-variant-numeric: tabular-nums; }
+.saving { color: var(--text-muted); }
+.footer { display: flex; justify-content: flex-start; }
+@media (max-width: 520px) { .header { flex-wrap: wrap; } .metrics > div { gap: 10px; } }

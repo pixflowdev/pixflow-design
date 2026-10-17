@@ -1,0 +1,1889 @@
+
+
+.app.pixflow-bricks-agent-frame-app {
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app {
+  display: grid;
+  /* Two rows: a reserved zero-height chrome row and the chat/workspace
+   * split (1fr — fills the remaining viewport). The standalone chrome header row was removed; its contents
+   * moved into the chat pane (project title + design-system picker) and the
+   * Design Files tab row (settings / handoff / present / share / avatar).
+   * The split keeps explicit `grid-row: 2` for layout compatibility. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  background: var(--bg-app);
+  overflow: hidden;
+}
+
+/* -------- App shell ------------------------------------------------- */
+
+.workspace-shell {
+  --workspace-tabs-chrome-height: 38px;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 36px minmax(0, 1fr);
+  background: var(--bg-app);
+  overflow: hidden;
+}
+
+.workspace-shell__body {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* WordPress Workspace owns its chrome in the chat/project sidebar shell. */
+
+.workspace-shell__body>.app,
+.workspace-shell__body>.entry-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+/* The pinned Home tab has no close button, so it drops the close column and
+   sits a little narrower than the project tabs. It is fixed: it never shrinks
+   with the others (flex 0 0) and stays stuck to the left edge so it remains
+   visible even after the project tabs overflow into horizontal scroll. The
+   opaque background keeps scrolled tabs from showing through it. */
+
+.app-chrome-header {
+  --app-chrome-traffic-space: 0px;
+  --app-chrome-traffic-margin: 0px;
+  /* Set to 8px on macOS */
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.app-chrome-traffic-space {
+  width: var(--app-chrome-traffic-space);
+  flex: 0 0 var(--app-chrome-traffic-space);
+  /* Add extra spacing after the traffic light controls on macOS so project
+     navigation starts after the native window controls. */
+  margin-right: var(--app-chrome-traffic-margin);
+}
+
+.app-chrome-back,
+.settings-icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-chrome-back:hover:not(:disabled),
+.settings-icon-btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.app-chrome-content {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  align-self: stretch;
+  flex: 1 1 auto;
+}
+
+.app-chrome-drag {
+  min-width: 24px;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+.app-chrome-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-chrome-file-actions-before {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-chrome-file-actions-before:has(> [data-app-chrome-file-actions='true']:empty),
+.app-chrome-file-actions:empty {
+  display: none;
+}
+
+.app-chrome-file-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-chrome-file-actions-before:not(:empty)+.app-chrome-file-actions:not(:empty) {
+  margin-left: 4px;
+}
+
+.app-chrome-file-actions:not(:empty)+.app-chrome-actions,
+.app-chrome-file-actions-before:not(:has(> [data-app-chrome-file-actions='true']:empty)):not(:empty)+.app-chrome-file-actions+.app-chrome-actions {
+  position: relative;
+  margin-left: 4px;
+  padding-left: 12px;
+}
+
+.app-chrome-file-actions:not(:empty)+.app-chrome-actions::before,
+.app-chrome-file-actions-before:not(:has(> [data-app-chrome-file-actions='true']:empty)):not(:empty)+.app-chrome-file-actions+.app-chrome-actions::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 1px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border) 82%, transparent);
+  transform: translateY(-50%);
+}
+
+.chrome-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  transition: background var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+}
+
+.chrome-action svg {
+  display: block;
+}
+
+.chrome-action>svg:first-child {
+  transform: translateY(1px);
+}
+
+.chrome-action:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.chrome-action-secondary {
+  border-color: var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.chrome-action-secondary:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+}
+
+.chrome-file-action-menus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chrome-action-with-label {
+  gap: 8px;
+}
+
+.present-trigger[aria-expanded='true'] {
+  background: var(--bg-panel);
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+}
+
+.chrome-action-primary {
+  background: var(--text-strong);
+  border-color: var(--text-strong);
+  color: var(--bg);
+}
+
+.chrome-action-primary:hover:not(:disabled) {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+.chrome-action-export {
+  background: var(--accent-solid, var(--accent));
+  border-color: var(--accent-solid, var(--accent));
+  color: white;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent-solid, var(--accent)) 24%, transparent);
+}
+
+.chrome-action-export:hover:not(:disabled) {
+  background: var(--accent-solid-hover, var(--accent-hover));
+  border-color: var(--accent-solid-hover, var(--accent-hover));
+  color: white;
+}
+
+.chrome-action-export:focus-visible {
+  outline-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.chrome-action-export.export-ready-nudge {
+  animation: export-ready-nudge 1600ms cubic-bezier(0.23, 1, 0.32, 1) 1;
+}
+
+.chrome-share-menu .share-menu-popover,
+.chrome-present-wrap .present-menu {
+  top: calc(100% + 6px);
+  right: 0;
+}
+
+.zoom-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.zoom-menu .zoom-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.viewer-toolbar-zoom .zoom-trigger:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.zoom-menu-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+  min-width: 110px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.viewer-toolbar-zoom .zoom-menu-popover {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.zoom-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.zoom-menu-item:hover {
+  background: var(--bg-subtle);
+}
+
+.zoom-menu-item.active {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+@media (max-width: 880px) {
+  .chrome-action-secondary span {
+    display: none;
+  }
+
+  .chrome-action-secondary {
+    padding: 0 10px;
+  }
+
+  .chrome-action-secondary.chrome-action-text-only span {
+    display: inline;
+  }
+
+  .chrome-action-secondary.chrome-action-text-only {
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-chrome-content {
+    display: none;
+  }
+}
+
+.viewer.is-tab-present .viewer-toolbar,
+.viewer.is-tab-present .live-artifact-refresh-notice {
+  display: none;
+}
+
+.viewer.is-tab-present .viewer-body {
+  inset: 0;
+}
+
+.viewer .present-exit-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-muted);
+}
+
+.viewer .present-exit-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+.live-artifact-preview-frame-host {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+}
+
+.live-artifact-preview-frame-host:fullscreen {
+  background: var(--bg);
+}
+
+/* Settings: custom instructions textarea */
+.custom-instructions-input {
+  width: 100%;
+  min-height: 80px;
+  max-height: 200px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.custom-instructions-input:focus {
+  outline: none;
+  border-color: var(--accent, #646cff);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.topbar-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.topbar .title {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar .meta {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.topbar .brand-mark {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent-tint) 0%, var(--accent-soft) 100%);
+  color: var(--accent);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.topbar .brand-mark .brand-mark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  padding: 1px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.topbar-left .back-btn {
+  align-self: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.topbar-left .back-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* -------- Avatar menu (replaces in-topbar agent picker) ------------- */
+.avatar-menu {
+  position: relative;
+}
+
+.avatar-agent-trigger {
+  width: 58px;
+  height: 32px;
+  padding: 0;
+  display: inline-grid;
+  grid-template-columns: 32px 24px;
+  align-items: center;
+  justify-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    background 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.avatar-agent-trigger:hover:not(:disabled) {
+  border-color: var(--border-strong, var(--border));
+}
+
+.avatar-agent-trigger>svg:last-child {
+  color: var(--text-muted);
+}
+
+.avatar-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-tint) 0%, var(--accent-soft) 100%);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: box-shadow var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
+}
+
+.avatar-btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 3px rgba(194, 83, 45, 0.18);
+  border-color: transparent;
+}
+
+.avatar-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(194, 83, 45, 0.32);
+  border-color: transparent;
+}
+
+.avatar-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.avatar-btn-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.avatar-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  min-width: 280px;
+  padding: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[dir='rtl'] .avatar-popover {
+  right: auto;
+  left: 0;
+}
+
+.avatar-popover-head {
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 4px;
+}
+
+.avatar-popover-head .who {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.avatar-popover-head .where {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.avatar-amr-account-link,
+.avatar-amr-account-link:visited {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 6px 6px;
+  padding: 9px 10px;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border-soft));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-tint) 34%, var(--bg-panel));
+}
+
+.avatar-amr-account-link:hover {
+  background: color-mix(in srgb, var(--accent-tint) 52%, var(--bg-panel));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.avatar-amr-account-link__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-strong);
+}
+
+.avatar-amr-account-link__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.avatar-amr-account-link__copy span:first-child {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-amr-account-link__copy span:last-child {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.avatar-item:hover {
+  background: var(--bg-subtle);
+}
+
+/* `<a>` items inside the popover need explicit color + decoration
+   resets — the user-agent stylesheet otherwise paints them blue
+   and underlined, which reads as misalignment next to the button
+   rows that share the same `.avatar-item` class. */
+a.avatar-item,
+a.avatar-item:visited {
+  color: var(--text);
+}
+
+.avatar-item .avatar-item-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.avatar-item .avatar-item-meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.avatar-section-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  font-weight: 600;
+  padding: 8px 10px 4px;
+}
+
+.avatar-model-section {
+  padding: 2px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed var(--border-soft);
+  margin-top: 4px;
+}
+
+.avatar-select-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.avatar-select-label {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.avatar-select {
+  display: block;
+  width: 100%;
+  min-width: min(340px, 100%);
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.avatar-select:focus {
+  outline: 2px solid var(--accent-soft, var(--border-strong));
+}
+
+/* Pixflow-owned: the Bricks builder defines generic tokens such as --text,
+   --border, and --bg-panel. The floating Bricks Agent intentionally reuses
+   the main Pixflow composer classes, so isolate the Pixflow token contract on
+   every builder-mounted or portaled Bricks Agent surface before those shared
+   classes resolve their variables. */
+.pixflow-bricks-agent-shell,
+.pixflow-bricks-agent-react-root,
+.pixflow-bricks-agent-react,
+.avatar-popover.avatar-popover--bricks-agent,
+.model-select-searchable__popover.avatar-model-select-popover,
+.plus-menu__popup {
+  --bg: #faf9f7;
+  --bg-app: #faf9f7;
+  --bg-panel: #fdfcfa;
+  --bg-subtle: #f4f5f7;
+  --bg-muted: #eef1f5;
+  --bg-fill-tertiary: rgba(0, 0, 0, 0.03);
+  --bg-fill-secondary: rgba(0, 0, 0, 0.06);
+  --bg-fill: rgba(0, 0, 0, 0.12);
+  --bg-elevated: #fffefc;
+  --border: #e1e5eb;
+  --border-strong: #c9d0da;
+  --border-soft: #edf0f4;
+  --text: #1a1916;
+  --text-strong: #0d0c0a;
+  --text-muted: #74716b;
+  --text-soft: #989590;
+  --text-faint: #b3b0a8;
+  --selected: var(--accent-solid, #1464dc);
+  --selected-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --shadow-xs: 0 1px 0 rgba(28, 27, 26, 0.04);
+  --shadow-sm: 0 1px 2px rgba(28, 27, 26, 0.05), 0 1px 3px rgba(28, 27, 26, 0.04);
+  --shadow-md: 0 6px 24px rgba(28, 27, 26, 0.07), 0 2px 6px rgba(28, 27, 26, 0.04);
+  --shadow-lg: 0 24px 60px rgba(28, 27, 26, 0.16), 0 8px 16px rgba(28, 27, 26, 0.07);
+  --code-header-bg: #f4f5f7;
+  --code-body-bg: #f9fafb;
+}
+
+#pixflow-bricks-agent-shell .pixflow-bricks-agent-react-root,
+[data-pixflow-bricks-agent-mounted="true"] .pixflow-bricks-agent-react-root,
+.pixflow-bricks-agent-react-root {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-panel);
+  color: var(--text);
+}
+
+main.app.pixflow-bricks-agent-frame-app,
+.pixflow-bricks-agent-frame-app {
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.pixflow-bricks-agent-frame-app>.pixflow-bricks-agent-react,
+.pixflow-bricks-agent-react {
+  position: relative;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  background: var(--bg-panel);
+  color: var(--text);
+}
+
+.pixflow-bricks-agent-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: calc(22px * 1.2);
+  background: var(--bg-panel);
+  box-shadow: 0 16px 48px rgb(0 0 0 / .24);
+  pointer-events: auto;
+}
+
+.pixflow-bricks-agent-shell[data-collapsed="true"] .pixflow-bricks-agent-panel {
+  height: auto;
+}
+
+.pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel,
+.pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel {
+  border-radius: 0;
+  box-shadow: var(--shadow-md);
+}
+
+.pixflow-bricks-agent-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-panel);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.pixflow-bricks-agent-panel__head:active {
+  cursor: grabbing;
+}
+
+.pixflow-bricks-agent-panel__title {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.pixflow-bricks-agent-panel__mark {
+  flex: 0 0 auto;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-strong);
+  font-weight: 800;
+}
+
+.pixflow-bricks-agent-panel__mark img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.avatar-fast-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 2px;
+  color: var(--text);
+}
+
+.avatar-fast-mode-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.avatar-fast-mode-hint {
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.pixflow-agent-bridge-status {
+  background: transparent;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  cursor: default;
+}
+
+.pixflow-agent-bridge-status__identity {
+  appearance: none;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 7px 8px;
+  min-height: 28px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+/* Shared WordPress floating-panel and workspace connection portal. */
+.pixflow-design-portal-scope.pixflow-bridge-sites {
+  position: fixed;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--composer-surface, var(--bg-elevated));
+  color: var(--text);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 24%);
+  font: 13px/1.5 system-ui, sans-serif;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 140ms cubic-bezier(0.23, 1, 0.32, 1), transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.pixflow-design-portal-scope.pixflow-bridge-sites[data-open="true"] { opacity: 1; transform: translateY(0); transition-duration: 200ms; }
+.pixflow-bridge-sites__header,
+.pixflow-bridge-sites__heading,
+.pixflow-bridge-sites__actions { display: flex; align-items: center; gap: 10px; }
+.pixflow-bridge-sites__header { justify-content: space-between; padding: 6px 6px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--border); font-size: 12px; flex-shrink: 0; }
+.pixflow-bridge-sites__list { display: grid; gap: 2px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.pixflow-bridge-sites__site { border: 0; border-radius: 8px; padding: 9px 10px; background: transparent; }
+.pixflow-bridge-sites__heading strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+.pixflow-bridge-sites__badge { flex: none; color: var(--text-muted); font-size: 10px; border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+.pixflow-bridge-sites__address { display: block; color: var(--text-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+.pixflow-bridge-sites__actions { margin-top: 5px; gap: 6px; font-size: 11px; }
+.pixflow-bridge-sites__state { margin-right: auto; color: var(--text-muted); }
+.pixflow-bridge-sites__state::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--green); }
+.pixflow-bridge-sites__site[data-state="sleeping"] .pixflow-bridge-sites__state::before { background: var(--text-muted); }
+.pixflow-bridge-sites__site[data-state="unavailable"] .pixflow-bridge-sites__state::before { background: var(--red); }
+.pixflow-bridge-sites__site:is([data-state="waking"], [data-state="releasing"], [data-state="working"]) .pixflow-bridge-sites__state::before { background: var(--amber); animation: pixflow-site-breathe 1.6s infinite alternate; }
+.pixflow-design-portal-scope.pixflow-bridge-sites button,
+.pixflow-design-portal-scope.pixflow-bridge-sites a { appearance: none; font: inherit; line-height: 1.4; color: var(--text); background: transparent; border: 0; border-radius: 6px; padding: 4px 7px; cursor: pointer; text-decoration: none; }
+.pixflow-design-portal-scope.pixflow-bridge-sites button:hover:not(:disabled),
+.pixflow-design-portal-scope.pixflow-bridge-sites a:hover { background: var(--composer-hover, var(--bg-subtle)); }
+.pixflow-design-portal-scope.pixflow-bridge-sites button:disabled { opacity: .5; cursor: default; }
+.pixflow-design-portal-scope.pixflow-bridge-sites .pixflow-bridge-sites__header button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; color: var(--text-muted); }
+.pixflow-bridge-sites__header button svg { display: block; width: 16px; height: 16px; pointer-events: none; }
+.pixflow-bridge-sites__site:hover { background: var(--composer-hover, var(--bg-subtle)); }
+.pixflow-design-portal-scope.pixflow-bridge-sites :is(button, a):focus-visible,
+.pixflow-agent-bridge-status__identity:focus-visible { outline: 2px solid var(--accent, #447bfb); outline-offset: 3px; }
+.pixflow-bridge-sites__notice { margin: 6px 0 0; padding: 9px 10px 5px; border-top: 1px solid var(--border); flex-shrink: 0; color: var(--text-muted); font-size: 11px; line-height: 1.55; }
+.pixflow-design-portal-scope.pixflow-bridge-sites [hidden] { display: none !important; }
+@keyframes pixflow-site-breathe { from { opacity: .45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pixflow-design-portal-scope.pixflow-bridge-sites { transition: none; transform: none; } .pixflow-bridge-sites__state::before,
+.pixflow-agent-bridge-status__dot { animation: none !important; } }
+
+.pixflow-agent-bridge-status__dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 18%, transparent);
+}
+
+.pixflow-agent-bridge-status[data-state="connected"] .pixflow-agent-bridge-status__dot {
+  background: var(--green);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 18%, transparent);
+}
+
+.pixflow-agent-bridge-status[data-state="disconnected"] .pixflow-agent-bridge-status__dot {
+  background: var(--red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 18%, transparent);
+}
+.pixflow-agent-bridge-status[data-runtime-state="sleeping"] .pixflow-agent-bridge-status__dot { background: var(--text-muted); box-shadow: none; }
+.pixflow-agent-bridge-status[data-runtime-state="waking"] .pixflow-agent-bridge-status__dot { background: var(--amber); animation: pixflow-site-breathe 1.6s infinite alternate; }
+
+.pixflow-agent-bridge-status__reconnect {
+  display: inline-flex;
+  min-width: 0;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.pixflow-agent-bridge-status__reconnect[hidden] {
+  display: none;
+}
+
+.pixflow-agent-bridge-status__reconnect:hover,
+.pixflow-agent-bridge-status__reconnect:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+  color: var(--text);
+  outline: none;
+}
+
+.pixflow-bricks-agent-panel__actions,
+.pixflow-bricks-agent-panel__sizes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.pixflow-bricks-agent-panel__sizes {
+  padding: 2px;
+  margin-inline-end: 6px;
+  border: 0;
+  border-radius: 8px;
+  gap: 1px;
+  background: var(--bg-elevated);
+}
+
+.pixflow-bricks-agent-panel__actions button,
+.pixflow-bricks-agent-panel__icon-button {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.pixflow-bricks-agent-panel__actions button:hover,
+.pixflow-bricks-agent-panel__actions button:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--composer-hover, var(--bg-subtle));
+  color: var(--text);
+  outline: none;
+}
+
+.pixflow-bricks-agent-panel__actions button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.pixflow-bricks-agent-panel__icon-button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.pixflow-bricks-agent-panel__sizes button { min-width: 26px; width: 26px; height: 24px; font-size: 10px; }
+.pixflow-bricks-agent-panel__head .pixflow-agent-bridge-status__identity:hover,
+.pixflow-bricks-agent-panel__head .pixflow-agent-bridge-status__identity[aria-expanded="true"] { background: var(--composer-surface, var(--bg-elevated)); color: var(--text); }
+.pixflow-bricks-agent-panel__actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pixflow-bricks-agent-panel__head .pixflow-agent-bridge-status__dot { width: 6px; height: 6px; box-shadow: none; }
+.pixflow-bricks-agent-panel__head .pixflow-agent-bridge-status__identity:not(:hover):not([aria-expanded="true"]) { background: var(--bg-panel); }
+
+.pixflow-bricks-agent-panel__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  scrollbar-gutter: stable;
+}
+
+.pixflow-bricks-agent-panel__resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.pixflow-bricks-agent-panel__resize::before {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid color-mix(in srgb, var(--text-muted) 55%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--text-muted) 55%, transparent);
+}
+
+.pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel__resize,
+.pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel__resize,
+.pixflow-bricks-agent-shell[data-bridge-loading="true"] .pixflow-bricks-agent-panel__resize {
+  display: none;
+}
+
+.pixflow-bricks-agent-react .chat-log-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.pixflow-bricks-agent-react .chat-log {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pixflow-bricks-agent-react__composer-dock {
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+/* An outdated Bridge blocks only CLI sends. Keep the explanation anchored to
+   the floating panel's chat log so BYOK mode can be selected from the normal
+   composer without a modal or viewport-fixed gate. */
+.pixflow-bricks-agent-react__bridge-update-chat-blocker {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  left: 12px;
+  z-index: 2;
+  margin: 0;
+  width: auto;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--shadow-color, #000) 18%, transparent);
+}
+
+.pixflow-bricks-agent-react__bridge-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pixflow-bricks-agent-react__bridge-loading svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.pixflow-prototype-bricks-canvas {
+  position: fixed;
+  z-index: 2147483001;
+  display: flex;
+  min-height: 240px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--bg-panel);
+  box-shadow: none;
+  opacity: 1;
+  transform: translateX(0);
+  transform-origin: left center;
+  transition:
+    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.pixflow-bricks-generation-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  color: var(--text);
+}
+
+.pixflow-bricks-generation-portal .pixflow-prototype-bricks-canvas {
+  pointer-events: auto;
+}
+
+.pixflow-prototype-bricks-canvas[data-open="false"] {
+  opacity: 0;
+  transform: translateX(-24px);
+  pointer-events: none;
+  transition-duration: 140ms;
+}
+
+.pixflow-prototype-bricks-canvas[data-side="left"] {
+  transform-origin: right center;
+}
+
+.pixflow-prototype-bricks-canvas[data-side="left"][data-open="false"] {
+  transform: translateX(24px);
+}
+
+#pixflow-bricks-agent-shell[data-generation-surface="true"] {
+  contain: layout style;
+}
+
+#pixflow-bricks-agent-shell[data-generation-surface="true"] .pixflow-bricks-agent-panel,
+#pixflow-bricks-agent-shell[data-generation-surface="true"] .pixflow-bricks-agent-panel__body,
+#pixflow-bricks-agent-shell[data-generation-surface="true"] .pixflow-bricks-agent-react-root,
+#pixflow-bricks-agent-shell[data-generation-surface="true"] .pixflow-bricks-agent-react {
+  overflow: visible;
+}
+
+.pixflow-prototype-bricks-canvas__head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.pixflow-prototype-bricks-canvas__title {
+  flex: 1 1 auto;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.pixflow-prototype-bricks-canvas__title strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixflow-prototype-bricks-canvas__status {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixflow-prototype-bricks-canvas__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.pixflow-prototype-bricks-canvas__icon:hover,
+.pixflow-prototype-bricks-canvas__icon:focus-visible {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--bg-subtle);
+  outline: none;
+}
+
+.pixflow-prototype-bricks-canvas__toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.pixflow-prototype-bricks-canvas__refresh {
+  display: inline-flex;
+  min-width: 0;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.pixflow-prototype-bricks-canvas__refresh:hover:not(:disabled),
+.pixflow-prototype-bricks-canvas__refresh:focus-visible {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--bg-subtle);
+  outline: none;
+}
+
+.pixflow-prototype-bricks-canvas__refresh.is-active,
+.pixflow-prototype-bricks-canvas__refresh[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-panel));
+}
+
+.pixflow-prototype-bricks-canvas__refresh:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.pixflow-prototype-bricks-canvas__evidence {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.pixflow-prototype-bricks-canvas__evidence span {
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.pixflow-prototype-bricks-canvas__evidence span[data-tone="ok"] {
+  border-color: color-mix(in srgb, #20a060 35%, transparent);
+  color: color-mix(in srgb, #20a060 86%, var(--text));
+  background: color-mix(in srgb, #20a060 10%, transparent);
+}
+
+.pixflow-prototype-bricks-canvas__evidence span[data-tone="warn"] {
+  border-color: color-mix(in srgb, #d08a00 38%, transparent);
+  color: color-mix(in srgb, #d08a00 86%, var(--text));
+  background: color-mix(in srgb, #d08a00 10%, transparent);
+}
+
+.pixflow-prototype-bricks-canvas__viewport {
+  display: inline-flex;
+  min-width: 0;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+}
+
+.pixflow-prototype-bricks-canvas__viewport button {
+  display: inline-flex;
+  min-width: 0;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.pixflow-prototype-bricks-canvas__viewport button:hover,
+.pixflow-prototype-bricks-canvas__viewport button:focus-visible {
+  color: var(--text);
+  background: var(--bg-panel);
+  outline: none;
+}
+
+.pixflow-prototype-bricks-canvas__viewport button.is-active,
+.pixflow-prototype-bricks-canvas__viewport button[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--bg-panel);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pixflow-prototype-bricks-canvas__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.pixflow-prototype-bricks-canvas__preview-stage {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: 10px;
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--border) 46%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--border) 46%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--border) 46%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--border) 46%, transparent) 75%);
+  background-color: var(--bg-subtle);
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-size: 12px 12px;
+}
+
+.pixflow-prototype-bricks-canvas__preview-frame {
+  flex: 0 0 auto;
+  width: var(--prototype-bricks-preview-scaled-width, 100%);
+  height: var(--prototype-bricks-preview-scaled-height, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.pixflow-prototype-bricks-canvas__preview-frame iframe {
+  display: block;
+  width: var(--prototype-bricks-preview-width, 100%);
+  max-width: none;
+  height: var(--prototype-bricks-preview-height, 100%);
+  border: 0;
+  background: #fff;
+  transform: scale(var(--prototype-bricks-preview-scale, 1));
+  transform-origin: top left;
+}
+
+.pixflow-prototype-bricks-canvas__empty {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.pixflow-prototype-bricks-canvas__empty svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.pixflow-prototype-bricks-canvas__empty strong,
+.pixflow-prototype-bricks-canvas__empty span {
+  display: block;
+}
+
+.pixflow-prototype-bricks-canvas__empty strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.pixflow-prototype-bricks-canvas__empty span {
+  max-width: 260px;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.pixflow-prototype-bricks-canvas__code {
+  height: 100%;
+  margin: 0;
+  padding: 12px 13px;
+  overflow: auto;
+  color: var(--text);
+  background: var(--code-body-bg);
+  font: 11px/1.65 "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pixflow-prototype-bricks-canvas__caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.15em;
+  margin-left: 1px;
+  background: currentColor;
+  vertical-align: -0.18em;
+  animation: pixflow-prototype-bricks-caret 900ms steps(1, end) infinite;
+}
+
+@keyframes pixflow-prototype-bricks-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.pixflow-prototype-bricks-canvas__source-stack {
+  display: grid;
+  height: 100%;
+  grid-auto-rows: minmax(132px, 1fr);
+  gap: 8px;
+  overflow: auto;
+  padding: 8px;
+  background: var(--bg-subtle);
+}
+
+.pixflow-prototype-bricks-canvas__source-pane {
+  display: flex;
+  min-width: 0;
+  min-height: 96px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+}
+
+.pixflow-prototype-bricks-canvas__source-pane header {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.pixflow-prototype-bricks-canvas__source-pane header strong,
+.pixflow-prototype-bricks-canvas__source-pane header span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixflow-prototype-bricks-canvas__source-pane header strong {
+  color: var(--text);
+}
+
+.pixflow-prototype-bricks-canvas__source-pane .pixflow-prototype-bricks-canvas__code,
+.pixflow-prototype-bricks-canvas__source-pane .pixflow-prototype-bricks-canvas__empty {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixflow-prototype-bricks-canvas {
+    transition: none;
+  }
+
+  .pixflow-prototype-bricks-canvas__caret {
+    animation: none;
+  }
+}
+
+.pixflow-bricks-agent-question-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pixflow-bricks-agent-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.pixflow-bricks-agent-banner .questions-banner-cta {
+  align-self: start;
+  margin: 1px 0 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .pixflow-bricks-agent-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pixflow-bricks-agent-banner .questions-banner-cta {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.pixflow-bricks-agent-shell[data-theme="dark"],
+[data-theme="dark"] .pixflow-bricks-agent-shell,
+[data-theme="dark"] .pixflow-bricks-agent-react-root,
+[data-theme="dark"] .pixflow-bricks-agent-react,
+[data-theme="dark"] .avatar-popover.avatar-popover--bricks-agent,
+[data-theme="dark"] .model-select-searchable__popover.avatar-model-select-popover,
+[data-theme="dark"] .plus-menu__popup {
+  color-scheme: dark;
+  --bg: #1a1917;
+  --bg-app: #1a1917;
+  --bg-panel: #222120;
+  --bg-subtle: #252321;
+  --bg-muted: #2e2c29;
+  --bg-fill-tertiary: rgba(255, 255, 255, 0.06);
+  --bg-fill-secondary: rgba(255, 255, 255, 0.10);
+  --bg-fill: rgba(255, 255, 255, 0.16);
+  --bg-elevated: #2a2825;
+  --border: #333128;
+  --border-strong: #46433c;
+  --border-soft: #2a2825;
+  --text: #e8e4dc;
+  --text-strong: #f2ede4;
+  --text-muted: #9a9690;
+  --text-soft: #6e6b65;
+  --text-faint: #4e4b46;
+  --selected: var(--accent-solid, #1464dc);
+  --selected-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.3);
+  --code-header-bg: #1e1e20;
+  --code-body-bg: #18181b;
+}
+
+/* Pixflow-owned: Bricks Agent AvatarMenu is portaled to document.body, so it
+   needs a portal class rather than panel-scoped selectors. Keep the same
+   tokens as the main composer menu, just above Bricks/settings overlays. */
+.avatar-popover.avatar-popover--bricks-agent {
+  z-index: 2000001;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-popover-head {
+  border-bottom-color: var(--border-soft);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-popover-head .who,
+.avatar-popover.avatar-popover--bricks-agent .avatar-item,
+.avatar-popover.avatar-popover--bricks-agent a.avatar-item,
+.avatar-popover.avatar-popover--bricks-agent a.avatar-item:visited {
+  color: var(--text);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-popover-head .where,
+.avatar-popover.avatar-popover--bricks-agent .avatar-item .avatar-item-icon,
+.avatar-popover.avatar-popover--bricks-agent .avatar-item .avatar-item-meta,
+.avatar-popover.avatar-popover--bricks-agent .avatar-select-row {
+  color: var(--text-muted);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-section-label {
+  color: var(--text-faint);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-model-section {
+  border-top-color: var(--border-soft);
+}
+
+.avatar-popover.avatar-popover--bricks-agent .avatar-select {
+  background-color: var(--bg-panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover {
+  z-index: 2000002;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__search-row {
+  border-bottom-color: var(--border);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__input {
+  color: var(--text);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__option {
+  color: var(--text);
+}
+
+.pixflow-bricks-agent-portal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+}
+
+.pixflow-bricks-agent-portal-root>* {
+  pointer-events: auto;
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__option:hover {
+  background: var(--bg-subtle);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__option.is-active {
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+}
+
+.model-select-searchable__popover.avatar-model-select-popover .model-select-searchable__option-meta {
+  color: var(--text-muted);
+}
+
+/* Environment pill — only used in entry view header now */
+
+/* -------- Split / panes -------------------------------------------- */
+
+.comment-left-host {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.comment-left-host>.comment-side-dock {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.comment-left-host>.comment-side-panel,
+.comment-left-host>.comment-side-dock>.comment-side-panel {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 20;
+}
+
+.comment-left-host .comment-side-header {
+  min-height: 40px;
+}
+
+.comment-left-host .comment-side-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 12px;
+}
+
+.comment-side-composer {
+  flex: 0 0 auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+/* Floating-panel surface only: docked panels retain their square edges. */
+@supports (corner-shape: squircle) {
+  .pixflow-bricks-agent-panel {
+    corner-shape: squircle;
+    border-radius: calc(30px * 1.2);
+    /* Keep shadows off the clipped squircle: Chromium can rasterize rectangular corner patches. */
+    box-shadow: none;
+    filter: none;
+  }
+  .pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel,
+.pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel { border-radius: 0; filter: none; }
+}
+

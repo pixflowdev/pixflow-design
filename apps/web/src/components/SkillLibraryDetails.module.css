@@ -1,0 +1,33 @@
+.dialog { box-sizing:border-box; width:min(880px,calc(100vw - 40px)); max-width:none; height:min(760px,calc(100dvh - 64px)); max-height:calc(100dvh - 64px); margin:auto; padding:0; border:1px solid var(--border-soft); border-radius:24px; corner-shape:squircle; background:var(--bg-elevated); color:var(--text); box-shadow:0 24px 80px rgba(15,23,42,.28),0 4px 18px rgba(15,23,42,.16); overflow:hidden; font-family:var(--sans); }
+.dialog[open] { display:flex; flex-direction:column; animation:appear 180ms cubic-bezier(.23,1,.32,1); }
+.dialog::backdrop { background:rgba(0,0,0,.48); }
+.header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:26px 26px 0; flex:none; }
+.dialog h2 { margin:10px 0 0; color:var(--text); font-size:22px; line-height:1.25; font-weight:550; letter-spacing:-.025em; }
+.meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; color:var(--text-muted); font-size:11px; }
+.meta > span:first-child { padding:3px 8px; background:var(--bg-fill-tertiary); border-radius:6px; }
+.dialog .close { flex:none; display:grid; place-items:center; width:32px; height:32px; min-height:32px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--text-muted); }
+.dialog .close:hover { background:var(--bg-fill-tertiary); color:var(--text); }
+.dialog .description { margin:12px 26px 20px; color:var(--text-muted); font-size:13px; line-height:1.65; flex:none; max-height:100px; overflow:auto; }
+.previewHeading { display:flex; align-items:center; justify-content:space-between; padding:0 26px 10px; flex:none; }
+.previewHeading h3 { margin:0; color:var(--text); font-size:12px; font-weight:550; }
+.previewHeading > span { color:var(--text-muted); font-size:11px; }
+.preview { display:flex; flex:1; min-height:0; margin:0 16px; border:1px solid var(--border-soft); border-radius:14px; overflow:hidden; background:var(--bg); }
+.files { flex:0 0 210px; overflow:auto; padding:8px; border-inline-end:1px solid var(--border-soft); }
+.dialog .files button { display:flex; align-items:center; gap:8px; width:100%; padding:9px 10px; border:0; border-radius:7px; background:transparent; color:var(--text-muted); text-align:start; font:400 11px/18px var(--sans); box-shadow:none; }
+.files button span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.files svg { flex:none; }
+.dialog .files button:hover,.dialog .files button[aria-pressed=true] { background:var(--bg-fill-tertiary); color:var(--text); }
+.file { display:flex; flex-direction:column; min-width:0; flex:1; }
+.filename { padding:12px 18px; border-bottom:1px solid var(--border-soft); font:500 11px/18px var(--sans); color:var(--text-muted); overflow-wrap:anywhere; }
+.file pre { flex:1; min-height:0; overflow:auto; padding:18px; margin:0; background:transparent; color:var(--text); white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; font:12px/1.8 var(--mono,monospace); }
+.footer { padding:18px 26px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex:none; color:var(--text-muted); font-size:11px; }
+.footer > div { display:flex; align-items:center; gap:12px; }
+.dialog .install { background:var(--text); color:var(--bg); padding:8px 18px; min-height:34px; border:0; border-radius:999px; font-size:12px; }
+.dialog .install:hover:not(:disabled) { background:color-mix(in srgb,var(--text) 90%,var(--bg)); color:var(--bg); }
+.status { width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:24px; text-align:center; font-size:13px; color:var(--text-muted); }
+.dialog .actionError { margin:10px 26px 0; color:var(--text); font-size:12px; overflow-wrap:anywhere; }
+.spinner { width:20px; height:20px; border:2px solid var(--border-soft); border-top-color:var(--text-muted); border-radius:50%; animation:spin 800ms linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes appear { from { opacity:0; transform:translateY(6px) scale(.98); } to { opacity:1; transform:none; } }
+@media(max-width:640px) { .dialog { width:calc(100vw - 24px); height:calc(100dvh - 32px); max-height:calc(100dvh - 32px); } .header { padding:20px 20px 0; } .preview { flex-direction:column; } .files { display:flex; gap:4px; flex:0 0 auto; max-height:130px; border-inline-end:0; border-bottom:1px solid var(--border-soft); } .dialog .files button { width:auto; flex:none; } .footer { padding:16px; flex-wrap:wrap; } }
+@media(prefers-reduced-motion:reduce) { .dialog[open],.spinner { animation:none; } }

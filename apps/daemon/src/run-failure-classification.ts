@@ -1,0 +1,730 @@
+import type {
+  TrackingRunFailureCategory,
+  TrackingRunFailureDetail,
+  TrackingRunFailureStage,
+  TrackingRunFailureUserAction,
+} from '@open-design/contracts/analytics';
+
+import { classifyAmrAccountFailure } from './integrations/vela-errors.js';
+import { classifyAgentServiceFailure } from './runtimes/auth.js';
+import type { RunResult, RunStatusForAnalytics } from './run-result.js';
+
+export interface RunEventForFailureClassification {
+  event: string;
+  data: unknown;
+}
+
+export interface RunFailureClassificationInput {
+  result: RunResult;
+  status: RunStatusForAnalytics & {
+    error?: string | null;
+  };
+  errorCode?: string;
+  agentId?: string | null;
+  events?: RunEventForFailureClassification[];
+}
+
+export interface RunFailureClassification {
+  failure_category: TrackingRunFailureCategory;
+  failure_detail: TrackingRunFailureDetail;
+  failure_stage: TrackingRunFailureStage;
+  retryable: boolean;
+  user_action: TrackingRunFailureUserAction;
+}
+
+function normalizeCode(value: string | undefined | null): string {
+  return typeof value === 'string' ? value.trim().toUpperCase() : '';
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function readBool(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function eventErrorText(data: unknown): string[] {
+  const payload = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  const nested = payload.error && typeof payload.error === 'object'
+    ? payload.error as Record<string, unknown>
+    : {};
+  const nestedData = nested.data && typeof nested.data === 'object'
+    ? nested.data as Record<string, unknown>
+    : {};
+  return [
+    readString(payload.message),
+    readString(payload.code),
+    readString(nested.message),
+    readString(nested.code),
+    readString(nestedData.message),
+    typeof nestedData.statusCode === 'number' ? `statusCode:${nestedData.statusCode}` : undefined,
+  ].filter((value): value is string => Boolean(value));
+}
+
+function eventStderrText(data: unknown): string[] {
+  if (typeof data === 'string' && data.trim()) return [data.trim()];
+  const payload = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  return [
+    readString(payload.chunk),
+    readString(payload.text),
+  ].filter((value): value is string => Boolean(value));
+}
+
+function latestRetryable(
+  events: RunEventForFailureClassification[] = [],
+): boolean | undefined {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const data = events[i]?.data;
+    const payload = data && typeof data === 'object'
+      ? data as Record<string, unknown>
+      : {};
+    const nested = payload.error && typeof payload.error === 'object'
+      ? payload.error as Record<string, unknown>
+      : {};
+    const nestedData = nested.data && typeof nested.data === 'object'
+      ? nested.data as Record<string, unknown>
+      : {};
+    const retryable =
+      readBool(payload.retryable) ??
+      readBool(nested.retryable) ??
+      readBool(nestedData.isRetryable);
+    if (retryable !== undefined) return retryable;
+  }
+  return undefined;
+}
+
+function collectFailureText(input: RunFailureClassificationInput): string {
+  const parts: string[] = [];
+  const statusError = readString(input.status.error);
+  if (statusError) parts.push(statusError);
+  const code = normalizeCode(input.errorCode ?? input.status.errorCode);
+  if (code) parts.push(code);
+  const events = input.events ?? [];
+  for (let i = events.length - 1; i >= 0 && parts.length < 24; i -= 1) {
+    const rec = events[i]!;
+    if (rec.event === 'error' || rec.event === 'agent') {
+      parts.push(...eventErrorText(rec.data));
+    } else if (rec.event === 'stderr') {
+      parts.push(...eventStderrText(rec.data));
+    }
+  }
+  return parts.join('\n');
+}
+
+function isHardQuotaText(text: string): boolean {
+  return /\b(session limit|usage limit|limit reached|quota|billing (?:hard )?limit|insufficient[ _-]?(?:quota|credit|funds)|exceeded your current quota)\b/i
+    .test(text);
+}
+
+function isTimeoutText(text: string): boolean {
+  return /\b(timed?\s*out|timeout|inactivity|stalled|hung|no new output|without emitting any new output)\b/i
+    .test(text);
+}
+
+function isEmptyOutputText(text: string): boolean {
+  return /\b(empty response|empty output|without producing any output|no visible output|returned an empty response)\b/i
+    .test(text);
+}
+
+function isToolErrorText(text: string): boolean {
+  if (isPluginArtifactMissingText(text)) return true;
+  return /\b(tool|mcp|connector|plugin)\b/i.test(text) &&
+    /\b(error|failed|failure)\b/i.test(text);
+}
+
+function isPluginArtifactMissingText(text: string): boolean {
+  return /\bPlugin authoring ended before generating the required generated-plugin artifacts\b/i
+    .test(text);
+}
+
+function isAgentConfigInvalidText(text: string): boolean {
+  return /\bError loading config\.toml: unknown variant\b/i.test(text) ||
+    /\bunknown variant [`'"][^`'"]+[`'"], expected\b[\s\S]*\bin `service_tier`/i.test(text);
+}
+
+function isFabricatedRoleMarkerText(text: string): boolean {
+  return /\bmodel emitted fabricated role marker\b/i.test(text);
+}
+
+function isPermissionRequestNotFoundText(text: string): boolean {
+  return /\b(PermissionNotFoundError|Permission request not found|permissions\/per_[A-Za-z0-9_-]+\s+returned\s+HTTP\s+404)\b/i
+    .test(text);
+}
+
+function isAuthDetailText(text: string): boolean {
+  return /\b(refresh token|access token could not be refreshed|stale local profile|different or stale local profile|missing environment variable: `?[A-Z0-9_]*(?:API_)?KEY`?|api key.*(?:missing|invalid)|invalid api key|credentials? (?:are )?missing|not logged in|Authentication required|carry the api (?:secret )?key|No auth type is selected|set an Auth method|organization has disabled .* subscription access)\b/i
+    .test(text);
+}
+
+function readRuntimeCloseReason(
+  events: RunEventForFailureClassification[] = [],
+): string | null {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const record = events[index];
+    if (record?.event !== 'diagnostic' || !record.data || typeof record.data !== 'object') continue;
+    const data = record.data as Record<string, unknown>;
+    if (data.type === 'runtime_close' && typeof data.rpc_close_reason === 'string') {
+      return data.rpc_close_reason;
+    }
+  }
+  return null;
+}
+
+function inferFailureStageFromEvents(
+  events: RunEventForFailureClassification[] | undefined,
+  fallback: TrackingRunFailureStage,
+): TrackingRunFailureStage {
+  let sawFirstToken = false;
+  let sawToolUse = false;
+  let sawArtifact = false;
+  const openTools = new Set<string>();
+  for (const record of events ?? []) {
+    if (record.event === 'live_artifact') sawArtifact = true;
+    if (record.event !== 'agent' || !record.data || typeof record.data !== 'object') continue;
+    const data = record.data as Record<string, unknown>;
+    if (data.type === 'text_delta' || data.type === 'thinking_delta') sawFirstToken = true;
+    if (data.type === 'artifact' || data.type === 'live_artifact') sawArtifact = true;
+    if (data.type === 'tool_use' && typeof data.id === 'string') {
+      sawToolUse = true;
+      openTools.add(data.id);
+    }
+    if (data.type === 'tool_result' && typeof data.toolUseId === 'string') openTools.delete(data.toolUseId);
+  }
+  if (sawArtifact) return 'artifact_write';
+  if (sawToolUse || openTools.size > 0) return 'tool_execution';
+  if (sawFirstToken) return 'child_close';
+  return fallback;
+}
+
+function executionFailedDetail(
+  events: RunEventForFailureClassification[] | undefined,
+): TrackingRunFailureDetail {
+  switch (readRuntimeCloseReason(events)) {
+    case 'stream_error': return 'stream_error';
+    case 'exit_nonzero': return 'exit_nonzero';
+    case 'fatal_rpc_error': return 'fatal_rpc_error';
+    default: return 'execution_failed';
+  }
+}
+
+function promptTooLargeDetail(text: string): TrackingRunFailureDetail | null {
+  if (
+    /\b(?:Payload Too Large|Request Entity Too Large|request body exceeds configured limit)\b/i.test(text)
+    || /\[code=request_too_large\]/i.test(text)
+  ) {
+    return 'request_too_large';
+  }
+  if (
+    /\b(context window|context size (?:has been )?exceeded|prompt too large|maximum context|too many tokens|input.*too large|request (?:body )?exceeds configured limit|output token maximum|maximum output tokens|CLAUDE_CODE_MAX_OUTPUT_TOKENS|exceeds the safe size|composed prompt exceeds|prompt token count .* exceeds|maximum context length|context too large|prefill context too large|reduce the length of (?:the )?(?:messages|input prompt)|request \(\d+ tokens\) exceeds the available context size|n_keep:\s*\d+\s*>=\s*n_ctx)\b/i.test(text)
+  ) {
+    return 'prompt_too_large';
+  }
+  return null;
+}
+
+function clientRequestFailureDetail(text: string): TrackingRunFailureDetail | null {
+  if (
+    /\bsource\.media_type\b[\s\S]*\bInvalid enum value\b[\s\S]*\bapplication\/pdf\b/i.test(text)
+    || /\bapplication\/pdf\b[\s\S]*\bexpected\b[\s\S]*\bimage\/(?:jpeg|png|gif|webp)\b/i.test(text)
+  ) {
+    return 'attachment_media_type_unsupported';
+  }
+  if (
+    /\bfunction_declarations\[\d+\]\.name\b[\s\S]*\bInvalid function name\b/i.test(text)
+  ) {
+    return 'tool_schema_invalid';
+  }
+  if (/\bFailed to tokenize (?:the )?prompt\b/i.test(text)) {
+    return 'prompt_tokenization_failed';
+  }
+  if (
+    /["']?status["']?\s*:\s*404\b[\s\S]*\bFunction\b[\s\S]*\bNot found for account\b/i.test(text)
+    || /\bFunction\b[\s\S]*\bNot found for account\b[\s\S]*["']?status["']?\s*:\s*404\b/i.test(text)
+  ) {
+    return 'provider_resource_not_found';
+  }
+  return null;
+}
+
+function isUpstreamDetailText(text: string): boolean {
+  if (/\b(?:stream|upstream) idle timeout\b/i.test(text)) return true;
+  return /\b(stream disconnected before completion|response\.completed|Transport error: network error|Upstream request failed|websocket closed|socket connection was closed unexpectedly|tls handshake eof|Connection reset by (?:peer|server)|TLS close_notify|Broken pipe|remote host|远程主机强迫关闭|No route to host|Connection refused|ConnectionRefused|error sending request|Provider returned error|high demand|model is at capacity|selected model is at capacity|temporarily unavailable|upstream_error|http2: response body closed|peer closed connection|incomplete chunked read|Client network socket disconnected before secure TLS connection|Connection failed repeatedly|Server error mid-response|empty or malformed response|Unexpected server error|Streaming response failed|Failed to process error response|AMR model catalog is (?:temporarily )?unavailable|statusCode[\"']?\s*:\s*(?:400|404)|400 Bad Request|404 Not Found)\b/i
+    .test(text);
+}
+
+function isUpstreamClientErrorText(text: string): boolean {
+  return /\b(statusCode[\"']?\s*:\s*(?:400|403|404)|400 Bad Request|403 Forbidden|404 Not Found|NotFoundError|OpenAIException - \{\"detail\":\"Not Found\"\}|API Error:\s*(?:400|403)\b|Country, region, or territory not supported|gateway or proxy|validation error|literal_error|Invalid input|Type validation failed)\b/i
+    .test(text);
+}
+
+function isModernRuntimeStreamFailureText(text: string): boolean {
+  return /\b(Server error mid-response|empty or malformed response|Streaming response failed|Failed to process error response|ConnectionRefused|incomplete chunked read|Client network socket disconnected before secure TLS connection|Connection failed repeatedly|lost its connection to the Anthropic API|gateway or proxy|Country, region, or territory not supported|403 Forbidden)\b/i
+    .test(text);
+}
+
+function isAnyUpstreamFailureText(text: string): boolean {
+  return isUpstreamDetailText(text) || isModernRuntimeStreamFailureText(text);
+}
+
+function modelUnavailableDetail(text: string): TrackingRunFailureDetail | null {
+  if (/\brequires a newer version of codex\b/i.test(text)) {
+    return 'cli_version_incompatible';
+  }
+  if (/\bmodel is disabled\b/i.test(text)) return 'model_disabled';
+  if (/\bno models loaded\b|\blms load\b/i.test(text)) return 'local_model_not_loaded';
+  if (/\b(no endpoints found that support tool use|provider routing)\b/i.test(text)) {
+    return 'provider_routing_error';
+  }
+  if (/\b(model .*not supported|not supported model\b|requested model is not supported|supported api model names|not supported when using codex)\b/i.test(text)) {
+    return 'model_not_supported';
+  }
+  if (/\b(model (?:is )?(?:unavailable|not available|unsupported|not found)|selected model is not available|not have access|no access|model .*not found|no healthy deployments)\b/i.test(text)) {
+    return 'model_not_found';
+  }
+  return null;
+}
+
+function authDetail(text: string): TrackingRunFailureDetail {
+  if (/\brefresh token (?:was )?(?:already used|expired|invalid)|access token could not be refreshed\b/i
+    .test(text)) {
+    return 'refresh_token_reused';
+  }
+  if (/\b(stale local profile|different or stale local profile|stale or expired auth state|stale.*credential|stale.*profile)\b/i
+    .test(text)) {
+    return 'stale_profile';
+  }
+  if (/\bmissing environment variable: `?[A-Z0-9_]*(?:API_)?KEY`?|api key.*missing|credentials? (?:are )?missing\b/i
+    .test(text)) {
+    return 'missing_api_key';
+  }
+  return 'auth_required';
+}
+
+function upstreamDetail(text: string): TrackingRunFailureDetail {
+  if (isUpstreamClientErrorText(text)) return 'upstream_client_error';
+  if (/\b(?:stream|upstream) idle timeout\b/i.test(text)) return 'stream_disconnected';
+  if (/\b(Server error mid-response|empty or malformed response|Streaming response failed)\b/i.test(text)) {
+    return 'stream_disconnected';
+  }
+  if (/\b(AMR model catalog is unavailable|no endpoints found that support tool use|provider routing)\b/i.test(text)) {
+    return 'provider_routing_error';
+  }
+  if (/\bhigh demand|temporary errors|model is at capacity|selected model is at capacity\b/i.test(text)) return 'provider_high_demand';
+  if (/\b(stream disconnected before completion|(?:stream|upstream) idle timeout|response\.completed|websocket closed|socket connection was closed unexpectedly|connection reset|ConnectionRefused|tls handshake eof|tls close_notify|broken pipe|peer closed connection|remote host|远程主机强迫关闭|http2: response body closed|incomplete chunked read|Client network socket disconnected before secure TLS connection|Connection failed repeatedly)\b/i
+    .test(text)) {
+    return 'stream_disconnected';
+  }
+  if (/\b(?:http|status|error|response)(?:[ _-]?code)?[\s:=#-]*5\d\d\b|\b5\d\d\s+(?:bad gateway|service unavailable|internal server error|gateway timeout)|\b(5xx|bad gateway|gateway timeout|internal server error|service unavailable|upstream[ _-](?:error|unavailable)|provider (?:error|unavailable)|overloaded)\b/i
+    .test(text)) {
+    return 'upstream_5xx';
+  }
+  if (isUpstreamClientErrorText(text)) return 'upstream_client_error';
+  return 'network_error';
+}
+
+// Signals that mean the agent process aborted abnormally (segfault, abort,
+// illegal instruction, trap, bus error). Distinct from SIGKILL (OOM / forced
+// kill) and SIGTERM (graceful shutdown / cancel). None of these are timeouts.
+const PROCESS_CRASH_SIGNALS = new Set([
+  'SIGSEGV',
+  'SIGABRT',
+  'SIGILL',
+  'SIGTRAP',
+  'SIGBUS',
+]);
+
+function isCpuUnsupportedCrashText(text: string): boolean {
+  if (/\bno_avx2\b/i.test(text)) return true;
+  return (
+    /0xc000001d|\b3221225501\b/i.test(text)
+    && /\bstart opencode server\b|\bopencode exited before readiness\b/i.test(text)
+  );
+}
+
+// Classifies a run that died from an OS signal or an interrupt exit code
+// (130 = 128 + SIGINT). Returns null when the failure is not signal/interrupt
+// shaped so the caller can fall through to the generic exit-code bucket.
+//
+// Earlier classifier branches already claim the cases where the failure text
+// carries richer meaning than the bare signal: an inactivity-driven SIGTERM is
+// caught by the timeout branch above, and a SIGINT/exit-130 whose text names a
+// stream disconnect is caught by the upstream branch. By the time control
+// reaches here a signal is the strongest evidence we have, so map it to a
+// non-retryable process_exit instead of laundering it into a retryable timeout.
+function signalInterruptClassification(
+  errorCode: string,
+  text: string,
+  retryableHint: boolean | undefined,
+): RunFailureClassification | null {
+  const isInterruptExit = errorCode === 'AGENT_EXIT_130';
+  const signal = errorCode.startsWith('AGENT_SIGNAL_')
+    ? errorCode.slice('AGENT_SIGNAL_'.length)
+    : '';
+  if (!signal && !isInterruptExit) return null;
+
+  if (signal === 'SIGKILL') {
+    return classification('process_exit', 'signal_killed', 'child_close', false, 'none');
+  }
+  if (PROCESS_CRASH_SIGNALS.has(signal)) {
+    return classification('process_exit', 'process_crashed', 'child_close', false, 'none');
+  }
+  if (/\b(?:exit status )?0xc0000409\b/i.test(text)) {
+    return classification('process_exit', 'process_crashed', 'child_close', false, 'none');
+  }
+  if (signal === 'SIGINT' || isInterruptExit) {
+    // Defensive: the upstream branch above already claims disconnect text, but
+    // re-check so a reordering can never silently bury a cancelled stream.
+    if (isAnyUpstreamFailureText(text)) {
+      return classification(
+        'upstream_unavailable',
+        upstreamDetail(text),
+        'first_token_wait',
+        retryableHint ?? true,
+        'retry',
+      );
+    }
+    return classification('process_exit', 'interrupted', 'child_close', false, 'none');
+  }
+  // SIGTERM (graceful shutdown / cancel) and any other signal. Inactivity-driven
+  // SIGTERMs were already claimed by the timeout branch above, so reaching here
+  // means there is no timeout evidence: treat as a non-retryable termination.
+  return classification('process_exit', 'terminated_unknown', 'child_close', false, 'none');
+}
+
+function toolErrorDetail(text: string): TrackingRunFailureDetail {
+  if (isPluginArtifactMissingText(text)) return 'plugin_artifact_missing';
+  return 'tool_error';
+}
+
+function processExitDetail(
+  errorCode: string,
+  text: string,
+): TrackingRunFailureDetail {
+  if (/\bnot installed|not on PATH\b/i.test(text) || errorCode === 'AGENT_UNAVAILABLE') {
+    return 'cli_not_installed';
+  }
+  if (/\bspawn failed: spawn ENOEXEC\b/i.test(text)) return 'spawn_enoexec';
+  if (/\bspawn failed: spawn EBADF\b/i.test(text)) return 'spawn_ebadf';
+  if (/\bspawn failed: spawn EPERM\b/i.test(text)) return 'spawn_eperm';
+  if (/\bspawn failed: spawn\b/i.test(text)) return 'spawn_failed';
+  if (/\bstdin: write EOF\b/i.test(text)) return 'stdin_write_eof';
+  if (isAgentConfigInvalidText(text)) return 'agent_config_invalid';
+  if (isFabricatedRoleMarkerText(text)) return 'fabricated_role_marker';
+  if (/\bjson-rpc id \d+: Internal error\b/i.test(text)) {
+    return 'agent_protocol_error';
+  }
+  if (/\bQoder run failed: stop_sequence\b/i.test(text)) {
+    return 'qoder_stop_sequence';
+  }
+  if (errorCode.startsWith('AGENT_EXIT_')) return 'exit_code';
+  if (errorCode === 'AGENT_TERMINATED_UNKNOWN') return 'terminated_unknown';
+  if (errorCode === 'AGENT_EXECUTION_FAILED') return 'execution_failed';
+  return 'unknown';
+}
+
+/**
+ * Whether a terminal failure can be recovered by RESUMING the agent's existing
+ * CLI session (continue from where it left off) rather than restarting from
+ * scratch. True only for transient mid-stream interruptions — an upstream drop
+ * or an inactivity timeout — where any work already committed to the session is
+ * worth continuing. Deliberately excludes process crashes, OOM kills,
+ * auth/balance/prompt-size and any other non-transient cause: resuming those
+ * would just reproduce the failure. The caller additionally gates on the
+ * runtime actually supporting CLI session resume and on holding a session id.
+ */
+export function isResumableFailure(
+  failure: RunFailureClassification | undefined,
+): boolean {
+  if (!failure?.retryable) return false;
+  if (
+    failure.failure_category === 'upstream_unavailable'
+    && (
+      failure.failure_detail === 'stream_disconnected'
+      || failure.failure_detail === 'upstream_5xx'
+      || failure.failure_detail === 'network_error'
+      || failure.failure_detail === 'provider_high_demand'
+      || failure.failure_detail === 'provider_routing_error'
+    )
+  ) {
+    return true;
+  }
+  if (
+    failure.failure_category === 'timeout' &&
+    failure.failure_detail === 'inactivity_timeout'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function classification(
+  failure_category: TrackingRunFailureCategory,
+  failure_detail: TrackingRunFailureDetail,
+  failure_stage: TrackingRunFailureStage,
+  retryable: boolean,
+  user_action: TrackingRunFailureUserAction,
+): RunFailureClassification {
+  return {
+    failure_category,
+    failure_detail,
+    failure_stage,
+    retryable,
+    user_action,
+  };
+}
+
+export function classifyRunFailure(
+  input: RunFailureClassificationInput,
+): RunFailureClassification | undefined {
+  if (input.result === 'success') return undefined;
+  if (input.result === 'cancelled') {
+    return classification('user_cancel', 'user_cancelled', 'finalize', false, 'none');
+  }
+
+  const errorCode = normalizeCode(input.errorCode ?? input.status.errorCode);
+  const text = collectFailureText(input);
+  const retryableHint = latestRetryable(input.events);
+  const amrFailure = classifyAmrAccountFailure(text);
+
+  if (
+    errorCode === 'AMR_INSUFFICIENT_BALANCE' ||
+    amrFailure?.code === 'AMR_INSUFFICIENT_BALANCE'
+  ) {
+    return classification(
+      'insufficient_balance',
+      'amr_insufficient_balance',
+      'session_init',
+      false,
+      'recharge',
+    );
+  }
+
+  if (
+    errorCode === 'AMR_AUTH_REQUIRED' ||
+    errorCode === 'AGENT_AUTH_REQUIRED' ||
+    errorCode === 'UNAUTHORIZED' ||
+    amrFailure?.code === 'AMR_AUTH_REQUIRED'
+  ) {
+    return classification(
+      'auth',
+      authDetail(text),
+      'session_init',
+      false,
+      'login',
+    );
+  }
+
+  const promptSizeDetail = promptTooLargeDetail(text);
+  if (errorCode === 'AGENT_PROMPT_TOO_LARGE' || promptSizeDetail) {
+    return classification(
+      'prompt_too_large',
+      promptSizeDetail ?? 'prompt_too_large',
+      'prompt_send',
+      false,
+      'reduce_context',
+    );
+  }
+
+  const modelDetail = errorCode === 'AMR_MODEL_UNAVAILABLE'
+    ? 'model_not_found'
+    : modelUnavailableDetail(text);
+  if (modelDetail) {
+    return classification(
+      'model_unavailable',
+      modelDetail,
+      'model_select',
+      false,
+      'switch_model',
+    );
+  }
+
+  if (errorCode === 'AGENT_UNAVAILABLE') {
+    return classification(
+      'process_exit',
+      'cli_not_installed',
+      'spawn',
+      false,
+      'install_cli',
+    );
+  }
+
+  if (isAgentConfigInvalidText(text)) {
+    return classification(
+      'process_exit',
+      'agent_config_invalid',
+      'session_init',
+      false,
+      'fix_config',
+    );
+  }
+
+  const serviceFailure = classifyAgentServiceFailure(text);
+  if (serviceFailure === 'AGENT_AUTH_REQUIRED' || isAuthDetailText(text)) {
+    return classification(
+      'auth',
+      authDetail(text),
+      'session_init',
+      false,
+      'login',
+    );
+  }
+
+  if (errorCode === 'RATE_LIMITED' || serviceFailure === 'RATE_LIMITED') {
+    const retryable = retryableHint ?? !isHardQuotaText(text);
+    return classification(
+      'rate_limit',
+      isHardQuotaText(text) ? 'hard_quota' : 'rate_limit_429',
+      'session_init',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (
+    errorCode === 'UPSTREAM_UNAVAILABLE' ||
+    serviceFailure === 'UPSTREAM_UNAVAILABLE' ||
+    isAnyUpstreamFailureText(text)
+  ) {
+    const upstreamClientError = isUpstreamClientErrorText(text);
+    const retryable = upstreamClientError ? false : retryableHint ?? true;
+    return classification(
+      'upstream_unavailable',
+      upstreamClientError ? 'upstream_client_error' : upstreamDetail(text),
+      'first_token_wait',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (isEmptyOutputText(text)) {
+    return classification(
+      'empty_output',
+      'empty_output',
+      'first_token_wait',
+      retryableHint ?? true,
+      'retry',
+    );
+  }
+
+  if (isTimeoutText(text) || errorCode === 'TIMEOUT') {
+    const retryable = retryableHint ?? true;
+    return classification(
+      'timeout',
+      /inactivity|stalled|hung|no new output|without emitting any new output/i.test(text)
+        ? 'inactivity_timeout'
+        : 'timeout',
+      'first_token_wait',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (isToolErrorText(text)) {
+    const retryable = retryableHint ?? !isPluginArtifactMissingText(text);
+    return classification(
+      'tool_error',
+      toolErrorDetail(text),
+      isPluginArtifactMissingText(text) ? 'artifact_write' : 'tool_execution',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (isFabricatedRoleMarkerText(text)) {
+    const retryable = retryableHint ?? true;
+    return classification(
+      'process_exit',
+      'fabricated_role_marker',
+      'child_close',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (isPermissionRequestNotFoundText(text)) {
+    const retryable = retryableHint ?? true;
+    return classification(
+      'process_exit',
+      'permission_request_not_found',
+      'child_close',
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  if (isCpuUnsupportedCrashText(text)) {
+    return classification(
+      'process_exit',
+      'cpu_unsupported',
+      inferFailureStageFromEvents(input.events, 'session_init'),
+      false,
+      'none',
+    );
+  }
+
+  const runtimeCloseReason = readRuntimeCloseReason(input.events);
+  if (
+    runtimeCloseReason === 'fatal_rpc_error' &&
+    (
+      errorCode === 'AGENT_EXECUTION_FAILED' ||
+      errorCode === 'AGENT_TERMINATED_UNKNOWN' ||
+      errorCode.startsWith('AGENT_SIGNAL_') ||
+      errorCode.startsWith('AGENT_EXIT_')
+    )
+  ) {
+    const retryable = retryableHint ?? true;
+    return classification(
+      'process_exit',
+      'fatal_rpc_error',
+      inferFailureStageFromEvents(input.events, 'child_close'),
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  const clientRequestDetail = clientRequestFailureDetail(text);
+  if (clientRequestDetail) {
+    return classification(
+      'upstream_unavailable',
+      clientRequestDetail,
+      'prompt_send',
+      false,
+      'none',
+    );
+  }
+
+  const signalInterrupt = signalInterruptClassification(errorCode, text, retryableHint);
+  if (signalInterrupt) return signalInterrupt;
+
+  if (
+    errorCode.startsWith('AGENT_EXIT_') ||
+    errorCode === 'AGENT_TERMINATED_UNKNOWN' ||
+    errorCode === 'AGENT_EXECUTION_FAILED'
+  ) {
+    const baseDetail = processExitDetail(errorCode, text);
+    const detail = baseDetail === 'execution_failed'
+      ? executionFailedDetail(input.events)
+      : baseDetail;
+    const retryable = retryableHint ?? (detail === 'stream_error' || detail === 'fatal_rpc_error');
+    return classification(
+      'process_exit',
+      detail,
+      inferFailureStageFromEvents(input.events, 'child_close'),
+      retryable,
+      retryable ? 'retry' : 'none',
+    );
+  }
+
+  return classification(
+    'unknown',
+    'unknown',
+    'finalize',
+    retryableHint ?? false,
+    retryableHint ? 'retry' : 'none',
+  );
+}

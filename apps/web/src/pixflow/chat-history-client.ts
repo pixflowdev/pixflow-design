@@ -1,0 +1,136 @@
+import { pixflowWordPressRestFetch } from './runtime-fetch';
+import { getPixflowWordPressConfig } from './wordpress-context';
+import type { PixflowChatHistoryBinding, PixflowChatHistoryPage, PixflowSavedChatHistory, PixflowChatHistoryListPage, PixflowChatHistoryImportResponse, PixflowChatHistoryResolveRequest, PixflowChatHistorySaveResponse, PixflowChatHistoryLookupResponse } from '@open-design/contracts';
+
+export type ChatHistoryBinding = PixflowChatHistoryBinding;
+export interface HistoryMessage { id?: string; role?: string; content?: string; historyRevision?: number; historySequence?: number }
+export type ChatHistoryPage<T> = PixflowChatHistoryPage<T>;
+export type SavedChatHistory = PixflowSavedChatHistory;
+export function listChatHistory(before?: string | null): Promise<PixflowChatHistoryListPage> {
+  return request(`/chat-history/conversations?limit=50${before ? `&before=${encodeURIComponent(before)}` : ''}`);
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await pixflowWordPressRestFetch(path, init);
+  const body = await response.json();
+  if (!response.ok) throw new ChatHistoryRequestError(body.message || `Chat history request failed (${response.status})`, response.status, body);
+  return body as T;
+}
+class ChatHistoryRequestError extends Error {
+  constructor(message: string, readonly status: number, readonly body: {code?:string;data?:{message?:HistoryMessage}}) { super(message); }
+}
+/** A terminal durable replay can acknowledge a previously truncated tail only
+ * when its exact content, events and metadata are already present there.
+ */
+function completedReplayContains<T extends HistoryMessage>(incoming:T,saved?:HistoryMessage): saved is T {
+  type Snapshot=HistoryMessage & {runId?:string;runStatus?:string;lastRunEventId?:string;events?:unknown[]};
+  const next=incoming as Snapshot, prior=saved as Snapshot | undefined;
+  if (!prior || next.id!==prior.id || next.role!=='assistant' || prior.role!=='assistant'
+    || !next.runId || next.runId!==prior.runId || prior.runStatus!=='succeeded' || next.runStatus!=='succeeded'
+    || !next.lastRunEventId || next.lastRunEventId!==prior.lastRunEventId
+    || !next.content || !prior.content?.endsWith(next.content)) return false;
+  const events=(list:unknown[] = [])=>list.filter(event=>!!event&&typeof event==='object'&&(event as {kind?:string}).kind!=='text');
+  const oldEvents=events(prior.events), newEvents=events(next.events), offset=oldEvents.length-newEvents.length;
+  if (offset<0 || newEvents.some((event,index)=>JSON.stringify(event)!==JSON.stringify(oldEvents[offset+index]))) return false;
+  const changing=new Set(['content','events','historyRevision','historySequence']);
+  return Object.entries(next).every(([key,value])=>changing.has(key)||JSON.stringify(value)===JSON.stringify((prior as unknown as Record<string,unknown>)[key]));
+}
+
+/** A reload may lose a local revision acknowledgement, never another tab's edits.
+ * Rebase only an exact append-only continuation of the same still-active run.
+ */
+function appendOnlyRecoveryRevision(incoming: HistoryMessage, saved?: HistoryMessage): number | null {
+  type Snapshot = HistoryMessage & {runId?:string;runStatus?:string;lastRunEventId?:string;events?:unknown[]};
+  const next=incoming as Snapshot, prior=saved as Snapshot | undefined;
+  if (!prior || next.id!==prior.id || next.role!=='assistant' || prior.role!=='assistant'
+    || !next.runId || next.runId!==prior.runId || !['queued','running'].includes(prior.runStatus || '')
+    || !Number.isInteger(prior.historyRevision) || !next.content?.startsWith(prior.content || '')
+    || !/^\d+$/.test(next.lastRunEventId || '') || !/^\d+$/.test(prior.lastRunEventId || '')
+    || Number(next.lastRunEventId)<=Number(prior.lastRunEventId)) return null;
+  const activity=(events:unknown[] = [])=>events.filter(event=>!!event && typeof event==='object' && (event as {kind?:string}).kind!=='text');
+  const oldEvents=activity(prior.events), newEvents=activity(next.events);
+  if (oldEvents.some((event,index)=>JSON.stringify(event)!==JSON.stringify(newEvents[index]))) return null;
+  // Other saved metadata (attachments, identity, etc.) must also survive intact.
+  const changing=new Set(['content','events','historyRevision','historySequence','runStatus','lastRunEventId','endedAt','producedFiles','telemetryFinalized','resumable']);
+  for (const [key,value] of Object.entries(prior)) if (!changing.has(key) && JSON.stringify(value)!==JSON.stringify((next as unknown as Record<string,unknown>)[key])) return null;
+  if ((prior as Snapshot & {producedFiles?:unknown[]}).producedFiles?.some(file=>!((next as Snapshot & {producedFiles?:unknown[]}).producedFiles || []).some(value=>JSON.stringify(value)===JSON.stringify(file)))) return null;
+  return prior.historyRevision!;
+}
+const json = (method: string, body: unknown): RequestInit => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const base = (binding: ChatHistoryBinding) => `/chat-history/${encodeURIComponent(binding.projectId)}/${encodeURIComponent(binding.conversationId)}/messages`;
+export const historyMessageFingerprint = (message: HistoryMessage) => {
+  const { historyRevision: _revision, historySequence: _sequence, ...payload } = message;
+  return JSON.stringify(payload);
+};
+export function resolveChatHistory(input: PixflowChatHistoryResolveRequest & { create: false }): Promise<PixflowChatHistoryLookupResponse>;
+export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<ChatHistoryBinding>;
+export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<PixflowChatHistoryLookupResponse> {
+  return request('/chat-history/resolve', json('POST', input));
+}
+export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null): Promise<ChatHistoryPage<T>> {
+  return request(`${base(binding)}?limit=50${before ? `&before=${encodeURIComponent(before)}` : ''}`);
+}
+export async function importChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, messages: T[]): Promise<PixflowChatHistoryImportResponse<T>> {
+  const owner = ownerScope();
+  const result: PixflowChatHistoryImportResponse<T> = { messages: [], deletedMessageIds: [] };
+  for (let offset = 0; offset < messages.length; offset += 100) {
+    if (ownerScope() !== owner) throw new Error('The signed-in account changed before chat history could be saved.');
+    const page = await request<PixflowChatHistoryImportResponse<T>>(base(binding), json('POST', { messages: messages.slice(offset, offset + 100), importOnly: true }));
+    result.messages.push(...(page.messages || []));
+    result.deletedMessageIds.push(...(page.deletedMessageIds || []));
+  }
+  return result;
+}
+
+// Serialize our own revisions. A stale tab still submits the revision it read,
+// so it cannot replace another tab's more recent answer.
+const writers = new Map<string, Promise<unknown>>();
+const acknowledged = new Map<string, { revision: number; inputs: Set<number> }>();
+export function chatHistoryOwnerScope(): string {
+  const config = getPixflowWordPressConfig();
+  return JSON.stringify([config?.restBaseUrl || config?.siteUrl || config?.siteHash || '', config?.userId || config?.restNonce || '']);
+}
+const ownerScope = chatHistoryOwnerScope;
+export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHistoryBinding, message: T): Promise<T> {
+  if (!message.id) return Promise.reject(new Error('Chat messages require a stable identity.'));
+  const path = `${base(binding)}/${encodeURIComponent(message.id)}`;
+  const owner = ownerScope();
+  const writerKey = `${owner}:${path}`;
+  const inputRevision = message.historyRevision ?? 0;
+  const task = (writers.get(writerKey) || Promise.resolve()).catch(() => undefined).then(async () => {
+    if (ownerScope() !== owner) throw new Error('The signed-in account changed before chat history could be saved.');
+    const previous = acknowledged.get(writerKey);
+    const revision = previous?.inputs.has(inputRevision) ? previous.revision : inputRevision;
+    let result: PixflowChatHistorySaveResponse<T>;
+    try {
+      result = await request(path, json('PUT', { ...message, historyRevision: revision }));
+    } catch (error) {
+      if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
+        && completedReplayContains(message,error.body.data?.message) && ownerScope()===owner) {
+        result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
+      } else {
+      const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
+        ? appendOnlyRecoveryRevision(message,error.body.data?.message) : null;
+      if (recovered===null || ownerScope()!==owner) throw error;
+      // One compare-and-swap retry; a concurrent edit still wins a real conflict.
+      result = await request(path, json('PUT',{...message,historyRevision:recovered}));
+      }
+    }
+    acknowledged.set(writerKey, { revision: result.revision, inputs: new Set([...(previous?.inputs || []), inputRevision, result.revision]) });
+    return result.message;
+  });
+  writers.set(writerKey, task);
+  void task.finally(() => { if (writers.get(writerKey) === task) writers.delete(writerKey); }).catch(() => undefined);
+  return task;
+}
+
+/** Historical payloads are preserved intact; identity, not array position, deduplicates. */
+export function mergeChatHistory<T extends HistoryMessage>(older: T[], newer: T[]): T[] {
+  const byId = new Map<string, T>();
+  for (const message of [...older, ...newer]) if (message.id) byId.set(message.id, message);
+  return [...byId.values()].sort((a, b) => {
+    if (a.historySequence && b.historySequence) return a.historySequence - b.historySequence;
+    const time = (value: T) => Number((value as T & { createdAt?: number }).createdAt || 0);
+    return time(a) - time(b);
+  });
+}

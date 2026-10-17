@@ -1,0 +1,11 @@
+.section { display: grid; gap: 12px; }
+.section .search { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-panel); color: var(--text); font: inherit; }
+.section .search:focus, .section .search:focus-visible { outline: none !important; box-shadow: none; border-color: var(--border); }
+.row { padding: 14px 16px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--settings-surface, var(--bg-elevated)); }
+.lockedName { font-size: 13px; font-weight: 550; opacity: .55; color: var(--text); }
+.locked p { opacity: .55; }
+.proBadge { flex: none; border: 1px solid var(--border-soft); border-radius: 5px; padding: 2px 6px; color: var(--text-muted); font-size: 10px; line-height: 1.4; font-weight: 550; }
+@supports (corner-shape: squircle) { .row { corner-shape: squircle; } }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row p { margin: 6px 0 0; color: var(--text-muted); font-size: 12px; }
+.section .body { max-height: 280px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 12px; line-height: 1.6; color: var(--text); background: var(--bg-panel); padding: 12px; border-radius: 8px; }

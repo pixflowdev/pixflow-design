@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clean Recipe Example</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --soft: #f6f8fb;
+      --tint: #f2edff;
+      --surface: #ffffff;
+      --ink: #111318;
+      --muted: #666b7a;
+      --border: #e4e8f0;
+      --accent: #146ef5;
+      --accent-2: #6f48f7;
+      --dark: #0b0d12;
+      --radius: 16px;
+      --radius-lg: 28px;
+      --shadow: 0 24px 70px rgba(15, 23, 42, .1);
+      --container: 1240px;
+      --wide: 1440px;
+      --font: Lato, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: Inconsolata, ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.55;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    h1, h2, h3, p { margin: 0; }
+    .container { width: min(var(--container), calc(100% - 48px)); margin-inline: auto; }
+    .wide { width: min(var(--wide), calc(100% - 48px)); margin-inline: auto; }
+    .nav {
+      min-height: 72px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; }
+    .mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff; font-family: var(--mono); font-size: 13px; }
+    .links { display: flex; gap: 30px; color: var(--muted); font-size: 14px; font-weight: 600; }
+    .actions { justify-self: end; display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 700; }
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 800;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, .04);
+    }
+    .btn-primary {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, var(--accent), #0f5fd8);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(20, 110, 245, .22);
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 96px 0 62px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -30% -10% auto;
+      height: 480px;
+      background: radial-gradient(circle, rgba(111, 72, 247, .12), transparent 58%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 1; }
+    h1 {
+      max-width: 900px;
+      margin-inline: auto;
+      font-size: clamp(48px, 6.2vw, 82px);
+      line-height: 1.02;
+      letter-spacing: 0;
+      font-weight: 850;
+    }
+    .lead {
+      max-width: 710px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 22px);
+      line-height: 1.55;
+    }
+    .hero-actions { margin-top: 34px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .trust {
+      max-width: 1140px;
+      margin: 76px auto 0;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      color: #a1a7b4;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .trust p { font-family: var(--mono); text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
+    .logo-row { margin-top: 22px; display: flex; justify-content: center; gap: 42px; flex-wrap: wrap; }
+    .product-band { padding: 74px 0 90px; background: var(--soft); border-bottom: 1px solid var(--border); }
+    .product-window {
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: #0d0e15;
+      box-shadow: var(--shadow);
+    }
+    .window-top {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      color: #8c91a3;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; background: #ff6b5f; box-shadow: 18px 0 #f8c04e, 36px 0 #2ec772; margin-right: 44px; }
+    .product-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 330px;
+      min-height: 580px;
+    }
+    .sidebar, .assistant-card { padding: 24px; border-right: 1px solid rgba(255, 255, 255, .08); color: #8c91a3; }
+    .assistant-card { border-right: 0; border-left: 1px solid rgba(255, 255, 255, .08); }
+    .file { padding: 11px 12px; border-radius: 10px; color: #b5bac8; font-family: var(--mono); font-size: 13px; }
+    .file.active { background: rgba(111, 72, 247, .16); color: #fff; }
+    .code { padding: 30px; color: #d9dcee; font-family: var(--mono); font-size: 14px; line-height: 1.8; }
+    .code b { color: #9e7cff; font-weight: 700; }
+    .suggestion {
+      margin-top: 32px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      color: #fff;
+    }
+    .suggestion p { color: #c9ccdb; margin-top: 10px; font-size: 14px; }
+    .section { padding: 104px 0; }
+    .section.soft { background: var(--soft); border-block: 1px solid var(--border); }
+    .section.tint { background: var(--tint); border-block: 1px solid #ded5ff; text-align: center; }
+    .section-head { max-width: 720px; margin: 0 auto 48px; text-align: center; }
+    .eyebrow { color: var(--accent-2); font-weight: 850; font-size: 13px; }
+    h2 { margin-top: 10px; font-size: clamp(34px, 4.2vw, 54px); line-height: 1.08; font-weight: 850; }
+    .section-head p { margin-top: 16px; color: var(--muted); font-size: 20px; }
+    .feature-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; }
+    .feature-grid.lower { grid-template-columns: repeat(3, 1fr); }
+    .card {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 1px 1px rgba(15, 23, 42, .03);
+    }
+    .card.wide { min-height: 300px; }
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      border: 1px solid #d7e5ff;
+      color: var(--accent);
+      font-weight: 900;
+      margin-bottom: 28px;
+    }
+    h3 { font-size: 22px; line-height: 1.2; }
+    .card p { margin-top: 11px; color: var(--muted); }
+    .mini-state {
+      margin-top: 26px;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      font-family: var(--mono);
+      color: var(--muted-strong);
+      font-size: 13px;
+    }
+    .pricing { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 860px; margin-inline: auto; }
+    .price-card { position: relative; padding: 34px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; }
+    .price-card.featured { border-color: rgba(111, 72, 247, .38); box-shadow: var(--shadow-soft); }
+    .badge { position: absolute; top: 0; right: 24px; transform: translateY(-50%); padding: 6px 12px; border-radius: var(--pill); background: var(--accent-2); color: #fff; font-size: 11px; font-weight: 900; }
+    .price { margin: 28px 0; font-size: 46px; font-weight: 850; }
+    .price span { color: var(--muted); font-size: 15px; font-weight: 700; }
+    .list { display: grid; gap: 12px; color: var(--muted); }
+    .testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .quote { color: var(--muted); }
+    .person { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-2); display: grid; place-items: center; font-size: 12px; font-weight: 900; }
+    .integrations { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; max-width: 920px; margin-inline: auto; }
+    .tile { border: 1px solid var(--border); border-radius: 14px; background: #fff; min-height: 86px; display: grid; place-items: center; font-weight: 850; color: var(--muted-strong); }
+    .cta p { margin: 16px auto 0; max-width: 580px; color: var(--muted); font-size: 20px; }
+    .footer {
+      padding: 56px 0;
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, 1fr);
+      gap: 40px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    .footer strong { color: var(--ink); }
+    .footer a { display: block; margin-top: 10px; }
+    @media (max-width: 980px) {
+      .links { display: none; }
+      .nav { grid-template-columns: 1fr auto; }
+      .actions { gap: 8px; }
+      .product-grid, .feature-grid, .feature-grid.lower, .pricing, .testimonials { grid-template-columns: 1fr; }
+      .sidebar, .assistant-card { border: 0; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+      .integrations { grid-template-columns: repeat(3, 1fr); }
+      .footer { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .container, .wide { width: min(100% - 28px, var(--container)); }
+      .hero { padding-top: 66px; }
+      h1 { font-size: 46px; }
+      .btn { width: 100%; }
+      .actions .btn { width: auto; }
+      .trust { margin-top: 52px; }
+      .product-grid { min-height: auto; }
+      .code { font-size: 12px; padding: 18px; overflow: hidden; }
+      .section { padding: 74px 0; }
+      .integrations { grid-template-columns: repeat(2, 1fr); }
+      .footer { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="container nav">
+    <a class="brand" href="#"><span class="mark">/</span> AgentWorks</a>
+    <nav class="links" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#proof">Proof</a>
+      <a href="#stack">Stack</a>
+    </nav>
+    <div class="actions">
+      <a href="#">Sign in</a>
+      <a class="btn btn-primary" href="#">Get started</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-inner">
+        <h1>Ship cleaner product work without leaving your editor.</h1>
+        <p class="lead">AgentWorks turns notes, code, tickets, and reviews into guided workflows your team can understand, inspect, and publish.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#">Start free</a>
+          <a class="btn" href="#">View product demo</a>
+        </div>
+        <div class="trust">
+          <p>Trusted by focused product teams</p>
+          <div class="logo-row">
+            <span>Northstar</span><span>Vertex</span><span>Orbit Labs</span><span>Forma</span><span>Linework</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="product-band">
+      <div class="wide">
+        <div class="product-window" aria-label="AgentWorks product preview">
+          <div class="window-top"><span class="dot"></span><span>workspace/launch-plan.ts</span></div>
+          <div class="product-grid">
+            <aside class="sidebar">
+              <div class="file active">launch-plan.ts</div>
+              <div class="file">review-notes.md</div>
+              <div class="file">tasks.json</div>
+              <div class="file">release-checks.yml</div>
+            </aside>
+            <div class="code">
+              <div><b>const</b> launch = createWorkflow({</div>
+              <div>&nbsp;&nbsp;source: "customer feedback",</div>
+              <div>&nbsp;&nbsp;mode: "review-ready",</div>
+              <div>&nbsp;&nbsp;checks: ["copy", "accessibility", "risk"],</div>
+              <div>});</div>
+              <div class="suggestion">
+                <strong>Agent suggestion</strong>
+                <p>Three acceptance criteria are missing owners. Add owner labels before publishing the launch plan.</p>
+              </div>
+            </div>
+            <aside class="assistant-card">
+              <h3>Review queue</h3>
+              <p style="margin-top:12px;color:#c9ccdb">12 checks ready, 3 need a decision, 0 blocked.</p>
+              <div class="mini-state" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#d9dcee">Next: assign content owner</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Agentic features</div>
+          <h2>Everything a launch team needs in one clean workspace.</h2>
+          <p>Keep the surface simple while the product carries real states, owners, and decisions.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="card wide">
+            <div class="icon">$</div>
+            <h3>Context-aware planning</h3>
+            <p>Turn briefs, notes, support issues, and source files into a readable plan with checks your team can trust.</p>
+            <div class="mini-state">Analyzing workspace... 42 linked items found</div>
+          </article>
+          <article class="card">
+            <div class="icon">^</div>
+            <h3>Autonomous follow-up</h3>
+            <p>Let the assistant draft next steps, route blockers, and keep review threads focused.</p>
+          </article>
+          <article class="card">
+            <div class="icon">[]</div>
+            <h3>Multi-file awareness</h3>
+            <p>Connect design notes, code, content, and deployment tasks without losing the decision trail.</p>
+          </article>
+          <article class="card">
+            <div class="icon">!</div>
+            <h3>Risk review</h3>
+            <p>Surface missing owners, unclear claims, risky copy, and accessibility issues before handoff.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Built in tools</div>
+          <h2>Every support surface stays calm.</h2>
+          <p>Use compact cards for secondary capabilities instead of bloating the main proof moment.</p>
+        </div>
+        <div class="feature-grid lower">
+          <article class="card"><div class="icon">C</div><h3>Command drafts</h3><p>Translate product requests into clear, reviewable actions.</p></article>
+          <article class="card"><div class="icon">R</div><h3>Review mode</h3><p>Keep notes attached to the work while the artifact changes.</p></article>
+          <article class="card"><div class="icon">S</div><h3>Shared standards</h3><p>Apply team guidance, tokens, and checks across every run.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Plans</div>
+          <h2>Simple plans for focused teams.</h2>
+          <p>Use pricing only when it helps the route. Otherwise this block becomes packages, setup steps, or support tiers.</p>
+        </div>
+        <div class="pricing">
+          <article class="price-card">
+            <h3>Studio</h3>
+            <p>For solo builders and small teams.</p>
+            <div class="price">$0 <span>/ month</span></div>
+            <div class="list"><span>Checklists and drafts</span><span>Local project context</span><span>Community support</span></div>
+          </article>
+          <article class="price-card featured">
+            <span class="badge">Popular</span>
+            <h3>Team</h3>
+            <p>For teams running repeatable launches.</p>
+            <div class="price">$24 <span>/ seat</span></div>
+            <div class="list"><span>Shared workflows</span><span>Priority reviews</span><span>Connected release notes</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="proof" class="section soft">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Proof</div>
+          <h2>Trusted by teams that need less noise.</h2>
+        </div>
+        <div class="testimonials">
+          <article class="card"><p class="quote">"The assistant keeps product and engineering aligned without turning every request into a meeting."</p><div class="person"><span class="avatar">MJ</span><strong>Mina James</strong></div></article>
+          <article class="card"><p class="quote">"We use it for launches because the output is clear enough for clients and specific enough for builders."</p><div class="person"><span class="avatar">RK</span><strong>Rory King</strong></div></article>
+          <article class="card"><p class="quote">"The best part is the restraint. It gives us the decision path, not another noisy dashboard."</p><div class="person"><span class="avatar">AS</span><strong>Ava Stone</strong></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="stack" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Integrations</div>
+          <h2>Works with your daily stack.</h2>
+          <p>Keep compatibility sections simple, centered, and readable.</p>
+        </div>
+        <div class="integrations">
+          <div class="tile">WP</div><div class="tile">API</div><div class="tile">CLI</div><div class="tile">Git</div><div class="tile">Docs</div><div class="tile">Tasks</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section tint cta">
+      <div class="container">
+        <h2>Start clean, stay focused.</h2>
+        <p>Give every product run a clear promise, inspectable proof, and a calm path to action.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="#">Start a workspace</a><a class="btn" href="#">Talk to sales</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container footer">
+    <div><strong>AgentWorks</strong><p style="margin-top:12px">A clean product workflow example for Pixflow Design.</p></div>
+    <div><strong>Product</strong><a href="#">Features</a><a href="#">Pricing</a><a href="#">Docs</a></div>
+    <div><strong>Company</strong><a href="#">About</a><a href="#">Blog</a><a href="#">Contact</a></div>
+    <div><strong>Legal</strong><a href="#">Privacy</a><a href="#">Terms</a></div>
+  </footer>
+</body>
+</html>

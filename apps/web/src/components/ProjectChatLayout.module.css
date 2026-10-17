@@ -1,0 +1,38 @@
+/* Workspace layout only. Rendering, scrolling and composing remain shared with the floating panel. */
+.root:global(.app) { height:100%; min-height:0; grid-template-rows:minmax(0,1fr); }
+.layout { position:relative; display:grid; grid-template-columns:minmax(0,1fr); height:100%; min-height:0; min-width:0; overflow:hidden; background:var(--bg); }
+.root .layout > :global(.split-chat-slot) { min-width:0; min-height:0; }
+.root .layout > :global(.split-chat-slot[hidden]) { display:none; }
+.root .layout > :global(.split-chat-slot) > :global(.pane) { min-height:0; background:var(--bg); }
+.root :global(.chat-project-header) { flex:none; padding:12px 24px; border-bottom:0; background:transparent; }
+.root .layout :global(.chat-log) { padding:24px max(24px,calc((100% - 760px)/2)); background:var(--bg); }
+.root :global(.chat-composer-slot) { width:min(760px,calc(100% - 48px)); margin-inline:auto; padding-block:8px 24px; }
+.root :global(.chat-composer-slot .composer) { width:100%; padding:0; }
+@media(max-width:600px) {
+  .root :global(.chat-project-header) { padding:10px 12px; }
+  .root .layout :global(.chat-log) { padding:16px 12px; }
+  .root :global(.chat-composer-slot) { width:calc(100% - 24px); padding-block:8px 12px; }
+}
+
+.root :global([data-testid="chat-queued-send-strip"]) { width:min(760px,calc(100% - 48px)); margin-inline:auto; box-sizing:border-box; }
+
+/* Auto margin consumes spare room only; long transcripts retain normal top-to-bottom scrolling. */
+.root .layout :global(.chat-log:not(.is-loading) > :first-child) { margin-block-start:auto; }
+.root .layout :global(.chat-log > *) { flex-shrink:0; }
+
+/* A single Workspace reading scale also covers legacy shared tool/status typography.
+   This local boundary deliberately wins over embedded WordPress and legacy sizes;
+   icon dimensions, media, charts and floating-panel typography remain independent. */
+.root .layout { --workspace-reading-size:15px; --prose-font-size:15px; --prose-line-height:1.7; }
+.root .layout :global(.chat-log :where(div,p,span,button,summary,a,time,code,pre,li,label,strong,em,h1,h2,h3,h4,h5,h6,input,textarea)),
+.root :global(.chat-composer-slot .composer-editable),
+.root :global([data-testid="chat-queued-send-strip"] :where(div,p,span,button)) { font-size:var(--workspace-reading-size,15px) !important; }
+/* Header actions, title and reply metadata use the compact secondary scale. */
+.root :global(.chat-project-header :where(div,p,span,button)),
+.root .layout :global(.chat-log .assistant-footer),
+.root .layout :global(.chat-log .assistant-footer :where(span,button)) { font-size:13px !important; }
+.root .layout :global(.msg.assistant .prose-block) { --prose-font-size:15px; --prose-line-height:1.7; }
+.root .layout :global(.msg.assistant) { max-width:100%; }
+.root .layout :global(.msg.user) { max-width:min(88%,600px); }
+.root :global(.composer .composer-editable) { line-height:1.6; }
+.headerIdentity { display:grid; gap:4px; min-width:0; }

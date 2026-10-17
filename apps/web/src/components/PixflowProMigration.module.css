@@ -1,0 +1,14 @@
+.card { display: grid; gap: 12px; padding: 18px; margin-block: 16px; min-width: 0; border: 1px solid var(--border); border-radius: var(--settings-radius, 16px); background: var(--settings-surface, var(--bg-elevated)); color: var(--text); }
+.heading { display: flex; align-items: center; gap: 9px; }
+.heading svg { flex: none; }
+.heading h4 { margin: 0; color: var(--text-strong, var(--text)); font-size: 14px; font-weight: 600; }
+.card p { margin: 0; font-size: 13px; line-height: 1.6; }
+.card .detail { color: var(--text-muted); font-size: 12px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 13px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 12px; font-weight: 500; text-decoration: none; transition: opacity 140ms cubic-bezier(.23,1,.32,1); }
+.primary:hover { opacity: .85; color: var(--bg); }
+.primary svg { flex: none; }
+.secondary { color: var(--text-muted); font-size: 12px; text-underline-offset: 3px; }
+.secondary:hover { color: var(--text); }
+.actions a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 480px) { .card { padding: 14px; } .primary { white-space: normal; text-align: center; } }

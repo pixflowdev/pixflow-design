@@ -1,0 +1,118 @@
+{
+  "name": "open-design",
+  "version": "0.10.1",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "type": "module",
+  "description": "Local-first design product: detects your installed code-agent CLI, runs design skills + design systems, streams artifacts into a sandboxed preview.",
+  "license": "Apache-2.0",
+  "bin": {
+    "od": "./apps/daemon/bin/od.mjs"
+  },
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.mjs",
+    "tools-dev": "pnpm exec tools-dev",
+    "tools-pack": "pnpm exec tools-pack",
+    "tools-serve": "pnpm exec tools-serve",
+    "nix:update-hash": "node --experimental-strip-types ./scripts/update-nix-pnpm-deps-hash.ts",
+    "guard": "tsx ./scripts/guard.ts && node --import tsx --test scripts/style-policy.test.ts scripts/product-neutrality.test.ts scripts/check-cross-app-imports.test.ts scripts/approve-fork-pr-workflows.test.ts scripts/postinstall.test.ts",
+    "i18n:check": "tsx ./scripts/i18n-check.ts",
+    "i18n:coverage": "tsx ./scripts/i18n-coverage-report.ts",
+    "sync:community-pets": "node --experimental-strip-types scripts/sync-community-pets.ts",
+    "bake:community-pets": "node --experimental-strip-types scripts/bake-community-pets.ts",
+    "seed:test-projects": "node --experimental-strip-types scripts/seed-test-projects.ts",
+    "seed:curated-design-skills": "node --experimental-strip-types scripts/seed-curated-design-skills.ts",
+    "backfill:failed-runs": "node --experimental-strip-types scripts/backfill-failed-runs-with-artifacts.ts",
+    "typecheck": "pnpm -r --workspace-concurrency=4 --if-present run typecheck && tsc -p scripts/tsconfig.json --noEmit",
+    "wordpress:web": "pnpm --filter @open-design/contracts build && node ./scripts/build-wordpress-web.mjs",
+    "wordpress:build": "node ./scripts/build-wordpress-local.mjs",
+    "wordpress:resources": "node ./scripts/build-wordpress-resource-packs.mjs",
+    "wordpress:zip": "pnpm wordpress:web && node ./scripts/build-wordpress-plugin.mjs",
+    "bridge:zip": "node ./scripts/build-pixflow-design-bridge-package.mjs",
+    "bridge:installer": "node ./scripts/build-pixflow-design-bridge-installer.mjs",
+    "bridge:mac": "node ./scripts/build-pixflow-design-bridge-mac-installers.mjs",
+    "bridge:dev": "node ./scripts/start-pixflow-bridge-dev.mjs",
+    "pixflow:upstream:status": "node ./scripts/pixflow-upstream-status.mjs",
+    "bridge:package": "php build-bridge.php",
+    "bridge:mac:local": "php build-bridge-mac.php",
+    "bridge:deploy": "node scripts/deploy-bridge.ts"
+  },
+  "devDependencies": {
+    "@open-design/components": "workspace:*",
+    "@open-design/daemon": "workspace:*",
+    "@open-design/tools-dev": "workspace:*",
+    "@open-design/tools-pack": "workspace:*",
+    "@open-design/tools-serve": "workspace:*",
+    "@types/node": "20.19.39",
+    "esbuild": "0.28.1",
+    "gsap": "3.15.0",
+    "jszip": "3.10.1",
+    "playwright": "1.60.0",
+    "tsx": "4.22.3",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": "~24",
+    "pnpm": ">=10.33.2 <11"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion": "5.0.12",
+      "devalue": "5.9.3",
+      "fast-uri": "3.1.8",
+      "hono": "4.13.7",
+      "ip-address": "10.7.1",
+      "node-abi@4": "4.37.0",
+      "postcss": "8.5.23",
+      "protobufjs": "8.4.0",
+      "qs": "6.16.0",
+      "tmp": "0.2.7",
+      "yaml": "2.9.0",
+      "form-data": "4.0.6",
+      "tar": "7.5.21",
+      "body-parser": "2.3.0",
+      "sharp": "0.35.5",
+      "builder-util-runtime": "9.7.0",
+      "@hono/node-server": "1.19.15",
+      "svgo": "4.1.0",
+      "baseline-browser-mapping": "2.11.0",
+      "smol-toml": "1.9.0",
+      "source-map-js": "1.2.2",
+      "proxy-addr": "2.0.8",
+      "js-yaml": "4.3.2",
+      "undici@6": "6.28.1",
+      "undici@7": "7.29.1",
+      "@xmldom/xmldom@0.8": "0.8.15",
+      "@xmldom/xmldom@0.9": "0.9.12",
+      "nanoid@3": "3.3.18",
+      "esbuild": "0.28.1",
+      "vite@7": "7.3.5"
+    },
+    "onlyBuiltDependencies": [
+      "core-js",
+      "electron",
+      "electron-winstaller",
+      "esbuild",
+      "protobufjs",
+      "sharp"
+    ],
+    "ignoredBuiltDependencies": ["better-sqlite3"]
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pixflowdev/pixflow-design.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/pixflowdev/pixflow-design/issues"
+  },
+  "homepage": "https://github.com/pixflowdev/pixflow-design#readme",
+  "dependencies": {
+    "qrcode-generator": "2.0.4"
+  }
+}

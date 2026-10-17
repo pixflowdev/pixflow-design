@@ -1,0 +1,107 @@
+# Generated from the typed Pixflow language catalogues. Edit the source catalogues.
+msgid ""
+msgstr "Project-Id-Version: pixflow-design 2.0.4\nLanguage: hu_HU\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
+
+#: wordpress/src/Modules/ModuleHost.php:54
+msgid "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available."
+msgstr "Egy Pixflow-bővítmény nem indult el. Ellenőrizze a Pixflow-bővítmények kompatibilitását, majd töltse újra az oldalt. Más funkciók továbbra is elérhetők lehetnek."
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Activate Pro"
+msgstr "Pro aktiválása"
+
+#: wordpress/src/License/LicenseService.php:336
+msgid "Automatic trial verification requires a public HTTPS website. Local testing remains available within your trial."
+msgstr "A próbaidőszak automatikus ellenőrzéséhez nyilvánosan elérhető HTTPS-webhely szükséges. A helyi tesztelés a próbaidőszak alatt továbbra is elérhető."
+
+#: wordpress/src/License/LicenseService.php:340
+msgid "Automatic website verification could not finish. Retry activation. Your saved content is unchanged."
+msgstr "A webhely automatikus ellenőrzése nem fejeződött be. Próbálja újra az aktiválást. A mentett tartalom változatlan marad."
+
+#: wordpress/src/License/ProUpgradeNotice.php:34
+msgid "Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro."
+msgstr "Hozza vissza prémium eszközeit a Pro-bővítménnyel. Licence, tartalmai és mentett beállításai megmaradnak. Ha használta a Bricks kétlépcsős hitelesítését, a Pro aktiválása után kapcsolja be újra a beállításokban."
+
+#: wordpress/src/License/ProUpgradeNotice.php:44
+msgid "Build in your favourite builder. Add annotations, voice, design systems and image generation to your workflow."
+msgstr "Alkosson kedvenc oldalkészítőjében. Egészítse ki munkafolyamatát megjegyzésekkel, hanggal, dizájnrendszerekkel és képgenerálással."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Check Pro trial"
+msgstr "Pro-próbaidőszak ellenőrzése"
+
+#: wordpress/src/License/ProUpgradeNotice.php:97
+msgid "Could not save dismissal. Please try again."
+msgstr "Az elutasítás mentése nem sikerült. Próbálja újra."
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss"
+msgstr "Bezárás"
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss Pixflow Pro banner"
+msgstr "Pixflow Pro-szalag bezárása"
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Download Pro"
+msgstr "Pro letöltése"
+
+#: wordpress/src/License/ProUpgradeNotice.php:43
+msgid "More possibilities with Pixflow Design Pro"
+msgstr "Több lehetőség a Pixflow Design Pro segítségével"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:40 wordpress/src/Admin/WpAdminFloatingPanel.php:41
+msgid "Open Pixflow Design"
+msgstr "Pixflow Design megnyitása"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:50 wordpress/src/Admin/WpAdminFloatingPanel.php:54 wordpress/src/Admin/WpAdminFloatingPanel.php:55
+msgid "Open settings"
+msgstr "Beállítások megnyitása"
+
+#: wordpress/src/License/LicenseService.php:337
+msgid "Pixflow could not reach this website to verify it. Check HTTPS and any firewall or password protection, then retry activation."
+msgstr "A Pixflow nem tudta elérni a webhelyet az ellenőrzéshez. Ellenőrizze a HTTPS-t, valamint az esetleges tűzfalat vagy jelszavas védelmet, majd próbálja újra az aktiválást."
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:36
+msgid "Pixflow Design"
+msgstr "Pixflow Design"
+
+#: wordpress/src/License/LicenseService.php:339
+msgid "Please wait a few minutes before retrying trial activation."
+msgstr "Várjon néhány percet, mielőtt újra megpróbálja aktiválni a próbaidőszakot."
+
+#: wordpress/src/License/ProUpgradeNotice.php:92
+msgid "Refresh this page and try again."
+msgstr "Frissítse az oldalt, és próbálja újra."
+
+#: wordpress/src/License/ProUpgradeNotice.php:65
+msgid "Start your 7-day Pro trial"
+msgstr "A Pro 7 napos próbaverziójának indítása"
+
+#: wordpress/src/License/LicenseService.php:334
+msgid "This domain and its subdomains have already used a Pro trial. View pricing or contact Pixflow support. Your saved content is unchanged."
+msgstr "Ez a domain és aldomainjei már igénybe vettek egy Pro-próbaidőszakot. Tekintse meg az árakat, vagy forduljon a Pixflow ügyfélszolgálatához. A mentett tartalom változatlan marad."
+
+#: wordpress/src/License/LicenseService.php:335
+msgid "This website needs a trial history review. Contact Pixflow support; your saved content is unchanged."
+msgstr "Ellenőrizni kell a webhely korábbi próbaidőszakait. Forduljon a Pixflow ügyfélszolgálatához; a mentett tartalom változatlan marad."
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Try Pro for 7 days"
+msgstr "Próbálja ki a Pro verziót 7 napig"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Upgrade to Pro"
+msgstr "Frissítés Próra"
+
+#: wordpress/src/License/ProUpgradeNotice.php:88 wordpress/src/License/ProUpgradeNotice.php:105
+msgid "You cannot dismiss this notice."
+msgstr "Ezt az értesítést nem zárhatja be."
+
+#: wordpress/src/License/ProUpgradeNotice.php:33
+msgid "Your Pixflow plan includes Pro"
+msgstr "Pixflow-csomagja tartalmazza a Pro verziót"
+
+#: wordpress/src/License/LicenseService.php:338
+msgid "Your Pro trial has expired. Free remains available and your saved content is unchanged."
+msgstr "A Pro-próbaidőszak lejárt. A Free továbbra is elérhető, a mentett tartalom pedig változatlan marad."

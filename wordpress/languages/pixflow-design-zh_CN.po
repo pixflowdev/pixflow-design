@@ -1,0 +1,107 @@
+# Generated from the typed Pixflow language catalogues. Edit the source catalogues.
+msgid ""
+msgstr "Project-Id-Version: pixflow-design 2.0.4\nLanguage: zh_CN\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
+
+#: wordpress/src/Modules/ModuleHost.php:54
+msgid "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available."
+msgstr "一个 Pixflow 附加组件无法启动。请检查 Pixflow 插件的兼容性，然后重新加载。其他功能可能仍可使用。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Activate Pro"
+msgstr "激活 Pro"
+
+#: wordpress/src/License/LicenseService.php:336
+msgid "Automatic trial verification requires a public HTTPS website. Local testing remains available within your trial."
+msgstr "自动试用验证需要可公开访问的 HTTPS 网站。试用期内仍可进行本地测试。"
+
+#: wordpress/src/License/LicenseService.php:340
+msgid "Automatic website verification could not finish. Retry activation. Your saved content is unchanged."
+msgstr "无法完成网站自动验证。请重试激活。您保存的内容未发生变化。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:34
+msgid "Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro."
+msgstr "使用 Pro 附加组件恢复高级工具。许可证、内容和已保存设置保持不变。如果使用过 Bricks 双重身份验证，请在激活 Pro 后于设置中重新启用。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:44
+msgid "Build in your favourite builder. Add annotations, voice, design systems and image generation to your workflow."
+msgstr "在您喜爱的构建器中创作，为工作流添加注释、语音、设计系统和图像生成功能。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Check Pro trial"
+msgstr "查看 Pro 试用资格"
+
+#: wordpress/src/License/ProUpgradeNotice.php:97
+msgid "Could not save dismissal. Please try again."
+msgstr "无法保存关闭状态。请重试。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss"
+msgstr "关闭"
+
+#: wordpress/src/License/ProUpgradeNotice.php:82
+msgid "Dismiss Pixflow Pro banner"
+msgstr "关闭 Pixflow Pro 横幅"
+
+#: wordpress/src/License/ProUpgradeNotice.php:35
+msgid "Download Pro"
+msgstr "下载 Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:43
+msgid "More possibilities with Pixflow Design Pro"
+msgstr "使用 Pixflow Design Pro 探索更多可能"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:40 wordpress/src/Admin/WpAdminFloatingPanel.php:41
+msgid "Open Pixflow Design"
+msgstr "打开 Pixflow Design"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:50 wordpress/src/Admin/WpAdminFloatingPanel.php:54 wordpress/src/Admin/WpAdminFloatingPanel.php:55
+msgid "Open settings"
+msgstr "打开设置"
+
+#: wordpress/src/License/LicenseService.php:337
+msgid "Pixflow could not reach this website to verify it. Check HTTPS and any firewall or password protection, then retry activation."
+msgstr "Pixflow 无法访问此网站进行验证。请检查 HTTPS 以及防火墙或密码保护，然后重试激活。"
+
+#: wordpress/src/Admin/WpAdminFloatingPanel.php:36
+msgid "Pixflow Design"
+msgstr "Pixflow Design"
+
+#: wordpress/src/License/LicenseService.php:339
+msgid "Please wait a few minutes before retrying trial activation."
+msgstr "请等待几分钟后再尝试激活试用。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:92
+msgid "Refresh this page and try again."
+msgstr "请刷新此页面后重试。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:65
+msgid "Start your 7-day Pro trial"
+msgstr "开始 7 天 Pro 试用"
+
+#: wordpress/src/License/LicenseService.php:334
+msgid "This domain and its subdomains have already used a Pro trial. View pricing or contact Pixflow support. Your saved content is unchanged."
+msgstr "此域名及其子域名已使用过 Pro 试用。请查看价格或联系 Pixflow 支持。您保存的内容未发生变化。"
+
+#: wordpress/src/License/LicenseService.php:335
+msgid "This website needs a trial history review. Contact Pixflow support; your saved content is unchanged."
+msgstr "需要审核此网站的试用记录。请联系 Pixflow 支持；您保存的内容未发生变化。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Try Pro for 7 days"
+msgstr "免费试用 Pro 7 天"
+
+#: wordpress/src/License/ProUpgradeNotice.php:45
+msgid "Upgrade to Pro"
+msgstr "升级至 Pro"
+
+#: wordpress/src/License/ProUpgradeNotice.php:88 wordpress/src/License/ProUpgradeNotice.php:105
+msgid "You cannot dismiss this notice."
+msgstr "您无法关闭此通知。"
+
+#: wordpress/src/License/ProUpgradeNotice.php:33
+msgid "Your Pixflow plan includes Pro"
+msgstr "您的 Pixflow 套餐包含 Pro"
+
+#: wordpress/src/License/LicenseService.php:338
+msgid "Your Pro trial has expired. Free remains available and your saved content is unchanged."
+msgstr "您的 Pro 试用已到期。Free 仍可使用，您保存的内容未发生变化。"

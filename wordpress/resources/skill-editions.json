@@ -1,0 +1,1614 @@
+{
+  "revision": "2026-10-14-cleanup-v1",
+  "skills": [
+    {
+      "folder": "8-bit-orbit-video-template",
+      "id": "8-bit-orbit-video-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "8 Bit Orbit Video Template",
+      "description": "Hyperframes-based video template for retro pixel deck motion design. Use when users want a high-fidelity, multi-scene HTML-to-video composition with advanced transitions, interactive preview controls, and ready-to-render default style.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "ad-creative",
+      "id": "ad-creative",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Ad Creative",
+      "description": "Generate and iterate ad creative including headlines, descriptions, and primary text. Useful for paid social and search ad iteration.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "after-hours-editorial-template",
+      "id": "after-hours-editorial-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "After Hours Editorial Template",
+      "description": "Luxury dark-editorial HyperFrames template for three-page cinematic storyboards, inspired by haute couture title cards and magazine chapter spreads. Use when the user asks for premium fashion-style motion pages, moody serif-led storytelling, or a high-end dark presentation aesthetic with rich transitions.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "agent-browser",
+      "id": "agent-browser",
+      "edition": "free",
+      "discoverable": true,
+      "label": "Browser verification",
+      "description": "Inspect the current site and verify browser behavior using the tools available in this Pixflow session, including screenshots when supported.",
+      "reason": "Core research, content quality, browser verification or export reliability.",
+      "status": "bundled"
+    },
+    {
+      "folder": "ai-music-album",
+      "id": "ai-music-album",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Ai Music Album",
+      "description": "Full-lifecycle AI music album production — concept, lyric drafting, track sequencing, and export. Useful for indie album experiments and brand soundtracks.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "algorithmic-art",
+      "id": "algorithmic-art",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Algorithmic Art",
+      "description": "Create generative art using p5.js with seeded randomness so every render is reproducible. Useful for procedural posters, motion-style stills, and artistic frame studies.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "apple-hig",
+      "id": "apple-hig",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Apple Hig",
+      "description": "Apple Human Interface Guidelines as 14 agent skills covering platforms, foundations, components, patterns, inputs, and technologies for iOS, macOS, visionOS, watchOS, and tvOS.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "article-magazine",
+      "id": "article-magazine",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Article Magazine",
+      "description": "Huashu / huashu-md-html-inspired magazine article layout for turning Markdown or notes into a polished long-form HTML essay.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "artifacts-builder",
+      "id": "artifacts-builder",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Artifacts Builder",
+      "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui).",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "brainstorming",
+      "id": "brainstorming",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Brainstorming",
+      "description": "Transform rough ideas into fully-formed designs through structured questioning and alternative exploration. Useful early in concept work.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "brand-guidelines",
+      "id": "brand-guidelines",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Brand Guidelines",
+      "description": "Apply Anthropic's official brand colors and typography to artifacts for consistent visual identity and professional design standards. A reference for shaping your own.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "brandkit",
+      "id": "brandkit",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Brand kits",
+      "description": "Create coordinated brand boards, logo concepts and visual identities.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "brutalist-skill",
+      "id": "industrial-brutalist-ui",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Brutalist Skill",
+      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites that need to feel like declassified blueprints.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "canvas-design",
+      "id": "canvas-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Canvas Design",
+      "description": "Create beautiful visual art in PNG and PDF documents using design philosophy and aesthetic principles for posters, illustrations, and static pieces.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "card-twitter",
+      "id": "card-twitter",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Card Twitter",
+      "description": "Twitter quote or data card designed to pair with a post.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "card-xiaohongshu",
+      "id": "card-xiaohongshu",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Card Xiaohongshu",
+      "description": "Xiaohongshu-style knowledge cards, arranged as a swipeable multi-card carousel.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "color-expert",
+      "id": "color-expert",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Color Expert",
+      "description": "Color science expert skill with 286K words of reference material covering OKLCH/OKLAB, palette generation, accessibility/contrast, color naming, pigment mixing, and historical color theory.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "competitive-ads-extractor",
+      "id": "competitive-ads-extractor",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Competitive Ads Extractor",
+      "description": "Extract and analyze competitors' ads from ad libraries to understand messaging and creative approaches that resonate.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "composio",
+      "id": "composio",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Composio",
+      "description": "Official Composio connection and tool guidance for the configured WordPress-owned Pro integration.",
+      "reason": "Bundled Pro guidance for the Composio integration; no Bridge is required.",
+      "status": "bundled"
+    },
+    {
+      "folder": "copywriting",
+      "id": "copywriting",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Copywriting",
+      "description": "Write and rewrite marketing copy for landing pages, homepages, and ads. Useful as a copy chief partner during launches.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "creative-director",
+      "id": "creative-director",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Creative Director",
+      "description": "AI creative director with recursive self-assessment: 20+ methodologies (SIT, TRIZ, Bisociation, SCAMPER, Synectics), 3-axis evaluation calibrated against Cannes/D&AD/HumanKind, 5-phase process from brief to presentation.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "d3-visualization",
+      "id": "d3-visualization",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "D3 Visualization",
+      "description": "Teaches the agent to produce D3 charts and interactive data visualizations. A comprehensive D3.js skill with examples across chart types and techniques giving the agent expert-level knowledge to generate complex, interactive visualizations. Useful for editorial dashboards, reports, data-rich prototypes, and explanatory graphics.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "data-report",
+      "id": "data-report",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Data Report",
+      "description": "Turns CSV, Excel, or JSON data into a polished visual report page.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "deck-guizang-editorial",
+      "id": "deck-guizang-editorial",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Deck Guizang Editorial",
+      "description": "Editorial magazine meets e-ink: 10 layouts and 5 palettes (Ink, Indigo Porcelain, Forest Ink, Kraft Paper, Dune).",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "deck-open-slide-canvas",
+      "id": "deck-open-slide-canvas",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Deck Open Slide Canvas",
+      "description": "Locked 1920x1080 canvas deck with React component-level free composition, not bound to a fixed template.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "deck-swiss-international",
+      "id": "deck-swiss-international",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Deck Swiss International",
+      "description": "16-column grid, one saturated accent, and 22 locked layouts (Klein Blue, Lemon, Mint, Safety Orange).",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "design-brief",
+      "id": "design-brief",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Design brief",
+      "description": "Turn a design brief into a clear visual direction and practical specification.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "design-consultation",
+      "id": "design-consultation",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Design Consultation",
+      "description": "Build a complete design system from scratch with creative risks and realistic product mockups. Useful for kickoff workshops and brand-from-zero work.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "design-md",
+      "id": "design-md",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Design Md",
+      "description": "Create and manage DESIGN.md files. Useful for capturing design direction, tokens, and visual rules in a single source of truth.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "design-review",
+      "id": "design-review",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Design Review",
+      "description": "Designer Who Codes: visual audit then fixes with atomic commits and before/after screenshots. Useful for tightening shipped UI before launch.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "digits-fintech-swiss-template",
+      "id": "digits-fintech-swiss-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Digits Fintech Swiss Template",
+      "description": "Swiss-grid fintech deck template in black / warm paper / neon-lime contrast. Use when users ask for premium data-story slides with strict modular layout, bold numeric cards, restrained motion, and keyboard/click navigation in one HTML file.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "doc",
+      "id": "doc",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Doc",
+      "description": "Read, create, and edit .docx documents with formatting and layout fidelity via OpenAI's document skill.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "doc-kami-parchment",
+      "id": "doc-kami-parchment",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Doc Kami Parchment",
+      "description": "Warm parchment canvas (#f5f4ed), monochrome ink-blue accent (#1B365D), one serif family, and editorial-grade typography.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "docx",
+      "id": "docx",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Docx",
+      "description": "Create, edit, and analyze Word documents with tracked changes, comments, and formatting. Useful for design briefs, copy docs, and review-ready deliverables.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "domain-name-brainstormer",
+      "id": "domain-name-brainstormer",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Domain Name Brainstormer",
+      "description": "Generate creative domain name ideas and check availability across multiple TLDs including .com, .io, .dev, and .ai.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "ecommerce-image-workflow",
+      "id": "ecommerce-image-workflow",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Product image workflow",
+      "description": "Create product, feature and lifestyle imagery from supplied product photos.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "editorial-burgundy-principles-template",
+      "id": "editorial-burgundy-principles-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Editorial Burgundy Principles Template",
+      "description": "Editorial studio deck template in burgundy / blush / muted-gold palette. Use when users ask for premium manifesto or culture slides with pill tags, large typographic statements, principle cards, and guided keyboard/click navigation.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "emil-design-eng",
+      "id": "emil-design-eng",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Interface polish",
+      "description": "Refine interface details, component behaviour and visual polish.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "emilkowalski-motion",
+      "id": "emilkowalski-motion",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Motion polish",
+      "description": "Add considered micro-interactions and smooth interface transitions.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "enhance-prompt",
+      "id": "enhance-prompt",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Enhance Prompt",
+      "description": "Improve prompts with design specs and UI/UX vocabulary. Useful for design-to-code workflows and clarifying requests for visual output.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "export-download-debugging",
+      "id": "export-download-debugging",
+      "edition": "free",
+      "discoverable": true,
+      "label": "Export troubleshooting",
+      "description": "Diagnose and fix browser, preview, or Electron export/download failures, especially image export issues involving Save As, Blob/Data URLs, the File System Access API, createWritable failures, and 0 KB files.",
+      "reason": "Core research, content quality, browser verification or export reliability.",
+      "status": "bundled"
+    },
+    {
+      "folder": "fal-3d",
+      "id": "fal-3d",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal 3D",
+      "description": "Generate 3D models from text or images via fal.ai. Useful for game assets, AR previews, product mockups, and concept sculpting.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-generate",
+      "id": "fal-generate",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Generate",
+      "description": "Generate images and videos using fal.ai AI models. Production-grade catalogue covering Flux, SDXL, ideogram, and other community-hosted endpoints.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-image-edit",
+      "id": "fal-image-edit",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Image Edit",
+      "description": "AI-powered image editing with style transfer, background removal, object removal, and inpainting via fal.ai hosted models.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-kling-o3",
+      "id": "fal-kling-o3",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Kling O3",
+      "description": "Generate images and videos with Kling O3 — Kling's most powerful model family — via fal.ai.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-lip-sync",
+      "id": "fal-lip-sync",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Lip Sync",
+      "description": "Create talking head videos and lip sync audio to video via fal.ai. Useful for explainer avatars, multilingual dubbing previews, and social cuts.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-realtime",
+      "id": "fal-realtime",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Realtime",
+      "description": "Real-time and streaming AI image generation via fal.ai. Suited for moodboard exploration, draft variations, and rapid creative iteration.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-restore",
+      "id": "fal-restore",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Restore",
+      "description": "Restore and fix image quality — deblur, denoise, fix faces, and restore old documents using fal.ai's hosted restoration models.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-train",
+      "id": "fal-train",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Train",
+      "description": "Train custom AI models (LoRA) on fal.ai for personalized image generation tailored to a brand, character, or style.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-tryon",
+      "id": "fal-tryon",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Tryon",
+      "description": "Virtual try-on — see how clothes look on a person via fal.ai's hosted try-on models. Useful for ecommerce, lookbooks, and styling experiments.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-upscale",
+      "id": "fal-upscale",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Upscale",
+      "description": "Upscale and enhance image and video resolution using AI super-resolution models hosted on fal.ai.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-video-edit",
+      "id": "fal-video-edit",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Video Edit",
+      "description": "Edit existing videos using AI — remix style, upscale, remove background, and add audio via fal.ai's hosted video models.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "fal-vision",
+      "id": "fal-vision",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Fal Vision",
+      "description": "Analyze images — segment objects, detect, run OCR, describe, and answer visual questions via fal.ai vision models.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "faq-page",
+      "id": "faq-page",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Faq Page",
+      "description": "A Frequently Asked Questions (FAQ) page with collapsible accordion sections, search functionality, and category filtering. Use when the brief asks for \"FAQ\", \"help center\", \"questions\", or \"support page\".",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "field-notes-editorial-template",
+      "id": "field-notes-editorial-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Field Notes Editorial Template",
+      "description": "Editorial \"Field Notes\" report template with soft paper background, serif hero typography, rounded pastel insight cards, and a retention chart panel. Use when users ask for a premium magazine-style business report, board memo one-pager, or elegant data storytelling layout.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "figma-code-connect-components",
+      "id": "figma-code-connect-components",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Code Connect Components",
+      "description": "Connect Figma design components to code components using Code Connect so design-system updates flow into the codebase automatically.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-create-design-system-rules",
+      "id": "figma-create-design-system-rules",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Create Design System Rules",
+      "description": "Generate project-specific design system rules for Figma-to-code workflows. Useful for capturing tokens, naming, and lint rules in one source.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-create-new-file",
+      "id": "figma-create-new-file",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Create New File",
+      "description": "Create a new blank Figma Design or FigJam file. Useful as the first step in scripted design-system or workshop workflows.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-generate-design",
+      "id": "figma-generate-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Generate Design",
+      "description": "Build or update screens in Figma from code or description using design system components. Translate app pages into Figma using design tokens.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-generate-library",
+      "id": "figma-generate-library",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Generate Library",
+      "description": "Build or update a professional-grade design system library in Figma from a codebase. Useful for keeping the Figma source of truth in sync with shipped components.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-implement-design",
+      "id": "figma-implement-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Implement Design",
+      "description": "Translate Figma designs into production-ready code with 1:1 visual fidelity. Useful for handing off Figma frames straight to a frontend agent.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "figma-use",
+      "id": "figma-use",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Figma Use",
+      "description": "Run Figma Plugin API scripts for canvas writes, inspections, variables, and design-system work. Prerequisite for every other Figma skill in this catalogue.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "flutter-animating-apps",
+      "id": "flutter-animating-apps",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Flutter Animating Apps",
+      "description": "Implement animated effects, transitions, and motion in Flutter apps. Useful for native iOS/Android motion design.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "frame-data-chart-nyt",
+      "id": "frame-data-chart-nyt",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Data Chart Nyt",
+      "description": "NYT-newsroom typography, staggered reveal animation, and editorial-grade charts (line, bar, or range band).",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-flowchart-sticky",
+      "id": "frame-flowchart-sticky",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Flowchart Sticky",
+      "description": "SVG curve connectors, sticky-note nodes, and cursor interaction with a whiteboard-brainstorm feel.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-glitch-title",
+      "id": "frame-glitch-title",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Glitch Title",
+      "description": "Digital glitch, chromatic offset, and data-corruption title frame for video transitions or cyberpunk heroes.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-light-leak-cinema",
+      "id": "frame-light-leak-cinema",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Light Leak Cinema",
+      "description": "Film light leaks, grain, 16:9 letterbox, and large serif type for cinematic openings or chapter cards.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-liquid-bg-hero",
+      "id": "frame-liquid-bg-hero",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Liquid Bg Hero",
+      "description": "WebGL-style fluid displacement background with a quote overlay, suited to video intros, landing heroes, or posters.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-logo-outro",
+      "id": "frame-logo-outro",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Logo Outro",
+      "description": "Segmented logo assembly, glow bloom, and tagline reveal for video outros or brand closing frames.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frame-macos-notification",
+      "id": "frame-macos-notification",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Frame Macos Notification",
+      "description": "Realistic macOS notification banner with app icon, title, and body, suited to video overlays or product teasers.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "frontend-design",
+      "id": "frontend-design",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Design foundation",
+      "description": "Build and refine native WordPress interfaces with consistent typography, layout, responsive behavior and accessible interactions.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "bundled"
+    },
+    {
+      "folder": "frontend-dev",
+      "id": "frontend-dev",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Frontend Dev",
+      "description": "Full-stack frontend with cinematic animations, AI-generated media via MiniMax API, and generative art. Useful for hero pages and showcase sites.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "frontend-skill",
+      "id": "frontend-skill",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Frontend Skill",
+      "description": "Create visually strong landing pages, websites, and app UIs with restrained composition. OpenAI's production frontend playbook.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "frontend-slides",
+      "id": "frontend-slides",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Frontend Slides",
+      "description": "Generate animation-rich HTML presentations with visual style previews. Useful for online keynotes, embedded talks, and interactive briefs.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "full-page-screenshot",
+      "id": "full-page-screenshot",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Full Page Screenshot",
+      "description": "Capture full-page screenshots of web pages via Chrome DevTools Protocol with zero dependencies. Useful for portfolios, case studies, and audit reports.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "gif-sticker-maker",
+      "id": "gif-sticker-maker",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Gif Sticker Maker",
+      "description": "Convert photos into animated GIF stickers in Funko Pop / Pop Mart style via the MiniMax API. Useful for personalized chat stickers and avatar packs.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "gpt-tasteskill",
+      "id": "gpt-taste",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Gpt Tasteskill",
+      "description": "Design expressive marketing interfaces with typography, composition, responsive behavior and purposeful motion guided by the brief.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "gsap-core",
+      "id": "gsap-core",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Core",
+      "description": "Build responsive web animations with GSAP.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-frameworks",
+      "id": "gsap-frameworks",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Frameworks",
+      "description": "Integrate GSAP with Vue, Svelte and other frameworks.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-performance",
+      "id": "gsap-performance",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Performance",
+      "description": "Improve animation performance and reduce visual stutter.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-plugins",
+      "id": "gsap-plugins",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Plugins",
+      "description": "Add advanced text, SVG, dragging and transition effects.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-react",
+      "id": "gsap-react",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP React",
+      "description": "Build GSAP animations in React and Next.js with reliable cleanup.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-scrolltrigger",
+      "id": "gsap-scrolltrigger",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP ScrollTrigger",
+      "description": "Create scroll-driven animation, parallax and pinned sections.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-timeline",
+      "id": "gsap-timeline",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Timeline",
+      "description": "Sequence and coordinate multi-step animations.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "gsap-utils",
+      "id": "gsap-utils",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "GSAP Utils",
+      "description": "Use GSAP helpers for precise, reusable animation behaviour.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "hand-drawn-diagrams",
+      "id": "hand-drawn-diagrams",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Hand Drawn Diagrams",
+      "description": "Generate hand-drawn Excalidraw diagrams from a prompt — animated SVG, hosted edit link, and PNG export. Works with Claude Code, Codex, Gemini CLI, and any agent supporting standard skill paths.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "hatch-pet",
+      "id": "hatch-pet",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Hatch Pet",
+      "description": "Create, repair, validate, preview, and package Codex-compatible animated pet spritesheets from character art, screenshots, generated images, or visual references. Use when a user wants to hatch a Codex pet, create a custom animated pet, or build a built-in pet asset with an 8x9 atlas, transparent unused cells, row-by-row animation prompts, QA conta",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "html-ppt-retro-quarterly-review",
+      "id": "html-ppt-retro-quarterly-review",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Html Ppt Retro Quarterly Review",
+      "description": "Retro Quarterly Review presentation template in a bold blue + orange editorial language. Use when users ask for a high-impact quarterly review / roadmap deck with heavyweight slab headlines, clean cream paper sections, structured grids, and fast premium motion pacing (3 slides, each hold under 3s in video mode).",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "image-enhancer",
+      "id": "image-enhancer",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Image Enhancer",
+      "description": "Improve image and screenshot quality by enhancing resolution, sharpness, and clarity for professional presentations and documentation.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "image-to-code-skill",
+      "id": "image-to-code",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Image to design",
+      "description": "Turn a visual reference into a carefully matched web design.",
+      "reason": "Advanced creative design workflow.",
+      "status": "alias",
+      "aliasOf": "web-clone"
+    },
+    {
+      "folder": "imagegen",
+      "id": "imagegen",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Imagegen",
+      "description": "Generate and edit images using OpenAI's Image API for project assets — UI mockups, icons, illustrations, social cards, and visual references.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "imagegen-frontend-mobile",
+      "id": "imagegen-frontend-mobile",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Imagegen Frontend Mobile",
+      "description": "Elite mobile app image-generation skill for creating premium, app-native screen concepts and flows. Designed for iOS, Android, and cross-platform mobile products. Prioritizes clean hierarchy, comfortably readable text, strong multi-screen consistency, controlled color palettes, non-generic creative direction, textured surfaces, image-led compositio",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "bundled"
+    },
+    {
+      "folder": "imagegen-frontend-web",
+      "id": "imagegen-frontend-web",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Imagegen Frontend Web",
+      "description": "Elite frontend image-direction skill for generating premium, conversion-aware website design references. CRITICAL OUTPUT RULE — generate ONE separate horizontal image FOR EVERY section. A landing page with 8 sections produces 8 images. Never compress multiple sections into one image. Enforces composition variety (not always left-text / right-image)",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "bundled"
+    },
+    {
+      "folder": "imagen",
+      "id": "imagen",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Imagen",
+      "description": "Generate images using Google Gemini's image generation API for UI mockups, icons, illustrations, and visual assets.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "impeccable-design-polish",
+      "id": "impeccable-design-polish",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Impeccable Design Polish",
+      "description": "Follow-up design polish skill inspired by Impeccable. Use after a web or HTML artifact exists to audit, critique, polish, animate, harden, and prepare the page for a live/share pass.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "login-flow",
+      "id": "login-flow",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Login Flow",
+      "description": "Mobile login and authentication flow screens",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "marketing-psychology",
+      "id": "marketing-psychology",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Marketing Psychology",
+      "description": "Apply psychological principles and behavioral science to copy and design. Useful for tightening hooks, framing, and pricing presentation.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "minimalist-skill",
+      "id": "minimalist-ui",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Minimalist Skill",
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "minimax-docx",
+      "id": "minimax-docx",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Minimax Docx",
+      "description": "Professional DOCX document creation and editing using OpenXML SDK. Useful for branded reports, polished proposals, and template-based authoring.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "minimax-pdf",
+      "id": "minimax-pdf",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Minimax Pdf",
+      "description": "Generate, fill, and reformat PDFs with a token-based design system and 15 cover styles. Useful for branded PDFs, e-guides, and reports.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "mockup-device-3d",
+      "id": "mockup-device-3d",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Mockup Device 3D",
+      "description": "Static iPhone and MacBook 3D-style showcase with real HTML embedded on screens, glass-lens refraction, and 360-degree turntable composition.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "nanobanana-ppt",
+      "id": "nanobanana-ppt",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Nanobanana Ppt",
+      "description": "AI-powered PPT generation with document analysis and styled images via the NanoBanana stack. Combines image generation with structured deck output.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "output-skill",
+      "id": "full-output-enforcement",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Output Skill",
+      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged output.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "paywall-upgrade-cro",
+      "id": "paywall-upgrade-cro",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Paywall Upgrade Cro",
+      "description": "Design and optimize upgrade screens, paywalls, and upsell modals. Useful for SaaS conversion design and pricing-page experiments.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pdf",
+      "id": "pdf",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pdf",
+      "description": "Extract text, create PDFs, and handle forms. Useful for press releases, branded one-pagers, and printable design deliverables.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pixelbin-media",
+      "id": "pixelbin-media",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pixelbin Media",
+      "description": "Generate and edit images and videos with an 85+ API portfolio and build visually appealing website pages via Pixelbin.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "plan-design-review",
+      "id": "plan-design-review",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Plan Design Review",
+      "description": "Senior Designer review: rates each design dimension 0-10, explains what a 10 looks like, and flags AI Slop signals. Useful for assessing UI work.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "platform-design",
+      "id": "platform-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Platform Design",
+      "description": "300+ design rules from Apple HIG, Material Design 3, and WCAG 2.2 for cross-platform apps. Useful when shipping a single design across iOS, Android, and the web.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "poster-hero",
+      "id": "poster-hero",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Poster Hero",
+      "description": "Vertical poster or Moments-style share image with strong visual impact.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "ppt-keynote",
+      "id": "ppt-keynote",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Ppt Keynote",
+      "description": "Apple Keynote-quality slides, one card per screen, with keyboard left/right navigation.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pptx",
+      "id": "pptx",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pptx",
+      "description": "Read, generate, and adjust PowerPoint slides, layouts, and templates. Useful for executive decks, training material, and product reviews.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pptx-generator",
+      "id": "pptx-generator",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pptx Generator",
+      "description": "Create and edit PowerPoint presentations from scratch with PptxGenJS — MiniMax's production-tested deck pipeline.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pptx-html-fidelity-audit",
+      "id": "pptx-html-fidelity-audit",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pptx Html Fidelity Audit",
+      "description": "Audit a python-pptx export against its source HTML deck, identify layout/content drift (footer overflow, cropped content, missing italic/em, lost styling, off-rhythm spacing), and re-export with strict footer-rail + cursor-flow layout discipline. Use this skill whenever the user has a .pptx that was generated from an HTML slide deck and asks to com",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "pr-feedback-quality-gate",
+      "id": "pr-feedback-quality-gate",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Pr Feedback Quality Gate",
+      "description": "Safely track pull request feedback, resolve review comments or merge conflicts, validate fixes, and use a read-only cross-review before committing or pushing follow-up changes.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "redesign-skill",
+      "id": "redesign-existing-projects",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Redesign Skill",
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "bundled"
+    },
+    {
+      "folder": "reference-design-contract",
+      "id": "reference-design-contract",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Reference design planning",
+      "description": "Plan and verify a faithful implementation of a supplied design reference.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "release-notes-one-pager",
+      "id": "release-notes-one-pager",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Release Notes One Pager",
+      "description": "Release notes one-page HTML with highlights, Added, Fixed, Breaking changes, Known issues, and Upgrade note. Writes explicit \"None\" style sections whenever the user does not provide details.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "remotion",
+      "id": "remotion",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Remotion",
+      "description": "Programmatic video creation with React. Useful for branded explainers, social cuts, dashboards-to-video, and reproducible motion graphics.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "replicate",
+      "id": "replicate",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Replicate",
+      "description": "Discover, compare, and run AI models using Replicate's API. Strong fit for image, audio, and video generation pipelines that swap models frequently.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "research-decision-room",
+      "id": "research-decision-room",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Research Decision Room",
+      "description": "Turn messy user research notes, interviews, support tickets, surveys, and product context into an evidence-backed decision room: a single HTML artifact with an evidence ledger, theme map, confidence heatmap, opportunity matrix, decision memo, and experiment queue. Use when teams need to move from qualitative signals to product or design decisions w",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "resume-modern",
+      "id": "resume-modern",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Resume Modern",
+      "description": "Modern minimal resume, single A4 page, ready for print or PDF export.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "review-animations",
+      "id": "review-animations",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Animation review",
+      "description": "Review motion quality, accessibility and interaction behaviour.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "screenshot",
+      "id": "screenshot",
+      "edition": "free",
+      "discoverable": false,
+      "label": "Screenshot",
+      "description": "Capture desktop, app windows, or pixel regions across OS platforms. Useful for marketing screenshots, design reviews, and bug reports.",
+      "reason": "Core research, content quality, browser verification or export reliability.",
+      "status": "alias",
+      "aliasOf": "agent-browser"
+    },
+    {
+      "folder": "screenshots-marketing",
+      "id": "screenshots-marketing",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Screenshots Marketing",
+      "description": "Generate marketing screenshots with Playwright. Useful for landing-page hero shots, App Store screenshots, and changelog visuals.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "shadcn-ui",
+      "id": "shadcn-ui",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Shadcn Ui",
+      "description": "Build UI components with shadcn/ui. Pairs with the Stitch design loop to ship structured, accessible components quickly.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "shader-dev",
+      "id": "shader-dev",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Shader Dev",
+      "description": "GLSL shader techniques for ray marching, fluid simulation, particle systems, and procedural generation. Useful for hero visuals and motion stills.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "slack-gif-creator",
+      "id": "slack-gif-creator",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Slack Gif Creator",
+      "description": "Create animated GIFs optimized for Slack with validators for size constraints and composable animation primitives.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "slides",
+      "id": "slides",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Slides",
+      "description": "Create and edit .pptx presentation decks with PptxGenJS. Useful for sales decks, kickoff briefs, and design-system showcases.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "social-reddit-card",
+      "id": "social-reddit-card",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Social Reddit Card",
+      "description": "Realistic Reddit post card with vote rail and comment count, suited to video overlays or story sharing.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "social-spotify-card",
+      "id": "social-spotify-card",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Social Spotify Card",
+      "description": "Spotify Now Playing-style card with album art, progress bar, and playback controls, suited to video overlays or personal homepages.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "social-x-post-card",
+      "id": "social-x-post-card",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Social X Post Card",
+      "description": "Realistic X post card with engagement metrics (likes, reposts, views), suited to video overlays or shareable image cards.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "soft-skill",
+      "id": "high-end-visual-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Soft Skill",
+      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "sora",
+      "id": "sora",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Sora",
+      "description": "Generate, remix, and manage short video clips via OpenAI's Sora API. Useful for cinematic shots, b-roll, and rapid concept video iteration.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "speech",
+      "id": "speech",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Speech",
+      "description": "Generate spoken audio from text using OpenAI's API with built-in voices. Useful for narrated explainers, lecture audio, and quick voiceover tracks.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "stitch-loop",
+      "id": "stitch-loop",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Stitch Loop",
+      "description": "Iterative design-to-code feedback loop. Critique → adjust → ship cycle for tightening visual fidelity between brief and built UI.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "stitch-skill",
+      "id": "stitch-design-taste",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Stitch design systems",
+      "description": "Create consistent design-system guidance for Google Stitch.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "swiftui-design",
+      "id": "swiftui-design",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Swiftui Design",
+      "description": "SwiftUI 前端设计 skill — anti AI-slop rules, design direction advisor, brand asset protocol, and five-dimension review. Works with Claude Code, Cursor, Codex, and OpenCode.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "swiss-creative-mode-template",
+      "id": "swiss-creative-mode-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Swiss Creative Mode Template",
+      "description": "Swiss-inspired creative-mode presentation template skill with bold editorial typography, high-contrast geometric cards, interactive slide navigation, theme switching, hotspot overlays, and palette choreography in a single-file HTML artifact. Use when users ask for a premium presentation-style landing, a Swiss/brutalist deck look, or a creative laun",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "swiss-user-research-video-template",
+      "id": "swiss-user-research-video-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Swiss User Research Video Template",
+      "description": "Swiss-style user-research narrative template in warm-paper editorial aesthetics. Use when users ask for a premium research deck or story-first live artifact with minimalist typography, high-clarity layout, subtle motion, donut breakdowns, and keyboard/click navigation across slides in a single HTML file.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "taste-skill",
+      "id": "design-taste-frontend",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Taste Skill",
+      "description": "Anti-slop frontend skill for landing pages, portfolios, and redesigns. The agent reads the brief, infers the right design direction, and ships interfaces that do not look templated. Uses existing design systems where appropriate and evaluates the rendered result.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "taste-skill-v1",
+      "id": "design-taste-frontend-v1",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Taste Skill V1",
+      "description": "Frontend composition and implementation guidance under the legacy v1 skill name. Choose typography, colour, layout and motion to fit the brief.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "alias",
+      "aliasOf": "frontend-design"
+    },
+    {
+      "folder": "theme-factory",
+      "id": "theme-factory",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Theme Factory",
+      "description": "Apply professional font and color themes to artifacts including slides, docs, reports, and HTML landing pages. Ships 10 pre-set themes.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "threejs",
+      "id": "threejs",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Threejs",
+      "description": "Three.js skills for creating 3D elements and interactive experiences in the browser — scenes, materials, controls, and post-processing.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "ui-skills",
+      "id": "ui-skills",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Ui Skills",
+      "description": "Opinionated, evolving constraints to guide agents when building interfaces. Useful for keeping output coherent across many small UI pieces.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "ui-ux-pro-max",
+      "id": "ui-ux-pro-max",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Ui Ux Pro Max",
+      "description": "Catalog-only UI/UX Pro Max entry. The full upstream templates, data, and search workflow are not bundled in Open Design.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "venice-audio-music",
+      "id": "venice-audio-music",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Venice Audio Music",
+      "description": "Music generation queueing, retrieval, and completion endpoints via Venice.ai. Suited for jingles, background loops, and prototype scoring.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "venice-audio-speech",
+      "id": "venice-audio-speech",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Venice Audio Speech",
+      "description": "Text-to-speech models, voices, formats, and streaming via Venice.ai. Useful for narration, voiceover, and conversational agent voices.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "venice-image-edit",
+      "id": "venice-image-edit",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Venice Image Edit",
+      "description": "Image edits, upscaling, and background removal via the Venice.ai API.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "venice-image-generate",
+      "id": "venice-image-generate",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Venice Image Generate",
+      "description": "Image generation endpoints and available styles via the Venice.ai API.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "venice-video",
+      "id": "venice-video",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Venice Video",
+      "description": "Video generation and transcription workflows via the Venice.ai API.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "vfx-text-cursor",
+      "id": "vfx-text-cursor",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Vfx Text Cursor",
+      "description": "Cursor light trail, chromatic rays, and directional flares for word-by-word quote reveals in video intros.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "video-downloader",
+      "id": "video-downloader",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Video Downloader",
+      "description": "Download videos from YouTube and other platforms for offline viewing, editing, or archival with support for various formats and quality options.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "video-hyperframes",
+      "id": "video-hyperframes",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Video Hyperframes",
+      "description": "Hyperframes / Remotion-compatible continuous frame animation with autoplay support.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "web-artifacts-builder",
+      "id": "web-artifacts-builder",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Web Artifacts Builder",
+      "description": "Build complex claude.ai HTML artifacts with React and Tailwind. Anthropic's reference workflow for shipping rich, embeddable artifacts.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "web-clone",
+      "id": "web-clone",
+      "edition": "pro",
+      "discoverable": true,
+      "label": "Reference reconstruction",
+      "description": "Recreate or adapt an image or website reference using the active native editor, with responsive and interaction checks.",
+      "reason": "Advanced creative design workflow.",
+      "status": "bundled"
+    },
+    {
+      "folder": "web-design-guidelines",
+      "id": "web-design-guidelines",
+      "edition": "free",
+      "discoverable": true,
+      "label": "Web accessibility and quality",
+      "description": "Review UI code for Web Interface Guidelines compliance by the Vercel engineering team. Covers layout, typography, color, motion, and accessibility for product UI.",
+      "reason": "Core research, content quality, browser verification or export reliability.",
+      "status": "bundled"
+    },
+    {
+      "folder": "weread-year-in-review-video-template",
+      "id": "weread-year-in-review-video-template",
+      "edition": "template",
+      "discoverable": false,
+      "label": "Weread Year In Review Video Template",
+      "description": "WeRead-inspired HyperFrames video template for vertical annual reading reports, personal reading dashboards, book-note recaps, and shareable year-in-review stories. Use when users want a 9:16 HTML-to-MP4 reading report with warm paper texture, editorial Chinese typography, book-page metaphors, data highlights, and deterministic motion.",
+      "reason": "Existing template catalogue; not a functional slash skill.",
+      "status": "excluded"
+    },
+    {
+      "folder": "wpds",
+      "id": "wpds",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Wpds",
+      "description": "WordPress Design System. Apply WordPress's official design tokens, typography, and component patterns to themes and sites.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    },
+    {
+      "folder": "writing-guidelines",
+      "id": "writing-guidelines",
+      "edition": "free",
+      "discoverable": true,
+      "label": "Writing review",
+      "description": "Review docs/prose for Writing Guidelines compliance. Use when asked to \"review my docs\", \"check writing style\", \"audit prose\", \"review docs voice and tone\", or \"check this page against the writing handbook\".",
+      "reason": "Core research, content quality, browser verification or export reliability.",
+      "status": "bundled"
+    },
+    {
+      "folder": "youtube-clipper",
+      "id": "youtube-clipper",
+      "edition": "pro",
+      "discoverable": false,
+      "label": "Youtube Clipper",
+      "description": "YouTube clip generation and editing with automated workflows — pull source video, slice highlights, add captions, and export.",
+      "reason": "Supporting or hidden legacy workflow; preserve in Pro without advertising placeholders.",
+      "status": "retired"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+.library { width:min(1120px,calc(100% - 64px)); margin-inline:auto; padding-block:0 48px; }
+@media(max-width:600px) { .library { width:calc(100% - 24px); padding-block-end:24px; } }

@@ -1,0 +1,73 @@
+/* Match the composer pickers while keeping scrollbars inside rounded edges. */
+.popover:global(.avatar-popover.avatar-popover) {
+  --composer-surface: inherit;
+  --composer-hover: inherit;
+  background: var(--composer-surface, var(--bg-elevated));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgb(0 0 0 / .22);
+  padding: 6px;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.scrollArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scrollArea > * { flex-shrink: 0; }
+
+.popover > :not(.scrollArea) { flex-shrink: 0; }
+
+.popover :global(.avatar-popover-head) { padding: 8px 10px 10px; margin-bottom: 4px; }
+.popover :global(.avatar-popover-head .where) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popover :global(.avatar-section-label) { text-transform: none; letter-spacing: 0; font-weight: 500; padding: 12px 10px 4px; }
+.popover :global(.avatar-model-section) { border-top-style: solid; padding: 12px 10px 8px; margin-top: 8px; gap: 10px; }
+.popover :global(.avatar-select-row) { display: grid; grid-template-columns: 68px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 0; }
+.popover :global(.avatar-select) { min-width: 0; width: 100%; }
+.footer { flex-shrink: 0; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 4px; }
+.headingRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.statusBadge { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 3px 6px; border-radius: 6px; background: var(--composer-hover, var(--bg-subtle)); color: var(--text-muted); font-size: 10px; line-height: 14px; }
+.statusBadge > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.statusBadge > :first-child { flex-shrink: 0; }
+
+.popover :global(.avatar-item) {
+  border-radius: 6px;
+}
+.popover .modeRow:global(.avatar-item) {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 16px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  min-height: 42px;
+  border-radius: 9px;
+  text-align: left;
+}
+.modeCopy { display: flex; flex-direction: column; gap: 4px; min-width: 0; line-height: 1.4; }
+.modeCopy > span:first-child { font-size: 12px; font-weight: 500; color: var(--text); }
+.modeHint { color: var(--text-muted); font-size: 11px; line-height: 1.5; font-weight: 400; white-space: normal; }
+.modeRow :global(.avatar-item-icon), .modeRow :global(.avatar-item-check) { display: flex; align-items: center; justify-content: center; margin: 0; }
+
+.popover :global(.avatar-item:hover:not(:disabled)),
+.popover :global(.avatar-item.active) {
+  background: var(--composer-hover, var(--bg-subtle));
+}
+
+@supports (corner-shape: squircle) {
+  .popover:global(.avatar-popover.avatar-popover) { corner-shape: squircle; border-radius: 22px; }
+}
+
+/* Composer pickers use a quiet surface change for focus, matching the shared panel. */
+.popover :global(.avatar-section-label) { color: var(--text-muted); }
+.popover :global(.avatar-select:is(:focus, :focus-visible)) { outline: none; box-shadow: none; border-color: var(--border); }

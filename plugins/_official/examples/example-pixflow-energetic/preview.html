@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VIBE SODA // PURE VITALITY</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Limelight&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #ffedd5;
+        --bg-deep: #1d1836;
+        --surface: #ffffff;
+        --surface-soft: #fdba74;
+        --text: #1d1836;
+        --text-light: #ffedd5;
+        --border: #ea580b;
+        --border-dark: #1d1836;
+        --accent: #ea580b;
+        --accent-secondary: #f59e0b;
+        --font-display: "Limelight", cursive;
+        --font-body: "Outfit", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --shadow: 4px 4px 0px 0px var(--border);
+        --shadow-dark: 4px 4px 0px 0px var(--border-dark);
+        --container: 1400px;
+        --gutter: 24px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        width: min(100%, var(--container));
+        margin: 0 auto;
+        padding: 0 var(--gutter);
+      }
+
+      /* Navigation */
+      .header {
+        border-bottom: 4px solid var(--border-dark);
+        background: var(--surface);
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+      }
+      .logo {
+        font-family: var(--font-display);
+        font-size: 28px;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 4px solid var(--border-dark);
+        padding: 6px 16px;
+        background: var(--bg);
+        box-shadow: var(--shadow-dark);
+        text-decoration: none;
+      }
+      .links {
+        display: flex;
+        gap: 24px;
+      }
+      .links a {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--text);
+        font-size: 14px;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border: 2px solid transparent;
+      }
+      .links a:hover {
+        border-color: var(--border-dark);
+        background: var(--bg);
+      }
+      .nav-btn {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--accent);
+        color: #fff;
+        border: 4px solid var(--border-dark);
+        padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: var(--shadow-dark);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .nav-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px 0px var(--border-dark);
+      }
+
+      /* Hero */
+      .hero {
+        padding: 80px 0;
+        border-bottom: 4px solid var(--border-dark);
+        background: var(--bg);
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 48px;
+        align-items: center;
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--accent-secondary);
+        color: var(--text);
+        padding: 6px 12px;
+        border: 4px solid var(--border-dark);
+        text-transform: uppercase;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow-dark);
+      }
+      .hero h1 {
+        font-family: var(--font-display);
+        font-size: clamp(48px, 6vw, 84px);
+        line-height: 0.95;
+        text-transform: uppercase;
+        margin: 0 0 24px 0;
+        color: var(--border-dark);
+      }
+      .hero p {
+        font-size: 18px;
+        line-height: 1.5;
+        margin: 0 0 32px 0;
+        max-width: 540px;
+      }
+      .cta-group {
+        display: flex;
+        gap: 16px;
+      }
+      .btn-primary {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--accent);
+        color: #fff;
+        border: 4px solid var(--border-dark);
+        padding: 16px 32px;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: var(--shadow-dark);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .btn-primary:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: 7px 7px 0px 0px var(--border-dark);
+      }
+      .btn-secondary {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--surface);
+        color: var(--text);
+        border: 4px solid var(--border-dark);
+        padding: 16px 32px;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: var(--shadow-dark);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .btn-secondary:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: 7px 7px 0px 0px var(--border-dark);
+      }
+
+      /* CSS Can Mockup */
+      .mockup-container {
+        display: grid;
+        place-items: center;
+      }
+      .can-mockup {
+        position: relative;
+        width: 200px;
+        height: 380px;
+        background: linear-gradient(90deg, #ea580b 0%, #f97316 40%, #ffedd5 60%, #ea580b 100%);
+        border: 4px solid var(--border-dark);
+        border-radius: 24px;
+        box-shadow: var(--shadow-dark);
+        overflow: hidden;
+      }
+      .can-mockup::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 20px;
+        background: #d1d5db;
+        border-bottom: 4px solid var(--border-dark);
+      }
+      .can-logo {
+        position: absolute;
+        top: 45%; left: 50%;
+        transform: translate(-50%, -50%) rotate(-90deg);
+        font-family: var(--font-display);
+        font-size: 64px;
+        color: var(--bg-deep);
+        letter-spacing: 4px;
+      }
+      .can-badge {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        background: var(--accent-secondary);
+        color: var(--text);
+        border: 2px solid var(--border-dark);
+        padding: 2px 8px;
+        white-space: nowrap;
+      }
+
+      /* Features Section */
+      .features {
+        padding: 80px 0;
+        background: var(--surface);
+        border-bottom: 4px solid var(--border-dark);
+      }
+      .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+      .section-header h2 {
+        font-family: var(--font-display);
+        font-size: 48px;
+        text-transform: uppercase;
+        margin: 0 0 16px 0;
+      }
+      .grid-2x2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+      .card {
+        border: 4px solid var(--border-dark);
+        background: var(--bg);
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: var(--shadow-dark);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: scale(1.02);
+      }
+      .card-tag {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .card h3 {
+        font-size: 24px;
+        text-transform: uppercase;
+        margin: 0 0 16px 0;
+        font-weight: 900;
+      }
+      .card p {
+        line-height: 1.5;
+        margin: 0;
+        color: var(--text);
+      }
+
+      /* Testimonials Section */
+      .testimonials {
+        padding: 80px 0;
+        background: var(--bg);
+        border-bottom: 4px solid var(--border-dark);
+      }
+      .testimonial-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+      .testimonial-card {
+        border: 4px solid var(--border-dark);
+        background: var(--surface);
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: var(--shadow-dark);
+      }
+      .quote {
+        font-size: 20px;
+        line-height: 1.4;
+        font-weight: 700;
+        margin: 0 0 24px 0;
+      }
+      .author {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      /* CTA Section */
+      .action-banner {
+        background: var(--bg-deep);
+        color: var(--text-light);
+        padding: 100px 0;
+        text-align: center;
+        border-bottom: 4px solid var(--border-dark);
+      }
+      .action-banner h2 {
+        font-family: var(--font-display);
+        font-size: 64px;
+        text-transform: uppercase;
+        margin: 0 0 24px 0;
+        color: var(--accent-secondary);
+      }
+      .action-banner p {
+        font-size: 20px;
+        max-width: 600px;
+        margin: 0 auto 40px auto;
+        line-height: 1.5;
+      }
+      .newsletter-form {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      .newsletter-form input {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        padding: 16px;
+        border: 4px solid var(--border-dark);
+        border-radius: 12px;
+        flex: 1;
+        outline: none;
+      }
+      .newsletter-form input:focus {
+        border-color: var(--accent-secondary);
+      }
+      .newsletter-form button {
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 16px;
+        border: 4px solid var(--border-dark);
+        border-radius: 12px;
+        padding: 16px 32px;
+        cursor: pointer;
+        box-shadow: 4px 4px 0px 0px var(--accent-secondary);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .newsletter-form button:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px 0px var(--accent-secondary);
+      }
+
+      /* Footer */
+      .footer {
+        background: var(--surface);
+        padding: 60px 0;
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 48px;
+      }
+      .footer-brand h3 {
+        font-family: var(--font-display);
+        font-size: 36px;
+        margin: 0 0 16px 0;
+        text-transform: uppercase;
+      }
+      .footer-col h4 {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        font-size: 14px;
+        margin: 0 0 20px 0;
+        color: var(--accent);
+      }
+      .footer-col ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .footer-col li {
+        margin-bottom: 12px;
+      }
+      .footer-col a {
+        font-size: 14px;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .footer-col a:hover {
+        color: var(--accent);
+      }
+      .copyright {
+        margin-top: 60px;
+        border-top: 4px solid var(--border-dark);
+        padding-top: 24px;
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      /* Responsive styling */
+      @media (max-width: 992px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+          text-align: center;
+        }
+        .hero p {
+          margin: 0 auto 32px auto;
+        }
+        .cta-group {
+          justify-content: center;
+        }
+        .grid-2x2 {
+          grid-template-columns: 1fr;
+        }
+        .testimonial-grid {
+          grid-template-columns: 1fr;
+        }
+        .footer-grid {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="nav">
+          <a href="#" class="logo">VIBE</a>
+          <div class="links">
+            <a href="#">[ FLAVORS ]</a>
+            <a href="#">[ STATS ]</a>
+            <a href="#">[ TALK ]</a>
+          </div>
+          <button class="nav-btn">GET ACTIVE</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-content">
+            <div class="badge">// NATURAL FUEL</div>
+            <h1>UNLEASH YOUR VITALITY.</h1>
+            <p>Experience clean energy made from organic fruits and essential vitamins. No artificial colors, no crash, just pure raw energy to drive your day.</p>
+            <div class="cta-group">
+              <button class="btn-primary">SHOP FLAVORS</button>
+              <button class="btn-secondary">LEARN MORE</button>
+            </div>
+          </div>
+          <div class="mockup-container">
+            <div class="can-mockup">
+              <div class="can-logo">VIBE</div>
+              <div class="can-badge">ORGANIC VITAMIN SODA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>WHY CHOOSE VIBE</h2>
+        </div>
+        <div class="grid-2x2">
+          <div class="card">
+            <div class="card-tag">[ 01 / ENERGY ]</div>
+            <h3>PURE FRUIT BASE</h3>
+            <p>Formulated with organic fruit juices and vitamins, providing a clean boost without the crash.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">[ 02 / FOCUS ]</div>
+            <h3>ZERO ADDED SUGAR</h3>
+            <p>Enjoy delicious, natural sweetness from fruits without any artificial sweeteners or chemical preservatives.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">[ 03 / POWER ]</div>
+            <h3>VITAMIN RICH</h3>
+            <p>Packed with B-complex vitamins, vitamin C, and organic nutrients to support daily health and active focus.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">[ 04 / ACTIVE ]</div>
+            <h3>FAST ACTION</h3>
+            <p>Designed for active individuals who need quick refreshment and natural revitalization on the go.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonials">
+      <div class="container">
+        <div class="section-header">
+          <h2>WHAT THE SQUAD SAYS</h2>
+        </div>
+        <div class="testimonial-grid">
+          <div class="testimonial-card">
+            <div class="quote">"Vibe has completely replaced my morning coffee. The orange citrus flavor is super clean and keeps me going for hours without any crash."</div>
+            <div class="author">// MARCUS K. (ATHLETE)</div>
+          </div>
+          <div class="testimonial-card">
+            <div class="quote">"I love the honest ingredients and the bold design. It fits my active routine perfectly and actually tastes like real fruit."</div>
+            <div class="author">// SARAH T. (CREATIVE DIRECTOR)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-banner">
+      <div class="container">
+        <h2>JOIN THE VIBE</h2>
+        <p>Subscribe for exclusive launches, fitness tips, and local event drops.</p>
+        <div class="newsletter-form">
+          <input type="email" placeholder="ENTER YOUR EMAIL" aria-label="Email Address" />
+          <button type="submit">SIGN UP</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <h3>VIBE SODA</h3>
+            <p>Natural energy drops designed to power raw creative focus and active lifestyle choices.</p>
+          </div>
+          <div class="footer-col">
+            <h4>EXPLORE</h4>
+            <ul>
+              <li><a href="#">FLAVORS</a></li>
+              <li><a href="#">OUR SOURCE</a></li>
+              <li><a href="#">SQUAD DROPS</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>SUPPORT</h4>
+            <ul>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">CONTACT</a></li>
+              <li><a href="#">SHIPPING</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="copyright">
+          <span>&copy; 2026 Vibe Soda. All rights reserved.</span>
+          <span>[ PIXFLOW DESIGN EXCLUSIVE ]</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

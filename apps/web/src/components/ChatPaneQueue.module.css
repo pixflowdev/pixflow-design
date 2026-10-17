@@ -1,0 +1,2 @@
+/* Layout only; ComposerQueue owns the floating-panel visuals and drag interaction. */
+.slot { display: flow-root; flex: none; min-width: 0; width: 100%; }

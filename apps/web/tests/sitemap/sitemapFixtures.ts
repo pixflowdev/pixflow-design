@@ -1,0 +1,92 @@
+import type {
+  WorkspaceSitemap,
+  WorkspaceSitemapSection,
+} from '../../src/components/sitemap/lib/sitemapContracts';
+
+export function sitemapSection(id: string, title: string, order: number): WorkspaceSitemapSection {
+  return {
+    id,
+    title,
+    description: `${title} description`,
+    order,
+  };
+}
+
+export function baseSitemap(): WorkspaceSitemap {
+  return {
+    type: 'pixflow_workspace_sitemap',
+    version: 1,
+    id: 'sitemap-1',
+    projectName: 'Proof Site',
+    businessName: 'Proof Studio',
+    prompt: 'Build a proof site',
+    pageCountPreference: '2-5',
+    generationMode: 'pixflow_generation',
+    sectionGuidancePolicy: 'advisory',
+    sourceRequestId: 'request-1',
+    createdAt: '2026-06-27T10:00:00.000Z',
+    updatedAt: '2026-06-27T10:00:00.000Z',
+    generationQueue: [],
+    generationConcurrency: 2,
+    nodes: [
+      {
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        summary: 'Primary site entry point.',
+        parentId: null,
+        order: 0,
+        sections: [
+          sitemapSection('hero', 'Hero', 0),
+          sitemapSection('proof', 'Proof', 1),
+          sitemapSection('cta', 'CTA', 2),
+        ],
+        savedSections: [],
+        isPageGroup: false,
+        status: 'planned',
+        wpPostId: null,
+        wpPageId: null,
+        editUrl: '',
+        generatedRunId: '',
+        generatedAt: '',
+        generationMessage: '',
+      },
+      {
+        id: 'services',
+        title: 'Services',
+        slug: 'services',
+        summary: 'Explain the service offer.',
+        parentId: 'home',
+        order: 1,
+        sections: [sitemapSection('services-hero', 'Hero', 0)],
+        savedSections: [],
+        isPageGroup: false,
+        status: 'planned',
+        wpPostId: null,
+        wpPageId: null,
+        editUrl: '',
+        generatedRunId: '',
+        generatedAt: '',
+        generationMessage: '',
+      },
+      {
+        id: 'seo',
+        title: 'SEO',
+        slug: 'seo',
+        summary: 'Detail the SEO service.',
+        parentId: 'services',
+        order: 2,
+        sections: [sitemapSection('seo-hero', 'Hero', 0)],
+        savedSections: [],
+        isPageGroup: false,
+        status: 'planned',
+        wpPostId: null,
+        wpPageId: null,
+        editUrl: '',
+        generatedRunId: '',
+        generatedAt: '',
+        generationMessage: '',
+      },
+    ],
+  };
+}

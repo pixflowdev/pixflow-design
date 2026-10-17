@@ -1,0 +1,4 @@
+/* Keep the indicator independent of button hover/focus background shorthands. */
+.trigger.trigger { position: relative; background-image: none; padding-inline-end: 30px; }
+.trigger > .chevron { position: absolute; inset-inline-end: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; min-width: 14px; flex-shrink: 0; pointer-events: none; color: var(--text-muted); }
+.list { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; overscroll-behavior: contain; }

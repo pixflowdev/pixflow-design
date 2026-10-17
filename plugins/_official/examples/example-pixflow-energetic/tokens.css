@@ -1,0 +1,21 @@
+:root {
+  --ene-bg: #ffedd5;
+  --ene-bg-deep: #1d1836;
+  --ene-surface: #ffffff;
+  --ene-surface-soft: #fdba74;
+  --ene-text: #1d1836;
+  --ene-text-light: #ffedd5;
+  --ene-muted: #5e5a75;
+  --ene-border: #ea580b;
+  --ene-border-dark: #1d1836;
+  --ene-accent: #ea580b;
+  --ene-accent-secondary: #f59e0b;
+  --ene-accent-soft: rgba(234, 88, 11, 0.16);
+  --ene-radius: 16px;
+  --ene-radius-sm: 8px;
+  --ene-radius-pill: 999px;
+  --ene-shadow: 4px 4px 0px 0px #ea580b;
+  --ene-shadow-dark: 4px 4px 0px 0px #1d1836;
+  --ene-container: 1440px;
+  --ene-gutter: 32px;
+}

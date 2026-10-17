@@ -1,0 +1,6 @@
+/* Shared full-screen workspace mounted by the Etch and Elementor quick menus. */
+.pixflow-native-editor-workspace { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 1000000; overflow: hidden; border-radius: 0; background: var(--bg, #171717); }
+.pixflow-native-editor-workspace[hidden] { display: none; }
+body:has(.pixflow-native-editor-workspace:not([hidden])) #pixflow-wp-admin-agent-shell { visibility: hidden; pointer-events: none; }
+html:has(.pixflow-native-editor-workspace:not([hidden])) { scrollbar-gutter: auto; overflow: hidden; }
+.pixflow-native-editor-workspace > #pixflow-design-root { height: 100%; }

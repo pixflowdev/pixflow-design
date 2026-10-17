@@ -1,0 +1,28 @@
+{
+  "id": "bento",
+  "title": "Bento",
+  "version": "2026.06.10.1",
+  "category": "Product",
+  "summary": "A Pixflow-owned recipe for modular product pages built from weighted bento cards, soft surfaces, clear hierarchy, and useful proof tiles.",
+  "default_design_system_ref": "bento",
+  "defaultDesignSystemRef": "bento",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-responsive.md",
+    "method-accessibility.md",
+    "method-anti-patterns.md",
+    "method-checklist.md",
+    "method-critique.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

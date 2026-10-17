@@ -1,0 +1,28 @@
+{
+  "id": "paper",
+  "title": "Paper",
+  "version": "2026.06.06.1",
+  "category": "Product",
+  "summary": "A Pixflow-owned recipe for light document-workspace, knowledge-base, editor, collaboration, and connected-canvas pages with tactile paper surfaces and product-readable UI proof.",
+  "default_design_system_ref": "paper",
+  "defaultDesignSystemRef": "paper",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-checklist.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-responsive.md",
+    "method-accessibility.md",
+    "method-anti-patterns.md",
+    "method-critique.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

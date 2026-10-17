@@ -1,0 +1,60 @@
+.banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  margin: 8px 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--danger, #d4543b) 34%, var(--border));
+  border-radius: var(--radius);
+  color: var(--text);
+  background: color-mix(in srgb, var(--danger, #d4543b) 8%, var(--bg-panel));
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--danger, #d4543b);
+  background: color-mix(in srgb, var(--danger, #d4543b) 12%, transparent);
+}
+
+.icon svg {
+  flex: 0 0 auto;
+}
+
+.content {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.message {
+  margin: 4px 0 0;
+  color: var(--text-muted, var(--text));
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.action {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+

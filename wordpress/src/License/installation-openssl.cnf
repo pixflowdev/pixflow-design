@@ -1,0 +1,8 @@
+# Operation-local configuration for PHP installation RSA key creation/export.
+# This does not configure providers, TLS trust or system-wide OpenSSL behaviour.
+[req]
+default_bits = 2048
+default_md = sha256
+distinguished_name = installation_identity
+
+[installation_identity]

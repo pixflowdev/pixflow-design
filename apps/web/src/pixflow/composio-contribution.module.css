@@ -1,0 +1,11 @@
+.unavailable {
+  padding: 16px;
+  border-radius: 16px;
+  corner-shape: squircle;
+  background: var(--settings-surface, var(--bg-elevated));
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.unavailable strong { font-weight: 550; }
+.unavailable p { margin: 6px 0 0; color: var(--text-muted); }

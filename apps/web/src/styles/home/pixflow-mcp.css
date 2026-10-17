@@ -1,0 +1,100 @@
+.pixflow-mcp-section {
+  gap: 16px;
+}
+
+.pixflow-mcp-notice {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.pixflow-mcp-notice.error {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 45%, var(--border));
+  color: var(--danger, #ef4444);
+}
+
+.pixflow-mcp-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pixflow-mcp-summary > div,
+.pixflow-mcp-contract {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.pixflow-mcp-summary > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.pixflow-mcp-summary span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.pixflow-mcp-summary strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.pixflow-mcp-skill-row .skills-row-detail {
+  display: block;
+}
+
+.pixflow-mcp-contract {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.pixflow-mcp-contract-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pixflow-mcp-contract-head h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.pixflow-mcp-contract-head .ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.pixflow-mcp-contract pre {
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 12px;
+  background: var(--bg-subtle);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 780px) {
+  .pixflow-mcp-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .pixflow-mcp-contract-head {
+    flex-direction: column;
+  }
+}

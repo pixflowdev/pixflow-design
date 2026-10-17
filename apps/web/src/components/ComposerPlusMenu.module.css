@@ -1,0 +1,28 @@
+.popup:global(.plus-menu__popup) {
+  --composer-surface: inherit;
+  --composer-hover: inherit;
+  min-width: min(232px, calc(100vw - 24px));
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--composer-surface, var(--bg-elevated));
+  box-shadow: 0 12px 36px rgb(0 0 0 / .22);
+  color: var(--text);
+}
+.popup :global(.plus-menu__item) {
+  min-height: 36px;
+  padding: 8px 10px;
+  gap: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.popup :global(.plus-menu__item:hover:not(:disabled)),
+.popup :global(.plus-menu__item:focus-visible) { background: var(--composer-hover, var(--bg-subtle)); }
+.popup :global(.plus-menu__item) > svg { flex: 0 0 16px; width: 16px; height: 16px; color: var(--text-muted); }
+.shortcut { margin-inline-start: auto; padding: 0; border: 0; background: transparent; box-shadow: none; color: var(--text-muted); font: inherit; font-size: 11px; }
+.divider { height: 1px; margin: 5px 6px; background: var(--border); }
+.popup :global(.plus-menu__list) { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; overscroll-behavior: contain; }

@@ -1,0 +1,16 @@
+Remix Icon v4.7.0, published 2025-10-10.
+Source: https://github.com/Remix-Design/RemixIcon/tree/v4.7.0
+
+Downloaded from the upstream version tag on 2026-10-16:
+https://raw.githubusercontent.com/Remix-Design/RemixIcon/v4.7.0/fonts/remixicon.woff2
+https://raw.githubusercontent.com/Remix-Design/RemixIcon/v4.7.0/fonts/remixicon.css
+https://raw.githubusercontent.com/Remix-Design/RemixIcon/v4.7.0/License
+
+Font SHA-256: 56fb214017445c51f775255d0a9ca74c527097d97e647c5807b7c71f44f07088
+Licence SHA-256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+Licence: Apache-2.0, complete original licence included in LICENSE.txt.
+
+Pixflow modification: CSS @font-face uses only the locally bundled WOFF2,
+removing obsolete EOT/TTF/SVG/WOFF URLs. All glyph names and mappings are original.
+The directory target uses this matched font and stylesheet pair. Website builds
+are unchanged. v4.9.1 introduced a restrictive licence and is not used here.

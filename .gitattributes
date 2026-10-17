@@ -1,0 +1,2 @@
+# Preserve exact reviewed bytes for hash-pinned directory artwork and licences.
+wordpress/directory/vendor/provider-icons/** -text

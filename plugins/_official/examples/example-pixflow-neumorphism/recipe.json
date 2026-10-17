@@ -1,0 +1,24 @@
+{
+  "id": "neumorphism",
+  "title": "Neumorphism",
+  "version": "2026.06.05.1",
+  "category": "Interface",
+  "summary": "A Pixflow-owned recipe for tactile product dashboards and app pages built from one material surface, raised/inset shadows, teal accents, and clear interaction states.",
+  "default_design_system_ref": "neumorphism",
+  "defaultDesignSystemRef": "neumorphism",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-checklist.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

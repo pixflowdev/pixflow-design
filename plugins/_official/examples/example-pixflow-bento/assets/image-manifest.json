@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "recipe": "bento",
+  "assets": [
+    {
+      "filename": "preview-desktop.png",
+      "path": "assets/preview-desktop.png",
+      "kind": "reference_screenshot",
+      "viewport": "desktop",
+      "intendedRole": "Approved desktop recipe preview screenshot",
+      "purpose": "Approved full-page Bento recipe preview used as visual reference evidence for spacing, section rhythm, component density, and desktop composition.",
+      "usage": "Read as a benchmark only. Do not place this screenshot inside generated pages."
+    },
+    {
+      "filename": "preview-mobile.png",
+      "path": "assets/preview-mobile.png",
+      "kind": "reference_screenshot",
+      "viewport": "mobile",
+      "intendedRole": "Approved mobile recipe preview screenshot",
+      "purpose": "Approved mobile Bento recipe preview used as visual reference evidence for responsive stacking, type scale, spacing, and mobile composition.",
+      "usage": "Read as a benchmark only. Do not place this screenshot inside generated pages."
+    }
+  ]
+}

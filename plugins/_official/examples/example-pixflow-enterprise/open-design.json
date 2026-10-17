@@ -1,0 +1,93 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "example-pixflow-enterprise",
+  "title": "Pixflow Enterprise",
+  "version": "0.1.0",
+  "description": "High-contrast enterprise workflow and automation product method using dark-green command surfaces, orange action states, structured product panels, and purposeful reveal motion.",
+  "license": "Pixflow",
+  "author": {
+    "name": "Pixflow Design"
+  },
+  "tags": [
+    "example",
+    "first-party",
+    "pixflow",
+    "prototype",
+    "web",
+    "enterprise",
+    "enterprise-recipe",
+    "design-recipe"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "scenario",
+    "taskKind": "new-generation",
+    "mode": "prototype",
+    "platform": "desktop",
+    "scenario": "design-recipe",
+    "surface": "web",
+    "preview": {
+      "type": "html",
+      "entry": "./example.html"
+    },
+    "useCase": {
+      "query": {
+        "en": "Create a Pixflow Enterprise web prototype using the bundled recipe."
+      },
+      "exampleOutputs": [
+        {
+          "path": "./example.html",
+          "title": "Pixflow Enterprise"
+        }
+      ]
+    },
+    "context": {
+      "skills": [
+        {
+          "path": "./SKILL.md"
+        }
+      ],
+      "designSystem": {
+        "primary": true
+      },
+      "craft": [
+        "state-coverage",
+        "accessibility-baseline"
+      ],
+      "assets": [
+        "./example.html",
+        "./preview.html",
+        "./SKILL.md",
+        "./DESIGN.md",
+        "./METHOD.md",
+        "./tokens.css",
+        "./recipe.json",
+        "./references/checklist.md",
+        "./references/components.md",
+        "./references/layouts.md"
+      ]
+    },
+    "pipeline": {
+      "stages": [
+        {
+          "id": "generate",
+          "atoms": [
+            "file-write",
+            "live-artifact"
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      "prompt:inject",
+      "fs:write"
+    ]
+  }
+}

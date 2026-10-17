@@ -1,0 +1,28 @@
+{
+  "id": "luxury",
+  "title": "Luxury",
+  "version": "2026.06.06.1",
+  "category": "Refined",
+  "summary": "A Pixflow-owned recipe for premium dark luxury pages with disciplined monochrome surfaces, oversized uppercase type, editorial product imagery, and restrained conversion moments.",
+  "default_design_system_ref": "luxury",
+  "defaultDesignSystemRef": "luxury",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-checklist.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-responsive.md",
+    "method-accessibility.md",
+    "method-anti-patterns.md",
+    "method-critique.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "example-pixflow-neobrutalism",
+  "title": "Pixflow Neobrutalism",
+  "version": "0.1.0",
+  "description": "Bold high-contrast Pixflow recipe using thick borders, hard offset shadows, flat colors, vivid yellow/violet accents, and accessible raw layout structure.",
+  "license": "Pixflow",
+  "author": {
+    "name": "Pixflow Design"
+  },
+  "tags": [
+    "example",
+    "first-party",
+    "pixflow",
+    "prototype",
+    "web",
+    "neobrutalism",
+    "neobrutalism-recipe",
+    "design-recipe"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "scenario",
+    "taskKind": "new-generation",
+    "mode": "prototype",
+    "platform": "desktop",
+    "scenario": "design-recipe",
+    "surface": "web",
+    "preview": {
+      "type": "html",
+      "entry": "./example.html"
+    },
+    "useCase": {
+      "query": {
+        "en": "Create a Pixflow Neobrutalism web prototype using the bundled recipe."
+      },
+      "exampleOutputs": [
+        {
+          "path": "./example.html",
+          "title": "Pixflow Neobrutalism"
+        }
+      ]
+    },
+    "context": {
+      "skills": [
+        {
+          "path": "./SKILL.md"
+        }
+      ],
+      "designSystem": {
+        "primary": true
+      },
+      "craft": [
+        "state-coverage",
+        "accessibility-baseline"
+      ],
+      "assets": [
+        "./example.html",
+        "./preview.html",
+        "./SKILL.md",
+        "./DESIGN.md",
+        "./METHOD.md",
+        "./tokens.css",
+        "./recipe.json",
+        "./references/checklist.md",
+        "./references/components.md",
+        "./references/layouts.md"
+      ]
+    },
+    "pipeline": {
+      "stages": [
+        {
+          "id": "generate",
+          "atoms": [
+            "file-write",
+            "live-artifact"
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      "prompt:inject",
+      "fs:write"
+    ]
+  }
+}

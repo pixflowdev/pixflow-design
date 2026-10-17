@@ -1,0 +1,2 @@
+/* Aggregate for the standalone app. WordPress loads shared and Pro styles through their owning entries. */
+@import './shared-entrance.css';

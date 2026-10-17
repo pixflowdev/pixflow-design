@@ -1,0 +1,32 @@
+[
+  {
+    "filename": "vibe-hero-can.png",
+    "intendedRole": "Hero beverage can mockup",
+    "promptSummary": "Vibrant energetic beverage can mockup with bold typography, orange and purple color blocking, and dynamic splash accents.",
+    "usedIn": "Hero image composition"
+  },
+  {
+    "filename": "vibe-flavor-grid.png",
+    "intendedRole": "Flavor selection gallery main image",
+    "promptSummary": "A row of three energetic beverage cans showing orange, lime, and berry flavors in front of a high-contrast geometric background.",
+    "usedIn": "Flavor Selection Section"
+  },
+  {
+    "filename": "preview-desktop.png",
+    "path": "assets/preview-desktop.png",
+    "kind": "reference_screenshot",
+    "viewport": "desktop",
+    "intendedRole": "Approved desktop recipe preview screenshot",
+    "purpose": "Approved full-page Energetic recipe preview used as visual reference evidence for spacing, section rhythm, component density, and desktop composition.",
+    "usage": "Read as a benchmark only. Do not place this screenshot inside generated pages."
+  },
+  {
+    "filename": "preview-mobile.png",
+    "path": "assets/preview-mobile.png",
+    "kind": "reference_screenshot",
+    "viewport": "mobile",
+    "intendedRole": "Approved mobile recipe preview screenshot",
+    "purpose": "Approved mobile Energetic recipe preview used as visual reference evidence for responsive stacking, type scale, spacing, and mobile composition.",
+    "usage": "Read as a benchmark only. Do not place this screenshot inside generated pages."
+  }
+]

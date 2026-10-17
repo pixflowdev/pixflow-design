@@ -1,0 +1,143 @@
+{
+  "$schema": "https://pixflow-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "recipe-luxury",
+  "title": "Luxury",
+  "version": "2026.06.06.1",
+  "description": "A Pixflow-owned recipe for premium dark luxury pages with disciplined monochrome surfaces, oversized uppercase type, editorial product imagery, and restrained conversion moments.",
+  "license": "Pixflow",
+  "author": {
+    "name": "Pixflow Design",
+    "url": "https://github.com/pixflowdev/pixflowdev"
+  },
+  "homepage": "https://github.com/pixflowdev/pixflowdev/tree/main/direct-resources/pixflow-design/packs/pixflow-design-recipe-luxury-pack",
+  "tags": [
+    "recipe",
+    "first-party",
+    "prototype",
+    "design",
+    "web",
+    "desktop",
+    "landing",
+    "pixflow",
+    "luxury"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "scenario",
+    "taskKind": "new-generation",
+    "mode": "prototype",
+    "platform": "desktop",
+    "scenario": "design",
+    "surface": "web",
+    "preview": {
+      "type": "html",
+      "entry": "./preview.html"
+    },
+    "useCase": {
+      "query": {
+        "en": "Create a polished high-fidelity web prototype using the Luxury recipe. Use the selected recipe files as the primary route, adapt the brief, and produce one self-contained HTML artifact."
+      },
+      "exampleOutputs": [
+        {
+          "path": "./preview.html",
+          "title": "Luxury"
+        }
+      ]
+    },
+    "inputs": [
+      {
+        "name": "artifactKind",
+        "label": "Artifact kind",
+        "type": "string",
+        "required": true,
+        "default": "web prototype",
+        "placeholder": "landing page"
+      },
+      {
+        "name": "audience",
+        "label": "Audience",
+        "type": "string",
+        "required": false,
+        "default": "product evaluators",
+        "placeholder": "startup founders, buyers, operators"
+      },
+      {
+        "name": "brief",
+        "label": "Brief",
+        "type": "string",
+        "required": false,
+        "placeholder": "Describe the product, business, page, or outcome"
+      }
+    ],
+    "context": {
+      "skills": [
+        {
+          "path": "./SKILL.md"
+        }
+      ],
+      "designSystem": {
+        "primary": true,
+        "default": "luxury"
+      },
+      "assets": [
+        "./recipe.json",
+        "./METHOD.md",
+        "./SKILL.md",
+        "./DESIGN.md",
+        "./tokens.css",
+        "./example.html",
+        "./preview.html",
+        "./references/layouts.md",
+        "./references/components.md",
+        "./references/responsive.md",
+        "./references/accessibility.md",
+        "./references/anti-patterns.md",
+        "./references/checklist.md",
+        "./references/critique.md"
+      ]
+    },
+    "pipeline": {
+      "stages": [
+        {
+          "id": "discovery",
+          "atoms": [
+            "discovery-question-form"
+          ]
+        },
+        {
+          "id": "plan",
+          "atoms": [
+            "direction-picker",
+            "todo-write"
+          ]
+        },
+        {
+          "id": "generate",
+          "atoms": [
+            "file-write",
+            "live-artifact"
+          ]
+        },
+        {
+          "id": "critique",
+          "atoms": [
+            "critique-theater"
+          ],
+          "repeat": true,
+          "until": "critique.score>=4 || iterations>=3"
+        }
+      ]
+    },
+    "capabilities": [
+      "prompt:inject",
+      "fs:write"
+    ]
+  }
+}

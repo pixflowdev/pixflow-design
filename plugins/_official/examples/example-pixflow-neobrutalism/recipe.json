@@ -1,0 +1,24 @@
+{
+  "id": "neobrutalism",
+  "title": "Neobrutalism",
+  "version": "2026.06.06.1",
+  "category": "Expressive",
+  "summary": "A Pixflow-owned recipe for bold, high-contrast pages with thick black borders, hard offset shadows, vivid yellow/violet accents, flat surfaces, and disciplined raw energy.",
+  "default_design_system_ref": "neobrutalism",
+  "defaultDesignSystemRef": "neobrutalism",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-checklist.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

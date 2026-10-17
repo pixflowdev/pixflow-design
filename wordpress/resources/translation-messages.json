@@ -1,0 +1,1952 @@
+[
+  {
+    "message": "Open settings",
+    "domain": "pixflow-design",
+    "references": ["wordpress/src/Admin/WpAdminFloatingPanel.php"],
+    "key": "entry.openSettingsAria"
+  },
+  {
+    "message": "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Modules/ModuleHost.php:54"
+    ],
+    "key": "wp.message.26a6374fbf59"
+  },
+  {
+    "message": "Activate Pro",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:35"
+    ],
+    "key": "wp.message.ca7714cffbcc"
+  },
+  {
+    "message": "Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:34"
+    ],
+    "key": "wp.message.197c83a2f752"
+  },
+  {
+    "message": "Build in your favourite builder. Add annotations, voice, design systems and image generation to your workflow.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:44"
+    ],
+    "key": "wp.message.2ffdcbc380ea"
+  },
+  {
+    "message": "Check Pro trial",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:45"
+    ],
+    "key": "wp.message.40ed1102964b"
+  },
+  {
+    "message": "Could not save dismissal. Please try again.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:97"
+    ],
+    "key": "wp.message.e9cccd3ef5fc"
+  },
+  {
+    "message": "Dismiss",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:82"
+    ],
+    "key": "ui.designFilesPanel.dismiss"
+  },
+  {
+    "message": "Dismiss Pixflow Pro banner",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:82"
+    ],
+    "key": "wp.message.1372089fb797"
+  },
+  {
+    "message": "Download Pro",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:35"
+    ],
+    "key": "wp.message.5e3ba715018d"
+  },
+  {
+    "message": "More possibilities with Pixflow Design Pro",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:43"
+    ],
+    "key": "wp.message.fb2e6d87b44c"
+  },
+  {
+    "message": "Open Pixflow Design",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Admin/WpAdminFloatingPanel.php:40",
+      "wordpress/src/Admin/WpAdminFloatingPanel.php:41"
+    ],
+    "key": "ui.entryShell.openPixflowDesign"
+  },
+  {
+    "message": "Pixflow Design",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Admin/WpAdminFloatingPanel.php:36"
+    ],
+    "key": "app.brand"
+  },
+  {
+    "message": "Refresh this page and try again.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:92"
+    ],
+    "key": "wp.message.9934717ca744"
+  },
+  {
+    "message": "Start your 7-day Pro trial",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:65"
+    ],
+    "key": "wp.message.7c78f9990490"
+  },
+  {
+    "message": "Try Pro for 7 days",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:45"
+    ],
+    "key": "wp.message.f89b4dcf2c2e"
+  },
+  {
+    "message": "Upgrade to Pro",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:45"
+    ],
+    "key": "ui.composioSiteApps.upgradeToPro"
+  },
+  {
+    "message": "You cannot dismiss this notice.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:88",
+      "wordpress/src/License/ProUpgradeNotice.php:105"
+    ],
+    "key": "wp.message.69ecce9deb2d"
+  },
+  {
+    "message": "Your Pixflow plan includes Pro",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php:33"
+    ],
+    "key": "wp.message.927384e7eed8"
+  },
+  {
+    "message": "[%s] Two-factor authentication was reset",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:273",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:75"
+    ],
+    "key": "wp.message.64585a3a39ef"
+  },
+  {
+    "message": "[%s] Your verification code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/VerificationEmail.php:38"
+    ],
+    "key": "wp.message.97c3ac935cc2"
+  },
+  {
+    "message": "10 minutes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:137"
+    ],
+    "key": "wp.message.b075b6e113fc"
+  },
+  {
+    "message": "2FA Authentication",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:187"
+    ],
+    "key": "wp.message.8bbe8944007a"
+  },
+  {
+    "message": "2FA Setup",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:183",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:21"
+    ],
+    "key": "wp.message.c2bf03beb4f6"
+  },
+  {
+    "message": "5 minutes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:132"
+    ],
+    "key": "wp.message.3170543ce47c"
+  },
+  {
+    "message": "6-digit code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:102",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:179"
+    ],
+    "key": "wp.message.0d1fa0dfcc9e"
+  },
+  {
+    "message": "Account panel",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:628",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:32",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:471"
+    ],
+    "key": "wp.message.8b6693be283d"
+  },
+  {
+    "message": "Active/completed color",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:361",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:184"
+    ],
+    "key": "wp.message.107a3671eb84"
+  },
+  {
+    "message": "Active/completed number color",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:374",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:198"
+    ],
+    "key": "wp.message.47d932f4c02a"
+  },
+  {
+    "message": "Add a second verification method to protect your account.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:257",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:60"
+    ],
+    "key": "wp.message.73dbcf028ec6"
+  },
+  {
+    "message": "Additional verification is required to finish signing in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:314",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:87"
+    ],
+    "key": "wp.message.529da8588051"
+  },
+  {
+    "message": "Administrators can use this emergency reset when the user has lost every factor and recovery code.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:37"
+    ],
+    "key": "wp.message.6b49000156c3"
+  },
+  {
+    "message": "After form",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:112"
+    ],
+    "key": "wp.message.4ea44caf5d6e"
+  },
+  {
+    "message": "An administrator removed two-factor authentication from your account. If you did not expect this change, reset your password and contact the site administrator immediately.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:76"
+    ],
+    "key": "wp.message.1be05927766c"
+  },
+  {
+    "message": "Auth/Email/Passkey modal",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:36"
+    ],
+    "key": "wp.message.bd4a7c92a53f"
+  },
+  {
+    "message": "Authenticator app",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:420",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:638",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:482",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:93",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:74"
+    ],
+    "key": "wp.message.09a12ace273f"
+  },
+  {
+    "message": "Authenticator app is ready",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:187"
+    ],
+    "key": "wp.message.a4c801f3d189"
+  },
+  {
+    "message": "Authenticator app setup is disabled for this site.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:81",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:97"
+    ],
+    "key": "wp.message.9fd5a3f4f23e"
+  },
+  {
+    "message": "Authenticator description",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:262"
+    ],
+    "key": "wp.message.7258165188b4"
+  },
+  {
+    "message": "Authenticator QR code preview",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:209"
+    ],
+    "key": "wp.message.7cb96fa5a704"
+  },
+  {
+    "message": "Background",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:82"
+    ],
+    "key": "manualEdit.background"
+  },
+  {
+    "message": "Backup",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:639",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:483",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:143"
+    ],
+    "key": "wp.message.838557924a5c"
+  },
+  {
+    "message": "Before form",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:111"
+    ],
+    "key": "wp.message.216f00eada6a"
+  },
+  {
+    "message": "Blocked content placeholder",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:55"
+    ],
+    "key": "wp.message.9e2b8fcf9a19"
+  },
+  {
+    "message": "Blocked Content Placeholder",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:41"
+    ],
+    "key": "wp.message.745c19fce0bf"
+  },
+  {
+    "message": "Body typography",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:211"
+    ],
+    "key": "wp.message.de4aeff9ee43"
+  },
+  {
+    "message": "Border",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:90"
+    ],
+    "key": "manualEdit.border"
+  },
+  {
+    "message": "Builder only. Pin the selected preview open while styling other elements.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:66"
+    ],
+    "key": "wp.message.45e9870097b1"
+  },
+  {
+    "message": "Builder preview",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:50",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:198",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:209",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:44"
+    ],
+    "key": "wp.message.c3d4759d35d0"
+  },
+  {
+    "message": "Can’t scan it? Enter this setup key manually:",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:213"
+    ],
+    "key": "wp.message.5be164b5cb70"
+  },
+  {
+    "message": "Cancel",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:231"
+    ],
+    "key": "dictationCancel"
+  },
+  {
+    "message": "Cancel and go back",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:238",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:94"
+    ],
+    "key": "wp.message.91cfaf3e7a2c"
+  },
+  {
+    "message": "Cancel button text",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:236"
+    ],
+    "key": "wp.message.3b72859f271e"
+  },
+  {
+    "message": "Centered",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:197"
+    ],
+    "key": "wp.message.739dee74b4dc"
+  },
+  {
+    "message": "Close setup",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:137"
+    ],
+    "key": "ui.entryShell.closeSetup"
+  },
+  {
+    "message": "Complete your two-factor authentication setup to continue.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:71"
+    ],
+    "key": "wp.message.fd00836aed08"
+  },
+  {
+    "message": "Confirm",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:232"
+    ],
+    "key": "wp.message.eebdd24a77d9"
+  },
+  {
+    "message": "Confirm this security change",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:228"
+    ],
+    "key": "wp.message.924d6bffb890"
+  },
+  {
+    "message": "Confirmation dialog",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:37",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:472"
+    ],
+    "key": "wp.message.12c6b5250354"
+  },
+  {
+    "message": "contains",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:68",
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:71"
+    ],
+    "key": "wp.message.beeb20fbd676"
+  },
+  {
+    "message": "Content spacing",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:786"
+    ],
+    "key": "wp.message.b50576843bb3"
+  },
+  {
+    "message": "Cookie banner",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:53"
+    ],
+    "key": "wp.message.fa6388fc7e52"
+  },
+  {
+    "message": "Cookie Consent",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:21"
+    ],
+    "key": "wp.message.02ce0133e19b"
+  },
+  {
+    "message": "Copy",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:215"
+    ],
+    "key": "settings.mcpCopy"
+  },
+  {
+    "message": "Copy codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:189"
+    ],
+    "key": "wp.message.9a62a4e9c79a"
+  },
+  {
+    "message": "Copy setup key",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:214"
+    ],
+    "key": "wp.message.44ea66fd790e"
+  },
+  {
+    "message": "Create passkey",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:205"
+    ],
+    "key": "wp.message.fb92febd0e5a"
+  },
+  {
+    "message": "Creating image",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:159"
+    ],
+    "key": "wp.message.8fd2a4936f51"
+  },
+  {
+    "message": "Current password or recovery code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:35"
+    ],
+    "key": "wp.message.036dbb4e569d"
+  },
+  {
+    "message": "Custom",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:198"
+    ],
+    "key": "pet.tabCustom"
+  },
+  {
+    "message": "Custom arrows and progress bars",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CustomSplideCode/Integration.php:43"
+    ],
+    "key": "wp.message.f8664bc68192"
+  },
+  {
+    "message": "Danger",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:845"
+    ],
+    "key": "wp.message.8412c0700243"
+  },
+  {
+    "message": "Dark",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:840",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:615"
+    ],
+    "key": "settings.themeDark"
+  },
+  {
+    "message": "Default",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:616",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:109",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:115",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:433"
+    ],
+    "key": "common.default"
+  },
+  {
+    "message": "Default (Before form)",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:114"
+    ],
+    "key": "wp.message.70aea7001f21"
+  },
+  {
+    "message": "Description",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:224",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:255"
+    ],
+    "key": "settings.skillsDescription"
+  },
+  {
+    "message": "Device name",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:203"
+    ],
+    "key": "wp.message.155106be1173"
+  },
+  {
+    "message": "Didn't receive a code?",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:432",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:103",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:174"
+    ],
+    "key": "wp.message.dcbabd0d8773"
+  },
+  {
+    "message": "Digit %d of 6",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:81",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:171"
+    ],
+    "key": "wp.message.cf6a0f8bda21"
+  },
+  {
+    "message": "does not contain",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:69"
+    ],
+    "key": "wp.message.80ccd8c9b9af"
+  },
+  {
+    "message": "Done",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:151",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:191"
+    ],
+    "key": "tasks.filter.done"
+  },
+  {
+    "message": "Done icon",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:351",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:173"
+    ],
+    "key": "wp.message.3a3ec2a62d3a"
+  },
+  {
+    "message": "Download codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:190"
+    ],
+    "key": "wp.message.22f940766e70"
+  },
+  {
+    "message": "e.g. Work laptop",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:204"
+    ],
+    "key": "wp.message.2c66b7ea3395"
+  },
+  {
+    "message": "Each recovery code works once.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:107"
+    ],
+    "key": "wp.message.961ff8fb62b1"
+  },
+  {
+    "message": "Edit failed",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:152"
+    ],
+    "key": "wp.message.1b751c7128ab"
+  },
+  {
+    "message": "Editing",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:149"
+    ],
+    "key": "chat.activeFileEditingLabel"
+  },
+  {
+    "message": "Email code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:420",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:93"
+    ],
+    "key": "wp.message.0adcdb5d55ec"
+  },
+  {
+    "message": "Email codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:638",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:482",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:77"
+    ],
+    "key": "wp.message.9c2e68245bb2"
+  },
+  {
+    "message": "Email codes are not enabled for this account.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:103"
+    ],
+    "key": "wp.message.c98e538fda6e"
+  },
+  {
+    "message": "Email codes are ready",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:187"
+    ],
+    "key": "wp.message.e02cddea488b"
+  },
+  {
+    "message": "Email description",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:263"
+    ],
+    "key": "wp.message.c640c11c7cb1"
+  },
+  {
+    "message": "Email-code setup is disabled for this site.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:122",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:155"
+    ],
+    "key": "wp.message.b9752ceeb36c"
+  },
+  {
+    "message": "Enable Google Login",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:91"
+    ],
+    "key": "wp.message.7037d58aadfe"
+  },
+  {
+    "message": "Enter a name for this device.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:208"
+    ],
+    "key": "wp.message.6aa08a6f461a"
+  },
+  {
+    "message": "Enter a recovery code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:106"
+    ],
+    "key": "wp.message.14b61f344112"
+  },
+  {
+    "message": "Enter the code sent to i•••@example.com.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:178"
+    ],
+    "key": "wp.message.f74445631f5f"
+  },
+  {
+    "message": "Enter the code shown in the app to make sure everything works.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:178"
+    ],
+    "key": "wp.message.00c5cc38946e"
+  },
+  {
+    "message": "Enter your current password or an unused recovery code.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:388"
+    ],
+    "key": "wp.message.8749afa4223c"
+  },
+  {
+    "message": "Enter your current password or one unused recovery code.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:229"
+    ],
+    "key": "wp.message.007c0a8191cb"
+  },
+  {
+    "message": "Enter your password again and complete the additional verification below.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:464"
+    ],
+    "key": "wp.message.de8bead7fe93"
+  },
+  {
+    "message": "Enter your verification code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:100"
+    ],
+    "key": "wp.message.2dea739f65bb"
+  },
+  {
+    "message": "Extra large",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:826",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:614"
+    ],
+    "key": "wp.message.cc16912b3b97"
+  },
+  {
+    "message": "Fill the available form width up to Google Identity Services' 400px maximum.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:126"
+    ],
+    "key": "wp.message.5ac454a802e0"
+  },
+  {
+    "message": "Fix gradient banding",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/GradientBanding/Integration.php:77"
+    ],
+    "key": "wp.message.87b9f03df44d"
+  },
+  {
+    "message": "Full width",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:124"
+    ],
+    "key": "wp.message.d34008d28f89"
+  },
+  {
+    "message": "Google Site Kit is required!",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:75"
+    ],
+    "key": "wp.message.e741c42218bb"
+  },
+  {
+    "message": "GSAP",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/Gsap/Integration.php:38",
+      "wordpress-pro/src/Bricks/Extensions/Gsap/Integration.php:42"
+    ],
+    "key": "wp.message.f854d412632c"
+  },
+  {
+    "message": "Heading",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:218",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:249"
+    ],
+    "key": "ui.pixflowFrameworkDesignSystemBuilder.heading"
+  },
+  {
+    "message": "Icon",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:762"
+    ],
+    "key": "wp.message.a35abcd6dac9"
+  },
+  {
+    "message": "Image could not be loaded",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:162"
+    ],
+    "key": "wp.message.bd3987c34e63"
+  },
+  {
+    "message": "Image generation failed",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:161"
+    ],
+    "key": "wp.message.a89539ab0c26"
+  },
+  {
+    "message": "Image ready",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:160"
+    ],
+    "key": "wp.message.7e953d5b9810"
+  },
+  {
+    "message": "Info",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:842"
+    ],
+    "key": "wp.message.170322a32f3c"
+  },
+  {
+    "message": "Inset",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:670"
+    ],
+    "key": "wp.message.145824df14a5"
+  },
+  {
+    "message": "Install the latest Google Site Kit plugin and configure the Sign in with Google service under:",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:76"
+    ],
+    "key": "wp.message.66d7671d170d"
+  },
+  {
+    "message": "Interactive 2FA is required; use a WordPress application password for API access.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:274"
+    ],
+    "key": "wp.message.793e6000d1b8"
+  },
+  {
+    "message": "Invalid Pixflow variable font request.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Fonts/BricksFontManager.php:822"
+    ],
+    "key": "wp.message.401802b23430"
+  },
+  {
+    "message": "is empty",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:54"
+    ],
+    "key": "wp.message.86aaa00d0f04"
+  },
+  {
+    "message": "is not empty",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:55",
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:57"
+    ],
+    "key": "wp.message.5a78c3a30610"
+  },
+  {
+    "message": "Keep open while styling",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:63"
+    ],
+    "key": "wp.message.d1b1ea7575cf"
+  },
+  {
+    "message": "Large",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:825",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:614"
+    ],
+    "key": "ui.pixflowFrameworkDesignSystemBuilder.large"
+  },
+  {
+    "message": "Light",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:839",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:615"
+    ],
+    "key": "settings.themeLight"
+  },
+  {
+    "message": "Main Cookie Banner",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:33"
+    ],
+    "key": "wp.message.1314f2e8976d"
+  },
+  {
+    "message": "Margin",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:138"
+    ],
+    "key": "manualEdit.margin"
+  },
+  {
+    "message": "Medium",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:824",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:614"
+    ],
+    "key": "ui.pixflowFrameworkDesignSystemBuilder.medium2"
+  },
+  {
+    "message": "Missing Pixflow variable font state.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Fonts/BricksFontManager.php:835"
+    ],
+    "key": "wp.message.99c4bb4b64ca"
+  },
+  {
+    "message": "Muted",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:841"
+    ],
+    "key": "wp.message.2346f214ad56"
+  },
+  {
+    "message": "Next",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:215"
+    ],
+    "key": "designFiles.next"
+  },
+  {
+    "message": "No active Google sign-in challenge was found.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:174"
+    ],
+    "key": "wp.message.d8289dfcd433"
+  },
+  {
+    "message": "No active two-factor authentication challenge was found.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:70",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:94"
+    ],
+    "key": "wp.message.cd8dedfb1ee6"
+  },
+  {
+    "message": "None",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:627",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:650"
+    ],
+    "key": "common.none"
+  },
+  {
+    "message": "Padding",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:86"
+    ],
+    "key": "manualEdit.padding"
+  },
+  {
+    "message": "Passkey — Setting up",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:635",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:479"
+    ],
+    "key": "wp.message.5749e7cab8b4"
+  },
+  {
+    "message": "Passkey description",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:264"
+    ],
+    "key": "wp.message.ef748333e03d"
+  },
+  {
+    "message": "Passkey or security key",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:420",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:93"
+    ],
+    "key": "wp.message.dd8c3b5e38b9"
+  },
+  {
+    "message": "Passkey setup is disabled for this site.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:178",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:197"
+    ],
+    "key": "wp.message.d5dedb552cfa"
+  },
+  {
+    "message": "Passkeys and security keys",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:80"
+    ],
+    "key": "wp.message.594d0d476015"
+  },
+  {
+    "message": "Passkeys require HTTPS plus the PHP OpenSSL and mbstring extensions.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:181"
+    ],
+    "key": "wp.message.56da94bc376c"
+  },
+  {
+    "message": "Pixflow custom Splide code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CustomSplideCode/Integration.php:37"
+    ],
+    "key": "wp.message.1d3f35031a5a"
+  },
+  {
+    "message": "Pixflow Design",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Integration.php:97",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Integration.php:104"
+    ],
+    "key": "app.brand"
+  },
+  {
+    "message": "Pixflow Design Pro requires a compatible Pixflow Design core build. Update both plugins together.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Plugin.php:98"
+    ],
+    "key": "wp.message.b73a688afd1a"
+  },
+  {
+    "message": "Pixflow Design Pro requires the Pixflow Design core plugin to be active.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Plugin.php:97"
+    ],
+    "key": "wp.message.7ecf123f8f20"
+  },
+  {
+    "message": "Pixflow Two-Factor Authentication",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:30"
+    ],
+    "key": "wp.message.46d86360f524"
+  },
+  {
+    "message": "Place this element once in a site-wide Bricks footer template. Consent services, detection, and blocking are configured under Pixflow Design → Bricks extensions → Cookie consent.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:77"
+    ],
+    "key": "wp.message.e70f8f3b8315"
+  },
+  {
+    "message": "Position",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:108"
+    ],
+    "key": "wp.message.6d031af10da7"
+  },
+  {
+    "message": "Positioning",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:194"
+    ],
+    "key": "wp.message.72d7dc1a93b5"
+  },
+  {
+    "message": "Preferences popup",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:54"
+    ],
+    "key": "wp.message.1783ebab33ee"
+  },
+  {
+    "message": "Preferences Popup",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:37"
+    ],
+    "key": "wp.message.758885fbfb64"
+  },
+  {
+    "message": "Primary",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:837",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:615"
+    ],
+    "key": "newproj.dsPrimaryFallback"
+  },
+  {
+    "message": "Product Count",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:82"
+    ],
+    "key": "wp.message.8e314cb69749"
+  },
+  {
+    "message": "Product ID",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:64"
+    ],
+    "key": "wp.message.c76c9e7682bc"
+  },
+  {
+    "message": "Products",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:50"
+    ],
+    "key": "wp.message.4edc8bfafc6b"
+  },
+  {
+    "message": "Recently Viewed Products",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Conditions.php:38",
+      "wordpress-pro/src/Bricks/Extensions/RecentlyViewed/Integration.php:72"
+    ],
+    "key": "wp.message.c6971d403239"
+  },
+  {
+    "message": "Recovery code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:427",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:654",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:97",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:108"
+    ],
+    "key": "wp.message.5bda8302b5ec"
+  },
+  {
+    "message": "Recovery codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:83"
+    ],
+    "key": "wp.message.36880d15c890"
+  },
+  {
+    "message": "Recovery description",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:265"
+    ],
+    "key": "wp.message.22ba7abac520"
+  },
+  {
+    "message": "Recovery submit button text",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:230"
+    ],
+    "key": "wp.message.c7901fa498bb"
+  },
+  {
+    "message": "Redo",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:156"
+    ],
+    "key": "manualEdit.redo"
+  },
+  {
+    "message": "Refreshing",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:158"
+    ],
+    "key": "liveArtifact.refresh.statusRunning"
+  },
+  {
+    "message": "Remove every enrolled method, passkey, and recovery code.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:33"
+    ],
+    "key": "wp.message.2374561a7b97"
+  },
+  {
+    "message": "Render Google Site Kit's connected Sign in with Google button inside this form.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:94"
+    ],
+    "key": "wp.message.77bbc9ed8bef"
+  },
+  {
+    "message": "Resend in 1:00",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:432",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:103",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:174"
+    ],
+    "key": "wp.message.858bbbd0f6e8"
+  },
+  {
+    "message": "Reset 2FA",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:31"
+    ],
+    "key": "wp.message.01c88bb1a49f"
+  },
+  {
+    "message": "Reset all 2FA",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:42",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:88"
+    ],
+    "key": "wp.message.e569a7dd5f6d"
+  },
+  {
+    "message": "Reset button",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:35"
+    ],
+    "key": "wp.message.5362713d638e"
+  },
+  {
+    "message": "Save these one-time recovery codes somewhere secure. They are only shown once.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:188"
+    ],
+    "key": "wp.message.0b443363f14e"
+  },
+  {
+    "message": "Saving",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:154"
+    ],
+    "key": "ui.memorySection.saving"
+  },
+  {
+    "message": "Scan this QR code with your authenticator app, then continue to verify the six-digit code.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:211"
+    ],
+    "key": "wp.message.76e07d866ee3"
+  },
+  {
+    "message": "ScrollTrigger",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/Gsap/Integration.php:43"
+    ],
+    "key": "ui.bricksExtensionsSection.scrolltrigger"
+  },
+  {
+    "message": "Secondary",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:838",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:615"
+    ],
+    "key": "wp.message.62f2ccfffcc5"
+  },
+  {
+    "message": "Secure your account",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:251",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:59"
+    ],
+    "key": "wp.message.193a98699d02"
+  },
+  {
+    "message": "Secure your account before WordPress completes this sign-in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:459"
+    ],
+    "key": "wp.message.753a970dd23f"
+  },
+  {
+    "message": "Selecting",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:157"
+    ],
+    "key": "wp.message.aba5693ac28d"
+  },
+  {
+    "message": "Send email code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:434"
+    ],
+    "key": "wp.message.d8d92d22f721"
+  },
+  {
+    "message": "Send verification code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:197"
+    ],
+    "key": "wp.message.19e86d2b7055"
+  },
+  {
+    "message": "Set up",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:121"
+    ],
+    "key": "wp.message.4da10f1fbb17"
+  },
+  {
+    "message": "Set up a passkey",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:201"
+    ],
+    "key": "wp.message.b5037bab5a4a"
+  },
+  {
+    "message": "Set up an authenticator app, email codes, or a passkey before generating recovery codes.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:258"
+    ],
+    "key": "wp.message.b7522cb65e91"
+  },
+  {
+    "message": "Set up email codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:195"
+    ],
+    "key": "wp.message.86d31445fccd"
+  },
+  {
+    "message": "Set up two-factor authentication to finish signing in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:262"
+    ],
+    "key": "wp.message.caa58d4bc38f"
+  },
+  {
+    "message": "Set up your authenticator app",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:210"
+    ],
+    "key": "wp.message.c5338ccf8fa1"
+  },
+  {
+    "message": "Setting up",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:639",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:483",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:141"
+    ],
+    "key": "wp.message.dbdf27e5db8d"
+  },
+  {
+    "message": "Setup progress",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:138"
+    ],
+    "key": "ui.entryShell.setupProgress"
+  },
+  {
+    "message": "Sign in with Google",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:49",
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Renderer.php:235"
+    ],
+    "key": "wp.message.1dbcee682443"
+  },
+  {
+    "message": "Site Kit > Settings > Connect more services",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/SiteKitGoogleLogin/Controls.php:81"
+    ],
+    "key": "wp.message.ab04d2e4de13"
+  },
+  {
+    "message": "Six-digit code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:653"
+    ],
+    "key": "wp.message.3bcb66ee1a6f"
+  },
+  {
+    "message": "Size",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:820",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:113"
+    ],
+    "key": "ui.designBrowserPanel.size"
+  },
+  {
+    "message": "Small",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:823",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:614"
+    ],
+    "key": "ui.pixflowFrameworkDesignSystemBuilder.small"
+  },
+  {
+    "message": "SplitText",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/Gsap/Integration.php:44"
+    ],
+    "key": "ui.bricksExtensionsSection.splittext"
+  },
+  {
+    "message": "Status notification",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:33"
+    ],
+    "key": "wp.message.5f365c1b7347"
+  },
+  {
+    "message": "Success",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:843"
+    ],
+    "key": "settings.memoryExtractionPhaseSuccess"
+  },
+  {
+    "message": "Text typography",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:95"
+    ],
+    "key": "wp.message.41af78359ce6"
+  },
+  {
+    "message": "That verification was not accepted. Please try again.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:204",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:297"
+    ],
+    "key": "wp.message.b68943b35209"
+  },
+  {
+    "message": "The account no longer exists.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:113",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:181"
+    ],
+    "key": "wp.message.1f0ec82c0aa3"
+  },
+  {
+    "message": "The authenticator code is not valid.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:102"
+    ],
+    "key": "wp.message.69f681b49ab5"
+  },
+  {
+    "message": "The email code is not valid.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:162"
+    ],
+    "key": "wp.message.d36fa8e752cb"
+  },
+  {
+    "message": "The passkey setup request expired. Start again.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:203"
+    ],
+    "key": "wp.message.dc568f104dd0"
+  },
+  {
+    "message": "The security settings could not be changed. Refresh and retry after any other setup request finishes.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:50"
+    ],
+    "key": "wp.message.582bb8974236"
+  },
+  {
+    "message": "The server cannot securely encrypt the authenticator secret. Contact the site administrator.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:110"
+    ],
+    "key": "wp.message.aadd9cf83b66"
+  },
+  {
+    "message": "there",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/VerificationEmail.php:50"
+    ],
+    "key": "wp.message.e244f187f696"
+  },
+  {
+    "message": "This will remove every two-factor method, passkey, and recovery code for this account. Continue?",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AdminProfile.php:40"
+    ],
+    "key": "wp.message.06b2bc8020aa"
+  },
+  {
+    "message": "Timeline",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/Gsap/Integration.php:45"
+    ],
+    "key": "ui.bricksExtensionsSection.timeline"
+  },
+  {
+    "message": "Too many verification attempts. Enter your password to start again.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:298"
+    ],
+    "key": "wp.message.51b6cdcc3257"
+  },
+  {
+    "message": "Too many verification attempts. Start the Google sign-in again.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:205"
+    ],
+    "key": "wp.message.aba49fa16207"
+  },
+  {
+    "message": "Transform",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:692"
+    ],
+    "key": "wp.message.d2d68041b53d"
+  },
+  {
+    "message": "Two-factor authentication was removed from your account. If you did not make this change, reset your password and contact the site administrator immediately.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:274"
+    ],
+    "key": "wp.message.f586fd3f8ba1"
+  },
+  {
+    "message": "Type",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:834",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:107"
+    ],
+    "key": "examples.typeLabel"
+  },
+  {
+    "message": "Undo",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:155"
+    ],
+    "key": "manualEdit.undo"
+  },
+  {
+    "message": "Updated",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:150"
+    ],
+    "key": "ui.sitemapBriefModal.updated"
+  },
+  {
+    "message": "Use passkey",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:435"
+    ],
+    "key": "wp.message.87f08d30fbad"
+  },
+  {
+    "message": "Use Windows Hello, Touch ID, Face ID, biometrics, or a FIDO2 security key.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:202"
+    ],
+    "key": "wp.message.a212e247b569"
+  },
+  {
+    "message": "Use your authenticator, email code, passkey, or a recovery code to finish signing in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:226"
+    ],
+    "key": "wp.message.b0f196cf2a59"
+  },
+  {
+    "message": "Verification method",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:419"
+    ],
+    "key": "wp.message.8e9144afb01c"
+  },
+  {
+    "message": "Verification methods",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:651",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:34"
+    ],
+    "key": "ui.bricksExtensionsSection.verificationMethods"
+  },
+  {
+    "message": "Verification or recovery code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:430"
+    ],
+    "key": "wp.message.cc4d85614069"
+  },
+  {
+    "message": "Verify",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:639",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Element.php:483",
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:142"
+    ],
+    "key": "wp.message.eea2745e2867"
+  },
+  {
+    "message": "Verify and sign in",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:232"
+    ],
+    "key": "wp.message.7a970cb4533f"
+  },
+  {
+    "message": "Verify it’s you",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/Controls.php:220"
+    ],
+    "key": "wp.message.4d8f4755ac09"
+  },
+  {
+    "message": "Verify your authenticator app",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:177"
+    ],
+    "key": "wp.message.2fcac134b4c3"
+  },
+  {
+    "message": "Verify your email code",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:177"
+    ],
+    "key": "wp.message.428defb7b530"
+  },
+  {
+    "message": "Warning",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/CookieConsent/Element.php:844"
+    ],
+    "key": "wp.message.e981ddae45d8"
+  },
+  {
+    "message": "We’ll send a short-lived verification code to i•••@example.com.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/SetupMarkup.php:196"
+    ],
+    "key": "wp.message.41298e82bbe5"
+  },
+  {
+    "message": "WordPress could not send the confirmation email.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AccountController.php:139"
+    ],
+    "key": "wp.message.7da797ee45af"
+  },
+  {
+    "message": "WordPress could not send the verification email.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:137"
+    ],
+    "key": "wp.message.276ff9d215e1"
+  },
+  {
+    "message": "Working in Bricks",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Assets/BricksAssetRegistrar.php:153"
+    ],
+    "key": "wp.message.e0259a80364a"
+  },
+  {
+    "message": "You must be signed in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/FormRenderer.php:44"
+    ],
+    "key": "wp.message.3310c5a30ba0"
+  },
+  {
+    "message": "You will be asked to set up two-factor authentication the first time you sign in.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/Bricks/Extensions/TwoFactorAuthentication/AuthController.php:473"
+    ],
+    "key": "wp.message.8fc36a487791"
+  },
+  {
+    "message": "This domain and its subdomains have already used a Pro trial. View pricing or contact Pixflow support. Your saved content is unchanged.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:333"
+    ],
+    "key": "wp.trialVerification.domainUsed"
+  },
+  {
+    "message": "This website needs a trial history review. Contact Pixflow support; your saved content is unchanged.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:334"
+    ],
+    "key": "wp.trialVerification.domainReview"
+  },
+  {
+    "message": "Automatic trial verification requires a public HTTPS website. Local testing remains available within your trial.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:335"
+    ],
+    "key": "wp.trialVerification.httpsRequired"
+  },
+  {
+    "message": "Pixflow could not reach this website to verify it. Check HTTPS and any firewall or password protection, then retry activation.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:336"
+    ],
+    "key": "wp.trialVerification.unreachable"
+  },
+  {
+    "message": "Your Pro trial has expired. Free remains available and your saved content is unchanged.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:337"
+    ],
+    "key": "wp.trialVerification.expired"
+  },
+  {
+    "message": "Please wait a few minutes before retrying trial activation.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:338"
+    ],
+    "key": "wp.trialVerification.rateLimited"
+  },
+  {
+    "message": "Automatic website verification could not finish. Retry activation. Your saved content is unchanged.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/LicenseService.php:339"
+    ],
+    "key": "wp.trialVerification.retry"
+  }
+]

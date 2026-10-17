@@ -1,0 +1,325 @@
+/* Settings owns these scoped overrides of its legacy shared class contracts.
+   Keep library, onboarding and connector surfaces outside this dialog unchanged. */
+.cliScan {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft, var(--border));
+  border-radius: 16px;
+  corner-shape: squircle;
+  background: var(--settings-surface, var(--bg-elevated));
+  color: var(--text-muted);
+}
+
+.cliScanIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--bg-fill-tertiary, var(--bg-muted));
+}
+
+.cliScanLabel {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@supports (background-clip: text) {
+  .cliScanLabel {
+    background: linear-gradient(110deg, var(--text-muted) 35%, var(--text) 50%, var(--text-muted) 65%);
+    background-size: 240% 100%;
+    background-clip: text;
+    color: transparent;
+    animation: scanShimmer 2.4s linear infinite;
+  }
+}
+
+@keyframes scanShimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .cliScanLabel { animation: none; background: none; color: var(--text-muted); }
+}
+
+.dialog:global(.modal-settings) {
+  --settings-surface: var(--composer-surface, var(--bg-elevated));
+  --settings-hover: var(--composer-hover, var(--bg-subtle));
+  --settings-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgb(0 0 0 / .28);
+}
+/* One settings switch contract for legacy labels, native inputs and buttons.
+   Explicit pseudo resets prevent WordPress's checked glyph leaking into thumbs. */
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) {
+  position:relative; display:inline-flex; flex-direction:row; align-items:center; flex:0 0 36px; width:36px; height:20px; margin:0; padding:0; cursor:pointer;
+}
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input {
+  position:absolute; inset:0; width:100%; height:100%; min-width:0; margin:0; opacity:0; appearance:none; border:0; padding:0; z-index:1; cursor:inherit;
+}
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input:disabled { opacity:0; }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input::before,
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input::after { content:none; display:none; }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) > :is(:global(.toggle-slider), span[aria-hidden='true']),
+.dialog:global(.modal-settings) button[role='switch'],
+.dialog:global(.modal-settings) input[role='switch']:not([data-settings-switch] input) {
+  appearance:none; box-sizing:border-box; position:relative; display:block; flex:0 0 36px; width:36px; min-width:36px; height:20px; min-height:20px; margin:0; padding:0; border:0; border-radius:999px; corner-shape:round; background:var(--border-strong); box-shadow:none; cursor:pointer; transition:background-color 140ms cubic-bezier(.23,1,.32,1);
+}
+.dialog:global(.modal-settings) button[role='switch'] > * { display:none; }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) > :is(:global(.toggle-slider), span[aria-hidden='true'])::after,
+.dialog:global(.modal-settings) button[role='switch']::before,
+.dialog:global(.modal-settings) input[role='switch']:not([data-settings-switch] input)::after { content:none; display:none; }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) > :is(:global(.toggle-slider), span[aria-hidden='true'])::before,
+.dialog:global(.modal-settings) button[role='switch']::after,
+.dialog:global(.modal-settings) input[role='switch']:not([data-settings-switch] input)::before {
+  content:''; display:block; position:absolute; inset:3px auto auto 3px; width:14px; height:14px; margin:0; border:0; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgb(0 0 0 / .16); transform:translateX(0); transition:transform 200ms cubic-bezier(.23,1,.32,1);
+}
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input:checked + span,
+.dialog:global(.modal-settings) button[role='switch'][aria-checked='true'],
+.dialog:global(.modal-settings) input[role='switch']:checked:not([data-settings-switch] input) { background:var(--accent); }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) input:checked + span::before,
+.dialog:global(.modal-settings) button[role='switch'][aria-checked='true']::after,
+.dialog:global(.modal-settings) input[role='switch']:checked:not([data-settings-switch] input)::before { transform:translateX(16px); }
+.dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]):has(input:disabled),
+.dialog:global(.modal-settings) button[role='switch']:disabled,
+.dialog:global(.modal-settings) input[role='switch']:disabled:not([data-settings-switch] input) { opacity:.45; cursor:not-allowed; }
+@media (prefers-reduced-motion:reduce) {
+  .dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) > span,
+  .dialog:global(.modal-settings) :is(:global(.toggle-switch), [data-settings-switch]) > span::before,
+  .dialog:global(.modal-settings) [role='switch'],
+  .dialog:global(.modal-settings) [role='switch']::before,
+  .dialog:global(.modal-settings) [role='switch']::after { transition:none; }
+}
+.dialog:global(.modal-settings) :global(.modal-head) { padding:24px 28px 20px; padding-inline-end:72px; border-bottom:1px solid var(--border); }
+/* Keep dialog controls at the reading-order end in both LTR and RTL locales. */
+.dialog:global(.modal-settings) :global(.settings-chrome) { right:auto; inset-inline-end:14px; }
+.dialog:global(.modal-settings) :global(.modal-head-line) { gap:8px 14px; flex-wrap:wrap; align-items:baseline; }
+.dialog:global(.modal-settings) :global(.modal-head h2) { font-size:22px; font-weight:600; letter-spacing:-.025em; }
+/* Builder heading rules must not override the dialog's independently selected theme. */
+.dialog:global(.modal-settings) :is(h1,h2,h3,h4,h5,h6) { color:var(--text); }
+.dialog:global(.modal-settings) :global(.modal-head .subtitle) { font-size:12px; line-height:1.5; color:var(--text-muted); }
+.dialog:global(.modal-settings) :global(.settings-close) { width:30px; height:30px; border-radius:8px; background:transparent; border:0; color:var(--text-muted); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.settings-close:hover) { background:var(--settings-hover); color:var(--text); }
+.dialog:global(.modal-settings) :global(.modal-body) { min-height:0; overflow:hidden; }
+.dialog:global(.modal-settings) :global(.settings-sidebar) { padding:14px 10px; gap:3px; background:transparent; }
+.dialog:global(.modal-settings) :global(.settings-nav-item) { min-height:36px; padding:8px 10px; border-radius:9px; gap:10px; transition:background-color 140ms cubic-bezier(.23,1,.32,1); }
+.dialog:global(.modal-settings) :global(.settings-nav-item:hover), .dialog:global(.modal-settings) :global(.settings-nav-item.active) { background:var(--settings-hover); }
+.dialog:global(.modal-settings) :global(.settings-nav-item strong) { font-weight:500; font-size:12px; }
+.dialog:global(.modal-settings) :global(.settings-nav-item.active svg) { opacity:1; }
+.dialog:global(.modal-settings) :global(.settings-content) { padding:20px 24px 28px; gap:20px; scrollbar-gutter:stable; }
+.dialog:global(.modal-settings) :is(:global(.settings-sidebar), :global(.settings-content), textarea, pre, :global(.library-preview-body)) {
+  scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent;
+}
+.dialog:global(.modal-settings) :is(:global(.settings-sidebar), :global(.settings-content), textarea, pre, :global(.library-preview-body))::-webkit-scrollbar { width:6px; height:6px; }
+.dialog:global(.modal-settings) :is(:global(.settings-sidebar), :global(.settings-content), textarea, pre, :global(.library-preview-body))::-webkit-scrollbar-track { background:transparent; }
+.dialog:global(.modal-settings) :is(:global(.settings-sidebar), :global(.settings-content), textarea, pre, :global(.library-preview-body))::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:8px; }
+.dialog:global(.modal-settings) :global(.settings-content) :is(h3,h4) { font-size:14px; font-weight:600; line-height:1.4; letter-spacing:-.01em; }
+.dialog:global(.modal-settings) :global(.settings-content) :is(:global(.hint), :global(.media-provider-hint)) { font-size:12px; line-height:1.6; color:var(--text-muted); }
+.dialog:global(.modal-settings) :global(.settings-content) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select, textarea) {
+  border-radius:9px; border-color:var(--border); color:var(--text); font-size:12px; box-shadow:none;
+}
+.dialog:global(.modal-settings) :global(.settings-content) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select) { min-height:34px; }
+.dialog:global(.modal-settings) :global(.settings-content) :is(input,select,textarea):focus-visible { outline:2px solid var(--text-muted); outline-offset:2px; }
+.dialog:global(.modal-settings) :global(.settings-content) :is(:global(.primary),:global(.secondary),:global(.ghost),:global(.primary-ghost)) { border-radius:8px; font-size:12px; }
+.dialog:global(.modal-settings) :global(.section-head) { align-items:center; gap:12px; flex-wrap:wrap; }
+.dialog:global(.modal-settings) :global(.section-head) :is(h3,h4,p) { margin:0; }
+.dialog:global(.modal-settings) :is(:global(.settings-section-card),:global(.empty-card),:global(.library-empty)) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); box-shadow:none; }
+.dialog:global(.modal-settings) :is(:global(.empty-card),:global(.library-empty)) { color:var(--text-muted); font-size:12px; line-height:1.7; }
+.dialog:global(.modal-settings) :global(.seg-control) { padding:4px; gap:3px; border:1px solid var(--border); border-radius:11px; background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.seg-control) > button { border-radius:7px; box-shadow:none; font-size:12px; }
+.dialog:global(.modal-settings) :global(.seg-control) > button:global(.active) { background:var(--settings-hover); color:var(--text); }
+
+/* Execution: compact provider summaries, with breathing room for expanded controls. */
+.dialog:global(.modal-settings) :global(.agent-grid-installed) { grid-template-columns:1fr; gap:8px; }
+.dialog:global(.modal-settings) :global(.agent-card) { border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.agent-card.active) { border-color:var(--border-strong); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.agent-card-select) { padding:14px; gap:12px; }
+.dialog:global(.modal-settings) :global(.agent-card-title) { font-size:13px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.agent-card-tagline) { font-size:11px; color:var(--text-muted); }
+.dialog:global(.modal-settings) :global(.agent-card-config) { padding:14px 16px 16px; border-top:1px solid var(--border); background:transparent; }
+.dialog:global(.modal-settings) :global(.agent-card-model-summary) { font-size:11px; }
+.dialog:global(.modal-settings) :global(.agent-cli-env) { padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--settings-surface); }
+
+.dialog:global(.modal-settings) :global(.agent-card-installed.active .agent-card-main) { background:var(--settings-hover); }
+
+.dialog:global(.modal-settings) :global(.agent-card-test-btn) { min-width:64px; padding:0 12px; font-weight:500; }
+
+/* Media: credentials remain inside their provider, with consistent row rhythm. */
+.dialog:global(.modal-settings) :global(.media-provider-list) { gap:10px; }
+.dialog:global(.modal-settings) :global(.media-provider-row) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.media-provider-head) { gap:12px; margin-bottom:12px; }
+.dialog:global(.modal-settings) :global(.media-provider-name) { font-size:13px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.media-provider-body) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.dialog:global(.modal-settings) :global(.media-provider-body .hint) { grid-column:1 / -1; margin:2px 0; }
+.dialog:global(.modal-settings) :global(.media-provider-body > button) { justify-self:start; }
+.dialog:global(.modal-settings) :global(.media-provider-secret-field) { min-width:160px; flex:1; }
+.dialog:global(.modal-settings) :global(.media-provider-coming-soon) { padding:14px; border-radius:12px; background:var(--settings-surface); }
+
+/* Memory: separate rules, context preferences and saved records without nested panels. */
+.dialog:global(.modal-settings) :global(.instructions-rules-card) { padding:0; background:transparent; border:0; }
+.dialog:global(.modal-settings) :global(.memory-source-tabs) { padding:4px; border-radius:11px; background:var(--settings-hover); gap:4px; }
+.dialog:global(.modal-settings) :global(.memory-source-tabs) > button { padding:9px 12px; border-radius:8px; box-shadow:none; }
+.dialog:global(.modal-settings) :global(.memory-source-tabs) > button:global(.active) { background:var(--settings-surface); color:var(--text); }
+.dialog:global(.modal-settings) :global(.memory-tab-panel) { padding-top:16px; }
+.dialog:global(.modal-settings) :global(.memory-source-summary) { gap:12px; }
+.dialog:global(.modal-settings) :is(:global(.memory-management-panel),:global(.memory-suggestion-panel)) { background:transparent; box-shadow:none; }
+
+/* Framework routes retain their selection semantics without onboarding-sized cards. */
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__setup-panel) { padding:0; border:0; background:transparent; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__setup-head) { margin-bottom:16px; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__card) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__card-copy) { gap:5px; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__card-copy strong) { font-size:14px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__card-copy p) { font-size:12px; line-height:1.6; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__icon) { width:32px; height:32px; border:0; background:transparent; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup__label) { font-size:11px; color:var(--text-muted); letter-spacing:.04em; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .pixflow-framework-card.is-selected) { background:var(--settings-hover); border-color:var(--border-strong); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .onboarding-view__card-copy > span) { font-size:12px; line-height:1.6; }
+
+/* Fonts, icons, abilities and skills share list contracts but retain their own actions. */
+.dialog:global(.modal-settings) :global(.skills-toolbar-top) { gap:10px; align-items:center; flex-wrap:wrap; }
+.dialog:global(.modal-settings) :global(.library-search) { background:var(--settings-surface); border:1px solid var(--border); border-radius:10px; min-width:140px; }
+.dialog:global(.modal-settings) :global(.library-filter-select) { border-radius:8px; }
+.dialog:global(.modal-settings) :global(.skills-rows) { gap:8px; }
+.dialog:global(.modal-settings) :global(.skills-row) { border:1px solid var(--border); border-radius:12px; background:var(--settings-surface); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.skills-row-head) { padding:12px 14px; gap:10px; }
+.dialog:global(.modal-settings) :global(.skills-row-icon) { width:22px; height:22px; border:0; background:transparent; border-radius:0; }
+.dialog:global(.modal-settings) :global(.skills-row-summary-name) { font-size:13px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.skills-row-summary-desc) { color:var(--text-muted); font-size:12px; }
+.dialog:global(.modal-settings) :global(.skills-row-detail) { padding:14px; border-top:1px solid var(--border); }
+.dialog:global(.modal-settings) :global(.pixflow-mcp-contract) { padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--settings-surface); }
+.dialog:global(.modal-settings) :is(:global(.pixflow-mcp-summary),:global(.settings-resource-packs__summary)) > div { padding:12px; border-radius:10px; background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.pixflow-resource-tabs) > button { min-height:34px; padding:8px 12px; }
+.dialog:global(.modal-settings) :global(.skills-row-head) { padding:0 10px; }
+.dialog:global(.modal-settings) :global(.skills-row-summary-btn) { padding:12px 4px; }
+.dialog:global(.modal-settings) :global(.skills-row-chevron) { background:transparent; color:var(--text-muted); }
+
+/* Design systems and downloads: information first, compact actions on the right. */
+.dialog:global(.modal-settings) :is(:global(.library-ds-card),:global(.pixflow-framework-ds-card)) { border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.library-ds-card-content) { padding:14px; }
+.dialog:global(.modal-settings) :global(.library-ds-title) { font-size:13px; }
+.dialog:global(.modal-settings) :global(.settings-resource-packs) { padding:0; border:0; background:transparent; }
+.dialog:global(.modal-settings) :global(.settings-resource-packs__rows) { gap:10px; }
+.dialog:global(.modal-settings) :global(.settings-pixflow-download) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.settings-pixflow-download__head) { gap:14px; align-items:center; }
+.dialog:global(.modal-settings) :global(.settings-pixflow-download__name) { font-size:13px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.settings-pixflow-download__desc) { font-size:12px; line-height:1.6; }
+.dialog:global(.modal-settings) :global(.settings-pixflow-download__pill) { font-size:10px; font-weight:500; padding:3px 7px; }
+
+/* External services: readable connection forms and modest credential surfaces. */
+.dialog:global(.modal-settings) :global(.mcp-row) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.mcp-row-head) { gap:10px; }
+.dialog:global(.modal-settings) :global(.mcp-row-summary-name) { font-size:13px; font-weight:500; }
+.dialog:global(.modal-settings) :global(.mcp-row-grid) { gap:12px; }
+.dialog:global(.modal-settings) :global(.settings-section-connectors-credentials) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.connectors-panel-embedded) { padding:0; border:0; background:transparent; }
+.dialog:global(.modal-settings) :global(.connector-card) { border-radius:12px; background:var(--settings-surface); border-color:var(--border); box-shadow:none; }
+
+/* Appearance, license and support: calm selection and utility rows. */
+.dialog:global(.modal-settings) [data-settings-page=appearance] :global(.memory-field-block) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.settings-language-grid) { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+.dialog:global(.modal-settings) :global(.settings-language-tile) { padding:10px 12px; border-radius:10px; background:var(--settings-surface); border-color:var(--border); box-shadow:none; }
+.dialog:global(.modal-settings) :global(.settings-language-tile.active) { background:var(--settings-hover); border-color:var(--border-strong); }
+.dialog:global(.modal-settings) :global(.pixflow-license-panel--settings) { padding:0; border:0; background:transparent; gap:18px; }
+.dialog:global(.modal-settings) :global(.pixflow-license-panel__head) { padding:0 0 14px; border-bottom:1px solid var(--border); }
+.dialog:global(.modal-settings) :global(.pixflow-license-panel__actions) { gap:8px; flex-wrap:wrap; }
+.dialog:global(.modal-settings) :global(.pixflow-license-panel__actions) > button { border-radius:8px; padding:9px 14px; font-size:12px; }
+.dialog:global(.modal-settings) :global(.settings-about-list) { padding:4px 16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); }
+.dialog:global(.modal-settings) :global(.settings-about-version-row) { padding:14px 0; }
+.dialog:global(.modal-settings) :global(.settings-about-version-row) { background:transparent; border:0; border-radius:0; }
+.dialog:global(.modal-settings) :global(.settings-about-version-row + .settings-about-version-row) { border-top:1px solid var(--border); }
+.dialog:global(.modal-settings) :global(.settings-about-version-num) { font-variant-numeric:tabular-nums; font-size:12px; }
+.dialog:global(.modal-settings) :is(:global(.settings-about-diagnostics),:global(.settings-about-action)) { padding:16px; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); gap:16px; }
+
+@media(max-width:760px) {
+  .dialog:global(.modal-settings) :global(.modal-head) { padding:20px 18px 16px; }
+  .dialog:global(.modal-settings) :global(.settings-content) { padding:16px; }
+  .dialog:global(.modal-settings) :global(.settings-sidebar) { flex-direction:row; overflow-x:auto; padding:8px; border-right:0; border-bottom:1px solid var(--border); }
+  .dialog:global(.modal-settings) :global(.settings-nav-item) { width:auto; flex-shrink:0; }
+  .dialog:global(.modal-settings) :global(.settings-nav-item strong) { white-space:nowrap; }
+  .dialog:global(.modal-settings) :global(.settings-pixflow-download__head) { flex-wrap:wrap; }
+  .dialog:global(.modal-settings) :global(.settings-language-grid) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .dialog:global(.modal-settings) :global(.media-provider-body) { grid-template-columns:1fr; }
+}
+@media(prefers-reduced-motion:reduce) { .dialog:global(.modal-settings) :global(.settings-nav-item) { transition:none; } }
+
+/* Group related settings into one quiet surface, rather than a stack of tiles. */
+.dialog:global(.modal-settings) :is(:global(.agent-grid-installed), :global(.media-provider-list), :global(.skills-rows), :global(.settings-resource-packs__rows), :global(.pixflow-framework-setup--settings .onboarding-view__alternatives)) {
+  gap:0; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); overflow:hidden;
+}
+.dialog:global(.modal-settings) :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-resource-packs__rows .settings-pixflow-download), :global(.pixflow-framework-setup--settings .onboarding-view__card)) {
+  margin:0; border:0; border-radius:0; background:transparent; box-shadow:none; outline:none;
+}
+.dialog:global(.modal-settings) :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-resource-packs__rows .settings-pixflow-download), :global(.pixflow-framework-setup--settings .onboarding-view__card)) + :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-pixflow-download), :global(.onboarding-view__card)) { border-top:1px solid var(--border); }
+.dialog:global(.modal-settings) :is(:global(.agent-card), :global(.skills-row), :global(.settings-pixflow-download))::before { display:none; }
+.dialog:global(.modal-settings) :is(:global(.skills-row-expanded), :global(.agent-card.active), :global(.pixflow-framework-setup--settings .pixflow-framework-card.is-selected)) { border-color:var(--border); background:transparent; box-shadow:none; }
+.dialog:global(.modal-settings) :global(.agent-card-installed.active .agent-card-main) { background:transparent; }
+.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-select) { min-height:64px; padding:12px 16px; }
+.dialog:global(.modal-settings) :global(.agent-card-test-btn) { align-self:center; min-height:30px; margin-right:12px; border:1px solid var(--border); border-radius:8px; }
+.dialog:global(.modal-settings) :global(.onboarding-view__check) { background:transparent; color:var(--text); border:0; box-shadow:none; }
+.dialog:global(.modal-settings) :global(.skills-row-chevron) { border:0; box-shadow:none; color:var(--text-muted); background:transparent; }
+.dialog:global(.modal-settings) :global(.media-provider-row) { padding:0 16px; }
+.providerSummary { display:flex; align-items:center; gap:12px; }
+.providerDisclosure { display:flex; align-items:center; gap:12px; flex:1; min-width:0; width:100%; padding:16px 0; color:var(--text); border:0; background:transparent; text-align:left; cursor:pointer; }
+.providerDisclosure:hover { color:var(--text-strong,var(--text)); }
+.providerDisclosure > svg { flex-shrink:0; color:var(--text-muted); transition:transform 140ms cubic-bezier(.23,1,.32,1); }
+.providerDisclosure[aria-expanded=true] > svg { transform:rotate(180deg); }
+.providerCopy { display:grid; gap:4px; flex:1; min-width:0; }
+.providerTitle { font-size:13px; font-weight:500; }
+.providerStatus { color:var(--text-muted); font-size:11px; }
+.providerControls { padding:0 0 16px; }
+.providerControls[hidden] { display:none; }
+
+.dialog:global(.modal-settings) .providerDisclosure:is(:hover,:active,:focus) { background:transparent; box-shadow:none; }
+.dialog:global(.modal-settings) :global(.pixflow-framework-setup--settings .pixflow-framework-card .onboarding-view__icon) { background:transparent; box-shadow:none; color:var(--text-muted); }
+.dialog:global(.modal-settings) :global(.media-provider-body) { display:flex; flex-wrap:wrap; }
+.dialog:global(.modal-settings) :global(.media-provider-body > input) { flex:1; min-width:180px; }
+.dialog:global(.modal-settings) :global(.media-provider-body .hint) { flex-basis:100%; }
+
+.dialog:global(.modal-settings) :global(.settings-pixflow-download__head) { padding:0; }
+.agentSelected { flex-shrink:0; margin-left:auto; color:var(--text); }
+/* Free retains saved-asset cleanup without exposing Pro catalogues. */
+.freeDisclosure { margin-block: 8px 20px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.freeDisclosure .assetsTrigger { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; height: auto; padding: 16px; border: 0; border-radius: 0; background: transparent; color: var(--text); text-align: left; white-space: normal; box-shadow: none; }
+.freeDisclosure .assetsTrigger:hover { background: var(--settings-hover); }
+.assetsCopy { display: grid; gap: 5px; min-width: 0; }
+.assetsCopy > span:first-child { font-size: 13px; font-weight: 500; line-height: 1.5; }
+.assetsCopy > span:last-child { font-size: 12px; font-weight: 400; line-height: 1.5; color: var(--text-muted); }
+.assetsTrigger > svg { flex: none; color: var(--text-muted); transition: transform 200ms cubic-bezier(.23,1,.32,1); }
+.assetsTrigger[aria-expanded=true] > svg { transform: rotate(180deg); }
+.assetsPanel { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 140ms cubic-bezier(.23,1,.32,1), opacity 140ms cubic-bezier(.23,1,.32,1), visibility 140ms; }
+.assetsPanelOpen { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-duration: 200ms; }
+.assetsPanelInner { min-height: 0; overflow: hidden; }
+.assetsContent { display: grid; gap: 20px; margin: 0 16px; padding: 16px 0; border-top: 1px solid var(--border); }
+.assetsContent > p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .assetsPanel, .assetsTrigger > svg { transition: none; } }
+
+/* Navigation scrolls independently so the Free upgrade entry stays in view. */
+.dialog:global(.modal-settings) :global(.settings-sidebar) { overflow: hidden; }
+.sidebarNavigation { display: flex; flex-direction: column; gap: 3px; flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.sidebarUpgrade { flex: none; display: grid; gap: 12px; margin-top: 12px; padding: 14px 10px 4px; border-top: 1px solid var(--border); }
+.sidebarUpgradeCopy { display: grid; gap: 5px; }
+.sidebarUpgradeCopy strong { color: var(--text); font-size: 12px; font-weight: 500; }
+.sidebarUpgradeCopy span { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.sidebarUpgradeLink { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 7px 12px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 12px; font-weight: 500; line-height: 1.5; text-decoration: none; transition: opacity 140ms cubic-bezier(.23,1,.32,1); }
+.sidebarUpgradeLink:hover { color: var(--bg); opacity: .85; }
+.sidebarUpgradeLink > svg { flex: none; }
+.sidebarUpgradeLink:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 3px; }
+@media (max-width:760px) {
+  .dialog:global(.modal-settings) :global(.settings-sidebar) { flex-direction: column; }
+  .sidebarNavigation { flex-direction: row; flex: none; overflow-x: auto; }
+  .sidebarUpgrade { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding: 10px 4px 2px; }
+  .sidebarUpgradeCopy span { display: none; }
+  .sidebarUpgradeLink { flex: none; }
+}
+/* Skill updates share the catalogue with the content pane; no separate polling. */
+.dialog .skillUpdateCount { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 10px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }

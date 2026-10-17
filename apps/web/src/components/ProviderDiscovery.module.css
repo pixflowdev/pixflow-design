@@ -1,0 +1,7 @@
+.status { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border-bottom: 1px solid var(--border-soft); color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.status > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.status strong { color: var(--text); font-size: 12px; font-weight: 500; }
+.status > svg, .status > .spinner { flex: 0 0 auto; margin-top: 2px; }
+.spinner { display: inline-block; box-sizing: border-box; width: 14px; height: 14px; flex: 0 0 14px; border: 1.5px solid var(--border); border-top-color: var(--text-muted); border-radius: 50%; animation: refresh 900ms linear infinite; }
+@keyframes refresh { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-style: dotted; } }

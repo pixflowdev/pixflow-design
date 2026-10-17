@@ -1,0 +1,43 @@
+Pixflow Design Free - readable source and build instructions
+
+PHP and browser JavaScript in this distribution are readable source. The source/
+directory also includes captured original Free TypeScript/CSS inputs,
+build-generated virtual modules, import-resolution recipes and a pinned
+standalone build tool. It does not require the private development repository or
+the separately distributed Pro implementation.
+
+Rebuild the Free browser assets with Node 24:
+
+  cd source
+  npm ci --ignore-scripts
+  npm run build
+
+Output: source/rebuilt-assets/. Build tools and original npm dependency versions
+are pinned in package-lock.json, with registry URLs and package integrity hashes.
+The source recipes identify each original dependency file and its SHA-256;
+npm ci retrieves those public sources and the rebuild verifies their exact bytes.
+Modified dependency/virtual modules are included locally instead of substituted.
+Snapshot namespaces can change bundler identifiers and tree-shaking, so output
+is not claimed byte-identical. Validate it before replacing installed files.
+Recipes name their original input paths. Local bodies in source/inputs/ have SHA-256
+filenames and contain plain source, not encoded archives. Custom module
+replacements are included so no private Pro file or build plugin is required.
+Source/README.txt describes CSS scoping and lazy-module handling.
+
+Maintainer development build commands (not needed for the included snapshot):
+
+  pnpm install --frozen-lockfile
+  PIXFLOW_DESIGN_WORDPRESS_DISTRIBUTION=directory pnpm exec tsx scripts/build-wordpress-web.mjs
+  PIXFLOW_DESIGN_WORDPRESS_DISTRIBUTION=directory pnpm exec tsx scripts/build-wordpress-plugin.mjs
+
+On PowerShell, set $env:PIXFLOW_DESIGN_WORDPRESS_DISTRIBUTION = 'directory'
+before the two build commands. Remove that environment variable for website
+builds. Directory assets use .tmp/wordpress-directory/assets/app. Directory ZIPs
+and staging files are isolated under dist/wordpress-directory; they never replace
+the current website updater release. Both builds retain pixflow-ai/pixflow-ai.php
+as the installed identity, subject to the Plugins Team approving that slug.
+
+The plugin's Apache-2.0 licence and retained third-party licence notices apply.
+See LICENSE and THIRD-PARTY-NOTICES.txt. This candidate is not represented as
+WordPress.org approved; remaining asset-provenance and policy review notes
+must be resolved before submission.

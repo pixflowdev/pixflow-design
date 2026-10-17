@@ -1,0 +1,28 @@
+{
+  "id": "clean",
+  "title": "Clean",
+  "version": "2026.06.06.1",
+  "category": "Product",
+  "summary": "A Pixflow-owned recipe for premium light product, SaaS, plugin, app, and workflow landing pages with centered clarity, inspectable product proof, calm card systems, and restrained conversion rhythm.",
+  "default_design_system_ref": "clean",
+  "defaultDesignSystemRef": "clean",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-responsive.md",
+    "method-accessibility.md",
+    "method-anti-patterns.md",
+    "method-checklist.md",
+    "method-critique.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

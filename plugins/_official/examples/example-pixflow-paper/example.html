@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Paper Recipe Example</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fcfcf8;
+      --bg-soft: #f6f5ef;
+      --surface: #ffffff;
+      --soft: #f2f1ea;
+      --ink: #242424;
+      --ink-strong: #111111;
+      --muted: #6f746f;
+      --muted-soft: #989b94;
+      --border: #e4e2d8;
+      --accent: #5f8fe8;
+      --accent-strong: #3f76d8;
+      --accent-soft: #eaf2ff;
+      --success: #0d8f62;
+      --radius: 22px;
+      --radius-lg: 32px;
+      --radius-xl: 42px;
+      --pill: 999px;
+      --shadow: 0 24px 70px rgba(36, 36, 36, 0.06);
+      --font-display: Montserrat, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-body: Roboto, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "PT Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      --container: 1440px;
+      --gutter: clamp(20px, 4vw, 80px);
+      --section: clamp(76px, 8vw, 126px);
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background:
+        repeating-linear-gradient(-45deg, rgba(36, 36, 36, 0.018) 0 1px, transparent 1px 28px),
+        var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    .container { width: min(var(--container), calc(100% - var(--gutter))); margin-inline: auto; }
+    .section { padding-block: var(--section); border-top: 1px solid rgba(228, 226, 216, 0.7); }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 16px;
+      color: var(--accent-strong);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      content: "";
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 22px;
+      border: 1px solid transparent;
+      border-radius: var(--pill);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-dark { background: var(--ink-strong); color: #fff; }
+    .btn-secondary { background: var(--surface); border-color: var(--border); color: var(--ink); }
+
+    .nav-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+    }
+    .nav {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 34px;
+      min-height: 68px;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; }
+    .brand-mark {
+      width: 22px;
+      height: 26px;
+      border: 2px solid var(--ink);
+      border-radius: 5px;
+      position: relative;
+    }
+    .brand-mark::after {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 9px;
+      height: 9px;
+      border-left: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      background: var(--bg);
+      content: "";
+    }
+    .nav-links { display: flex; justify-content: center; gap: 34px; color: var(--muted); font-weight: 600; }
+    .nav-actions { display: flex; align-items: center; gap: 16px; }
+
+    .hero { padding: clamp(76px, 9vw, 132px) 0 84px; }
+    .hero-copy { max-width: 880px; }
+    .hero h1 {
+      max-width: 850px;
+      font-family: var(--font-display);
+      font-size: clamp(50px, 5.4vw, 80px);
+      font-weight: 500;
+      line-height: 1.06;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+    .hero .lead {
+      max-width: 660px;
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: clamp(18px, 1.4vw, 21px);
+      line-height: 1.6;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+
+    .editor-shell {
+      margin-top: 68px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .editor-chrome {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dots { display: flex; gap: 7px; }
+    .dots span { width: 8px; height: 8px; border-radius: 50%; background: #dddacf; }
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 240px 1fr 330px;
+      min-height: 520px;
+      background: var(--surface);
+    }
+    .sidebar {
+      padding: 28px 18px;
+      border-right: 1px solid var(--border);
+      background: #fafaf5;
+    }
+    .side-label { margin: 26px 0 10px; color: var(--muted-soft); font: 700 11px/1 var(--font-mono); text-transform: uppercase; }
+    .side-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 38px;
+      padding: 0 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .side-row.active { background: var(--accent-soft); color: var(--ink); }
+    .side-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .document {
+      padding: clamp(30px, 4vw, 58px);
+      background: linear-gradient(90deg, transparent, rgba(95, 143, 232, 0.035));
+    }
+    .doc-status { color: var(--accent); font: 700 12px/1 var(--font-mono); text-transform: uppercase; }
+    .document h2 { max-width: 680px; margin-top: 20px; font: 500 42px/1.16 var(--font-display); }
+    .doc-meta { margin-top: 14px; color: var(--muted); }
+    .doc-rule { width: min(100%, 660px); height: 1px; margin: 30px 0; background: var(--border); }
+    .doc-lines { display: grid; gap: 12px; width: min(100%, 680px); }
+    .doc-lines span { height: 13px; border-radius: 99px; background: #e8e6dc; }
+    .doc-lines span:nth-child(2) { width: 82%; }
+    .doc-lines span:nth-child(3) { width: 68%; }
+    .suggestion {
+      width: min(100%, 560px);
+      margin-top: 34px;
+      padding: 18px;
+      border: 1px solid #d8e4fb;
+      border-radius: 18px;
+      background: #fbfdff;
+    }
+    .suggestion b { display: block; margin-bottom: 9px; color: var(--accent-strong); font-size: 13px; }
+    .suggestion p { color: var(--muted); font-size: 14px; }
+    .panel {
+      padding: 28px;
+      border-left: 1px solid var(--border);
+      background: var(--soft);
+    }
+    .panel-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      margin-bottom: 16px;
+    }
+    .panel-card h3 { font-size: 16px; }
+    .panel-card p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+
+    .section-intro { max-width: 920px; margin-bottom: 44px; }
+    .section-intro.center { margin-inline: auto; text-align: center; }
+    .section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(38px, 4vw, 62px);
+      font-weight: 500;
+      line-height: 1.12;
+      text-wrap: balance;
+    }
+    .section-intro p { max-width: 720px; margin-top: 18px; color: var(--muted); font-size: 18px; }
+    .section-intro.center p { margin-inline: auto; }
+
+    .foundation-grid, .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .feature-grid { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+    .card {
+      padding: 30px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-card);
+    }
+    .card h3 { margin-top: 20px; font-size: 22px; }
+    .card p { margin-top: 12px; color: var(--muted); }
+    .icon-dot {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-weight: 900;
+    }
+    .mini {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--soft);
+    }
+    .mini-row { height: 10px; margin-bottom: 10px; border-radius: 99px; background: #dcdad0; }
+    .mini-row.short { width: 58%; }
+    .mini-row.blue { background: #bcd3fb; }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 28px;
+    }
+    .step { position: relative; }
+    .step-num { color: rgba(36, 36, 36, 0.08); font: 600 60px/1 var(--font-display); }
+    .step h3 { margin-top: 10px; font-size: 20px; }
+    .step p { margin-top: 10px; color: var(--muted); }
+
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .usecase-card {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 34px;
+      align-items: center;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    .usecase-card.wide { grid-column: 1 / -1; }
+    .doc-preview {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--soft);
+    }
+    .check-row { display: grid; grid-template-columns: 20px 1fr; gap: 12px; align-items: center; margin: 10px 0; }
+    .check { width: 16px; height: 16px; border-radius: 4px; background: var(--success); }
+    .check-line { height: 8px; border-radius: 99px; background: #d6d4c8; }
+    .check-row.active .check-line { background: var(--success); }
+
+    .advantage {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.95fr);
+      gap: clamp(42px, 8vw, 130px);
+      align-items: center;
+    }
+    .advantage-list { display: grid; gap: 28px; }
+    .advantage-item { display: grid; grid-template-columns: 52px 1fr; gap: 20px; }
+    .advantage-item h3 { font-size: 20px; }
+    .advantage-item p { margin-top: 7px; color: var(--muted); }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .price-card {
+      min-height: 470px;
+      padding: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      display: grid;
+      align-content: space-between;
+      gap: 28px;
+    }
+    .price-card.featured { background: var(--ink); color: #fff; box-shadow: 0 30px 90px rgba(36, 36, 36, 0.16); }
+    .price-card p, .price-card li { color: var(--muted); }
+    .price-card.featured p, .price-card.featured li { color: rgba(255, 255, 255, 0.76); }
+    .price { margin: 22px 0; font-size: 44px; font-weight: 800; letter-spacing: -0.02em; }
+    .price small { color: var(--muted); font-size: 15px; font-weight: 500; }
+    .price-card.featured .price small { color: rgba(255, 255, 255, 0.7); }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    li::before { content: "✓"; margin-right: 10px; color: var(--success); }
+
+    .cta { text-align: center; }
+    .cta h2 { margin-inline: auto; max-width: 780px; }
+    .cta p { margin: 18px auto 28px; max-width: 620px; color: var(--muted); }
+
+    footer { border-top: 1px solid var(--border); padding: 70px 0 40px; }
+    .footer-grid { display: grid; grid-template-columns: 1.2fr repeat(4, 1fr); gap: 38px; }
+    footer h4 { margin: 0 0 16px; font: 800 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+    footer a, footer p { color: var(--muted); }
+    footer nav { display: grid; gap: 12px; }
+    .legal { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 1120px) {
+      .editor-grid { grid-template-columns: 190px 1fr; }
+      .panel { display: none; }
+      .foundation-grid, .feature-grid, .pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .usecase-card, .advantage { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 740px) {
+      .nav { grid-template-columns: 1fr auto; }
+      .nav-links, .nav-actions a:not(.btn) { display: none; }
+      .hero { padding-top: 58px; }
+      .hero h1 { font-size: clamp(42px, 12vw, 54px); }
+      .hero-actions, .btn { width: 100%; }
+      .editor-grid { grid-template-columns: 1fr; min-height: auto; }
+      .sidebar { display: none; }
+      .document { padding: 28px 20px; }
+      .document h2 { font-size: 30px; }
+      .foundation-grid, .feature-grid, .pricing-grid, .workflow, .usecase-grid { grid-template-columns: 1fr; }
+      .usecase-card.wide { grid-column: auto; }
+      .usecase-card { padding: 24px; }
+      .price-card { min-height: auto; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav-wrap">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="Paper example home"><span class="brand-mark" aria-hidden="true"></span>Draftly</a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#workflow">How it works</a>
+        <a href="#use-cases">Use cases</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="#signin">Sign in</a>
+        <a class="btn btn-primary" href="#cta">Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container">
+        <div class="hero-copy">
+          <h1>The writing workspace your team can actually keep using</h1>
+          <p class="lead">Draftly turns specs, notes, research, and launch plans into one calm document system with live collaboration and reusable team knowledge.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#pricing">Start free</a>
+            <a class="btn btn-secondary" href="#workflow">See workflow</a>
+          </div>
+        </div>
+        <article class="editor-shell" aria-label="Product workspace preview">
+          <div class="editor-chrome"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span><span>Draftly — Product workspace</span></div>
+          <div class="editor-grid">
+            <aside class="sidebar">
+              <div class="side-label">Documents</div>
+              <div class="side-row active"><span class="side-dot"></span>Q3 launch brief</div>
+              <div class="side-row">Roadmap notes</div>
+              <div class="side-row">Research library</div>
+              <div class="side-label">Workspaces</div>
+              <div class="side-row">Product</div>
+              <div class="side-row">Design</div>
+              <div class="side-row">Marketing</div>
+            </aside>
+            <div class="document">
+              <span class="doc-status">Draft</span>
+              <h2>Q3 launch brief</h2>
+              <p class="doc-meta">Edited by Product Team · 18 minutes ago · 4 collaborators</p>
+              <div class="doc-rule"></div>
+              <div class="doc-lines" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+              <div class="suggestion">
+                <b>AI suggestion</b>
+                <p>Convert the research notes into three customer-facing proof points and assign owners before review.</p>
+              </div>
+            </div>
+            <aside class="panel">
+              <div class="panel-card"><h3>Comments</h3><p>Design review added two notes on onboarding copy.</p></div>
+              <div class="panel-card"><h3>Permissions</h3><p>Editors: 8 · Viewers: 42 · Public link off</p></div>
+              <div class="panel-card"><h3>Version</h3><p>Restorable checkpoint created 2 hours ago.</p></div>
+            </aside>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">Platform</span>
+          <h2>A new kind of document platform for teams that think in public</h2>
+          <p>Bring writing, planning, and review into a single surface where decisions remain connected to the work that created them.</p>
+        </div>
+        <div class="foundation-grid">
+          <article class="card"><span class="icon-dot">D</span><h3>Structured writing</h3><p>Nested pages, tables, embeds, and templates keep complex work readable without turning documents into dashboards.</p></article>
+          <article class="card"><span class="icon-dot">C</span><h3>Live collaboration</h3><p>Comments, suggestions, and review states stay attached to the exact paragraph or artifact that needs action.</p></article>
+          <article class="card"><span class="icon-dot">A</span><h3>Assistance in context</h3><p>AI summarizes long drafts, rewrites sections, and turns research into decisions while preserving source context.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">Features</span>
+          <h2>Everything needed to write, review, and ship</h2>
+          <p>Each tool is designed to feel like part of the same document surface, from search to version history.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="card"><span class="icon-dot">B</span><h3>Block editor</h3><p>Drag blocks, add tables, and keep markdown shortcuts close.</p><div class="mini"><div class="mini-row"></div><div class="mini-row short"></div><div class="mini-row blue"></div></div></article>
+          <article class="card"><span class="icon-dot">M</span><h3>Multiplayer editing</h3><p>See cursors, selections, and changes as teammates write.</p><div class="mini"><div class="mini-row blue"></div><div class="mini-row"></div><div class="mini-row short"></div></div></article>
+          <article class="card"><span class="icon-dot">S</span><h3>Universal search</h3><p>Find any paragraph, decision, or comment across the workspace.</p><div class="mini"><div class="mini-row blue"></div><div class="mini-row"></div><div class="mini-row"></div></div></article>
+          <article class="card"><span class="icon-dot">V</span><h3>Version history</h3><p>Browse, compare, and restore previous states with confidence.</p><div class="mini"><div class="mini-row"></div><div class="mini-row short"></div><div class="mini-row"></div></div></article>
+          <article class="card"><span class="icon-dot">AI</span><h3>AI assistant</h3><p>Summarize, clarify, translate, and draft from trusted context.</p><div class="mini"><div class="mini-row blue"></div><div class="mini-row"></div><div class="mini-row short"></div></div></article>
+          <article class="card"><span class="icon-dot">P</span><h3>Permissions</h3><p>Control who can view, edit, publish, and manage every page.</p><div class="mini"><div class="mini-row"></div><div class="mini-row blue"></div><div class="mini-row short"></div></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">Workflow</span>
+          <h2>From idea to published in minutes</h2>
+          <p>Paper pages work best when the process is visible: create, collaborate, refine, then share.</p>
+        </div>
+        <div class="workflow">
+          <article class="step"><span class="step-num">01</span><h3>Create a workspace</h3><p>Organize by team, project, or topic with reusable page templates.</p></article>
+          <article class="step"><span class="step-num">02</span><h3>Write together</h3><p>Invite collaborators and keep edits, comments, and context in one place.</p></article>
+          <article class="step"><span class="step-num">03</span><h3>Refine with AI</h3><p>Turn rough notes into clear drafts while preserving the source trail.</p></article>
+          <article class="step"><span class="step-num">04</span><h3>Share and ship</h3><p>Publish internally or externally with permissions and version control.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="use-cases">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">Use cases</span>
+          <h2>Built for every kind of writing team</h2>
+          <p>Use Paper for specs, technical documentation, research reports, campaign briefs, and operating notes.</p>
+        </div>
+        <div class="usecase-grid">
+          <article class="usecase-card wide">
+            <div><span class="eyebrow">Product teams</span><h3>Product specs and PRDs</h3><p>Write requirements that engineering, design, and leadership can follow as decisions evolve.</p></div>
+            <div class="doc-preview"><div class="check-row active"><span class="check"></span><span class="check-line"></span></div><div class="check-row active"><span class="check"></span><span class="check-line"></span></div><div class="check-row"><span class="check"></span><span class="check-line"></span></div><div class="check-row"><span class="check"></span><span class="check-line"></span></div></div>
+          </article>
+          <article class="usecase-card">
+            <div><span class="eyebrow">Engineering</span><h3>Technical docs</h3><p>Keep API notes, decisions, and onboarding guides close to active product work.</p></div>
+            <div class="doc-preview"><div class="mini-row blue"></div><div class="mini-row"></div><div class="mini-row short"></div></div>
+          </article>
+          <article class="usecase-card">
+            <div><span class="eyebrow">Marketing</span><h3>Campaign briefs</h3><p>Draft launches, review copy, and track approvals without losing brand context.</p></div>
+            <div class="doc-preview"><div class="mini-row"></div><div class="mini-row blue"></div><div class="mini-row short"></div></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container advantage">
+        <div>
+          <span class="eyebrow">Why Paper</span>
+          <h2>The unfair advantage for teams that write before they build</h2>
+          <p class="lead">Most tools make collaboration louder. Paper keeps writing calm, source-aware, and ready to publish.</p>
+        </div>
+        <div class="advantage-list">
+          <article class="advantage-item"><span class="icon-dot">L</span><div><h3>Lightning fast</h3><p>Pages open quickly and keep editing responsive as documents grow.</p></div></article>
+          <article class="advantage-item"><span class="icon-dot">E</span><div><h3>Works everywhere</h3><p>Web, desktop, and mobile surfaces keep the same document rhythm.</p></div></article>
+          <article class="advantage-item"><span class="icon-dot">S</span><div><h3>Secure sharing</h3><p>Workspace permissions, audit trails, and role control stay understandable.</p></div></article>
+          <article class="advantage-item"><span class="icon-dot">I</span><div><h3>Connected sources</h3><p>Integrations keep issues, designs, and references attached to the page.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">Pricing</span>
+          <h2>Simple plans for teams that want cleaner documents</h2>
+          <p>Use clear plan cards, realistic limits, and one highlighted plan when the page needs conversion.</p>
+        </div>
+        <div class="pricing-grid">
+          <article class="price-card"><div><h3>Starter</h3><p>For individuals and small projects</p><div class="price">$0<small>/month</small></div><ul><li>Five documents</li><li>One workspace</li><li>Basic templates</li></ul></div><a class="btn btn-secondary" href="#cta">Start free</a></article>
+          <article class="price-card featured"><div><h3>Team</h3><p>For growing teams and collaboration</p><div class="price">$14<small>/member</small></div><ul><li>Unlimited documents</li><li>Live collaboration</li><li>AI assistance</li><li>Version history</li></ul></div><a class="btn btn-secondary" href="#cta">Start trial</a></article>
+          <article class="price-card"><div><h3>Enterprise</h3><p>For organizations with deeper control</p><div class="price">Custom</div><ul><li>SSO and audit logs</li><li>Data residency</li><li>Custom integrations</li></ul></div><a class="btn btn-secondary" href="#cta">Contact sales</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta" id="cta">
+      <div class="container">
+        <h2>Start writing with less friction</h2>
+        <p>Give your team one place to plan, draft, review, and publish the documents that move work forward.</p>
+        <a class="btn btn-primary" href="#top">Get started</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>Draftly</a><p style="margin-top:16px">A calm document workspace for modern teams.</p></div>
+        <nav aria-label="Product"><h4>Product</h4><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#workflow">Workflow</a></nav>
+        <nav aria-label="Resources"><h4>Resources</h4><a href="#use-cases">Templates</a><a href="#use-cases">Guides</a><a href="#use-cases">Docs</a></nav>
+        <nav aria-label="Support"><h4>Support</h4><a href="#top">Help center</a><a href="#top">Status</a><a href="#top">Contact</a></nav>
+        <nav aria-label="Company"><h4>Company</h4><a href="#top">About</a><a href="#top">Security</a><a href="#top">Terms</a></nav>
+      </div>
+      <div class="legal">© 2026 Draftly. All rights reserved.</div>
+    </div>
+  </footer>
+</body>
+</html>

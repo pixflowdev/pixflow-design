@@ -1,0 +1,28 @@
+{
+  "id": "energetic",
+  "title": "Energetic",
+  "version": "2026.06.11.1",
+  "category": "Expressive",
+  "summary": "A Pixflow-owned recipe for bold, high-contrast expressive pages with vibrant orange/purple accents, thick 4px borders, hard drop shadows, and modern geometric styling.",
+  "default_design_system_ref": "energetic",
+  "defaultDesignSystemRef": "energetic",
+  "design_system_mode": "recipe_default_fallback",
+  "designSystemMode": "recipe_default_fallback",
+  "required_reads": [
+    "design-method.md",
+    "method-skill.md",
+    "method-layouts.md",
+    "method-components.md",
+    "method-checklist.md",
+    "method-example.html"
+  ],
+  "optional_reads": [
+    "method-design-system.md",
+    "method-responsive.md",
+    "method-accessibility.md",
+    "method-anti-patterns.md",
+    "method-critique.md",
+    "method-tokens.css",
+    "method-preview.html"
+  ]
+}

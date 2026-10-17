@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aurum House | Private Interiors Atelier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <style>
+      :root {
+        --lux-bg: #181823;
+        --lux-bg-deep: #0f0f14;
+        --lux-surface: #222231;
+        --lux-surface-soft: #2b2b3b;
+        --lux-text: #f7f3ea;
+        --lux-muted: #c8c0b4;
+        --lux-line: rgba(247, 243, 234, 0.18);
+        --lux-line-strong: rgba(247, 243, 234, 0.34);
+        --lux-accent: #d6c29a;
+        --lux-accent-soft: rgba(214, 194, 154, 0.16);
+        --lux-accent-ink: #17171f;
+        --lux-radius-image: 24px;
+        --lux-radius-pill: 999px;
+        --lux-container: 1440px;
+        --lux-gutter: 32px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--lux-bg-deep);
+        color: var(--lux-text);
+        font-family: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body::selection {
+        background: var(--lux-accent);
+        color: var(--lux-accent-ink);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--lux-accent);
+        outline-offset: 4px;
+      }
+
+      .site-shell {
+        min-height: 100vh;
+        overflow-x: clip;
+        background: var(--lux-bg-deep);
+      }
+
+      .container {
+        width: 100%;
+        max-width: calc(var(--lux-container) + 64px);
+        margin: 0 auto;
+        padding-inline: var(--lux-gutter);
+      }
+
+      .site-nav {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(15, 15, 20, 0.86);
+        border-bottom: 1px solid var(--lux-line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav-grid {
+        min-height: 78px;
+        display: grid;
+        grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr);
+        align-items: center;
+        gap: 28px;
+      }
+
+      .wordmark {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .wordmark::before {
+        width: 8px;
+        height: 8px;
+        border: 1px solid var(--lux-accent);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        color: var(--lux-muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .nav-links a,
+      .footer-links a {
+        transition: color 180ms ease, opacity 180ms ease;
+      }
+
+      .nav-links a:hover,
+      .footer-links a:hover {
+        color: var(--lux-text);
+      }
+
+      .nav-action {
+        justify-self: end;
+      }
+
+      .button {
+        min-height: 48px;
+        padding: 0 22px;
+        border: 1px solid var(--lux-line-strong);
+        border-radius: var(--lux-radius-pill);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: var(--lux-text);
+        background: transparent;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.11em;
+        line-height: 1;
+        text-transform: uppercase;
+        transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
+      }
+
+      .button:hover {
+        border-color: var(--lux-text);
+        transform: translateY(-1px);
+      }
+
+      .button-primary {
+        border-color: var(--lux-text);
+        background: var(--lux-text);
+        color: var(--lux-accent-ink);
+      }
+
+      .button-primary:hover {
+        background: var(--lux-accent);
+        border-color: var(--lux-accent);
+      }
+
+      .section {
+        position: relative;
+        padding: 118px 0;
+        border-top: 1px solid var(--lux-line);
+      }
+
+      .section-hero {
+        padding: 76px 0 126px;
+        border-top: 0;
+        background:
+          radial-gradient(circle at 50% 36%, rgba(214, 194, 154, 0.12), transparent 30%),
+          radial-gradient(circle at 80% 8%, rgba(247, 243, 234, 0.08), transparent 24%),
+          linear-gradient(180deg, var(--lux-bg) 0%, var(--lux-bg-deep) 100%);
+      }
+
+      .section-edit {
+        background:
+          linear-gradient(180deg, var(--lux-bg-deep) 0%, #14141d 100%);
+      }
+
+      .section-craft {
+        background:
+          radial-gradient(circle at 12% 18%, rgba(214, 194, 154, 0.07), transparent 28%),
+          var(--lux-bg);
+      }
+
+      .section-collection {
+        background:
+          linear-gradient(180deg, var(--lux-surface) 0%, var(--lux-bg) 100%);
+      }
+
+      .section-private {
+        padding: 132px 0;
+        background:
+          radial-gradient(circle at 76% 20%, rgba(214, 194, 154, 0.11), transparent 30%),
+          var(--lux-bg-deep);
+      }
+
+      .footer {
+        padding: 72px 0 88px;
+        border-top: 1px solid var(--lux-line);
+        background: #0c0c11;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Oswald", "Arial Narrow", Impact, sans-serif;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .kicker,
+      .meta,
+      .caption,
+      .card-meta,
+      .field-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        line-height: 1.4;
+        text-transform: uppercase;
+      }
+
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        padding: 9px 15px;
+        border: 1px solid var(--lux-line);
+        border-radius: var(--lux-radius-pill);
+        color: var(--lux-accent);
+        background: rgba(214, 194, 154, 0.05);
+      }
+
+      .hero-content {
+        display: grid;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .hero-title {
+        max-width: 1160px;
+        margin-top: 30px;
+        font-size: 132px;
+        line-height: 0.9;
+      }
+
+      .hero-copy {
+        max-width: 680px;
+        margin-top: 30px;
+        color: var(--lux-muted);
+        font-size: 19px;
+        line-height: 1.65;
+      }
+
+      .hero-micro {
+        width: min(100%, 840px);
+        margin-top: 32px;
+        padding-top: 18px;
+        border-top: 1px solid var(--lux-line);
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        color: var(--lux-muted);
+      }
+
+      .hero-micro span {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .hero-micro span + span::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--lux-accent);
+        content: "";
+      }
+
+      .hero-actions {
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .hero-stage {
+        position: relative;
+        width: min(100%, 1080px);
+        height: 620px;
+        margin: 76px auto 0;
+      }
+
+      .image-frame {
+        position: absolute;
+        overflow: hidden;
+        border: 1px solid var(--lux-line-strong);
+        border-radius: var(--lux-radius-image);
+        background: var(--lux-surface);
+      }
+
+      .image-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-frame::after {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, transparent 55%, rgba(15, 15, 20, 0.72) 100%);
+        box-shadow: inset 0 0 0 1px rgba(247, 243, 234, 0.08);
+        content: "";
+      }
+
+      .hero-main {
+        inset: 0 9% 0;
+      }
+
+      .hero-main img {
+        object-position: center center;
+      }
+
+      .hero-side {
+        left: 0;
+        bottom: 56px;
+        z-index: 2;
+        width: 34%;
+        height: 56%;
+      }
+
+      .hero-detail {
+        right: 0;
+        top: 38px;
+        z-index: 3;
+        width: 28%;
+        height: 40%;
+      }
+
+      .frame-caption {
+        position: absolute;
+        left: 22px;
+        bottom: 20px;
+        z-index: 4;
+        color: var(--lux-text);
+      }
+
+      .frame-caption small {
+        display: block;
+        margin-top: 5px;
+        color: var(--lux-muted);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .editorial-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.98fr) minmax(440px, 0.62fr);
+        gap: 82px;
+        align-items: center;
+      }
+
+      .editorial-visual {
+        position: relative;
+        min-height: 690px;
+        overflow: hidden;
+        border: 1px solid var(--lux-line);
+        border-radius: var(--lux-radius-image);
+        background: var(--lux-surface-soft);
+      }
+
+      .editorial-visual img {
+        width: 100%;
+        height: 100%;
+        min-height: 690px;
+        object-fit: cover;
+      }
+
+      .editorial-visual::after {
+        position: absolute;
+        inset: 22px;
+        border: 1px solid var(--lux-line);
+        border-radius: 18px;
+        pointer-events: none;
+        content: "";
+      }
+
+      .editorial-note {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
+        z-index: 2;
+        width: min(280px, calc(100% - 48px));
+        padding: 18px;
+        border: 1px solid var(--lux-line);
+        border-radius: 18px;
+        background: rgba(15, 15, 20, 0.78);
+        color: var(--lux-muted);
+        line-height: 1.55;
+        backdrop-filter: blur(14px);
+      }
+
+      .copy-block {
+        display: grid;
+        gap: 26px;
+      }
+
+      .section-title {
+        max-width: 900px;
+        font-size: 84px;
+        line-height: 0.98;
+      }
+
+      .copy-block p,
+      .section-intro p,
+      .card p,
+      .private-copy p,
+      .footer p {
+        color: var(--lux-muted);
+        line-height: 1.68;
+      }
+
+      .copy-block p,
+      .section-intro p,
+      .private-copy p {
+        font-size: 16px;
+      }
+
+      .detail-rail {
+        margin-top: 8px;
+        border-top: 1px solid var(--lux-line);
+        border-bottom: 1px solid var(--lux-line);
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 132px 1fr;
+        gap: 24px;
+        padding: 18px 0;
+        border-top: 1px solid var(--lux-line);
+      }
+
+      .detail-row:first-child {
+        border-top: 0;
+      }
+
+      .detail-row b {
+        color: var(--lux-accent);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .detail-row span {
+        color: var(--lux-text);
+        line-height: 1.5;
+      }
+
+      .section-intro {
+        max-width: 1060px;
+        display: grid;
+        gap: 24px;
+      }
+
+      .section-intro .section-title {
+        max-width: 980px;
+      }
+
+      .section-intro p {
+        max-width: 720px;
+      }
+
+      .proof-grid {
+        margin-top: 56px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--lux-line);
+        background: var(--lux-line);
+      }
+
+      .proof-card {
+        min-height: 270px;
+        padding: 30px;
+        background:
+          linear-gradient(180deg, rgba(247, 243, 234, 0.035), transparent 52%),
+          var(--lux-bg-deep);
+        display: grid;
+        align-content: space-between;
+        gap: 42px;
+      }
+
+      .proof-card b {
+        color: var(--lux-accent);
+      }
+
+      .proof-card h3 {
+        max-width: 12ch;
+        font-size: 30px;
+        line-height: 1.04;
+      }
+
+      .proof-card p {
+        color: var(--lux-muted);
+        line-height: 1.62;
+      }
+
+      .collection-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+        gap: 64px;
+        align-items: end;
+      }
+
+      .collection-head .section-title {
+        max-width: 980px;
+      }
+
+      .collection-head p {
+        color: var(--lux-muted);
+        line-height: 1.68;
+      }
+
+      .collection-grid {
+        margin-top: 58px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+      }
+
+      .collection-card {
+        min-height: 620px;
+        padding: 18px;
+        border: 1px solid var(--lux-line);
+        border-radius: var(--lux-radius-image);
+        background:
+          linear-gradient(180deg, rgba(247, 243, 234, 0.045), transparent 42%),
+          var(--lux-bg);
+        display: grid;
+        grid-template-rows: 356px 1fr;
+        gap: 24px;
+      }
+
+      .card-image {
+        overflow: hidden;
+        border: 1px solid var(--lux-line);
+        border-radius: 18px;
+        background: var(--lux-surface-soft);
+      }
+
+      .card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 800ms ease;
+      }
+
+      .collection-card:hover .card-image img {
+        transform: scale(1.025);
+      }
+
+      .card-body {
+        display: grid;
+        align-content: space-between;
+        gap: 24px;
+        padding: 0 4px 4px;
+      }
+
+      .card-meta {
+        color: var(--lux-accent);
+      }
+
+      .collection-card h3 {
+        margin-top: 12px;
+        font-size: 32px;
+        line-height: 1.05;
+      }
+
+      .card-link {
+        width: max-content;
+        padding-bottom: 7px;
+        border-bottom: 1px solid var(--lux-line-strong);
+        color: var(--lux-text);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .private-panel {
+        padding: 54px;
+        border: 1px solid var(--lux-line);
+        border-radius: 28px;
+        background:
+          linear-gradient(135deg, rgba(214, 194, 154, 0.13), transparent 40%),
+          var(--lux-surface);
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(380px, 0.56fr);
+        gap: 54px;
+        align-items: stretch;
+      }
+
+      .private-copy {
+        display: grid;
+        align-content: center;
+        gap: 26px;
+      }
+
+      .private-copy .section-title {
+        max-width: 760px;
+      }
+
+      .private-form {
+        padding: 26px;
+        border: 1px solid var(--lux-line);
+        border-radius: 22px;
+        background: rgba(15, 15, 20, 0.58);
+        display: grid;
+        gap: 18px;
+      }
+
+      .form-row {
+        display: grid;
+        gap: 9px;
+      }
+
+      .field-label {
+        color: var(--lux-accent);
+      }
+
+      .private-form input,
+      .private-form textarea {
+        width: 100%;
+        min-height: 48px;
+        padding: 14px 15px;
+        border: 1px solid var(--lux-line);
+        border-radius: 14px;
+        color: var(--lux-text);
+        background: var(--lux-bg-deep);
+      }
+
+      .private-form textarea {
+        min-height: 104px;
+        resize: vertical;
+      }
+
+      .form-note {
+        color: var(--lux-muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.9fr) repeat(3, minmax(140px, 1fr));
+        gap: 42px;
+      }
+
+      .footer-mark {
+        font-family: "Oswald", "Arial Narrow", Impact, sans-serif;
+        font-size: 54px;
+        font-weight: 500;
+        line-height: 0.96;
+        text-transform: uppercase;
+      }
+
+      .footer p {
+        max-width: 34ch;
+        margin-top: 22px;
+        font-size: 13px;
+      }
+
+      .footer-links {
+        display: grid;
+        gap: 12px;
+        color: var(--lux-muted);
+        font-size: 13px;
+      }
+
+      .footer-links strong {
+        margin-bottom: 8px;
+        color: var(--lux-text);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .footer-bottom {
+        margin-top: 74px;
+        padding-top: 24px;
+        border-top: 1px solid var(--lux-line);
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        color: var(--lux-muted);
+        font-size: 12px;
+      }
+
+      [data-reveal] {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .js.motion-ready [data-reveal] {
+        transition: transform 700ms ease, filter 700ms ease;
+      }
+
+      .js.motion-ready [data-reveal]:not([data-revealed="true"]) {
+        transform: translateY(14px);
+        filter: saturate(0.92);
+      }
+
+      .js.motion-ready [data-reveal][data-revealed="true"] {
+        transform: translateY(0);
+        filter: none;
+      }
+
+      @media (max-width: 1160px) {
+        .hero-title {
+          font-size: 104px;
+        }
+
+        .section-title {
+          font-size: 68px;
+        }
+
+        .editorial-grid,
+        .collection-head,
+        .private-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .editorial-grid {
+          gap: 48px;
+        }
+
+        .private-panel {
+          padding: 42px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        :root {
+          --lux-gutter: 22px;
+        }
+
+        .nav-grid {
+          grid-template-columns: 1fr auto;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .hero-title {
+          font-size: 74px;
+        }
+
+        .hero-stage {
+          height: 500px;
+          margin-top: 54px;
+        }
+
+        .hero-main {
+          inset: 0;
+        }
+
+        .hero-side {
+          width: 42%;
+          height: 42%;
+          bottom: 24px;
+        }
+
+        .hero-detail {
+          width: 35%;
+          height: 31%;
+          top: 24px;
+        }
+
+        .section {
+          padding: 86px 0;
+        }
+
+        .section-hero {
+          padding: 54px 0 88px;
+        }
+
+        .editorial-visual,
+        .editorial-visual img {
+          min-height: 500px;
+        }
+
+        .proof-grid,
+        .collection-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .collection-card {
+          min-height: 0;
+          grid-template-rows: 320px auto;
+        }
+
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 620px) {
+        :root {
+          --lux-gutter: 18px;
+        }
+
+        .site-nav {
+          position: static;
+        }
+
+        .nav-grid {
+          min-height: 70px;
+          gap: 16px;
+        }
+
+        .wordmark {
+          font-size: 12px;
+        }
+
+        .nav-action {
+          padding-inline: 16px;
+        }
+
+        .hero-actions {
+          width: 100%;
+        }
+
+        .hero-actions .button,
+        .private-form .button {
+          width: 100%;
+          min-height: 50px;
+        }
+
+        .hero-title {
+          margin-top: 24px;
+          font-size: 56px;
+          line-height: 0.94;
+        }
+
+        .hero-copy {
+          font-size: 16px;
+        }
+
+        .hero-micro {
+          display: grid;
+          gap: 10px;
+          justify-items: center;
+        }
+
+        .hero-micro span + span::before {
+          display: none;
+        }
+
+        .hero-stage {
+          height: 430px;
+        }
+
+        .hero-side {
+          display: none;
+        }
+
+        .hero-detail {
+          width: 44%;
+          height: 28%;
+        }
+
+        .frame-caption {
+          left: 16px;
+          bottom: 15px;
+        }
+
+        .section-title {
+          font-size: 48px;
+          line-height: 1;
+        }
+
+        .editorial-visual,
+        .editorial-visual img {
+          min-height: 430px;
+        }
+
+        .editorial-note {
+          position: relative;
+          right: auto;
+          bottom: auto;
+          width: calc(100% - 32px);
+          margin: -94px 16px 16px;
+        }
+
+        .detail-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .proof-card {
+          min-height: 230px;
+          padding: 24px;
+        }
+
+        .collection-card {
+          grid-template-rows: 260px auto;
+        }
+
+        .private-panel {
+          padding: 24px;
+          border-radius: 22px;
+        }
+
+        .private-form {
+          padding: 20px;
+        }
+
+        .footer-grid,
+        .footer-bottom {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+
+        .js.motion-ready [data-reveal] {
+          transform: none;
+          filter: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="site-shell" data-od-id="luxury-page">
+      <header class="site-nav" data-od-id="site-header" aria-label="Primary navigation">
+        <div class="container nav-grid">
+          <a class="wordmark" href="#top" aria-label="Aurum House home">Aurum House</a>
+          <nav class="nav-links" aria-label="Sections">
+            <a href="#edit">The Edit</a>
+            <a href="#craft">Material</a>
+            <a href="#collection">Collection</a>
+            <a href="#private">Private Access</a>
+          </nav>
+          <a class="button nav-action" href="#private">Appointment</a>
+        </div>
+      </header>
+
+      <section class="section section-hero" id="top" data-od-id="hero">
+        <div class="container">
+          <div class="hero-content" data-reveal>
+            <p class="kicker">Private collection / interiors atelier</p>
+            <h1 class="hero-title">Curated rooms for private collections</h1>
+            <p class="hero-copy">Aurum House prepares interior objects, material studies, and private viewings for studios and collectors who need the room to feel resolved before a single piece is placed.</p>
+            <div class="hero-micro meta" aria-label="Collection scope">
+              <span>Objects</span>
+              <span>Materials</span>
+              <span>Appointments</span>
+            </div>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#collection">View the collection</a>
+              <a class="button" href="#private">Arrange a viewing</a>
+            </div>
+          </div>
+
+          <div class="hero-stage" data-od-id="hero-image-stack" data-reveal aria-label="Curated Aurum House object composition">
+            <figure class="image-frame hero-main">
+              <img src="assets/aurum-hero-still-life.png" alt="Obsidian stone console with an ivory vessel, charcoal textile, and muted champagne metal detail." />
+              <figcaption class="frame-caption caption">Signature still life <small>Stone / ceramic / textile</small></figcaption>
+            </figure>
+            <figure class="image-frame hero-side">
+              <img src="assets/aurum-private-viewing-room.png" alt="Dark private viewing room with an archive chair, stone pedestal, and material samples." />
+              <figcaption class="frame-caption caption">Private room <small>Appointment setting</small></figcaption>
+            </figure>
+            <figure class="image-frame hero-detail">
+              <img src="assets/aurum-ivory-vessel.png" alt="Matte ivory sculptural vessel beside a muted metal sample." />
+              <figcaption class="frame-caption caption">Material note <small>Ivory clay</small></figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-edit" id="edit" data-od-id="editorial-split">
+        <div class="container editorial-grid">
+          <figure class="editorial-visual" data-reveal>
+            <img src="assets/aurum-private-viewing-room.png" alt="A private viewing room with a leather archive chair, stone plinth, vessel, and material samples." />
+            <figcaption class="editorial-note">
+              Each viewing begins with the room, then moves through scale, finish, and the way a piece holds silence around it.
+            </figcaption>
+          </figure>
+
+          <div class="copy-block" data-reveal>
+            <span class="kicker">The edit</span>
+            <h2 class="section-title">Fewer objects, held with more intention.</h2>
+            <p>Aurum House is built around private selection rather than catalogue speed. The edit gives every console, vessel, chair, and surface enough space for proportion and material to do the work.</p>
+            <p>Appointments are prepared for interior teams, galleries, and brand environments that need a composed collection view before final placement decisions.</p>
+            <div class="detail-rail" aria-label="Atelier details">
+              <div class="detail-row">
+                <b>Setting</b>
+                <span>Private viewing rooms, gallery edits, and residential collection studies.</span>
+              </div>
+              <div class="detail-row">
+                <b>Material</b>
+                <span>Stone, ceramic, brushed metal, dark timber, and dense textile references.</span>
+              </div>
+              <div class="detail-row">
+                <b>Path</b>
+                <span>Review the collection, request notes, then arrange a focused appointment.</span>
+              </div>
+            </div>
+            <a class="button" href="#private">Request notes</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-craft" id="craft" data-od-id="provenance">
+        <div class="container">
+          <div class="section-intro" data-reveal>
+            <span class="kicker">Material proof</span>
+            <h2 class="section-title">Provenance without theatre.</h2>
+            <p>The collection relies on restrained evidence: weight, surface, finish, service path, and the way each object answers an actual room. No decorative claim needs to shout.</p>
+          </div>
+
+          <div class="proof-grid" data-reveal>
+            <article class="proof-card">
+              <b class="meta">Stone</b>
+              <div>
+                <h3>Honed, veined, grounded.</h3>
+                <p>Obsidian and dark marble references keep the forms architectural, with natural irregularity left visible.</p>
+              </div>
+            </article>
+            <article class="proof-card">
+              <b class="meta">Metal</b>
+              <div>
+                <h3>Champagne as an edge.</h3>
+                <p>Warm metal appears as a support, seam, or material sample, never as a decorative flood.</p>
+              </div>
+            </article>
+            <article class="proof-card">
+              <b class="meta">Service</b>
+              <div>
+                <h3>Prepared for appointment.</h3>
+                <p>Room notes, placement context, and material references are assembled before a private review.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-collection" id="collection" data-od-id="collection">
+        <div class="container">
+          <div class="collection-head" data-reveal>
+            <div>
+              <span class="kicker">Selected pieces</span>
+              <h2 class="section-title">Three statements, no catalogue noise.</h2>
+            </div>
+            <p>Each object is presented as a considered placement option, with enough information to guide a private conversation and enough restraint to keep the room first.</p>
+          </div>
+
+          <div class="collection-grid">
+            <article class="collection-card" data-reveal>
+              <div class="card-image">
+                <img src="assets/aurum-obsidian-console.png" alt="Long obsidian console with muted metal support and an ivory vessel." />
+              </div>
+              <div class="card-body">
+                <div>
+                  <span class="card-meta">Console / stone and brushed metal</span>
+                  <h3>Obsidian Console</h3>
+                  <p>Low horizontal mass for entry galleries, retail salons, and rooms that need one confident line.</p>
+                </div>
+                <a class="card-link" href="#private">Discuss placement</a>
+              </div>
+            </article>
+
+            <article class="collection-card" data-reveal>
+              <div class="card-image">
+                <img src="assets/aurum-ivory-vessel.png" alt="Large matte ivory ceramic vessel beside a brushed metal sample." />
+              </div>
+              <div class="card-body">
+                <div>
+                  <span class="card-meta">Object / matte ceramic</span>
+                  <h3>Ivory Vessel</h3>
+                  <p>A quiet sculptural profile for shelves, plinths, and editorial rooms that need a pale counterpoint.</p>
+                </div>
+                <a class="card-link" href="#private">Request details</a>
+              </div>
+            </article>
+
+            <article class="collection-card" data-reveal>
+              <div class="card-image">
+                <img src="assets/aurum-archive-chair.png" alt="Charcoal leather lounge chair with dark walnut frame in a blue-black gallery corner." />
+              </div>
+              <div class="card-body">
+                <div>
+                  <span class="card-meta">Seating / leather and walnut</span>
+                  <h3>Archive Chair</h3>
+                  <p>A generous lounge form with dark grain, leather depth, and a silhouette suited to private rooms.</p>
+                </div>
+                <a class="card-link" href="#private">Arrange viewing</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-private" id="private" data-od-id="private-access">
+        <div class="container">
+          <div class="private-panel" data-reveal>
+            <div class="private-copy">
+              <span class="kicker">Private access</span>
+              <h2 class="section-title">Book a quiet review of the collection.</h2>
+              <p>Share the room, the intended tone, and the pieces under consideration. The appointment note helps Aurum House prepare a focused viewing rather than a broad sales call.</p>
+              <div class="hero-actions">
+          <a class="button button-primary" href="mailto:appointments@aurumhouse.studio">Email the atelier</a>
+                <a class="button" href="#collection">Return to pieces</a>
+              </div>
+            </div>
+
+            <form class="private-form" aria-label="Private appointment request">
+              <div class="form-row">
+                <label class="field-label" for="name">Name</label>
+                <input id="name" name="name" type="text" autocomplete="name" />
+              </div>
+              <div class="form-row">
+                <label class="field-label" for="studio">Studio or gallery</label>
+                <input id="studio" name="studio" type="text" autocomplete="organization" />
+              </div>
+              <div class="form-row">
+                <label class="field-label" for="interest">Collection interest</label>
+                <textarea id="interest" name="interest"></textarea>
+              </div>
+              <button class="button button-primary" type="submit">Prepare request</button>
+              <p class="form-note">For collection appointments, material notes, and private interior reviews.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer" data-od-id="footer">
+        <div class="container">
+          <div class="footer-grid">
+            <div>
+              <strong class="footer-mark">Aurum<br />House</strong>
+              <p>Curated interiors, objects, and private collection appointments for composed rooms.</p>
+            </div>
+            <nav class="footer-links" aria-label="Collection links">
+              <strong>Collection</strong>
+              <a href="#collection">Obsidian Console</a>
+              <a href="#collection">Ivory Vessel</a>
+              <a href="#collection">Archive Chair</a>
+            </nav>
+            <nav class="footer-links" aria-label="Atelier links">
+              <strong>Atelier</strong>
+              <a href="#edit">The Edit</a>
+              <a href="#craft">Materials</a>
+              <a href="#private">Private Access</a>
+            </nav>
+            <nav class="footer-links" aria-label="Appointment links">
+              <strong>Appointment</strong>
+              <a href="mailto:appointments@aurumhouse.studio">appointments@aurumhouse.studio</a>
+              <a href="#private">Request viewing</a>
+              <a href="#top">Back to top</a>
+            </nav>
+          </div>
+          <div class="footer-bottom">
+            <span>2026 Aurum House. Private interiors atelier.</span>
+            <span>Objects / Materials / Appointments</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        const root = document.documentElement;
+        const revealItems = Array.from(document.querySelectorAll("[data-reveal]"));
+        document.querySelectorAll("form").forEach((form) => {
+          form.addEventListener("submit", (event) => event.preventDefault());
+        });
+
+        if (!revealItems.length) return;
+
+        const revealAll = () => {
+          revealItems.forEach((item) => item.setAttribute("data-revealed", "true"));
+        };
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+          revealAll();
+          return;
+        }
+
+        root.classList.add("motion-ready");
+        const revealFallback = window.setTimeout(revealAll, 1800);
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.setAttribute("data-revealed", "true");
+              observer.unobserve(entry.target);
+            });
+            if (revealItems.every((item) => item.getAttribute("data-revealed") === "true")) {
+              window.clearTimeout(revealFallback);
+            }
+          },
+          { rootMargin: "0px 0px -12% 0px", threshold: 0.12 }
+        );
+
+        revealItems.forEach((item) => observer.observe(item));
+      })();
+    </script>
+  </body>
+</html>

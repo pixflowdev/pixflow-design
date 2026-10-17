@@ -1,0 +1,50 @@
+.section { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.section :global(.settings-section-connectors-credentials) { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 18px; border: 1px solid var(--border-soft); border-radius: 16px; background: var(--settings-surface, var(--bg-elevated)); }
+.section :global(.field-label-row), .section :global(.field-label-group) { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.section :global(.field-label-row) { justify-content: space-between; }
+.section :global(.field-label) { color: var(--text); font-size: 13px; font-weight: 550; margin: 0; }
+.section :global(.field-status-badge) { padding: 3px 7px; border: 1px solid var(--border-soft); border-radius: 6px; background: transparent; color: var(--text-muted); font-size: 11px; }
+.section :global(.field-label-link) { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 12px; }
+.section :global(.field-label-link):hover { color: var(--text); }
+.section :global(.field-row) { display: flex; align-items: center; gap: 8px; margin: 0; }
+.section :global(.field-input-skeleton-wrap) { flex: 1; min-width: 0; }
+.section input[type=password] { appearance: none; width: 100%; min-height: 38px; padding: 9px 12px; border: 1px solid var(--border-soft); border-radius: 9px; background: var(--bg-elevated); color: var(--text); font: inherit; font-size: 12px; box-shadow: none; }
+.section input::placeholder { color: var(--text-muted); opacity: 1; }
+.section input:focus, .section input:focus-visible,
+.browser input:focus, .browser input:focus-visible { outline: none !important; box-shadow: none !important; }
+.section :global(.hint) { display: block; margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+.section :global(.field-row) button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 8px 12px; border-radius: 9px; font-size: 12px; font-weight: 500; box-shadow: none; }
+.section button:global(.settings-connectors-save) { background: var(--text); color: var(--bg-elevated); border: 1px solid transparent; }
+.section button:global(.settings-connectors-save):hover:not(:disabled) { background: var(--text-muted); }
+.section button:global(.settings-connectors-clear) { background: transparent; color: var(--text-muted); border: 1px solid var(--border-soft); }
+.section button:global(.settings-connectors-clear):hover:not(:disabled) { background: var(--settings-hover, var(--bg-subtle)); color: var(--text); }
+.section button:disabled { opacity: .45; cursor: default; }
+.browser { min-width: 0; }
+.browser:global(.connectors-panel-embedded) :global(.connector-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.browser:global(.connectors-panel-embedded) :global(.connector-card) { padding: 16px; }
+.browser:global(.connectors-panel-embedded) :global(.tab-panel-toolbar) :global(.toolbar-search.connectors-search) { flex: 1; width: 100%; max-width: none; min-width: 0; }
+.browser :global(.tab-panel-toolbar) { position: static; display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding: 0 0 16px; margin: 0; border: 0; background: transparent; }
+.browser :global(.connectors-heading) { display: block; }
+.browser :global(.connectors-heading) h2 { margin: 0 0 5px; color: var(--text); font-size: 14px; font-weight: 550; }
+.browser :global(.connectors-heading) p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.browser :global(.toolbar-right) { width: 100%; margin: 0; }
+.browser :global(.toolbar-search.connectors-search) { flex: 1; width: 100%; max-width: none; min-width: 0; padding: 9px 12px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--settings-surface, var(--bg-elevated)); box-shadow: none; }
+.browser :global(.toolbar-search.connectors-search):focus-within { border-color: var(--border-soft); box-shadow: none; outline: none; }
+.browser :global(.toolbar-search.connectors-search) input { min-height: 20px; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 12px; }
+.browser :global(.connector-grid) { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.browser :global(.connector-card) { padding: 16px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--settings-surface, var(--bg-elevated)); box-shadow: none; transition: background 140ms cubic-bezier(.23,1,.32,1); }
+.browser :global(.connector-card):hover:not(:global(.is-locked)) { background: var(--settings-hover, var(--bg-subtle)); border-color: var(--border); transform: none; box-shadow: none; }
+.browser :global(.connector-card-title) { font-size: 13px; font-weight: 550; }
+.browser :global(.connector-meta) { color: var(--text-muted); }
+.browser :global(.connector-logo) { border-radius: 8px; }
+.notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--settings-surface, var(--bg-elevated)); color: var(--text); }
+.notice strong { font-size: 13px; font-weight: 550; }
+.notice p { margin: 5px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.notice button { flex: none; }
+.browser button.action { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; min-width: 30px; padding: 0; border: 1px solid var(--border-soft); border-radius: 8px; background: transparent; color: var(--text-muted); box-shadow: none; transition: background 140ms cubic-bezier(.23,1,.32,1), color 140ms cubic-bezier(.23,1,.32,1); }
+.browser button.action:hover:not(:disabled) { background: var(--bg-elevated); color: var(--text); border-color: var(--border); }
+.browser button.action:disabled { opacity: .4; cursor: default; }
+.browser button.action svg { width: 14px; height: 14px; flex: none; }
+@supports (corner-shape: squircle) { .section :global(.settings-section-connectors-credentials), .browser :global(.connector-card), .notice { corner-shape: squircle; } }
+@media (max-width: 620px) { .section :global(.field-row) { flex-wrap: wrap; } .section :global(.field-input-skeleton-wrap) { flex-basis: 100%; } .browser:global(.connectors-panel-embedded) :global(.connector-grid) { grid-template-columns: 1fr; } .notice { align-items: flex-start; flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .browser :global(.connector-card) { transition: none; } }

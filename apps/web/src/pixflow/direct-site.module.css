@@ -1,0 +1,15 @@
+.title {
+  color: var(--text);
+}
+
+.notice { margin: 8px 12px; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-secondary, rgb(128 128 128 / 7%)); color: var(--text); font-size: 12px; line-height: 1.5; }
+.noticeHeading { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.noticeIcon { display: inline-grid; place-items: center; flex: 0 0 17px; height: 17px; border: 1px solid currentColor; border-radius: 50%; color: var(--text-muted, #888); font-size: 11px; }
+.notice .noticeMessage { margin: 7px 0 10px; overflow-wrap: anywhere; font: inherit; font-weight: 400; color: var(--text-secondary, var(--text)); }
+.noticeActions { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+.noticeActions > button { padding: 5px 9px; font-size: 12px; }
+.noticeDetails { min-width: 0; max-width: 100%; color: var(--text-muted, #888); font-size: 11px; }
+.noticeDetails[open] { flex-basis: 100%; }
+.noticeDetails summary { cursor: pointer; border-radius: 3px; }
+.noticeDetails summary:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
+.noticeDetails pre { max-height: 120px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0 0; font: inherit; user-select: text; }

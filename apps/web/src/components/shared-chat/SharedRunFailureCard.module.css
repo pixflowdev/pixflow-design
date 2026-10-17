@@ -1,0 +1,21 @@
+.card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; margin: 12px; padding: 18px; border: 1px solid var(--border-soft, var(--border)); border-radius: 24px; corner-shape: squircle; color: var(--text); background: var(--bg-elevated, var(--bg-panel)); }
+.compact { margin-inline: 0; }
+.icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 12px; corner-shape: squircle; color: var(--text-muted, var(--text)); background: var(--bg-fill-tertiary, var(--bg-muted)); }
+.body { min-width: 0; }
+.body .title { margin: 4px 0 0; color: var(--text); font-size: 15px; font-weight: 600; line-height: 1.4; }
+.message { margin: 7px 0 0; color: var(--text-muted, var(--text)); font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.actions > button, .actions > a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; margin: 0; padding: 6px 12px; border: 0; border-radius: 999px; background: var(--bg-fill-tertiary, var(--bg-muted)); color: var(--text); font-size: 13px; font-weight: 500; line-height: 1.4; box-shadow: none; text-decoration: none; }
+.actions > button:hover, .actions > a:hover { background: var(--bg-hover); color: var(--text); }
+.details { margin-top: 12px; }
+.detailsToggle { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 7px; margin-inline-start: -7px; border: 0; border-radius: 10px; corner-shape: squircle; background: transparent; color: var(--text-muted, var(--text)); font-size: 13px; font-weight: 500; box-shadow: none; }
+.detailsToggle:hover { background: var(--bg-hover); color: var(--text); }
+.detailsToggle svg { transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+.chevronOpen { transform: rotate(90deg); }
+.detailsBody { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 140ms cubic-bezier(0.23, 1, 0.32, 1), opacity 140ms cubic-bezier(0.23, 1, 0.32, 1), visibility 140ms; }
+.detailsBody[data-open='true'] { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-duration: 200ms; }
+.detailsInner { min-height: 0; overflow: hidden; }
+.diagnostic { margin: 10px 0 0; padding: 12px; border: 1px solid var(--border-soft, var(--border)); border-radius: 14px; corner-shape: squircle; max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-muted, var(--text)); background: var(--bg-panel); font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.copy { margin-top: 8px; min-height: 30px; padding: 5px 10px; border-radius: 999px; font-size: 12px; }
+@media (max-width: 480px) { .card { padding: 14px; gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .detailsBody, .detailsToggle svg { transition: none; } }

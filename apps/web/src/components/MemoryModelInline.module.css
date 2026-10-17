@@ -1,0 +1,63 @@
+.card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-soft, var(--border));
+  border-radius: 16px;
+  corner-shape: squircle;
+  background: var(--settings-surface, var(--bg-elevated));
+  color: var(--text);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.feedback {
+  color: var(--text-success, var(--text));
+  font-size: 12px;
+}
+
+.custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.custom input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border-soft, var(--border));
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.custom input:focus,
+.custom input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--border-strong, var(--border));
+}
+
+.card [role='combobox']:focus,
+.card [role='combobox']:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.custom button { flex-shrink: 0; }

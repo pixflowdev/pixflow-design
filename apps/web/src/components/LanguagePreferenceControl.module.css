@@ -1,0 +1,23 @@
+.control { min-width: 0; color: var(--text); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 23px 0; }
+.copy { min-width: 0; }
+.control h3 { margin: 0; color: var(--text); font-size: 13px; font-weight: 550; line-height: 1.5; }
+.control p { margin: 5px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.copy p { max-width: 30ch; }
+.control .select { flex: 0 1 210px; min-width: 160px; width: 210px; }
+.control .trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 38px; padding: 9px 12px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--settings-surface, var(--bg-elevated)); color: var(--text); font-size: 13px; font-weight: 450; box-shadow: none; }
+.control .trigger:hover, .control .trigger[aria-expanded='true'] { background: var(--settings-hover, var(--bg-subtle)); }
+.control .trigger:focus, .control .trigger:focus-visible { outline: none; border-color: var(--border-soft); box-shadow: none; }
+.trigger > svg { flex: 0 0 14px; color: var(--text-muted); }
+.menu.menu { padding: 5px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--bg-elevated); color: var(--text); box-shadow: 0 8px 30px rgb(0 0 0 / 16%); }
+.menu :global(.od-select-option) { min-height: 34px; padding: 8px 10px; border-radius: 7px; font-size: 13px; color: var(--text); }
+.menu.menu :global(.od-select-option.selected), .menu.menu :global(.od-select-option.active), .menu.menu :global(.od-select-option:hover) { background: var(--bg-subtle); color: var(--text); }
+.menu.menu :global(.od-select-option.selected .od-select-option-check) { color: var(--text); }
+.download { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--settings-surface, var(--bg-elevated)); }
+.download p { margin: 0; max-width: 42ch; }
+.control .downloadButton { flex-shrink: 0; padding: 8px 13px; border: 0; border-radius: 999px; color: var(--bg); background: var(--text); font-size: 12px; font-weight: 550; box-shadow: none; }
+.control .downloadButton:hover:not(:disabled) { background: var(--text); opacity: .86; }
+.control .downloadButton:focus, .control .downloadButton:focus-visible { outline: none; box-shadow: none; }
+.control .downloadButton:focus-visible { text-decoration: underline; }
+.control .hint { max-width: none; margin: 0 0 12px; }
+@container (max-width: 380px) { .row, .download { flex-direction: column; align-items: stretch; gap: 12px; } .control .select { flex: none; width: 100%; } .downloadButton { align-self: flex-start; } }

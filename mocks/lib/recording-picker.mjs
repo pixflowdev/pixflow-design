@@ -1,16 +1,16 @@
 // Pick which recording to play back, driven by env vars.
 //
 // Priority order:
-//   1. OD_MOCKS_TRACE                → fixed trace id (or prefix)
-//   2. OD_MOCKS_BY_PROMPT_HASH=1     → hash(prompt) → trace
-//   3. OD_MOCKS_POOL=<tag>           → random within tag pool
-//   4. (default)                                → random across all
+//   1. OD_MOCKS_TRACE                â†’ fixed trace id (or prefix)
+//   2. OD_MOCKS_BY_PROMPT_HASH=1     â†’ hash(prompt) â†’ trace
+//   3. OD_MOCKS_POOL=<tag>           â†’ random within tag pool
+//   4. (default)                                â†’ random across all
 //
 // OD_MOCKS_SEED gives reproducible "random" selection.
 // OD_MOCKS_RECORDINGS_DIR overrides the default recordings dir
 // (defaults to ../recordings/ relative to this file).
 
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +53,7 @@ export async function pickRecording({ prompt } = {}) {
   const all = await listRecordings(dir);
   if (all.length === 0) return null;
 
-  // 1. fixed — if the env is set, refuse to fall through to random / pool /
+  // 1. fixed â€” if the env is set, refuse to fall through to random / pool /
   //    hash selection. A typo in `OD_MOCKS_TRACE` should surface loudly,
   //    not silently produce a different trace and silently poison a test.
   const fixed = process.env.OD_MOCKS_TRACE;
@@ -62,8 +62,7 @@ export async function pickRecording({ prompt } = {}) {
     if (hit) return { traceId: hit, path: join(dir, `${hit}.jsonl`), method: 'fixed' };
     throw new Error(
       `OD_MOCKS_TRACE="${fixed}" set but no matching recording in ${dir}. ` +
-      `8-char id prefix is supported; check spelling and that the corpus has been fetched ` +
-      `(\`bash mocks/scripts/fetch-recordings.sh\`).`
+      `ID prefixes are supported; check spelling and the recordings directory.`
     );
   }
 
@@ -73,12 +72,12 @@ export async function pickRecording({ prompt } = {}) {
     if (picked) return { traceId: picked, path: join(dir, `${picked}.jsonl`), method: 'hash' };
   }
 
-  // 3. pool by tag — supports structured `<dimension>:<value>` shortcuts
+  // 3. pool by tag â€” supports structured `<dimension>:<value>` shortcuts
   //    documented in README (agent:claude, skill:agent-browser,
   //    outcome:failed). The dimension routes to the right meta field;
   //    bare values fall back to tag substring match. Mirrors the
   //    OD_MOCKS_TRACE policy: if the env is set and matches nothing,
-  //    refuse to fall through to global random — surface the typo.
+  //    refuse to fall through to global random â€” surface the typo.
   const pool = process.env.OD_MOCKS_POOL;
   if (pool) {
     const colonIdx = pool.indexOf(':');

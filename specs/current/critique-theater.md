@@ -110,7 +110,7 @@ The default weights for composite score are `{ designer: 0, critic: 0.40, brand:
 
 ## Wire protocol (`PROTOCOL_VERSION = 1`)
 
-The format is XML-ish tagged regions, not JSON. Tagged regions tolerate streaming, partial chunks, and model variability where JSON does not. Existing OD prompt files (`directions.ts`, `discovery.ts`) already use this style.
+The format is XML-ish tagged regions, not JSON. Tagged regions tolerate streaming, partial chunks, and model variability where JSON does not. Existing Pixflow Design prompt files (`directions.ts`, `discovery.ts`) already use this style.
 
 ```
 <CRITIQUE_RUN version="1" maxRounds="3" threshold="8.0" scale="10">

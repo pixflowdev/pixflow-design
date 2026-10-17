@@ -1,0 +1,84 @@
+{
+  "agent": "opencode",
+  "trace": "synthetic-success",
+  "events": [
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-read",
+      "name": "Read",
+      "input": {
+        "file_path": "/fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-read",
+      "content": "Hello fixture.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-write",
+      "name": "Write",
+      "input": {
+        "file_path": "/fixture/example.txt",
+        "content": "Updated fixture."
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-write",
+      "content": "Fixture written.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-edit",
+      "name": "Edit",
+      "input": {
+        "file_path": "/fixture/example.txt",
+        "old_string": "Updated",
+        "new_string": "Edited"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-edit",
+      "content": "Fixture edited.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-bash",
+      "name": "Bash",
+      "input": {
+        "command": "printf fixture"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-bash",
+      "content": "fixture",
+      "isError": false
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic fixture complete."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "thought_tokens": 0,
+        "cached_read_tokens": 0,
+        "cached_write_tokens": 0
+      },
+      "costUsd": 0
+    }
+  ]
+}

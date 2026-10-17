@@ -17,4 +17,3 @@ deploy/**/*.tar
 deploy/**/*.tgz
 deploy/**/*.zip
 docs
-story

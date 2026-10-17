@@ -13,16 +13,9 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 MOCKS="$(cd "$HERE/.." && pwd -P)"
-TRACE_ID="${OD_MOCKS_SMOKE_TRACE:-04097377}"   # the 17-tool claude session
+TRACE_ID="${OD_MOCKS_SMOKE_TRACE:-synthetic-success}"   # repository-owned synthetic tool session
 
-# Ensure recordings are on disk — the corpus is hosted on R2 and fetched
-# on demand. If nothing's been pulled yet (or only a few are), run the
-# fetcher so smoke covers the full agent matrix.
-if ! ls "$MOCKS/recordings"/*.jsonl >/dev/null 2>&1; then
-  echo "no recordings found — fetching from R2 first..."
-  bash "$HERE/fetch-recordings.sh" >/dev/null
-  echo
-fi
+# Synthetic fixtures ship in the repository; smoke tests never fetch external data.
 
 export PATH="$MOCKS/bin:$PATH"
 export OD_MOCKS_TRACE="$TRACE_ID"
@@ -101,9 +94,13 @@ fi
 # so override just for this one invocation.
 amr_sandbox="$(mktemp -d -t od-mocks-amr.XXXXXX)"
 trap 'rm -rf "$amr_sandbox"' EXIT
-if HOME="$amr_sandbox" FAKE_VELA_LOGIN_USER_EMAIL=smoke@od.local vela login >/dev/null 2>&1 \
+amr_sandbox_native="$amr_sandbox"
+if command -v cygpath >/dev/null 2>&1; then
+  amr_sandbox_native="$(cygpath -w "$amr_sandbox")"
+fi
+if VELA_PROFILE=prod USERPROFILE="$amr_sandbox_native" HOME="$amr_sandbox" FAKE_VELA_LOGIN_USER_EMAIL=smoke@od.local vela login >/dev/null 2>&1 \
    && [ -f "$amr_sandbox/.amr/config.json" ]; then
-  email=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$amr_sandbox/.amr/config.json','utf-8')).profiles.prod.user.email)" 2>/dev/null || echo "")
+  email=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).profiles.prod.user.email)' "$amr_sandbox_native/.amr/config.json" 2>/dev/null || echo "")
   if [ "$email" = "smoke@od.local" ]; then
     pass "vela login wrote ~/.amr/config.json with profile.prod.user.email"
   else

@@ -185,8 +185,6 @@ function normalizeAllowedOrigins(values) {
   const defaults = [
     'http://127.0.0.1:8088',
     'http://localhost:8088',
-    'https://socialpulsedigital.co.uk',
-    'https://confidencecurve.co.uk',
   ];
   const input = Array.isArray(values) ? values : [];
   const origins = new Set();

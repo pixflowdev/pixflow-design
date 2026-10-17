@@ -1,0 +1,41 @@
+{
+  "agent": "codex",
+  "trace": "synthetic-failure",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-failure-missing",
+      "name": "Bash",
+      "input": {
+        "command": "cat \"/fixture/missing.txt\""
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-failure-missing",
+      "content": "Synthetic file not found.",
+      "isError": true
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic failure handled."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cached_read_tokens": 0
+      }
+    }
+  ]
+}

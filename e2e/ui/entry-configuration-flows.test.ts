@@ -157,6 +157,7 @@ test('[P1] prompt template retry preserves the edited body in project metadata',
 });
 
 test('[P1] live artifact empty connector CTA opens the gated connector setup path', async ({ page }) => {
+  test.skip(!process.env.PIXFLOW_DESIGN_PRO_ROOT, 'Requires the explicitly configured Pro connector contribution.');
   await routeConnectors(page, []);
   await routeComposioConfig(page, { configured: false, apiKeyTail: '' });
 
@@ -168,22 +169,17 @@ test('[P1] live artifact empty connector CTA opens the gated connector setup pat
   await page.getByTestId('new-project-tab-live-artifact').click();
   await expect(page.getByTestId('new-project-connectors')).toBeVisible();
 
-  // The empty CTA now opens Integrations → Connectors directly. The Composio
-  // API key field sits at the top of the section; the catalog (and its gate)
-  // sits below it.
+  // The connector shortcut opens the current Settings contribution.
   await page.getByTestId('new-project-connectors-empty').click();
   await expect(page.getByTestId('new-project-modal')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible();
-  await expect(page.getByTestId('integrations-tab-connectors')).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByPlaceholder('Paste Composio API key')).toBeVisible();
   await expect(page.getByTestId('connector-gate')).toBeVisible();
   await expect(page.getByTestId('connectors-search-input')).toBeDisabled();
 });
 
 test('[P2] connectors search supports empty results and keyboard-closeable details', async ({ page }) => {
+  test.skip(!process.env.PIXFLOW_DESIGN_PRO_ROOT, 'Requires the explicitly configured Pro connector contribution.');
   await routeConnectors(page, CONNECTORS);
   await routeComposioConfig(page, { configured: true, apiKeyTail: '1234' });
   await page.addInitScript((key) => {
@@ -229,7 +225,8 @@ test('[P2] connectors search supports empty results and keyboard-closeable detai
   await expect(page.getByTestId('connector-drawer')).toHaveCount(0);
 });
 
-test('[P0] saving a Composio key from Integrations unlocks the connectors gate immediately', async ({ page }) => {
+test('[P0] saving a Composio key from Settings unlocks the connectors gate immediately', async ({ page }) => {
+  test.skip(!process.env.PIXFLOW_DESIGN_PRO_ROOT, 'Requires the explicitly configured Pro connector contribution.');
   const { accountLabel: _unusedAccountLabel, ...slackConnector } = CONNECTORS[1]!;
   await routeConnectors(page, [
     {
@@ -285,6 +282,7 @@ test('[P0] saving a Composio key from Integrations unlocks the connectors gate i
 });
 
 test('[P1] typing a draft replacement Composio key does not trigger global autosave', async ({ page }) => {
+  test.skip(!process.env.PIXFLOW_DESIGN_PRO_ROOT, 'Requires the explicitly configured Pro connector contribution.');
   await routeConnectors(page, CONNECTORS);
   await routeComposioConfig(page, { configured: true, apiKeyTail: '1234' });
   await page.addInitScript((key) => {
@@ -372,16 +370,11 @@ async function gotoEntryHome(page: Page) {
 }
 
 async function openIntegrationsConnectors(page: Page): Promise<Locator> {
-  await ensureRailOpen(page);
-  await page.getByTestId('entry-nav-integrations').click();
-  await expect(page).toHaveURL(/\/integrations$/);
-  await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible();
-  await page.getByTestId('integrations-tab-connectors').click();
-  await expect(page.getByTestId('integrations-tab-connectors')).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
-  const panel = page.locator('.integrations-view__panel');
+  await page.getByTestId('entry-settings-menu-trigger').click();
+  await page.getByTestId('entry-settings-open-details').click();
+  const panel = page.getByRole('dialog');
+  await expect(panel).toBeVisible();
+  await panel.locator('.settings-nav-item').filter({ hasText: 'Connectors' }).click();
   await expect(panel.getByTestId('connector-grid-wrap')).toBeVisible();
   return panel;
 }

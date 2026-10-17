@@ -118,7 +118,7 @@ Every user-facing capability must be reachable through both the web UI **and** t
 - Opening a PR uses `.github/pull_request_template.md`; fill every section, not just the title.
 - "Why" must answer both the author's use case (what made you write this PR) and the pain being addressed (user problem, technical debt, prod issue, or unblocker), not just a one-line restatement of the title.
 - "What users will see" describes the change from a user's perspective — what they click, what new thing appears, what default behavior changed — not from a code perspective.
-- The Surface area checklist must reflect actual surfaces touched; check every box that applies, including extension points (`skills/`, `design-systems/`, `design-templates/`, `craft/`), CLI flags, env vars, i18n keys, and new root `package.json` dependencies.
+- The Surface area checklist must reflect actual surfaces touched; check every box that applies, including extension points (`skills/`, `guidance/`, shared resource schemas), CLI flags, env vars, i18n keys, and new root `package.json` dependencies.
 - If any UI surface is checked, attach screenshots showing the entry point — where users discover the change — not just the feature in isolation; before/after is best for behavior changes.
 - For bug-fix PRs, link the red-spec test that reproduces the bug and confirm it went red on `main` and green on the branch, per the `Bug follow-up workflow` section above.
 - `CONTRIBUTING.md` covers PR scope, title format, dependency policy, and the issue-first rule for non-trivial features; `docs/code-review-guidelines.md` is the reviewer-facing complement.
@@ -204,7 +204,7 @@ root `pnpm tools-pr` script without a new explicit maintainer decision.
 ### Repository validation
 
 - After package, workspace, or command-entry changes, run `pnpm install` so workspace links and generated dist entries stay fresh.
-- For agent-stream / parser changes (`apps/daemon/src/claude-stream.ts`, `json-event-stream.ts`, `qoder-stream.ts`, etc.), replay a recorded session through the mock CLIs in `mocks/` to verify event shapes round-trip without burning provider budget. PATH-overlay activation: `export PATH="$PWD/mocks/bin:$PATH" OD_MOCKS_TRACE=<8-char-id> OD_MOCKS_NO_DELAY=1`. See `mocks/README.md` for the trace catalog and selection knobs.
+- For agent-stream / parser changes (`apps/daemon/src/claude-stream.ts`, `json-event-stream.ts`, `qoder-stream.ts`, etc.), replay a synthetic fixture through the mock CLIs in `mocks/` to verify event shapes round-trip without burning provider budget. PATH-overlay activation: `export PATH="$PWD/mocks/bin:$PATH" OD_MOCKS_TRACE=synthetic-success OD_MOCKS_NO_DELAY=1`. See `mocks/README.md` for the local synthetic fixtures and selection options.
 - Treat every `pnpm-lock.yaml` change as requiring a Nix pnpm deps hash refresh check. `nix/pnpm-deps.nix` is a generated lock artifact; use `pnpm nix:update-hash` only when intentionally maintaining Nix packaging, then re-run `nix flake check --print-build-logs --keep-going`. Contributors without Nix can rely on the PR `Validate workspace` gate, which now uploads or auto-applies the generated hash-only fix when possible.
 - Before marking regular work ready, run at least `pnpm guard` and `pnpm typecheck`, plus the package-scoped tests/builds that match the files changed. Do not use or add root `pnpm test`/`pnpm build` aliases.
 - For local web runtime loops, prefer `pnpm tools-dev run web --daemon-port <port> --web-port <port>`.

@@ -26,7 +26,7 @@ Then build this checkout locally and start the service:
 
 ```bash
 docker compose build
-OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design:latest docker compose up -d --pull never --no-build
+docker compose up -d --pull never --no-build
 ```
 
 Defaults:
@@ -52,7 +52,7 @@ OPEN_DESIGN_ALLOWED_ORIGINS=https://od.example.com,http://203.0.113.10:7456 dock
 Pin a specific published image with a digest instead of the mutable `latest` tag:
 
 ```bash
-OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design@sha256:<digest> docker compose up -d --pull never --no-build
+OPEN_DESIGN_IMAGE=your-registry.example/pixflow-design@sha256:<digest> docker compose up -d --pull never --no-build
 ```
 The image intentionally does not bundle Claude/Codex/Gemini CLI binaries. Keep
 those outside the image, or build a separate private runtime layer if a server
@@ -72,29 +72,10 @@ without the workspace-write sandbox, which is useful when the container host
 blocks unprivileged user namespaces, but it gives the Codex process broader
 filesystem access inside the container.
 
-## Publish to Docker Hub
+## Local build helpers
 
-```bash
-deploy/scripts/publish-images.sh --image_tag latest
-```
-
-Useful overrides:
-
-```bash
-IMAGE_NAMESPACE=your-dockerhub-user deploy/scripts/publish-images.sh --arch arm64
-deploy/scripts/publish-images.sh --image docker.io/your-user/open-design:0.1.0
-```
-
-The script defaults to:
-
-- `docker.io/vanjayak/open-design:<tag>`
-- `linux/amd64,linux/arm64`
-- `skopeo` push strategy with Docker credentials read from `~/.docker/config.json`
-- preloading base images through `skopeo` to reduce Docker Hub pull flakiness
-
-If `127.0.0.1:7890` is available and no proxy is already set, the script uses it
-for registry access and passes `host.docker.internal:7890` into Docker builds. The
-host-gateway alias is only added for builds that need this local proxy mapping.
+Pixflow does not use the inherited upstream Docker Hub publishing pipeline.
+Build this checkout locally; publishing an image requires your own reviewed registry setup.
 
 ### Colima swap helper for Apple Silicon
 
@@ -125,7 +106,7 @@ until cleanup or VM restart, so use a shell trap for one-off sessions:
 deploy/scripts/prepare-colima-build-swap.sh status
 deploy/scripts/prepare-colima-build-swap.sh
 trap 'deploy/scripts/prepare-colima-build-swap.sh cleanup' EXIT
-deploy/scripts/publish-images.sh --image_tag latest
+docker compose build
 ```
 
 Useful overrides:

@@ -5,11 +5,7 @@ import path from 'node:path';
 import { fulfillAgentsRoute } from './mock-factory.js';
 
 const STORAGE_KEY = 'open-design:config';
-const GITHUB_STARS_STORAGE_KEY = 'open-design:gh-stars';
 const VISUAL_STYLE_ID = 'od-visual-stability-style';
-// Keep this exact-route mock narrow so unrelated GitHub UI still behaves normally.
-const VISUAL_GITHUB_REPO_API = 'https://api.github.com/repos/nexu-io/open-design';
-const VISUAL_GITHUB_STARS = 40_000;
 
 type VisualConfig = {
   mode: 'daemon' | 'api';
@@ -153,13 +149,9 @@ export async function configureVisualPage(page: Page, options: VisualPageOptions
   const config = { ...VISUAL_CONFIG, ...(options.config ?? {}) };
   const agents = options.agents ?? [MOCK_AGENT];
 
-  await page.addInitScript(([key, config, githubStarsKey, githubStarsCount]) => {
+  await page.addInitScript(([key, config]) => {
     window.localStorage.setItem(key, JSON.stringify(config));
-    window.localStorage.setItem(
-      githubStarsKey,
-      JSON.stringify({ count: githubStarsCount, ts: Date.now() }),
-    );
-  }, [STORAGE_KEY, config, GITHUB_STARS_STORAGE_KEY, VISUAL_GITHUB_STARS] as const);
+  }, [STORAGE_KEY, config] as const);
 
   await page.route('**/api/app-config', async (route) => {
     await fulfillGet(route, { config });
@@ -179,17 +171,6 @@ export async function configureVisualPage(page: Page, options: VisualPageOptions
       profile: 'local',
       configPath: '/tmp/.amr/config.json',
       user: null,
-    });
-  });
-
-  await page.route(VISUAL_GITHUB_REPO_API, async (route) => {
-    if (route.request().method() !== 'GET') {
-      await route.continue();
-      return;
-    }
-
-    await route.fulfill({
-      json: { stargazers_count: VISUAL_GITHUB_STARS },
     });
   });
 

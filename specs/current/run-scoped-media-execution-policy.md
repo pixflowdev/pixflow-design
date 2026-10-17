@@ -3,13 +3,13 @@
 ## Purpose
 
 Define the smallest Pixflow Design patch that lets an upstream orchestrator call
-OD as a creative runtime adapter while the upstream orchestrator keeps authority
+Pixflow Design as a creative runtime adapter while the upstream orchestrator keeps authority
 over media provider use.
 
 The proposed patch adds a run-scoped media execution policy. The policy tells
-OD whether a run may generate media bytes, emit structured media requests
+Pixflow Design whether a run may generate media bytes, emit structured media requests
 without executing them, or delegate those requests to a generic external media
-executor. The default preserves current OD behavior.
+executor. The default preserves current Pixflow Design behavior.
 
 This is a strategy and implementation-shape document. It is intended to be the
 first review artifact before code lands, following the maintainer pattern from
@@ -27,7 +27,7 @@ recent architecture threads:
   before implementation is treated as mergeable.
 
 The same shape applies here: land the integration contract first, keep the
-first code patch small, and do not make OD a provider router or account owner.
+first code patch small, and do not make Pixflow Design a provider router or account owner.
 
 ## Background
 
@@ -58,10 +58,10 @@ The run layer already has a scoped tool-token primitive:
 - Existing `/api/tools/*` endpoints are the precedent for run-scoped, token
   gated wrapper commands.
 
-The current media path is correct for normal OD use. It is too permissive for
+The current media path is correct for normal Pixflow Design use. It is too permissive for
 an externally orchestrated creative execution path because an agent inside a
-run can shell out to `od media generate`, causing OD to spend provider budget
-and use OD-held credentials. For this integration shape, OD should contribute
+run can shell out to `od media generate`, causing Pixflow Design to spend provider budget
+and use Pixflow Design-held credentials. For this integration shape, Pixflow Design should contribute
 creative context, skills, design systems, previews, artifacts, and
 design-aware workflow, while the external orchestrator owns caller auth,
 admission, orchestration, provider policy, retries, budgets, accounting,
@@ -69,14 +69,14 @@ webhooks, and external artifact manifests.
 
 ## Non-goals
 
-- Do not replace OD's existing local media dispatcher for normal OD users.
-- Do not make OD a model router, provider account pool, media budget authority,
+- Do not replace Pixflow Design's existing local media dispatcher for normal Pixflow Design users.
+- Do not make Pixflow Design a model router, provider account pool, media budget authority,
   or global provider rate-limit service.
 - Do not add an orchestrator-specific provider or import external-service
-  concepts into OD's core media dispatcher.
+  concepts into Pixflow Design's core media dispatcher.
 - Do not expose arbitrary daemon/media access to any caller that can reach the
   local daemon.
-- Do not require any external orchestrator for local OD media generation.
+- Do not require any external orchestrator for local Pixflow Design media generation.
 - Do not start with a broad provider-refactor PR. The first patch should be a
   focused run-policy and request-capture slice.
 
@@ -89,7 +89,7 @@ in the linked issues and PRs.
 |---|---|
 | #2146: use an authoritative contract, do not silently infer extra children. | `mediaExecution` on the run is the authoritative policy. Agents do not infer permission from project kind, selected model, or provider config. |
 | #2146: keep persisted ids/storage separate from unsafe display ids. | Media requests get daemon-owned ids and project-relative artifact paths. Provider names, external executor ids, and caller labels are metadata, not storage paths. |
-| #1969: decide the user workflow first, then implement modes. | The workflow split is "OD executes local media" vs "OD emits design-aware media requests for an upstream executor." These are separate policy modes, not a hidden fallback. |
+| #1969: decide the user workflow first, then implement modes. | The workflow split is "Pixflow Design executes local media" vs "Pixflow Design emits design-aware media requests for an upstream executor." These are separate policy modes, not a hidden fallback. |
 | #1969: first useful artifact is design note plus schema/fixture/comparison criteria. | This doc includes the mode schema, media request shape, enforcement points, and tests. Fixtures should cover enabled, disabled, request-only, and external-stub runs. |
 | #1637/#1746: avoid more isolated engine churn when product/pipeline boundary is unresolved. | Do not start by refactoring providers. Start at the run boundary, media command boundary, and request event boundary. |
 | #1637/#3021: use an integration-shape doc with concrete decision points. | This doc names the policy modes, API contracts, event/resource model, owner decisions, and phased implementation sequence. |
@@ -115,7 +115,7 @@ in the linked issues and PRs.
 10. Suppress direct media-provider prompt instructions, including the Codex
     imagegen override, unless the policy permits byte generation.
 11. Gate external MCP media tools in non-enabled modes so connected MCP servers
-    cannot bypass OD's own media policy.
+    cannot bypass Pixflow Design's own media policy.
 12. Keep provider credentials and budgets outside the new policy object.
 
 ## Policy model
@@ -148,22 +148,22 @@ export interface ExternalMediaExecutorRef {
 }
 ```
 
-`enabled` means current OD behavior. Provider credentials, local media config,
+`enabled` means current Pixflow Design behavior. Provider credentials, local media config,
 and task execution work as they do today.
 
 `disabled` means this run must not generate media bytes or create media
 requests. Attempts fail with a structured policy error. The prompt should not
 tell the agent to call `od media generate`.
 
-`request-only` means the agent may create structured media requests. OD stores
+`request-only` means the agent may create structured media requests. Pixflow Design stores
 the request and emits events, but does not call providers or write media bytes.
 This is the safest first step for external orchestration because the upstream
 service can read/poll/subscribe to the request, execute it under its own
 creative policy, and fulfill it later.
 
-`external` means OD can synchronously or asynchronously submit a media request
+`external` means Pixflow Design can synchronously or asynchronously submit a media request
 to a generic HTTP executor. This should stay generic. A particular deployment
-can provide one executor implementation, but OD should not add
+can provide one executor implementation, but Pixflow Design should not add
 orchestrator-specific code to the provider dispatcher.
 
 Open question: whether the first code PR should include `external`. The
@@ -230,7 +230,7 @@ Behavior by mode:
 | `external` | Create a `MediaRequest`, submit it to the external executor, and update status from executor response. |
 
 `od media generate` should prefer this endpoint when `OD_TOOL_TOKEN` is present.
-Outside a run, it can continue using the existing project endpoint so normal OD
+Outside a run, it can continue using the existing project endpoint so normal Pixflow Design
 and current UI flows remain compatible.
 
 ### Media request resource
@@ -366,7 +366,7 @@ slot:
 ```
 
 When fulfilled, the request points at the actual project file/artifact metadata.
-This keeps OD's artifact structure useful without pretending a request is a
+This keeps Pixflow Design's artifact structure useful without pretending a request is a
 generated image/video/audio file.
 
 Do not store media requests only as files under the project directory. The
@@ -426,18 +426,18 @@ mode:
 |---|---|
 | `enabled` | Current media generation contract. |
 | `disabled` | State that media generation is disabled for this run and the agent must not call `od media generate` or external media tools. |
-| `request-only` | Instruct the agent to create media requests through the OD wrapper. State that OD will not execute provider calls. |
-| `external` | Instruct the agent to create/delegate media requests through OD wrapper only. Do not name provider credentials or direct provider APIs. |
+| `request-only` | Instruct the agent to create media requests through the Pixflow Design wrapper. State that Pixflow Design will not execute provider calls. |
+| `external` | Instruct the agent to create/delegate media requests through Pixflow Design wrapper only. Do not name provider credentials or direct provider APIs. |
 
 The Codex built-in imagegen override must render only when the effective policy
-is `enabled`. Otherwise Codex can bypass OD's dispatcher and violate the run
+is `enabled`. Otherwise Codex can bypass Pixflow Design's dispatcher and violate the run
 policy.
 
 ### External MCP tools
 
 `apps/daemon/src/server.ts` injects connected external MCP instructions into
 the run prompt. In `disabled`, `request-only`, and non-generic `external` modes,
-the prompt should block direct media-provider MCP tools unless OD can gate them
+the prompt should block direct media-provider MCP tools unless Pixflow Design can gate them
 through the same policy. Otherwise a connected MCP server can become an
 untracked provider route.
 
@@ -452,14 +452,14 @@ they should fail. In `enabled`, current behavior stays.
 Existing media tasks own polling/wait loops. Media requests should have a
 separate lifecycle because request-only mode has no provider task to poll.
 
-In `external`, OD should model cancellation as best-effort:
+In `external`, Pixflow Design should model cancellation as best-effort:
 
-- mark OD request `cancelled` if it has not been submitted,
+- mark Pixflow Design request `cancelled` if it has not been submitted,
 - call executor cancel endpoint if the executor declared one,
 - otherwise record cancellation requested and stop waiting locally.
 
-Retries should not be OD's responsibility in the externally orchestrated path.
-OD can expose the request and failure details; the upstream service decides
+Retries should not be Pixflow Design's responsibility in the externally orchestrated path.
+Pixflow Design can expose the request and failure details; the upstream service decides
 whether to retry.
 
 ## External executor contract
@@ -501,31 +501,31 @@ Recommended response:
 
 Auth representation:
 
-- OD may read a bearer token or header value from an environment variable named
+- Pixflow Design may read a bearer token or header value from an environment variable named
   in `externalExecutor.auth`.
-- OD must not store provider credentials, provider account ids, budgets, or
+- Pixflow Design must not store provider credentials, provider account ids, budgets, or
   provider rate-limit policy in the run policy.
-- The executor token authenticates OD to the executor, not OD to a concrete
+- The executor token authenticates Pixflow Design to the executor, not Pixflow Design to a concrete
   media provider.
 
 Artifact storage:
 
-- Preferred: executor returns or posts bytes/files to OD fulfillment endpoint,
-  and OD writes the final artifact into the project using daemon project-file
+- Preferred: executor returns or posts bytes/files to Pixflow Design fulfillment endpoint,
+  and Pixflow Design writes the final artifact into the project using daemon project-file
   APIs.
-- Alternate: executor returns a durable URL and OD records a manifest entry
+- Alternate: executor returns a durable URL and Pixflow Design records a manifest entry
   without importing bytes. This should be explicit because local-first users
   may expect project artifacts to remain available offline.
 
-Open question: whether OD should allow the alternate URL-only fulfillment in
+Open question: whether Pixflow Design should allow the alternate URL-only fulfillment in
 the first external implementation. For externally orchestrated use, imported
-bytes are safer because OD previews remain stable.
+bytes are safer because Pixflow Design previews remain stable.
 
 ## Backward compatibility
 
-- Omitted policy means `enabled`, so existing OD users see no behavior change.
+- Omitted policy means `enabled`, so existing Pixflow Design users see no behavior change.
 - Existing media config and provider credentials continue to work for normal
-  OD media projects.
+  Pixflow Design media projects.
 - Existing UI calls to `/api/projects/:id/media/generate` keep working.
 - `od media generate` outside a run keeps working.
 - In-run `od media generate` becomes stricter only when `OD_TOOL_TOKEN` exists.
@@ -580,7 +580,7 @@ Use the existing fake-agent harness:
 - Assert disabled fails with a policy error and does not create request/task
   state.
 - Add a fake HTTP executor for the external follow-up. It should record submit
-  payloads, simulate async fulfillment, and verify OD writes the fulfilled file.
+  payloads, simulate async fulfillment, and verify Pixflow Design writes the fulfilled file.
 
 ## Implementation sequence
 
@@ -674,7 +674,7 @@ reconcile artifacts. Use a first-class request resource plus SSE.
 
 ### Risk: external executor becomes provider routing by another name
 
-Keep the executor contract generic and request-level. OD submits a design-aware
+Keep the executor contract generic and request-level. Pixflow Design submits a design-aware
 media request to one executor. It does not choose OpenAI vs Runway vs Kling,
 rotate credentials, manage budgets, or retry provider-specific failures.
 
@@ -687,7 +687,7 @@ contracts, and does not give external orchestrators a stable API.
 ### Alternative: project-level policy
 
 Project-level policy is too broad for external orchestration. One project may
-be opened locally with OD-owned media enabled and later run under an external
+be opened locally with Pixflow Design-owned media enabled and later run under an external
 orchestrator with media disabled or request-only. The policy should be
 run-scoped.
 
@@ -707,11 +707,11 @@ daemon must still enforce at the tool/media endpoint.
 4. Should the fulfill endpoint require the same run-scoped tool token, a
    separate fulfillment token, or only local/same-origin access in v1?
 5. Should URL-only fulfillment be allowed, or must fulfilled requests import
-   bytes into the OD project?
+   bytes into the Pixflow Design project?
 6. Should connected MCP media tools be fully hidden in non-enabled modes, or
    shown with explicit "not allowed by run policy" guidance?
 7. Should allowed models be advisory hints for the upstream orchestrator, or
-   hard validation in OD request-only mode?
+   hard validation in Pixflow Design request-only mode?
 8. Should `disabled` allow placeholder slots, or should slots require
    `request-only`?
 9. Where should media request status appear in the web UI for the first patch:

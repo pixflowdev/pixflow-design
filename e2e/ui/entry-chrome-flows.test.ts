@@ -77,8 +77,8 @@ test('[P0] @critical entry chrome exposes the primary home creation surface and 
   });
 
   await gotoEntryHome(page);
-  await expect(page.getByTestId('entry-star-badge')).toBeVisible();
-  await expect(page.getByTestId('entry-use-everywhere-button')).toBeVisible();
+  await expect(page.getByTestId('entry-star-badge')).toHaveCount(0);
+  await expect(page.getByTestId('inline-model-switcher-chip')).toBeVisible();
   await expect(page.getByTestId('recent-projects-strip')).toHaveCount(0);
   // The nav rail is collapsed by default — only the topbar toggle shows.
   // Expand it to assert the rail and its logo are reachable.
@@ -122,10 +122,8 @@ test('[P1] entry top navigation matches the current home tab structure', async (
   await expect(page.getByTestId('entry-nav-home')).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTestId('entry-nav-new-project')).toBeVisible();
   await expect(page.getByTestId('entry-nav-projects')).toBeVisible();
-  await expect(page.getByTestId('entry-nav-tasks')).toBeVisible();
-  await expect(page.getByTestId('entry-nav-design-systems')).toBeVisible();
+  await expect(page.getByTestId('entry-nav-media')).toBeVisible();
   await expect(page.locator('.entry-nav-rail__group').getByTestId('entry-nav-plugins')).toBeVisible();
-  await expect(page.locator('.entry-nav-rail__group').getByTestId('entry-nav-integrations')).toBeVisible();
   await expect(page.locator('.entry-nav-rail__footer').getByTestId('entry-nav-plugins')).toHaveCount(0);
   await expect(page.locator('.entry-nav-rail__footer').getByTestId('entry-nav-integrations')).toHaveCount(0);
   await expect(page.getByTestId('home-hero-type-tabs')).toBeVisible();
@@ -376,7 +374,7 @@ test('[P0] @critical entry execution pill opens the Local CLI and BYOK switcher 
   await expect(page.getByRole('tab', { name: LOCAL_CLI_LABEL })).toBeVisible();
 });
 
-test('[P2] entry help menu exposes community links and topbar routes Use everywhere', async ({ page }) => {
+test('[P2] entry help menu exposes Pixflow links and preserves navigation', async ({ page }) => {
   await gotoEntryHome(page);
 
   // The help launcher lives in the (collapsed-by-default) rail footer.
@@ -384,21 +382,19 @@ test('[P2] entry help menu exposes community links and topbar routes Use everywh
   await page.getByTestId('entry-help-trigger').click();
   const menu = page.locator('.entry-help-popover[role="menu"]');
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('menuitem', { name: /Follow @nexudotio on X/i })).toHaveAttribute(
+  await expect(menu.getByRole('menuitem', { name: /Follow Pixflow on X/i })).toHaveAttribute(
     'href',
-    'https://x.com/nexudotio',
+    'https://x.com/pixflowdev',
   );
-  await expect(menu.getByRole('menuitem', { name: /Join Discord/i })).toHaveAttribute(
+  await expect(menu.getByRole('menuitem', { name: /Join the Facebook group/i })).toHaveAttribute(
     'href',
-    'https://discord.gg/mHAjSMV6gz',
+    'https://www.facebook.com/groups/pixflow',
   );
 
-  await page.getByTestId('entry-use-everywhere-button').click();
-  await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible();
-  await expect(page.getByTestId('integrations-tab-use-everywhere')).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await page.getByTestId('entry-nav-projects').click();
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
 
   await ensureRailOpen(page);
   // Return home via the explicit Home nav (the logo is overlaid by the
@@ -447,10 +443,7 @@ test('[P1] entry execution pill remains available across secondary entry pages',
 
   const destinations = [
     { nav: 'entry-nav-projects', heading: 'Projects' },
-    { nav: 'entry-nav-tasks', heading: 'Automations' },
     { nav: 'entry-nav-plugins', heading: 'Plugins' },
-    { nav: 'entry-nav-design-systems', heading: 'Design systems' },
-    { nav: 'entry-nav-integrations', heading: 'Integrations' },
   ];
 
   for (const destination of destinations) {
@@ -684,7 +677,7 @@ test('[P2] home starters html details modal shows metadata links and supports co
     previewEntry: './example.html',
     tags: ['deck', 'marketing'],
     authorName: 'Pixflow Design',
-    authorUrl: 'https://github.com/nexu-io/open-design',
+    authorUrl: 'https://example.test/fixture-author',
     homepage: 'https://example.com/html-metadata-plugin',
     context: {
       skills: [{ path: './SKILL.md' }],
@@ -739,11 +732,11 @@ test('[P2] home starters html details modal shows metadata links and supports co
   await expect(page.getByTestId('plugin-details-author')).toContainText('Pixflow Design');
   await expect(page.getByTestId('plugin-details-author-profile')).toHaveAttribute(
     'href',
-    'https://github.com/nexu-io/open-design',
+    'https://example.test/fixture-author',
   );
   await expect(page.getByTestId('plugin-details-author-homepage')).toHaveAttribute(
     'href',
-    'https://github.com/nexu-io/open-design',
+    'https://example.test/fixture-author',
   );
   await expect(dialog).toContainText('Context bundles');
   await expect(dialog).toContainText('./SKILL.md');

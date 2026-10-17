@@ -7,7 +7,7 @@ Fixes #
 
 <!-- Why are you opening this PR? Cover two things:
        - Your use case — what made you write this today? Did you hit it yourself
-         while building on top of OD, are you scratching an itch for a team, or
+         while building on top of Pixflow Design, are you scratching an itch for a team, or
          are you speculatively adding for others? All are fine, but say which.
        - The pain being addressed — user-facing problem, technical debt, a prod
          issue, or unblocking another change.
@@ -33,7 +33,7 @@ Fixes #
 - [ ] **Keyboard shortcut** — new or changed
 - [ ] **CLI / env var** — new `od` subcommand or flag, new `tools-dev` / `tools-pack` / `tools-pr` flag, or new `OD_*` env var
 - [ ] **API / contract** — new `/api/*` endpoint, new SSE event, or changed shape in `packages/contracts`
-- [ ] **Extension point** — new entry under `skills/`, `design-systems/`, `design-templates/`, or `craft/`, or change to the skills protocol
+- [ ] **Extension point** — new entry under `skills/`, `guidance/`, or shared resource schemas, or change to the skills protocol
 - [ ] **i18n keys** — added new translation keys (see `TRANSLATIONS.md` for the locale workflow)
 - [ ] **New top-level dependency** — adding any new entry to the **root** `package.json` (`dependencies` or `devDependencies`); workspace-package `package.json` files are out of scope. Include a paragraph on what we get vs. what bytes we ship (see `CONTRIBUTING.md` → Code style)
 - [ ] **Default behavior change** — changes what existing users experience without opting in (default model, default setting, file/SQLite schema, auto-network on startup, auto-install)

@@ -1,0 +1,4 @@
+{"type":"meta","source":{"provider":"synthetic","author":"Pixflow Design contributors","license":"Apache-2.0","trace_id":"synthetic-failure"},"agent":"claude","model":"synthetic-test-model","duration_ms":40,"total_tokens":12,"tags":["synthetic","skill:parser-regression"],"outcome":"failed","tool_call_count":1,"error_count":1}
+{"type":"tool_call","obs_id":"synthetic-failure-missing","name":"Read","input":{"file_path":"/fixture/missing.txt"},"t_ms":0}
+{"type":"tool_result","obs_id":"synthetic-failure-missing","output":"Synthetic file not found.","status":"error","t_ms":1}
+{"type":"report","content":"Synthetic failure handled.","t_ms":40}

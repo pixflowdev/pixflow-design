@@ -1,0 +1,25 @@
+{
+  "agent": "opencode",
+  "trace": "synthetic-empty",
+  "events": [
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "raw",
+      "line": "{\"type\":\"text\",\"part\":{\"text\":\"\"}}"
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "thought_tokens": 0,
+        "cached_read_tokens": 0,
+        "cached_write_tokens": 0
+      },
+      "costUsd": 0
+    }
+  ]
+}

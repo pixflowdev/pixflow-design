@@ -2,6 +2,11 @@
 
 Local packaging control plane for Pixflow Design.
 
+Platform icons in `resources/` use the canonical Pixflow mark from
+`wordpress/assets/brand/pixflow-plugin-icon.svg`. Regenerate the PNG, ICO and
+ICNS files on any platform with `pnpm exec tsx scripts/build-packaged-brand-icons.ts`.
+Keep the resource filenames stable because existing packaging refers to them.
+
 The active slice is mac-first local packaging and smoke lifecycle control:
 
 - `tools-pack mac build --to all`

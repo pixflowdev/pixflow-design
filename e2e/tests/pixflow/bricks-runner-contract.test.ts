@@ -114,7 +114,7 @@ function runFixture(
   const fixture = createRunnerFixture(root);
   createRunnerCommand(binDir, fixture, runner);
   writeFileSync(requestFile, JSON.stringify({
-    mode: 'ask',
+    mode: action === 'insert' ? 'design' : 'ask',
     prompt: `Verify the ${runner} Bricks runner contract.`,
     targetLabel: 'current Bricks page',
     bricksContext: { postId: 123, pageTitle: 'Runner contract page', selectedId: '' },

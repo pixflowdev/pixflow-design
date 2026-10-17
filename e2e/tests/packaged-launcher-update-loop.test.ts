@@ -133,7 +133,7 @@ function serverAddress(server: Server): string {
 }
 
 async function createPayloadMetadataFixture(options: PlatformCase): Promise<FixtureServer> {
-  const payloadBody = Buffer.from("open design launcher payload update loop fixture");
+  const payloadBody = Buffer.from("pixflow design launcher payload update loop fixture");
   const payloadDigest = createHash("sha256").update(payloadBody).digest("hex");
   const server = createServer((request, response) => {
     const url = request.url ?? "/";

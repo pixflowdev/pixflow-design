@@ -1,13 +1,13 @@
 # Real-CLI contract check
 
 The replay mocks under `mocks/` impersonate real agent CLIs by emitting
-recorded traces in each CLI's native protocol. They're great for parser
+authored synthetic fixtures in each CLI's native protocol. They're great for parser
 regression coverage but they can silently drift away from the real CLI
 when:
 
 - An agent CLI ships a new event `type` that the mock doesn't know about.
 - A field gets renamed (`sessionID` → `sessionId`) and the mock keeps
-  emitting the old name. OD's parser may have been updated to accept
+  emitting the old name. Pixflow Design's parser may have been updated to accept
   both, so smoke tests stay green, but new fields aren't surfaced.
 - A protocol version bump changes the shape of `usage` / tool calls /
   init blocks.
@@ -48,10 +48,10 @@ The script:
 
 Compare the two `type` distributions. Acceptable differences:
 
-- Counts vary slightly (mock plays a single recorded trace, real CLI
+- Counts vary slightly (mock plays a fixed synthetic fixture, real CLI
   may take a different number of turns for the same prompt).
-- Mock emits a superset of the real CLI's event types — the recordings
-  span historical CLI versions.
+- Mock and real CLI cover different event subsets — the synthetic fixtures
+  deliberately exercise parser branches rather than reproducing a real session.
 
 **Red flags**:
 
@@ -93,7 +93,7 @@ Possible follow-ups:
    mock formatters' output, run a validator against real-CLI output,
    report violations with field paths.
 2. **Recorded-then-replayed delta** — capture the real CLI's output
-   for the fixed prompt, save under `mocks/contracts/<agent>.golden.jsonl`,
+   for the fixed prompt, keep privately under ignored `.tmp/cli-contracts/` after redaction and consent review,
    then in CI replay that golden through the daemon parser and assert
    no parser errors. Cheaper than calling the LLM every CI run but
    only catches *parser* drift, not *CLI* drift.

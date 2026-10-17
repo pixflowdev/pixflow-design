@@ -5,12 +5,12 @@
 Research v1 is an agent-callable capability. The daemon owns API-key
 resolution and provider execution, but it does not run search before the
 agent starts and it does not inject external search result content into a
-system prompt. The agent invokes a stable OD command when current external
+system prompt. The agent invokes a stable Pixflow Design command when current external
 facts would improve the answer.
 
 The primary user-facing shortcut is `/search <query>` in the composer. It
 expands into an agent request that requires the first tool action to call
-the OD research command, then asks the agent to summarize findings with
+the Pixflow Design research command, then asks the agent to summarize findings with
 citations and write a reusable Markdown report into Design Files.
 
 ## Architecture
@@ -104,7 +104,7 @@ findings, source list with `[1]`, `[2]` citations, and a note that source
 content is external untrusted evidence. The final assistant answer should
 mention the report path.
 
-If the OD command fails because Tavily is not configured or unavailable, the
+If the Pixflow Design command fails because Tavily is not configured or unavailable, the
 agent reports the real error. If it uses a built-in search capability as a
 fallback, the report and final answer must label the fallback clearly.
 
@@ -137,7 +137,7 @@ surface and resolved by the daemon from stored config or environment:
   normal sends.
 - Manual smoke: start `pnpm tools-dev run web --daemon-port 17456 --web-port
   17573`, configure Tavily, run `/search EV market 2025 trends`, confirm the
-  agent calls the OD command first, JSON output is valid, a Markdown report is
+  agent calls the Pixflow Design command first, JSON output is valid, a Markdown report is
   saved under `research/`, and the final answer cites source indices.
 
 ## Reviewer response draft

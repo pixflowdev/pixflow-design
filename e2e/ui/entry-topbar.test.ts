@@ -5,7 +5,6 @@ import type { Page } from '@playwright/test';
 
 const STORAGE_KEY = 'open-design:config';
 const LOCAL_CLI_LABEL = /Local CLI|本机 CLI|本地 CLI/i;
-const OPEN_SETTINGS_LABEL = /Open settings|打开设置|開啟設定/i;
 
 test.describe.configure({ timeout: 30_000 });
 
@@ -20,7 +19,7 @@ async function gotoEntryHome(page: Page) {
   if (await privacyDialog.isVisible().catch(() => false)) {
     await privacyDialog.getByRole('button', { name: /I get it|not now|got it|don't share/i }).click();
   }
-  await expect(page.getByRole('button', { name: OPEN_SETTINGS_LABEL })).toBeVisible();
+  await expect(page.getByTestId('entry-settings-menu-trigger')).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -45,13 +44,6 @@ test.beforeEach(async ({ page }) => {
     );
   }, STORAGE_KEY);
 
-  await page.route('**/api/github/open-design', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ stargazers_count: 51600 }),
-    });
-  });
 
   await routeAgents(page, [
     {
@@ -101,20 +93,12 @@ test('[P2] home topbar shows the new entry chips and links', async ({ page }) =>
   const topbar = page.locator('.entry-main__topbar');
   await expect(topbar).toBeVisible();
 
-  const star = page.getByTestId('entry-star-badge');
-  await expect(star).toBeVisible();
-  await expect(star).toHaveAttribute('href', 'https://github.com/nexu-io/open-design');
-  await expect(star).toContainText('Star');
-  await expect(star).toContainText('51.6K');
-
-  const discord = page.getByTestId('entry-discord-badge');
-  await expect(discord).toBeVisible();
-  await expect(discord).toHaveAttribute('href', 'https://discord.gg/mHAjSMV6gz');
-  await expect(discord).toContainText('Join Discord');
+  await expect(page.getByTestId('entry-star-badge')).toHaveCount(0);
+  await expect(page.getByTestId('entry-discord-badge')).toHaveCount(0);
+  await expect(page.getByTestId('entry-use-everywhere-button')).toHaveCount(0);
 
   await expect(page.getByTestId('inline-model-switcher-chip')).toBeVisible();
-  await expect(page.getByTestId('entry-use-everywhere-button')).toBeVisible();
-  await expect(page.getByRole('button', { name: OPEN_SETTINGS_LABEL })).toBeVisible();
+  await expect(page.getByTestId('entry-settings-menu-trigger')).toBeVisible();
 });
 
 test('[P1] home topbar execution pill reflects the selected Local CLI agent and opens the switcher', async ({ page }) => {
@@ -138,29 +122,22 @@ test('[P1] home topbar execution pill reflects the selected Local CLI agent and 
   await expect(popover.getByRole('radio', { name: /Codex CLI/i })).toBeVisible();
 });
 
-test('[P2] home topbar star and discord badges expose the current external-link contract', async ({ page }) => {
+test('[P2] entry help links expose the Pixflow external-link contract', async ({ page }) => {
   await gotoEntryHome(page);
-
-  const star = page.getByTestId('entry-star-badge');
-  await expect(star).toHaveAttribute('target', '_blank');
-  await expect(star).toHaveAttribute('rel', /noreferrer/);
-  await expect(star).toHaveAttribute('rel', /noopener/);
-
-  const discord = page.getByTestId('entry-discord-badge');
-  await expect(discord).toHaveAttribute('href', 'https://discord.gg/mHAjSMV6gz');
-  await expect(discord).toHaveAttribute('title', /Join the Pixflow Design Discord/i);
-  await expect(discord).toHaveAttribute('aria-label', /Join the Pixflow Design Discord/i);
-});
-
-test('[P2] home topbar Use everywhere navigates to Integrations with the tab selected', async ({ page }) => {
-  await gotoEntryHome(page);
-
-  await page.getByTestId('entry-use-everywhere-button').click();
-  await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible();
-  await expect(page.getByTestId('integrations-tab-use-everywhere')).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  await ensureRailOpen(page);
+  await page.getByTestId('entry-help-trigger').click();
+  const menu = page.getByRole('menu', { name: 'Help menu' });
+  for (const [name, href] of [
+    ['Follow Pixflow on X', 'https://x.com/pixflowdev'],
+    ['Join the Facebook group', 'https://www.facebook.com/groups/pixflow'],
+    ['Download the Pixflow Bridge', 'https://pixflow.dev/download-bridge'],
+  ] as const) {
+    const link = menu.getByRole('menuitem', { name, exact: true });
+    await expect(link).toHaveAttribute('href', href);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noreferrer/);
+    await expect(link).toHaveAttribute('rel', /noopener/);
+  }
 });
 
 test('[P1] home topbar settings button opens settings and closes the execution popover', async ({ page }) => {
@@ -172,7 +149,8 @@ test('[P1] home topbar settings button opens settings and closes the execution p
   await pill.click();
   await expect(popover).toBeVisible();
 
-  await page.getByRole('button', { name: OPEN_SETTINGS_LABEL }).click();
+  await page.getByTestId('entry-settings-menu-trigger').click();
+  await page.getByTestId('entry-settings-open-details').click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(popover).toHaveCount(0);
 });
@@ -180,8 +158,9 @@ test('[P1] home topbar settings button opens settings and closes the execution p
 test('[P2] returning from another entry view via the home nav reaches the home hero', async ({ page }) => {
   await gotoEntryHome(page);
 
-  await page.getByTestId('entry-use-everywhere-button').click();
-  await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible();
+  await ensureRailOpen(page);
+  await page.getByTestId('entry-nav-projects').click();
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
 
   // The logo doubles as a hover-to-collapse control now, so home is reached
   // through the explicit Home nav item rather than clicking the brand mark.
@@ -190,5 +169,5 @@ test('[P2] returning from another entry view via the home nav reaches the home h
   await expect(page.getByTestId('home-hero')).toBeVisible();
   await expect(page.getByTestId('home-hero-input')).toBeVisible();
   await expect(page.getByTestId('home-hero-type-tabs')).toBeVisible();
-  await expect(page.getByTestId('entry-star-badge')).toBeVisible();
+  await expect(page.getByTestId('inline-model-switcher-chip')).toBeVisible();
 });

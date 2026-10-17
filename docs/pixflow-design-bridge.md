@@ -11,7 +11,7 @@ Included:
 - Pixflow Design daemon/runtime.
 - Local loopback start/stop/status supervision.
 - Local bridge config under the user's app data folder.
-- Installer/package scripts for the OD-based bridge.
+- Installer/package scripts for the Pixflow Design-based bridge.
 
 Excluded:
 
@@ -29,14 +29,14 @@ WordPress builder page
       -> Pixflow Design daemon routes
 ```
 
-The React app still calls OD paths such as:
+The React app still calls Pixflow Design paths such as:
 
 - `/api/*`
 - `/artifacts/*`
 - `/frames/*`
 
 The WordPress runtime adapter routes explicit local capabilities to the configured Bridge and site-owned calls to WordPress.
-The bridge starts OD on `http://127.0.0.1:7456` by default.
+The bridge starts Pixflow Design on `http://127.0.0.1:7456` by default.
 
 ## Commands
 
@@ -62,7 +62,7 @@ node tools/pixflow-design-bridge/pixflow-design-bridge.mjs stop
 
 ## WordPress Config
 
-By default the plugin points OD requests at:
+By default the plugin points Pixflow Design requests at:
 
 ```text
 http://127.0.0.1:7456

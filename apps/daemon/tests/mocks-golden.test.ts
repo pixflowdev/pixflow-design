@@ -13,9 +13,7 @@
 //   MOCKS_GOLDEN_UPDATE=1 pnpm --filter @open-design/daemon test mocks-golden
 // then `git diff mocks/golden/` and commit the new shapes.
 //
-// Auto-skips when the recording corpus hasn't been fetched yet (see
-// `mocks/scripts/fetch-recordings.sh`); CI that exercises this test must
-// fetch first.
+// Synthetic fixtures are committed and must always be present.
 
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -32,14 +30,10 @@ const MOCK_AGENT = join(REPO, 'mocks/mock-agent.mjs');
 const GOLDEN_DIR = join(REPO, 'mocks/golden');
 const RECORDINGS_DIR = join(REPO, 'mocks/recordings');
 
-// Median-tool-count successful traces per agent (selected from manifest
-// 2026-05-29). Each one's `.jsonl` lives in `mocks/recordings/` after
-// `bash mocks/scripts/fetch-recordings.sh`.
-const CASES: Array<{ agent: 'claude' | 'codex' | 'opencode'; trace: string }> = [
-  { agent: 'claude',   trace: '314d6833-0377-4ac4-ba11-2b8d7eca5511' },
-  { agent: 'codex',    trace: 'dcdff3b3-cd39-4dcd-be83-372830a29639' },
-  { agent: 'opencode', trace: '9a9522ec-575f-432f-aeed-efc491e900aa' },
-];
+// Exercise each protocol with the same locally authored tool and text fixture.
+const CASES = (['claude', 'codex', 'opencode'] as const).flatMap(agent =>
+  ['synthetic-success', 'synthetic-failure', 'synthetic-empty'].map(trace => ({ agent, trace })),
+);
 
 // Replace per-spawn-volatile fields with stable sentinels so the
 // snapshot stays diffable across runs. Currently only `sessionId` —
@@ -88,13 +82,16 @@ const recordingsAvailable =
   existsSync(RECORDINGS_DIR) &&
   CASES.every(c => existsSync(join(RECORDINGS_DIR, `${c.trace}.jsonl`)));
 
-describe.skipIf(!recordingsAvailable)(
+describe(
   'mocks goldens — daemon event shape regression',
   () => {
+    it('ships all synthetic replay fixtures', () => {
+      expect(recordingsAvailable).toBe(true);
+    });
     for (const { agent, trace } of CASES) {
-      it(`${agent} ${trace.slice(0, 8)}`, () => {
+      it(`${agent} ${trace}`, () => {
         const events = runMockAndCollectEvents(agent, trace);
-        const goldenPath = join(GOLDEN_DIR, `${trace}.events.json`);
+        const goldenPath = join(GOLDEN_DIR, `${agent}-${trace}.events.json`);
 
         if (process.env.MOCKS_GOLDEN_UPDATE === '1') {
           mkdirSync(GOLDEN_DIR, { recursive: true });

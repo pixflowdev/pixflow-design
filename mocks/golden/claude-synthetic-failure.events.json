@@ -1,0 +1,50 @@
+{
+  "agent": "claude",
+  "trace": "synthetic-failure",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "model": "synthetic-test-model",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-failure-missing",
+      "name": "Read",
+      "input": {
+        "file_path": "/fixture/missing.txt"
+      }
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "tool_use"
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-failure-missing",
+      "content": "Synthetic file not found.",
+      "isError": true
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic failure handled."
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn"
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "costUsd": 0,
+      "durationMs": 40,
+      "stopReason": "end_turn"
+    }
+  ]
+}

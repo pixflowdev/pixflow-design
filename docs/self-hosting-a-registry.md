@@ -31,6 +31,6 @@ Version, dist-tag, integrity and yanked-version metadata remain supported by the
 
 `od marketplace login` delegates GitHub authentication to `gh`; tokens stay in GitHub CLI. It does not configure arbitrary HTTPS server credentials or guarantee that a private raw endpoint is readable by the catalogue fetcher. Configure and verify the chosen host's supported access before relying on a private catalogue.
 
-The former Pixflow/Open Design official and community catalogue URLs return a retirement error before fetching. Their saved metadata and installed resources remain intact, but they cannot resolve new installations. Use an explicit URL for your own catalogue rather than refreshing a retired default.
+The retired upstream official and community catalogue URLs return a retirement error before fetching. Their saved metadata and installed resources remain intact, but they cannot resolve new installations. Use an explicit URL for your own catalogue rather than refreshing a retired default.
 
 For local authoring and publication to your own GitHub repository, see [sharing a personal plugin](publishing-a-plugin.md). Keep customer data, credentials and internal operational evidence outside resource sources and archives.

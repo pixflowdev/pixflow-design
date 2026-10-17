@@ -1,0 +1,28 @@
+{
+  "agent": "claude",
+  "trace": "synthetic-empty",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "model": "synthetic-test-model",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn"
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "costUsd": 0,
+      "durationMs": 40,
+      "stopReason": "end_turn"
+    }
+  ]
+}

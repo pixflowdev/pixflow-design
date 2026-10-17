@@ -7,7 +7,7 @@ import { useT as usePixflowUiTranslation } from '../i18n';
 // (image / video / HTML / design-system / fallback), and the user
 // expects the detail modal to mirror those tiles with the same
 // affordances they get on the curated gallery (DesignSystemPreview
-// modal, examples PreviewModal, PromptTemplatePreviewModal):
+// modal and examples PreviewModal):
 //
 //   media   → image/video player, prompt body, copy, lightbox
 //   html    → sandboxed iframe + share menu + fullscreen

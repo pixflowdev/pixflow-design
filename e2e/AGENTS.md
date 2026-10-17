@@ -62,3 +62,20 @@ pnpm exec playwright test -c playwright.config.ts
 Use a specific file path when validating a single case. Do not add root e2e aliases or extra package scripts for individual cases.
 
 Case-level priority tags use test-name prefixes: `[P0]`, `[P1]`, `[P2]`.
+
+## WordPress package boundary checks
+
+Package suites under `tests/wordpress/*-package.test.ts` always run their Free
+assertions without a private checkout. Set `PIXFLOW_FREE_PACKAGE` to an absolute
+ZIP path when validating an isolated build. Paired Pro assertions and CSS collision
+checks run only when `PIXFLOW_PRO_PACKAGE` names an explicit ZIP or
+`PIXFLOW_DESIGN_PRO_ROOT` names the configured private checkout (using its
+`dist/pixflow-design-pro.zip`). The helper never discovers neighbouring checkouts.
+
+```powershell
+$env:PIXFLOW_FREE_PACKAGE = 'C:\isolated-build\pixflow-ai.zip'
+pnpm test tests/wordpress
+# Optional paired validation:
+$env:PIXFLOW_PRO_PACKAGE = 'C:\isolated-build\pixflow-design-pro.zip'
+pnpm test tests/wordpress
+```

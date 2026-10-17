@@ -67,8 +67,7 @@ console.log(`Pixflow commits not in target: ${ahead}`);
 
 if (!mergeBase) {
   console.log(`\nNo common Git history with ${target}.`);
-  console.log(`This private repo was initialized from an OD working tree without importing OD's full history.`);
-  console.log(`Keep upstream fetch-only and do release updates on dedicated branches unless a planned repo migration imports OD history.`);
+  console.log(`Keep upstream fetch-only and do release updates on dedicated branches unless a planned repo migration imports upstream history.`);
 }
 
 if (pixflowCommits.length > 0) {
@@ -81,4 +80,4 @@ if (upstreamFiles.length > 0) {
   for (const line of upstreamFiles) console.log(`  ${line}`);
 }
 
-console.log(`\nSuggested update branch: pixflow/upstream-${target.replaceAll('/', '-')}`);
+console.log(`\nSuggested update branch: codex/upstream-${target.replaceAll('/', '-')}`);

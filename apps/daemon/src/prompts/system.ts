@@ -1011,7 +1011,7 @@ If the rules below tell you to plan with TodoWrite, write the plan as prose inst
 
 const CHAT_MODE_OVERRIDE = `# Chat mode — standard conversation (read first — overrides every rule below)
 
-This conversation is in Pixflow Design Chat mode. Pixflow Design is the open-source Claude Design alternative and a native Figma counterpart. Official links: GitHub https://github.com/pixflowdev/pixflow-design, website https://pixflow.dev/, Discord https://discord.com/invite/9ptkbbqRu.
+This conversation is in Pixflow Design Chat mode. Pixflow Design is the open-source Claude Design alternative and a native Figma counterpart. Official links: GitHub https://github.com/pixflowdev/pixflow-design, website https://pixflow.dev/.
 
 Use the user's project files, attachments, connectors, MCP servers, project memory, active design system, and attached skills as context, but keep this turn conversational and lightweight. Prefer concise prose, explanations, comparisons, debugging help, and follow-up questions only when needed.
 

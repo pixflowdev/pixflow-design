@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(import.meta.dirname, '..', '..', '..');
 
 describe('Pixflow WordPress REST proxy authentication recovery', () => {
-  it('refreshes an expired REST nonce and retries the original request once', () => {
+  it.skipIf(!process.env.PIXFLOW_DESIGN_PRO_ROOT)('refreshes an expired REST nonce and retries the original request once', () => {
     const source = readFileSync(
-      resolve(root, 'wordpress/assets/pixflow-design-builder.js'),
+      resolve(process.env.PIXFLOW_DESIGN_PRO_ROOT!, 'wordpress-pro/assets/pixflow-design-builder.js'),
       'utf8',
     );
 
@@ -36,7 +36,7 @@ describe('Pixflow WordPress conversation mode persistence', () => {
     );
 
     expect(source).toContain(
-      'private function od_normalize_session_mode(string $session_mode): string',
+      'protected function od_normalize_session_mode(string $session_mode): string',
     );
     expect(source).toContain("in_array($session_mode, ['ask', 'chat'], true)");
     expect(source).toContain("if ($session_mode === 'plan')");

@@ -1,43 +1,46 @@
-# Pixflow Design WordPress Wrapper
+# Pixflow Design for WordPress
 
-This wrapper keeps the OD v0.10.0 workspace intact and adds only the Bricks Builder entry point for Pixflow Design.
+This directory owns the Free WordPress host: authenticated site APIs, the floating
+agent panel, native WordPress/Gutenberg operations, onboarding, appearance,
+provider settings, durable chat history and export. Shared React code lives in
+`apps/web`; this is not a separate copy of that application.
 
-The builder shell enqueues only in the Bricks main window. It adds a Pixflow Design toolbar icon and opens a full-screen overlay that mounts the OD React app directly into the builder page.
+Premium builder integrations, Workspace contributions, advanced raw tools and
+Composio are supplied by the separately installed Pro add-on. Core retains their
+module contracts, permission boundaries and saved-data compatibility, not their
+private implementations. See [repository boundaries](../docs/architecture.md).
 
-PHP classes under `wordpress/src/` are mapped with Composer PSR-4:
+## Build and installed identity
 
-```json
-"PixflowDesign\\WordPress\\": "wordpress/src/"
-```
+Use `pnpm wordpress:build` for the local build or `pnpm wordpress:zip` to build
+browser assets and the website ZIP. Read [packaging](../docs/pixflow-design-local-packaging.md)
+for isolated output options. [Directory builds](directory/BUILD.md) are separate:
+they use WordPress.org updates rather than the website updater.
 
-The plugin bootstrap loads `vendor/autoload.php` when present and falls back to the minimal direct include required for local development before Composer has been installed.
+The installed basename is `pixflow-ai/pixflow-ai.php`. Keep it unchanged so existing
+users can upgrade without reinstalling. Do not install a second copy under a
+`pixflow-design/` directory. Source cleanup does not authorize replacing published
+ZIPs or changing update feeds.
 
-Build the local WordPress plugin zip with the embedded OD React bundle:
+PHP classes use the `PixflowDesign\WordPress\` namespace with the local autoloader
+and vendored dependencies. Runtime browser assets are generated under
+`wordpress/assets/app/`; edit their TypeScript/CSS sources rather than compiled files.
 
-```bash
-pnpm wordpress:build
-```
+## Execution and preservation
 
-Build only the WordPress plugin zip with whatever embedded app bundle already exists:
+API chat runs through WordPress without requiring the Bridge. Local CLI execution
+uses the authenticated Bridge connection. Pro integrations are discovered and
+authorized server-side. Existing licences, preferences, conversations and installed
+resources must remain readable when a capability becomes unavailable.
 
-```bash
-pnpm wordpress:zip
-```
+The `pixflow-design/v1/od/*` REST paths and other `od` identifiers are compatibility
+contracts, not product branding. Keep those paths stable. Resource migration must
+preserve personal assets and site content; essential Free guidance is bundled and
+does not require a resource download.
 
-The zip builder includes the WordPress wrapper, Composer metadata, the OD app icon, `vendor/` when present, and the generated bundle under `wordpress/assets/app/`.
+## Validation
 
-The zip is packaged as `pixflow-ai/pixflow-ai.php`. That preserves the installed plugin basename used by existing Pixflow users, so WordPress can install Pixflow Design as an update over the current Pixflow plugin instead of requiring users to remove it first.
-
-Do not also install a `pixflow-design/pixflow-design.php` package on the same site. WordPress identifies plugins by basename, not display name, so multiple basenames with the same `Plugin Name` appear as duplicate Pixflow Design plugins and can leave stale activation records.
-
-The embedded OD app rewrites daemon-style `/api/*` requests to the plugin REST namespace at `pixflow-design/v1/od/*`. API/BYOK mode uses WordPress-backed projects, conversations, file trees, and request-scoped media generation, so it does not require the optional Bridge. Local CLI execution, filesystem projects, long-running media task polling, artifacts, and frame capture remain Bridge capabilities.
-# Bricks design-system library
-
-Inside the WordPress embed, Design Systems uses the existing Pixflow visual editor for both manual drafts and AI proposals. Creating and saving a library record does not apply it to the site. Apply is a separate action.
-
-On an available Pixflow Framework route, Apply uses the existing framework service, including its Theme Styles integration. Other routes receive namespaced Bricks variables, palettes and reusable classes; global Theme Styles are optional. Unrelated Theme Styles and their conditions are retained. Library records retain up to 20 previous revisions and reject stale revision updates.
-
-The WordPress REST surface is `pixflow-design/v1/od/design-systems/bricks`, with `/<id>` for records and `/<id>/apply` for application. Existing administrator authentication applies. The CLI equivalent is `od design-systems bricks <list|show|save|apply> --help`; it uses these same endpoints and accepts a private authentication headers file. Never commit that file. CLI profiles should reference available Bricks fonts; the editor additionally installs needed Google fonts when local font installation is required.
-
-Validation: focused library/editor/parser/hydration web tests, `wordpress/tests/bricks-design-system-library.test.php`, and daemon CLI tests. Local QA also exercised manual creation/editing, a Codex AI proposal, standalone application with and without Theme Styles, Framework application, and the previous editor's publication link. Final visual review after the last styling adjustment requires an authenticated local WordPress session. No public deployment is part of this change.
-
+`wordpress/tests/` contains isolated PHP checks and explicitly named integration
+or live tests. Run live tests only against a configured disposable site; never
+use customer content as a fixture. Shared browser tests live in `apps/web/tests`,
+and cross-runtime checks live in `e2e/tests`.

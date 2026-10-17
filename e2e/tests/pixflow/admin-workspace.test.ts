@@ -35,7 +35,9 @@ function host(flag: unknown, native = false) {
     querySelector: (selector: string) => selector.includes('wp-admin-bar') ? trigger : native ? editorTrigger : null,
   };
   const start = source.indexOf('  function bindWorkspaceMenu()');
-  const end = source.indexOf("  if (document.readyState", start);
+  const end = source.indexOf('  // A native editor can be usable', start);
+  expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
   runInNewContext(`${source.slice(start, end)}\nbindWorkspaceMenu();`, {
     window, document, config: { workspaceAvailable: flag, appConfig: { theme: 'dark' } }, setPanelUiLabel: vi.fn(),
   });
@@ -58,10 +60,16 @@ describe('WordPress admin Workspace host', () => {
     h.message('pixflow-design:workspace-tool-closed');
     expect(h.body.children[0].hidden).toBe(false);
   });
-  it.each([false, '', undefined, 'false', '0'])('does not bind unavailable Workspace (%s)', flag => {
+  it.each([false, '', undefined, 'false', '0'])('keeps Settings available and blocks unavailable Workspace (%s)', flag => {
     const h = host(flag); h.click();
-    expect(h.window.pixflowDesignWorkspaceMenu.mount).not.toHaveBeenCalled();
+    expect(h.window.pixflowDesignWorkspaceMenu.mount).toHaveBeenCalledOnce();
+    expect(h.options().workspaceAvailable).toBe(false);
+    h.options().onToggleWorkspace();
+    h.options().onOpenTool('design-system');
     expect(h.mount).not.toHaveBeenCalled();
+    h.options().onOpenSettings();
+    expect(h.mount).toHaveBeenCalledOnce();
+    expect(h.body.children[0].hidden).toBe(true);
   });
   it.each([true, '1'])('accepts Pro and WordPress-localized Pro (%s), mounting only once', flag => {
     const h = host(flag); h.click(); h.click();

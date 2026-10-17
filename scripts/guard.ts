@@ -87,12 +87,6 @@ const residualAllowedExactPaths = new Set([
   "apps/web/public/od-notifications-sw.js",
   // PostCSS loads Tailwind through a web-local .mjs compatibility config entry.
   "apps/web/postcss.config.mjs",
-  "scripts/bake-html-ppt-examples.mjs",
-  // CI-only plugin-preview renderer. Kept .mjs and run directly by Node so its
-  // runtime deps (puppeteer-core + a headless Chrome + ffmpeg) are provided by
-  // the CI environment and never pulled into the daemon/web TS build or bundle.
-  "scripts/scaffold-html-ppt-skills.mjs",
-  "scripts/sync-hyperframes-skill.mjs",
   "scripts/verify-media-models.mjs",
   // AMR (vela) verifier: ad-hoc dev runner that imports the daemon's compiled
   // `dist/acp.js` and drives a real `vela agent run` against a live model.
@@ -915,7 +909,7 @@ const hardcodedColorAllowlist: StylePolicyAllowlistEntry[] = [
     reason: "global token definitions, shadows, overlays, and retained migration inventory live in the CSS source of truth",
   },
   {
-    pathPattern: /^apps\/web\/src\/components\/(?:AgentIcon|PaletteTweaks|PetSettings|SettingsDialog)\.tsx$/,
+    pathPattern: /^apps\/web\/src\/components\/(?:AgentIcon|PetSettings|SettingsDialog)\.tsx$/,
     valuePattern: /^(?:#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\))$/,
     reason: "brand accents, user accent choices, and legacy token fallbacks are classified as Phase 1 migration inventory",
   },

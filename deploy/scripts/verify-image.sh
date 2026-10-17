@@ -31,7 +31,7 @@ for required_path in \
   "app/apps/daemon/node_modules/express" \
   "app/apps/daemon/node_modules/better-sqlite3" \
   "app/skills" \
-  "app/design-systems" \
+  "app/guidance" \
   "app/assets/frames"
 do
   if ! grep -Eq "^${required_path}(/|$)" <<<"$archive_listing"; then
@@ -90,5 +90,5 @@ if [[ "$health_code" != "200" ]]; then
 fi
 
 rss_bytes="$(docker stats --no-stream --format '{{.MemUsage}}' "$CONTAINER_ID" | awk '{print $1}')"
-echo "open-design runtime image verified: $IMAGE_REF"
+echo "Pixflow Design runtime image verified: $IMAGE_REF"
 echo "container memory sample: ${rss_bytes}"

@@ -1,0 +1,2 @@
+{"type":"meta","source":{"provider":"synthetic","author":"Pixflow Design contributors","license":"Apache-2.0","trace_id":"synthetic-empty"},"agent":"claude","model":"synthetic-test-model","duration_ms":40,"total_tokens":12,"tags":["synthetic","skill:parser-regression"],"outcome":"succeeded","tool_call_count":0,"error_count":0}
+{"type":"report","content":"","t_ms":40}

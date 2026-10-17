@@ -1,0 +1,27 @@
+{
+  "agent": "codex",
+  "trace": "synthetic-empty",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "raw",
+      "line": "{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"id\":\"mock-msg-1\",\"text\":\"\"}}"
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cached_read_tokens": 0
+      }
+    }
+  ]
+}

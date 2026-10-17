@@ -1,0 +1,107 @@
+{
+  "agent": "claude",
+  "trace": "synthetic-success",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "model": "synthetic-test-model",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-read",
+      "name": "Read",
+      "input": {
+        "file_path": "/fixture/example.txt"
+      }
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "tool_use"
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-read",
+      "content": "Hello fixture.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-write",
+      "name": "Write",
+      "input": {
+        "file_path": "/fixture/example.txt",
+        "content": "Updated fixture."
+      }
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "tool_use"
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-write",
+      "content": "Fixture written.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-edit",
+      "name": "Edit",
+      "input": {
+        "file_path": "/fixture/example.txt",
+        "old_string": "Updated",
+        "new_string": "Edited"
+      }
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "tool_use"
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-edit",
+      "content": "Fixture edited.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-bash",
+      "name": "Bash",
+      "input": {
+        "command": "printf fixture"
+      }
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "tool_use"
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-bash",
+      "content": "fixture",
+      "isError": false
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic fixture complete."
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn"
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "costUsd": 0,
+      "durationMs": 40,
+      "stopReason": "end_turn"
+    }
+  ]
+}

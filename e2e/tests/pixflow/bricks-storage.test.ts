@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 
-const source = readFileSync(new URL('../../../wordpress/assets/pixflow-design-builder.js', import.meta.url), 'utf8');
+// The native Bricks implementation belongs to the explicitly paired Pro checkout.
+const proRoot = process.env.PIXFLOW_DESIGN_PRO_ROOT;
+const source = proRoot ? readFileSync(resolve(proRoot, 'wordpress-pro/assets/pixflow-design-builder.js'), 'utf8') : '';
 function harness() {
   const values = new Map<string, string>();
   const sessionStorage = { getItem: (key: string) => values.get(key) || null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) };
@@ -25,7 +28,7 @@ function harness() {
   const api = runInNewContext(`${scope}\n${reader}\n${writer}\n({write:writeBricksAgentMemoryMessages,read:readBricksAgentMemoryEnvelope});`, context) as { write: (value: unknown[]) => void; read: () => {messages: unknown[]} };
   return { api, config, settings };
 }
-describe('native Bricks transcript storage', () => {
+describe.skipIf(!proRoot)('native Bricks transcript storage (explicit Pro source)', () => {
   it('retains a whole streamed answer, provider identity and attachment ownership after sanitization', () => {
     const start = source.indexOf('function compactBricksAgentTranscriptValue(');
     const end = source.indexOf('function sanitizeBricksAgentIntentScalar(', start);

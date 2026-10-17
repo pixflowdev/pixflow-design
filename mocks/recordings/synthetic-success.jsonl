@@ -1,0 +1,10 @@
+{"type":"meta","source":{"provider":"synthetic","author":"Pixflow Design contributors","license":"Apache-2.0","trace_id":"synthetic-success"},"agent":"claude","model":"synthetic-test-model","duration_ms":40,"total_tokens":12,"tags":["synthetic","skill:parser-regression"],"outcome":"succeeded","tool_call_count":4,"error_count":0}
+{"type":"tool_call","obs_id":"synthetic-success-read","name":"Read","input":{"file_path":"/fixture/example.txt"},"t_ms":0}
+{"type":"tool_result","obs_id":"synthetic-success-read","output":"Hello fixture.","status":"success","t_ms":1}
+{"type":"tool_call","obs_id":"synthetic-success-write","name":"Write","input":{"file_path":"/fixture/example.txt","content":"Updated fixture."},"t_ms":10}
+{"type":"tool_result","obs_id":"synthetic-success-write","output":"Fixture written.","status":"success","t_ms":11}
+{"type":"tool_call","obs_id":"synthetic-success-edit","name":"Edit","input":{"file_path":"/fixture/example.txt","old_string":"Updated","new_string":"Edited"},"t_ms":20}
+{"type":"tool_result","obs_id":"synthetic-success-edit","output":"Fixture edited.","status":"success","t_ms":21}
+{"type":"tool_call","obs_id":"synthetic-success-bash","name":"Bash","input":{"command":"printf fixture"},"t_ms":30}
+{"type":"tool_result","obs_id":"synthetic-success-bash","output":"fixture","status":"success","t_ms":31}
+{"type":"report","content":"Synthetic fixture complete.","t_ms":40}

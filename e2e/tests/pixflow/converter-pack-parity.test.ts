@@ -9,9 +9,9 @@ import {
   PIXFLOW_BRICKS_CONVERTER_SKILL_PACK_FILES,
 } from '@open-design/contracts';
 
-it('keeps WordPress converter resources and the Bridge contract identical', () => {
+it.skipIf(!process.env.PIXFLOW_DESIGN_PRO_ROOT)('keeps WordPress converter resources and the Bridge contract identical', () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
-  const php = "define('ABSPATH', getcwd()); require 'wordpress/src/Mcp/PromptSkillCatalog.php'; echo json_encode((new \\PixflowDesign\\WordPress\\Mcp\\PromptSkillCatalog())->bricks_converter_skill_pack());";
+  const php = "define('ABSPATH', getcwd()); require getenv('PIXFLOW_DESIGN_PRO_ROOT') . '/wordpress-pro/src/Mcp/BricksPromptSkillCatalog.php'; echo json_encode((new \\PixflowDesign\\WordPress\\Mcp\\BricksPromptSkillCatalog())->bricks_converter_skill_pack());";
   const pack = JSON.parse(execFileSync('php', ['-r', php], {
     cwd: root, encoding: 'utf8', windowsHide: true, timeout: 15000,
   })) as { revision: string; fingerprint: string; files: {path: string; content: string; fingerprint: string}[] };

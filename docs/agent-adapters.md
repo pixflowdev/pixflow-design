@@ -2,7 +2,7 @@
 
 **Parent:** [`spec.md`](spec.md) · **Siblings:** [`architecture.md`](architecture.md) · [`skills-protocol.md`](skills-protocol.md) · [`new-agent-runtime-acp.md`](new-agent-runtime-acp.md) · [`modes.md`](modes.md)
 
-The adapter layer is OD's most load-bearing design decision. We delegate the **entire agent loop** — model calls, tool use, context management, permission handling, resume, cancel — to the user's existing code agent CLI. OD's job is to detect it, feed it a skill + prompt + working directory, and stream its output back to the web UI.
+The adapter layer is Pixflow Design's most load-bearing design decision. We delegate the **entire agent loop** — model calls, tool use, context management, permission handling, resume, cancel — to the user's existing code agent CLI. Pixflow Design's job is to detect it, feed it a skill + prompt + working directory, and stream its output back to the web UI.
 
 If you're adding a new ACP-backed runtime, start with [`new-agent-runtime-acp.md`](new-agent-runtime-acp.md) for the expected stdio transport, JSON-RPC message flow, and process lifecycle contract.
 
@@ -102,14 +102,14 @@ If both signals agree, detection is confident. If only one signal fires, we mark
 | **qoder** | `qodercli` | Qoder CLI config | Qoder CLI managed | ❌ (prompt-injected) | ✅ | ✅ (`stream-json`) | P2 |
 | **pi** | `pi` | `~/.pi/agent/` | `~/.pi/agent/skills/` | ❌ (prompt-injected) | ✅ | ✅ (`pi-rpc` JSON-RPC) | P2 |
 
-"P0/P1/P2" correspond to the roadmap phases in [`roadmap.md`](roadmap.md).
+The historical P0/P1/P2 labels describe adapter coverage priorities; they are not a current release schedule.
 
 ## 4. Skill injection per adapter
 
 Skills travel into each agent via one of three strategies, in order of preference:
 
 ### 4.1 Native skill loading (preferred)
-Agent scans its own `~/.<agent>/skills/` on launch. We symlink OD's skill into that dir (see [`skills-protocol.md`](skills-protocol.md) §3) and let the agent pick it up natively. Zero prompt overhead.
+An agent may load its own installed skills. Pixflow preserves user-managed agent configuration; the bundled guidance is resolved through the current runtime's prompt/skill context. Do not install symlinks into a user's global skills directory as part of repository setup. See [skills protocol](skills-protocol.md).
 
 - **Works for:** Claude Code. Codex (version-dependent). OpenCode.
 
@@ -142,10 +142,10 @@ The adapter declares which strategy to use via `capabilities().nativeSkillLoadin
 
 - Invocation: direct Anthropic Messages API with `stream: true`.
 - Skill loading: prompt injection only — read the skill dir, inline everything.
-- Tool use: we register `Read/Write/Edit` as tools, implement them in the daemon against the artifact cwd, and run the loop ourselves. This is the one place OD does own the loop — because the user has no agent at all. Keep it as dumb as possible.
+- Tool use: we register `Read/Write/Edit` as tools, implement them in the daemon against the artifact cwd, and run the loop ourselves. This is the one place Pixflow Design does own the loop — because the user has no agent at all. Keep it as dumb as possible.
 - Surgical edits: approximated by regenerating the whole target file with "only change X" in the prompt.
 - Model: Claude Sonnet 4.6 default; Opus 4.7 behind a flag.
-- **Why ship this at all?** Topology C requires it (no daemon available in a pure-Vercel deploy). Also, users trying OD for the first time without a CLI installed still get a working experience.
+- **Why ship this at all?** Topology C requires it (no daemon available in a pure-Vercel deploy). Also, users trying Pixflow Design for the first time without a CLI installed still get a working experience.
 
 ### 5.3 Codex
 
@@ -161,7 +161,7 @@ The adapter declares which strategy to use via `capabilities().nativeSkillLoadin
 - Install/update: macOS/Linux/WSL users can install with `curl -fsSL https://cli.devin.ai/install.sh | bash`; run `devin update` for existing installs.
 - Version requirement: requires a Devin CLI build with the `devin acp` subcommand (verified with `devin 2026.5.1-1`). Check with `devin acp --help`; if the subcommand is missing, update or reinstall Devin for Terminal.
 - Streaming: Agent Client Protocol JSON-RPC over stdio, handled by the daemon's shared `acp-json-rpc` transport.
-- Skill loading: Devin supports `.devin/skills/` and `~/.config/devin/skills/`; OD's current daemon also prompt-injects the selected skill body into the composed prompt, so no per-project skill install is required for generation.
+- Skill loading: Devin supports `.devin/skills/` and `~/.config/devin/skills/`; Pixflow Design's current daemon also prompt-injects the selected skill body into the composed prompt, so no per-project skill install is required for generation.
 - Surgical edits: Devin's own edit/write tools handle targeted changes.
 - Permission: `--permission-mode dangerous` avoids headless approval prompts in the web UI; `--respect-workspace-trust false` ensures Devin doesn't block on trust prompts for newly created project dirs. Org/team-level policies still apply inside Devin.
 
@@ -205,7 +205,7 @@ The adapter declares which strategy to use via `capabilities().nativeSkillLoadin
 
 ### 5.9 Qoder CLI
 
-- Invocation: `qodercli -p --output-format stream-json --permission-mode bypass_permissions --cwd <dir> [--model <id>] --add-dir <absolute-skills-dir> --add-dir <absolute-design-systems-dir>`, with the composed prompt delivered over stdin. Print mode exits after the turn, which fits the daemon's one-request chat lifecycle. Qoder is currently text-only in OD; `_imagePaths` are intentionally ignored because Qoder CLI does not expose a supported multimodal flag for this adapter path yet.
+- Invocation: `qodercli -p --output-format stream-json --permission-mode bypass_permissions --cwd <dir> [--model <id>] --add-dir <absolute-skills-dir> --add-dir <absolute-design-systems-dir>`, with the composed prompt delivered over stdin. Print mode exits after the turn, which fits the daemon's one-request chat lifecycle. Qoder is currently text-only in Pixflow Design; `_imagePaths` are intentionally ignored because Qoder CLI does not expose a supported multimodal flag for this adapter path yet.
 - Streaming: `--output-format stream-json` emits JSONL records such as `system/init`, `assistant`, and `result`. `apps/daemon/src/qoder-stream.ts` maps assistant content blocks to text deltas, maps assistant errors without text to typed error events, and preserves result usage, model usage, cost, duration, stop reason, and unknown records as raw events.
 - Models: ships fallback hints for `default`, `lite`, `efficient`, `auto`, `performance`, and `ultimate`. Selecting `default` omits `--model` so Qoder's own CLI configuration remains authoritative.
 - Skills: prompt injection only in v1. `--add-dir` is repeatable so Qoder can read absolute skill and design-system roots that live outside the active project cwd; the daemon does not forward relative extra directory entries.
@@ -270,7 +270,7 @@ Switching mid-run is not allowed (cancel first). The artifact is agent-agnostic;
 
 ## 8. Fallback chain
 
-If the user's preferred agent fails (crash, auth, timeout), OD offers a one-click fallback in this order:
+If the user's preferred agent fails (crash, auth, timeout), Pixflow Design offers a one-click fallback in this order:
 
 1. User's preferred agent (e.g. Cursor Agent)
 2. Any other detected agent (Claude Code, if installed)
@@ -300,8 +300,8 @@ Web UI mirrors this in an agent-selector dropdown, with unauthenticated agents s
 
 We inherit the underlying agent's permission model rather than building our own. This means:
 
-- **Claude Code** respects its own `--allowed-tools` and `--permission-mode` flags. OD passes through user preferences.
-- **Codex / Cursor** sandbox by workspace; OD always sets cwd to the artifact dir so nothing outside is visible by default.
+- **Claude Code** respects its own `--allowed-tools` and `--permission-mode` flags. Pixflow Design passes through user preferences.
+- **Codex / Cursor** sandbox by workspace; Pixflow Design always sets cwd to the artifact dir so nothing outside is visible by default.
 - **Qoder CLI** runs with `--permission-mode bypass_permissions` for non-interactive web execution and is scoped by the daemon's cwd plus explicit absolute `--add-dir` entries.
 - **API fallback** is the one case we own. We implement a whitelist: only `Read`, `Write`, `Edit` tools, all rooted at the artifact cwd. Network access is off.
 
@@ -332,7 +332,7 @@ Each adapter is a separate module so community contributions can add new ones wi
 ## 12. Open questions
 
 - **Nested agents.** What if Claude Code's agent itself spawns a subagent? We receive events from the outer process only. v1 policy: surface only top-level events; summarize subagent activity as "sub-task" placeholder.
-- **Billing awareness.** Some agents bill per message, some per token. OD doesn't track cost in MVP; v1 adds an optional "usage" event from adapters that expose it.
+- **Billing awareness.** Some agents bill per message, some per token. Pixflow Design doesn't track cost in MVP; v1 adds an optional "usage" event from adapters that expose it.
 - **Windows support.** PATH scanning and `spawn` semantics differ on Windows. v1 targets
   macOS and Linux; Windows is best-effort. Known issue fixed: `spawn ENAMETOOLONG` when
   running Gemini CLI (and other plain-text agents) on Windows — resolved by routing the

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * mock-agent.mjs — pretends to be one of OD's supported agent CLIs
+ * mock-agent.mjs â€” pretends to be one of OD's supported agent CLIs
  * (claude / opencode / codex / deepseek / qwen / grok) by streaming a
  * pre-recorded session in that CLI's native stdout protocol. Zero LLM
  * tokens.
@@ -8,11 +8,11 @@
  * Usage (driven by the wrappers in bin/, not directly):
  *   ./mock-agent.mjs --as opencode [--no-delay] [--report-file <path>]
  *
- * Recording selection — see lib/recording-picker.mjs. The wrappers
+ * Recording selection â€” see lib/recording-picker.mjs. The wrappers
  * announce the picked trace id on stderr.
  *
- * Trace data: ./recordings/<trace-id>.jsonl (anonymized exports from
- * Langfuse). Index: ./recordings/index.json.
+ * Trace data: ./recordings/synthetic-*.jsonl (locally authored test data).
+ * Index: ./manifest.json.
  */
 
 import { pickRecording, readRecording } from './lib/recording-picker.mjs';
@@ -33,15 +33,15 @@ function parseArgs(argv) {
     if (a === '--as' || a === '--agent') { opts.as = argv[++i]; continue; }
     if (a === '--no-delay')              { opts.noDelay = true; continue; }
     if (a === '--report-file')           { opts.reportFile = argv[++i]; continue; }
-    if (a.startsWith('-')) continue;     // Unknown flag — silently skip (model/permission flags etc.)
-    // Anything left is a positional — used by vela subcommand dispatch.
+    if (a.startsWith('-')) continue;     // Unknown flag â€” silently skip (model/permission flags etc.)
+    // Anything left is a positional â€” used by vela subcommand dispatch.
     opts.positionals.push(a);
   }
   if (process.env.OD_MOCKS_NO_DELAY === '1') opts.noDelay = true;
   // Fall through to REPORT_FILE env when --report-file wasn't supplied.
-  // Some harnesses (e.g. the agent-pr-explore orchestrator) set
+  // Some harnesses set
   // REPORT_FILE as env but expect the agent to write there
-  // autonomously — real opencode/claude do via their Write tool, but
+  // autonomously â€” real opencode/claude do via their Write tool, but
   // the mock needs to project the recording's final assistant text to
   // that path so the harness sees a report.
   if (!opts.reportFile && process.env.REPORT_FILE) {
@@ -71,7 +71,7 @@ async function main() {
       '  supported: opencode | claude | codex | gemini | cursor-agent |\n' +
       '             deepseek | qwen | grok | plain |\n' +
       '             devin | hermes | kilo | kimi | kiro | vibe   (ACP)\n' +
-      '             vela                                          (AMR — vela CLI)\n',
+      '             vela                                          (AMR â€” vela CLI)\n',
     );
     process.exit(2);
   }
@@ -83,12 +83,12 @@ async function main() {
     const cmd = (opts.positionals[0] || '').trim();
     if (cmd === 'login')  return runVelaLogin();
     if (cmd === 'models') return runVelaModels();
-    // Default: `agent run --runtime opencode` — fall through to the ACP
+    // Default: `agent run --runtime opencode` â€” fall through to the ACP
     // server below with the vela-flavored protocol.
   }
 
   // ACP agents read JSON-RPC messages off stdin one line at a time, so the
-  // bulk-prompt buffering logic below doesn't apply — pickRecording sees no
+  // bulk-prompt buffering logic below doesn't apply â€” pickRecording sees no
   // prompt for hash-mode (use OD_MOCKS_TRACE or _POOL instead).
   const ACP_AGENTS = new Set(['devin', 'hermes', 'kilo', 'kimi', 'kiro', 'vibe', 'vela']);
   const isAcp = ACP_AGENTS.has(opts.as);
@@ -96,20 +96,15 @@ async function main() {
   const picked = await pickRecording({ prompt });
   if (!picked) {
     process.stderr.write(
-      'mock-agent: no recordings on disk yet.\n' +
-      'The recording corpus is hosted on Cloudflare R2 (see mocks/manifest.json)\n' +
-      'and is fetched on demand. Run:\n' +
-      '\n' +
-      '  bash mocks/scripts/fetch-recordings.sh             # all 179 (~30s, 4.5MB)\n' +
-      '  bash mocks/scripts/fetch-recordings.sh --agent claude   # subset\n' +
-      '\n' +
-      'Or set OD_MOCKS_RECORDINGS_DIR if you stashed them elsewhere.\n',
+      'mock-agent: no replay fixtures found.\n' +
+      'The repository includes synthetic fixtures under mocks/recordings/.\n' +
+      'Check OD_MOCKS_RECORDINGS_DIR if using a private local fixture directory.\n',
     );
     process.exit(3);
   }
 
   process.stderr.write(
-    `[mock-${opts.as}] picked ${picked.traceId.slice(0, 8)}… via ${picked.method}` +
+    `[mock-${opts.as}] picked ${picked.traceId.slice(0, 8)}â€¦ via ${picked.method}` +
     (picked.pool ? ` (pool="${picked.pool}")` : '') +
     '\n',
   );
@@ -130,14 +125,14 @@ async function main() {
     case 'deepseek':
     case 'grok':
     case 'plain':        await renderAsPlain(events, renderOpts);       break;
-    // ACP family — JSON-RPC server over stdio.
+    // ACP family â€” JSON-RPC server over stdio.
     case 'devin':
     case 'hermes':
     case 'kilo':
     case 'kimi':
     case 'kiro':
     case 'vibe':         await runAcpServer(events, renderOpts);        break;
-    // AMR (vela CLI) — ACP with vela-specific protocol extensions
+    // AMR (vela CLI) â€” ACP with vela-specific protocol extensions
     // (agentCapabilities + models block + strict set_model gate).
     case 'vela':         await runVelaAcpServer(events, renderOpts);    break;
     default:

@@ -20,11 +20,11 @@ Examples:
 - “Turn this folder of JSON files into a polished stakeholder report.”
 - “Create a design-system coverage artifact that can be refreshed after code changes.”
 
-The user experience should feel like the existing OD artifact flow:
+The user experience should feel like the existing Pixflow Design artifact flow:
 
 1. User chats with the selected agent.
 2. Agent uses a skill to plan and create a live artifact.
-3. OD persists the artifact as project-scoped files and metadata.
+3. Pixflow Design persists the artifact as project-scoped files and metadata.
 4. UI previews the artifact in the existing iframe/file viewer model.
 5. User can refresh the artifact later without asking the agent to redesign it from scratch.
 
@@ -32,7 +32,7 @@ The user experience should feel like the existing OD artifact flow:
 
 ### 2.1 Use `skill + daemon tool endpoint`, not MCP-first
 
-Monet exposes connectors and live artifacts through a controller-owned tool registry. OD should not copy that exact runtime shape because OD's core architecture is different: OD delegates to external CLI agents such as Claude Code, Codex, Cursor Agent, Gemini CLI, OpenCode, and Qwen.
+Monet exposes connectors and live artifacts through a controller-owned tool registry. Pixflow Design should not copy that exact runtime shape because Pixflow Design's core architecture is different: Pixflow Design delegates to external CLI agents such as Claude Code, Codex, Cursor Agent, Gemini CLI, OpenCode, and Qwen.
 
 The agent-facing interface should therefore be:
 
@@ -53,7 +53,7 @@ Reasons:
 - **Multi-agent compatibility:** every supported agent can read a skill and execute shell commands; MCP support varies by agent and CLI version.
 - **Lower migration cost:** current daemon `/api/chat` does not support per-run MCP binding.
 - **Centralized safety:** daemon endpoints can enforce project, path, connector, and output-size policies consistently.
-- **Skill-native product model:** OD's extension point is already `skills/` + `SKILL.md`, so live artifacts should feel like another OD capability, not a separate agent protocol.
+- **Skill-native product model:** Pixflow Design's extension point is already `skills/` + `SKILL.md`, so live artifacts should feel like another Pixflow Design capability, not a separate agent protocol.
 
 ### 2.2 Keep live artifacts distinct, but project-native
 
@@ -91,13 +91,13 @@ From `~/Projects/monet`:
 
 ### 3.2 Concepts to adapt
 
-Monet concept | OD adaptation
+Monet concept | Pixflow Design adaptation
 ---|---
 Controller `ToolRegistry` | Daemon service endpoints and optional CLI wrappers
 Chat tools `create_live_artifact`, `update_live_artifact`, `list_live_artifacts` | Skill instructions that call `od-tools live-artifacts ...` or localhost daemon endpoints
 Connector tools dynamically injected into tool registry | Connector catalog exposed through daemon endpoints; skill asks agent to query/use them explicitly
 SQLite-first artifact storage | Project-scoped metadata files first; SQLite optional later if indexing becomes necessary
-Controller-owned agent loop | External CLI agent loop; OD only injects skills and receives output/events
+Controller-owned agent loop | External CLI agent loop; Pixflow Design only injects skills and receives output/events
 
 ### 3.3 Monet files used as source material
 
@@ -374,7 +374,7 @@ Use project-scoped files under the daemon runtime data directory first. `OD_DATA
                 └── provenance.json
 ```
 
-The dot-prefixed `.live-artifacts/` directory keeps implementation files out of the generic project file tree while preserving OD's file-first, inspectable-on-disk artifact philosophy. Add SQLite later only for cross-project indexing or high-volume refresh history.
+The dot-prefixed `.live-artifacts/` directory keeps implementation files out of the generic project file tree while preserving Pixflow Design's file-first, inspectable-on-disk artifact philosophy. Add SQLite later only for cross-project indexing or high-volume refresh history.
 
 `index.html` is a generated preview artifact, not the source of truth for refreshable data. The UI should load live artifacts through:
 
@@ -541,7 +541,7 @@ The daemon must validate `template.html` before persistence and again before pre
 ```text
 User asks for a live dashboard
   ↓
-OD selects/injects live-artifact skill
+Pixflow Design selects/injects live-artifact skill
   ↓
 Agent queries connectors or local sources through daemon wrapper
   ↓
@@ -849,7 +849,7 @@ Design constraints:
   - `od_connectors_list` → `GET /api/tools/connectors/list`
   - `od_connectors_execute` → `POST /api/tools/connectors/execute`
 - **No project overrides:** tool input schemas must not accept `projectId`; project/run scope is always derived from `OD_TOOL_TOKEN` by daemon routes.
-- **No global config mutation:** OD may display or generate an ephemeral MCP launch descriptor for compatible agents, but must not edit user-level MCP config files automatically.
+- **No global config mutation:** Pixflow Design may display or generate an ephemeral MCP launch descriptor for compatible agents, but must not edit user-level MCP config files automatically.
 - **No primary-path dependency:** `SKILL.md`, `od tools ...`, and raw-token debugging remain unchanged and continue to work when MCP is disabled or unsupported.
 - **Typed implementation:** project-owned MCP code should be TypeScript source under `apps/daemon/src` (for example `apps/daemon/src/mcp/live-artifacts-server.ts` plus small CLI dispatch in `apps/daemon/src/cli.ts`). Any JavaScript entrypoint must be generated build output or an explicitly documented compatibility artifact.
 
@@ -950,7 +950,7 @@ Keep the first implementation small: current daemon route handlers live in `apps
 - No raw provider response storage.
 - No multi-user auth model.
 - No cloud-hosted connector broker in v1.
-- No new canvas abstraction separate from OD's existing artifact/preview model.
+- No new canvas abstraction separate from Pixflow Design's existing artifact/preview model.
 
 ## 15. Open questions
 

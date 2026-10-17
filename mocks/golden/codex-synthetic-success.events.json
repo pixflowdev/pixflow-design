@@ -1,0 +1,83 @@
+{
+  "agent": "codex",
+  "trace": "synthetic-success",
+  "events": [
+    {
+      "type": "status",
+      "label": "initializing",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-read",
+      "name": "Bash",
+      "input": {
+        "command": "cat \"/fixture/example.txt\""
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-read",
+      "content": "Hello fixture.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-write",
+      "name": "Bash",
+      "input": {
+        "command": "# Write /fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-write",
+      "content": "Fixture written.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-edit",
+      "name": "Bash",
+      "input": {
+        "command": "# Edit /fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-edit",
+      "content": "Fixture edited.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-bash",
+      "name": "Bash",
+      "input": {
+        "command": "printf fixture"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-bash",
+      "content": "fixture",
+      "isError": false
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic fixture complete."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "cached_read_tokens": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "agent": "opencode",
+  "trace": "synthetic-failure",
+  "events": [
+    {
+      "type": "status",
+      "label": "running"
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-failure-missing",
+      "name": "Read",
+      "input": {
+        "file_path": "/fixture/missing.txt"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic failure handled."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 12,
+        "thought_tokens": 0,
+        "cached_read_tokens": 0,
+        "cached_write_tokens": 0
+      },
+      "costUsd": 0
+    }
+  ]
+}

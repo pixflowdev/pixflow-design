@@ -13,7 +13,7 @@ both.
 | ------------------------------------------ | -------------------------------------------------------------------------------------- |
 | `packages.<system>.daemon`                 | The `@open-design/daemon` package — produces `bin/od`. Default output.                 |
 | `packages.<system>.web`                    | The Next.js static export (`apps/web/out/`) ready to drop into any static file server. |
-| `apps.<system>.default`                    | `nix run github:nexu-io/open-design` — boots the daemon.                               |
+| `apps.<system>.default`                    | `nix run github:pixflowdev/pixflow-design` — boots the daemon.                               |
 | `devShells.<system>.default`               | Node 24 + Corepack-pinned pnpm 10.33 — reproduces `pnpm install` locally.              |
 | `homeManagerModules.{default,open-design}` | Home Manager module — primary individual-developer interface.                          |
 | `nixosModules.{default,open-design}`       | NixOS module — secondary, for shared/server installs.                                  |
@@ -21,8 +21,8 @@ both.
 ## Try it without installing
 
 ```bash
-nix run github:nexu-io/open-design        # boots the daemon on :7457
-nix develop github:nexu-io/open-design    # drop into the dev shell
+nix run github:pixflowdev/pixflow-design        # boots the daemon on :7457
+nix develop github:pixflowdev/pixflow-design    # drop into the dev shell
 ```
 
 ## (1) Home Manager — the recommended path
@@ -32,7 +32,7 @@ default module:
 
 ```nix
 {
-  inputs.open-design.url = "github:nexu-io/open-design";
+  inputs.open-design.url = "github:pixflowdev/pixflow-design";
 
   outputs = { self, home-manager, open-design, ... }: {
     homeConfigurations.you = home-manager.lib.homeManagerConfiguration {

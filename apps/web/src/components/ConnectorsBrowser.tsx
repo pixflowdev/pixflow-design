@@ -262,7 +262,7 @@ interface ConnectorsBrowserProps {
   composioConfigured: boolean;
   catalogRefreshKey?: string | number;
   /** Optional analytics hook for the integrations surface. The parent
-   *  (IntegrationsView → ConnectorSection) wires this so provider-tab
+   *  can wire this so provider-tab
    *  / search clicks emit on `page_name: 'integrations'`; when omitted
    *  (SettingsDialog uses the settings page family instead), no event
    *  is fired. */

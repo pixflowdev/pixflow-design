@@ -29,7 +29,7 @@ export function BridgeConnectorSection({
    *  section-local Save button can flip from "Saving…" back to idle. */
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
   /** Optional analytics hook for the integrations surface. The parent
-   *  (IntegrationsView) wires this so connectors-tab clicks emit on
+   *  can wire this so connectors-tab clicks emit on
    *  `page_name: 'integrations'`; when omitted (SettingsDialog uses the
    *  settings page family instead), no event is fired. */
   onConnectorsTabClick?: (

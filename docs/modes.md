@@ -2,7 +2,7 @@
 
 **Parent:** [`spec.md`](spec.md) · **Siblings:** [`architecture.md`](architecture.md) · [`skills-protocol.md`](skills-protocol.md) · [`agent-adapters.md`](agent-adapters.md)
 
-OD exposes four user-facing modes. Modes are not arbitrary; each maps to a distinct **skill type** (see [`skills-protocol.md`](skills-protocol.md) §4) and a distinct **workflow shape**. Keeping them separate lets us tune UI affordances, export pipelines, and default skills per mode.
+Pixflow Design exposes four user-facing modes. Modes are not arbitrary; each maps to a distinct **skill type** (see [`skills-protocol.md`](skills-protocol.md) §4) and a distinct **workflow shape**. Keeping them separate lets us tune UI affordances, export pipelines, and default skills per mode.
 
 | Mode | What you get | Time to first result | Skill type |
 |---|---|---|---|

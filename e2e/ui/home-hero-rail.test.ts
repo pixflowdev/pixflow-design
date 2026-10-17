@@ -5,7 +5,6 @@ import { routeAgents } from '@/playwright/mock-factory';
 test.describe.configure({ timeout: 30_000 });
 
 const STORAGE_KEY = 'open-design:config';
-const OPEN_SETTINGS_LABEL = /Open settings|打开设置|開啟設定/i;
 
 const HOME_CONFIG = {
   mode: 'daemon',
@@ -282,7 +281,7 @@ async function gotoEntryHome(page: Page) {
   if (await privacyDialog.isVisible().catch(() => false)) {
     await privacyDialog.getByRole('button', { name: /I get it|not now|got it|don't share/i }).click();
   }
-  await expect(page.getByRole('button', { name: OPEN_SETTINGS_LABEL })).toBeVisible();
+  await expect(page.getByTestId('entry-settings-menu-trigger')).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -292,13 +291,6 @@ test.beforeEach(async ({ page }) => {
     window.localStorage.setItem(key, JSON.stringify(value));
   }, { key: STORAGE_KEY, value: HOME_CONFIG });
 
-  await page.route('**/api/github/open-design', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ stargazers_count: 51600 }),
-    });
-  });
 
   await routeAgents(page, [
     {
@@ -368,7 +360,7 @@ test.beforeEach(async ({ page }) => {
 test('[P2] home hero rail shows the current creation chips and More shortcuts', async ({ page }) => {
   await gotoEntryHome(page);
 
-  await expect(page.getByTestId('entry-star-badge')).toContainText('51.6K');
+  await expect(page.getByTestId('entry-star-badge')).toHaveCount(0);
   await expect(page.getByTestId('home-hero-type-tabs')).toBeVisible();
   for (const id of ['prototype', 'live-artifact', 'deck', 'image', 'video', 'hyperframes', 'audio']) {
     await expect(page.getByTestId(`home-hero-rail-${id}`)).toBeVisible();

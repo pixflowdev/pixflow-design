@@ -56,7 +56,7 @@ describe('DISCOVERY_AND_PHILOSOPHY (contracts copy) — TodoWrite plan item coun
     expect(prompt).toContain('# Chat mode — standard conversation');
     expect(prompt).toContain('https://github.com/pixflowdev/pixflow-design');
     expect(prompt).toContain('https://pixflow.dev/');
-    expect(prompt).toContain('https://discord.com/invite/9ptkbbqRu');
+    expect(prompt).not.toContain('discord.com/invite/9ptkbbqRu');
     expect(prompt.indexOf('# Chat mode — standard conversation')).toBe(0);
     expect(prompt).not.toContain(DISCOVERY_AND_PHILOSOPHY);
   });

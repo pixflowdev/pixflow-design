@@ -51,7 +51,7 @@ if (imported.length === 0) {
     'Run this script on macOS to build the current architecture, or pass:',
     '  --arm64 /path/to/pixflow-design-bridge-mac-arm64.dmg',
     '  --x64 /path/to/pixflow-design-bridge-mac-x64.dmg',
-    'Do not pass Open Design DMGs; they contain the wrong product identity.',
+    'Pass only Pixflow Design Bridge DMGs; other products contain the wrong identity.',
   ].join('\n');
   if (requireExisting) throw new Error(message);
   console.warn(`[Pixflow Bridge macOS] ${message}`);

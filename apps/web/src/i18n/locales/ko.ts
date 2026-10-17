@@ -914,7 +914,7 @@ export const ko: Dict = {
   'pluginCard.contributeAria': '{title}을(를) Pixflow Design에 기여',
   'pluginCard.contributeTitle': 'pull request로 플러그인을 Pixflow Design에 기여',
   'skillPluginCandidate.createForMe': '플러그인/템플릿 만들기',
-  'skillPluginCandidate.contributeToMain': 'open-design에 기여',
+  'skillPluginCandidate.contributeToMain': 'Pixflow Design에 기여',
   'skillPluginCandidate.repoDescription': '이 저장소는 플러그인으로 사용할 수 있을 것 같습니다.',
   'integrations.kicker': '통합',
   'integrations.lede': '외부 시스템을 연결하고, MCP 도구를 Agent 루프에 가져오고, 다른 IDE, 스크립트, 자동화에서 Pixflow Design을 사용하세요.',
@@ -3288,7 +3288,7 @@ export const ko: Dict = {
 
   "ui.app.licenseRequired": "라이선스 필요",
   "ui.amrRunGateDialog.signInBeforeStarting": "시작하기 전에 로그인",
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Open Design Cloud 잔액 확인",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "AMR 잔액 확인",
   "ui.amrRunGateDialog.signInToStartThisRun": "로그인하여 이 실행 시작",
   "ui.amrRunGateDialog.yourPromptIsStillHereSignIn": "프롬프트가 그대로 남아 있습니다. 로그인한 후 다시 확인하면 다시 작성하지 않고 계속할 수 있습니다.",
   "ui.amrRunGateDialog.topUpBalance": "잔액 충전",

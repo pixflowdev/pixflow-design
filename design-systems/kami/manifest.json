@@ -3,7 +3,7 @@
   "id": "kami",
   "name": "kami (紙 / 纸)",
   "category": "Editorial & Print",
-  "description": "Bundled Open Design package for kami (紙 / 纸), derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
+  "description": "Bundled Pixflow Design package for kami (紙 / 纸), derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
   "source": {
     "type": "bundled",
     "origin": "Open Design curated bundled fixture"

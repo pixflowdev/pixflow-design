@@ -18,7 +18,7 @@ vi.mock('../../src/i18n', async () => { const actual = await vi.importActual<typ
   }),
   useT: () => (key: string) => {
     const labels: Record<string, string> = {
-      'app.brand': 'Open Design',
+      'app.brand': 'Pixflow Design',
       'common.close': 'Close',
       'common.untitled': 'Untitled',
       'entry.navDesignSystems': 'Design systems',

@@ -76,7 +76,7 @@ function buildPublishPrompt(folderPath: string): string {
     `Plugin folder: \`${folderPath}\``,
     `Manifest: \`${folderPath}/open-design.json\``,
     '',
-    'This is the **repository publish** action, NOT the registry-submission action — do NOT route through `od plugin publish --to open-design`. That command emits an Pixflow Design issue URL and belongs to the "Pixflow Design PR" button.',
+    'This is the **repository publish** action, NOT the registry-submission action — do NOT route through `od plugin publish --to open-design`. That command emits a Pixflow Design issue URL and belongs to the "Pixflow Design PR" button.',
     '',
     'Run this deterministic Pixflow Design CLI workflow from the current project workspace:',
     '',

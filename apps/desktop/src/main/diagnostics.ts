@@ -128,7 +128,7 @@ export async function exportDiagnosticsToFile(
 ): Promise<DesktopDiagnosticsExportResult> {
   const filename = diagnosticsFileName(DIAGNOSTICS_FILENAME_PREFIX);
   const dialogOptions = {
-    title: "Export Open Design diagnostics",
+    title: "Export Pixflow Design diagnostics",
     // Let the OS restore its last warm directory. Opening a OneDrive-backed
     // Downloads folder explicitly can block the Windows dialog shell thread.
     defaultPath: filename,
@@ -188,11 +188,11 @@ export async function exportDiagnosticsToFile(
       sources,
       redaction: { username: safeUsername() },
       crashReports: {
-        // Restrict to Open Design's own process names. A generic "Electron"
+        // Restrict to Pixflow Design's own process names. A generic "Electron"
         // substring would sweep up crash reports from any other Electron app
         // on the host (VS Code, Slack, …) and leak unrelated user data into
         // the support bundle.
-        matchSubstrings: ["Open Design", "open-design"],
+        matchSubstrings: ["Pixflow Design", "pixflow-design", "Open Design", "open-design"],
         withinDays: 7,
         maxReports: 10,
         homeDir: homedir(),

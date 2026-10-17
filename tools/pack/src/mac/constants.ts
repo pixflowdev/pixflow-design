@@ -1,4 +1,4 @@
-export const PRODUCT_NAME = process.env.PIXFLOW_DESIGN_PACK_PRODUCT_NAME?.trim() || "Open Design";
+export const PRODUCT_NAME = process.env.PIXFLOW_DESIGN_PACK_PRODUCT_NAME?.trim() || "Pixflow Design";
 export const PRODUCT_APP_ID = process.env.PIXFLOW_DESIGN_PACK_APP_ID?.trim() || "io.open-design.desktop";
 
 export const INTERNAL_PACKAGES = [

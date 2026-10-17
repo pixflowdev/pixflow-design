@@ -914,7 +914,7 @@ export const th: Dict = {
   'pluginCard.contributeAria': 'ร่วมสนับสนุน {title} ให้กับ Pixflow Design',
   'pluginCard.contributeTitle': 'ร่วมสนับสนุน plugin ให้กับ Pixflow Design ด้วย pull request',
   'skillPluginCandidate.createForMe': 'สร้างปลั๊กอิน/เทมเพลต',
-  'skillPluginCandidate.contributeToMain': 'ร่วมสนับสนุน open-design',
+  'skillPluginCandidate.contributeToMain': 'ร่วมสนับสนุน Pixflow Design',
   'skillPluginCandidate.repoDescription': 'repo นี้ดูเหมือนจะใช้งานเป็น plugin ได้',
   'integrations.kicker': 'การผสานรวม',
   'integrations.lede': 'เชื่อมต่อระบบภายนอก นำเครื่องมือ MCP เข้าสู่ลูปของ Agent และใช้งาน Pixflow Design จาก IDE สคริปต์ และระบบอัตโนมัติอื่น ๆ',
@@ -3288,7 +3288,7 @@ export const th: Dict = {
 
   "ui.app.licenseRequired": "ต้องมีใบอนุญาต",
   "ui.amrRunGateDialog.signInBeforeStarting": "ลงชื่อเข้าใช้ก่อนเริ่ม",
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "ตรวจสอบยอดคงเหลือ Open Design Cloud",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "ตรวจสอบยอดคงเหลือ AMR",
   "ui.amrRunGateDialog.signInToStartThisRun": "ลงชื่อเข้าใช้เพื่อเริ่มการทำงานนี้",
   "ui.amrRunGateDialog.yourPromptIsStillHereSignIn": "พรอมต์ของคุณยังอยู่ ลงชื่อเข้าใช้แล้วตรวจสอบอีกครั้งเพื่อดำเนินการต่อโดยไม่ต้องเขียนใหม่",
   "ui.amrRunGateDialog.topUpBalance": "เติมยอดคงเหลือ",

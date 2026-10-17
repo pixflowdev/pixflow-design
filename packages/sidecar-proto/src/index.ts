@@ -67,6 +67,7 @@ export const SIDECAR_DEFAULTS = Object.freeze({
   windowsPipePrefix: "open-design",
 } as const);
 
+// Legacy install and data identity. Keep stable for existing installations.
 export const OPEN_DESIGN_PRODUCT_NAME = "Open Design";
 
 export function resolveWindowsReleaseNamespaceToken(value: string): string {

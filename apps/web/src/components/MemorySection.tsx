@@ -375,8 +375,8 @@ function describeExtractionFailure(record: MemoryExtractionRecord): FriendlyExtr
   const haystack = `${parsed.message} ${parsed.code} ${record.error}`.toLowerCase();
   const source =
     record.kind === 'connector'
-      ? 'Connected apps were read, but OpenDesign could not turn that context into memory.'
-      : 'OpenDesign could not run memory extraction for this chat.';
+      ? 'Connected apps were read, but Pixflow Design could not turn that context into memory.'
+      : 'Pixflow Design could not run memory extraction for this chat.';
 
   if (
     parsed.status === 401

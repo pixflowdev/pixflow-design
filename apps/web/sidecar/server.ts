@@ -561,7 +561,7 @@ async function startStandaloneBackend(webRoot: string | null): Promise<Standalon
 
   const port = await reserveTcpPort(STANDALONE_BACKEND_HOST);
   const origin = resolveStandaloneBackendOrigin(port);
-  console.log(`[open-design web] starting standalone Next.js server from ${entryPath}`);
+  console.log(`[pixflow-design web] starting standalone Next.js server from ${entryPath}`);
   const child = spawn(process.execPath, createStandaloneServerArgs(entryPath), {
     cwd: dirname(entryPath),
     env: createStandaloneBackendEnv({ port }),
@@ -577,7 +577,7 @@ async function startStandaloneBackend(webRoot: string | null): Promise<Standalon
   child.once("exit", (code, signal) => {
     standaloneRunning = false;
     standaloneExitReason = `code=${code ?? "null"} signal=${signal ?? "null"}`;
-    console.error(`[open-design web] standalone Next.js server exited ${standaloneExitReason}`);
+    console.error(`[pixflow-design web] standalone Next.js server exited ${standaloneExitReason}`);
   });
 
   try {

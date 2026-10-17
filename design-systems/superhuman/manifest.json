@@ -3,7 +3,7 @@
   "id": "superhuman",
   "name": "Superhuman",
   "category": "Developer Tools",
-  "description": "Bundled Open Design package for Superhuman, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
+  "description": "Bundled Pixflow Design package for Superhuman, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
   "source": {
     "type": "bundled",
     "origin": "Open Design curated bundled fixture"

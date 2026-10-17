@@ -914,7 +914,7 @@ export const ja: Dict = {
   'pluginCard.contributeAria': '{title} を Pixflow Design に貢献',
   'pluginCard.contributeTitle': 'プラグインを pull request で Pixflow Design に貢献',
   'skillPluginCandidate.createForMe': 'プラグイン/テンプレートを作成',
-  'skillPluginCandidate.contributeToMain': 'open-design にコントリビュート',
+  'skillPluginCandidate.contributeToMain': 'Pixflow Design にコントリビュート',
   'skillPluginCandidate.repoDescription': 'このリポジトリはプラグインとして利用できそうです。',
   'integrations.kicker': '連携',
   'integrations.lede': '外部システムを接続し、MCP ツールをエージェントループに取り込み、他の IDE やスクリプト、自動化から Pixflow Design を利用できます。',
@@ -3288,7 +3288,7 @@ export const ja: Dict = {
 
   "ui.app.licenseRequired": "ライセンスが必要です",
   "ui.amrRunGateDialog.signInBeforeStarting": "開始前にログイン",
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Open Design Cloud の残高を確認",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "AMR の残高を確認",
   "ui.amrRunGateDialog.signInToStartThisRun": "ログインしてこの実行を開始",
   "ui.amrRunGateDialog.yourPromptIsStillHereSignIn": "プロンプトは保存されています。ログインして再確認すれば、入力し直さずに続行できます。",
   "ui.amrRunGateDialog.topUpBalance": "残高をチャージ",

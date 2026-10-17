@@ -310,9 +310,9 @@ describe('Plan §8 e2e-3 (entry slice) — headless install → project → run'
     const previousGitCommitterName = process.env.GIT_COMMITTER_NAME;
     const previousGitCommitterEmail = process.env.GIT_COMMITTER_EMAIL;
     process.env.OD_REAL_GIT = realGit;
-    process.env.GIT_AUTHOR_NAME = 'Open Design Test';
+    process.env.GIT_AUTHOR_NAME = 'Pixflow Design Test';
     process.env.GIT_AUTHOR_EMAIL = 'open-design-test@example.com';
-    process.env.GIT_COMMITTER_NAME = 'Open Design Test';
+    process.env.GIT_COMMITTER_NAME = 'Pixflow Design Test';
     process.env.GIT_COMMITTER_EMAIL = 'open-design-test@example.com';
     try {
       await withFakeAgent(

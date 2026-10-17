@@ -227,7 +227,7 @@ describe.skip('InlineModelSwitcher AMR row', () => {
 
     expect(screen.getByTestId('inline-model-switcher-chip').textContent).toContain('AMR');
     expect(screen.getByTestId('inline-model-switcher-chip').textContent).not.toContain(
-      'Open Design AMR',
+      'AMR',
     );
 
     fireEvent.click(screen.getByTestId('inline-model-switcher-chip'));

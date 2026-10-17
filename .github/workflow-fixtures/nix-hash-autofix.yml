@@ -109,7 +109,7 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Generate Open Design bot token
+      - name: Generate Pixflow Design bot token
         if: ${{ steps.meta.outputs.can_autopush == 'true' && steps.bot-secrets.outputs.present == 'true' }}
         id: bot-token
         continue-on-error: true

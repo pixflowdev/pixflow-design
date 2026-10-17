@@ -305,7 +305,7 @@ async function uploadFile(name, content) {
     `/api/projects/${encodeURIComponent(projectId)}/conversations/${encodeURIComponent(conversationId)}/messages/u-fixture`,
     {
       role: "user",
-      content: "Create a small Open Design plugin.",
+      content: "Create a small Pixflow Design plugin.",
       createdAt: now - 2000,
     },
   );
@@ -1287,7 +1287,7 @@ REPORT
 fi
 
 expect_prompt="$(cat <<PROMPT
-You are reviewing nexu-io/open-design PR #${PR_NUMBER}, against the live app at ${base_url}.
+You are reviewing pixflowdev/pixflow-design PR #${PR_NUMBER}, against the live app at ${base_url}.
 
 ## MINDSET -- this is a precious, expensive validation opportunity
 

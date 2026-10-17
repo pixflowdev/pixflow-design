@@ -198,7 +198,7 @@ Improved
 Fixed
 
 * Use one composer action button across idle, active-run and voice states: disabled Send for an empty idle draft, Stop for an empty active draft, and Send/Queue when text, files or annotations are present.
-* Fix External MCP settings in WordPress to save on the paired Bridge and forward enabled servers to Codex, OpenCode and Claude runs. Apply configuration changes to the next run, explain provider and transport support, and remove the internal Open Design storage-path label.
+* Fix External MCP settings in WordPress to save on the paired Bridge and forward enabled servers to Codex, OpenCode and Claude runs. Apply configuration changes to the next run, explain provider and transport support, and remove the internal Pixflow Design storage-path label.
 * Fix Antigravity prompts failing from the floating panel by providing the required temporary prompt file, with cleanup after each run. Preserve the existing CLI invocation for older supported versions.
 * Keep Steer and Stop working when browser storage is full, and show steering delivery errors beside queued messages. Bridge conversations retain their complete run logs on the Bridge with lightweight browser recovery; API runs can discard duplicate display logs without losing execution state.
 * Add separate browser and Bridge tool-history cleanup controls in Memory settings. Protect active and interrupted runs, messages, attachments and native CLI sessions; apply the Bridge’s seven-day completed-run retention regularly while it stays running.

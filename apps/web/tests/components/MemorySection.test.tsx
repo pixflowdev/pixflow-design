@@ -196,7 +196,7 @@ describe('MemorySection', () => {
     const entry = {
       id: 'project_design_agent_goal',
       name: 'Design agent goal',
-      description: 'Open Design should evolve from accepted work',
+      description: 'Pixflow Design should evolve from accepted work',
       type: 'project',
       body: '- Keep design-system extraction in the loop',
       updatedAt: Date.now(),
@@ -287,7 +287,7 @@ describe('MemorySection', () => {
     const entry = {
       id: 'project_design_agent_goal',
       name: 'Design agent goal',
-      description: 'Open Design should evolve from accepted work',
+      description: 'Pixflow Design should evolve from accepted work',
       type: 'project',
       body: '- Keep design-system extraction in the loop',
       updatedAt: Date.now(),
@@ -647,7 +647,7 @@ describe('MemorySection', () => {
               name: 'Memory context',
               description: 'Connector-derived context',
               type: 'project',
-              body: 'OpenDesign connector memory should focus on design preferences, UI decisions, and visual references from Notion.',
+              body: 'Pixflow Design connector memory should focus on design preferences, UI decisions, and visual references from Notion.',
               source: {
                 kind: 'connector',
                 connectorId: 'notion',
@@ -762,7 +762,7 @@ describe('MemorySection', () => {
         name: 'Memory context',
         description: 'Connector-derived context',
         type: 'project',
-        body: 'OpenDesign connector memory should focus on design preferences, UI decisions, and visual references from Notion.',
+        body: 'Pixflow Design connector memory should focus on design preferences, UI decisions, and visual references from Notion.',
       },
     ]);
   });
@@ -1877,7 +1877,7 @@ describe('MemorySection', () => {
               },
               startedAt: Date.now(),
               finishedAt: Date.now() + 1300,
-              userMessagePreview: 'Suggest durable OpenDesign memories from connected apps.',
+              userMessagePreview: 'Suggest durable Pixflow Design memories from connected apps.',
               error: 'openai 401: { "error": { "message": "Your authentication token has expired. Please try signing in again.", "type": "invalid_request_error", "code": "token_expired", "param": null }, "status": 401 }',
             },
           ],
@@ -1898,15 +1898,15 @@ describe('MemorySection', () => {
 	      .getByText('Connected app scan failed'),
 	  ).toBeTruthy();
 	  expect(
-	    screen.queryByText('Suggest durable OpenDesign memories from connected apps.'),
+	    screen.queryByText('Suggest durable Pixflow Design memories from connected apps.'),
 	  ).toBeNull();
 	  expect(
 	    within(document.querySelector('.memory-unified-list') as HTMLElement)
-	      .queryByText('Suggest durable OpenDesign memories from connected apps.'),
+	      .queryByText('Suggest durable Pixflow Design memories from connected apps.'),
 	  ).toBeNull();
 	  expect(screen.getByText('OpenAI authentication expired')).toBeTruthy();
     expect(
-      screen.getByText('Connected apps were read, but OpenDesign could not turn that context into memory.'),
+      screen.getByText('Connected apps were read, but Pixflow Design could not turn that context into memory.'),
     ).toBeTruthy();
     expect(
       screen.getByText('Update the Memory extraction model key or sign in again.'),
@@ -1942,7 +1942,7 @@ describe('MemorySection', () => {
               },
               startedAt: Date.now(),
               finishedAt: Date.now() + 900,
-              userMessagePreview: 'Suggest durable OpenDesign memories from connected apps.',
+              userMessagePreview: 'Suggest durable Pixflow Design memories from connected apps.',
               error: 'Claude Code CLI exit 1: authentication token has expired',
             },
           ],

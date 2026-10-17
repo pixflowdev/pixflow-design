@@ -9,12 +9,12 @@ Follow the root `AGENTS.md` first. This file only records module-level boundarie
 - `pnpm tools-dev run web` runs foreground daemon + web for the Playwright webServer flow.
 - `pnpm tools-dev inspect desktop ...` inspects the desktop runtime through sidecar IPC.
 - `tools/pack` provides `@open-design/tools-pack` and the `tools-pack` bin. The active slice is packaged artifact build/install/start/stop/logs/uninstall/cleanup/list/reset plus beta release artifact preparation for mac and Windows lanes, plus a Linux AppImage lane with optional containerized builds.
-- `tools/pixflow-design-bridge` is a standalone compatibility runtime copied verbatim into desktop and Pixflow bridge installers. It is intentionally not a pnpm workspace package; its `.mjs` entrypoints must remain directly executable by Node. Packaging may consume it, but local Open Design lifecycle orchestration still belongs to `tools/dev`.
+- `tools/pixflow-design-bridge` is a standalone compatibility runtime copied verbatim into desktop and Pixflow bridge installers. It is intentionally not a pnpm workspace package; its `.mjs` entrypoints must remain directly executable by Node. Packaging may consume it, but local Pixflow Design lifecycle orchestration still belongs to `tools/dev`.
 - `tools/serve` provides `@open-design/tools-serve` and the `tools-serve` bin. It owns local fixture services such as `tools-serve start updater`.
 
 ## Retired tools
 
-- `tools/pr` / `@open-design/tools-pr` / `pnpm tools-pr` has been retired from this repository. Maintainer PR-duty workflows now live outside the product workspace in `PerishCode/duty`; do not restore an Open Design-local PR-duty tool without a new explicit maintainer decision.
+- `tools/pr` / `@open-design/tools-pr` / `pnpm tools-pr` has been retired from this repository. Maintainer PR-duty workflows now live outside the product workspace in `PerishCode/duty`; do not restore an Pixflow Design-local PR-duty tool without a new explicit maintainer decision.
 
 ## Packaging scope
 

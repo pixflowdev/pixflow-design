@@ -53,7 +53,7 @@ const IMAGE_TEMPLATE = {
   source: {
     repo: 'open-design/test-prompts',
     license: 'MIT',
-    author: 'Open Design QA',
+    author: 'Pixflow Design QA',
   },
 };
 

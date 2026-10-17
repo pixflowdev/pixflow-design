@@ -3,9 +3,10 @@ function envString(key: string, fallback: string): string {
   return value == null || value.length === 0 ? fallback : value;
 }
 
-export const PRODUCT_NAME = envString("PIXFLOW_DESIGN_PACK_PRODUCT_NAME", "Open Design");
+export const PRODUCT_NAME = envString("PIXFLOW_DESIGN_PACK_PRODUCT_NAME", "Pixflow Design");
 export const PRODUCT_APP_ID = envString("PIXFLOW_DESIGN_PACK_APP_ID", "io.open-design.desktop");
 export const PRODUCT_PACKAGE_NAME = envString("PIXFLOW_DESIGN_PACK_PACKAGE_NAME", "open-design-packaged-app");
+// Keep the legacy uninstall identity so existing installs update in place.
 export const PRODUCT_REGISTRY_ID = envString("PIXFLOW_DESIGN_PACK_REGISTRY_ID", "Open Design");
 export const PRODUCT_UPDATE_URL = envString("PIXFLOW_DESIGN_PACK_UPDATE_URL", "https://updates.invalid/open-design");
 export const PRODUCT_BRIDGE_TRAY_MODE = envString("PIXFLOW_DESIGN_PACK_BRIDGE_TRAY_MODE", "") === "1";

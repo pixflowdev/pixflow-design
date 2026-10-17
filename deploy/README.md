@@ -1,6 +1,6 @@
 # Docker deployment
 
-This deployment ships Open Design as a single Alpine-based runtime image. The
+This deployment ships Pixflow Design as a single Alpine-based runtime image. The
 daemon serves both the API and the built Next.js static export, so there is no
 separate nginx container.
 
@@ -22,11 +22,11 @@ Before starting:
 
 3. Open `.env` in your editor, find `OD_API_TOKEN=`, and paste the generated token there.
 
-Then pull and start the service:
+Then build this checkout locally and start the service:
 
 ```bash
-OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design:latest docker compose pull
-OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design:latest docker compose up -d --no-build
+docker compose build
+OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design:latest docker compose up -d --pull never --no-build
 ```
 
 Defaults:
@@ -46,13 +46,13 @@ proxy, set `OPEN_DESIGN_ALLOWED_ORIGINS` to the browser origins that should be
 allowed to call `/api`:
 
 ```bash
-OPEN_DESIGN_ALLOWED_ORIGINS=https://od.example.com,http://203.0.113.10:7456 docker compose up -d --no-build
+OPEN_DESIGN_ALLOWED_ORIGINS=https://od.example.com,http://203.0.113.10:7456 docker compose up -d --pull never --no-build
 ```
 
 Pin a specific published image with a digest instead of the mutable `latest` tag:
 
 ```bash
-OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design@sha256:<digest> docker compose up -d --no-build
+OPEN_DESIGN_IMAGE=docker.io/vanjayak/open-design@sha256:<digest> docker compose up -d --pull never --no-build
 ```
 The image intentionally does not bundle Claude/Codex/Gemini CLI binaries. Keep
 those outside the image, or build a separate private runtime layer if a server
@@ -63,7 +63,7 @@ creating its `workspace-write` sandbox, opt into Codex's full-access mode for
 all Codex runs in that deployment:
 
 ```bash
-OD_CODEX_SANDBOX=danger-full-access docker compose up -d --no-build
+OD_CODEX_SANDBOX=danger-full-access docker compose up -d --pull never --no-build
 ```
 
 Only the exact value `danger-full-access` is supported; unknown values are
@@ -165,7 +165,7 @@ Workaround:
 
    ```bash
    docker compose down
-   docker compose up -d --force-recreate
+   docker compose up -d --pull never --force-recreate
    ```
 
 4. Verify:

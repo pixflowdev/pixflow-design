@@ -81,7 +81,7 @@ describe('resolveDaemonResourceRoot', () => {
       'versions',
       '0.10.0-beta.15',
       'payload',
-      'Open Design Beta.app',
+      'Pixflow Design Beta.app',
       'Contents',
       'Resources',
       'open-design',

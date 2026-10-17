@@ -1,6 +1,6 @@
 # Documentation languages
 
-The canonical Pixflow source documentation is currently maintained in English at the repository root. Earlier translated Open Design onboarding and governance documents described a different product and have been retired.
+The canonical Pixflow source documentation is currently maintained in English at the repository root. Earlier translated Pixflow Design onboarding and governance documents described a different product and have been retired.
 
 Product UI translations remain in `apps/web/src/i18n/locales/`. Retiring outdated repository documentation does not remove language selection or installed WordPress language packs.
 

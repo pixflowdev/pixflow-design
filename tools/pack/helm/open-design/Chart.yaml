@@ -1,23 +1,23 @@
 apiVersion: v2
 name: open-design
 description: |
-  Open Design daemon Helm chart. Spec §15.5 reference deployment for
+  Pixflow Design daemon Helm chart. Spec §15.5 reference deployment for
   AWS / GCP / Azure / Aliyun / Tencent / Huawei / self-hosted Kubernetes.
   Pairs with `tools/pack/docker-compose.yml` as the docker-only entry
   point.
 type: application
 version: 0.1.0
 appVersion: "0.5.0"
-icon: https://open-design.ai/favicon.png
+icon: https://pixflow.dev/favicon.png
 keywords:
   - open-design
   - design-agent
   - generative-ui
   - plugins
   - skills
-home: https://open-design.ai
+home: https://pixflow.dev
 sources:
-  - https://github.com/nexu-io/open-design
+  - https://github.com/pixflowdev/pixflow-design
 maintainers:
-  - name: Open Design
-    url: https://open-design.ai
+  - name: Pixflow Design
+    url: https://pixflow.dev

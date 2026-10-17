@@ -10,16 +10,16 @@ import {
 describe('resolveSafeProjectAttachments', () => {
   it('keeps Windows attachments when root and attachment path use different separators and drive casing', () => {
     const existing = new Set([
-      'C:\\Users\\Designer\\Open Design\\m5-logo.png',
-      'c:\\users\\designer\\open design\\assets\\mark.png',
+      'C:\\Users\\Designer\\Pixflow Design\\m5-logo.png',
+      'c:\\users\\designer\\pixflow design\\assets\\mark.png',
     ]);
 
     const safe = resolveSafeProjectAttachments(
-      'C:/Users/Designer/Open Design/',
+      'C:/Users/Designer/Pixflow Design/',
       [
         'm5-logo.png',
-        'c:/users/designer/open design/assets/mark.png',
-        'C:/Users/Designer/Open Design Adjacent/secret.png',
+        'c:/users/designer/pixflow design/assets/mark.png',
+        'C:/Users/Designer/Pixflow Design Adjacent/secret.png',
         '..\\secret.png',
       ],
       {
@@ -30,7 +30,7 @@ describe('resolveSafeProjectAttachments', () => {
 
     expect(safe).toEqual([
       'm5-logo.png',
-      'c:/users/designer/open design/assets/mark.png',
+      'c:/users/designer/pixflow design/assets/mark.png',
     ]);
   });
 

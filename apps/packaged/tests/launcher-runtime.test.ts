@@ -72,7 +72,7 @@ describe("resolvePackagedLauncherRuntime", () => {
         root,
         version: "1.2.3-beta.5",
       });
-      const resourcesPath = join(versionPaths.payloadRoot, "Open Design Beta.app", "Contents", "Resources");
+      const resourcesPath = join(versionPaths.payloadRoot, "Pixflow Design Beta.app", "Contents", "Resources");
       await mkdir(join(resourcesPath, "open-design", "bin"), { recursive: true });
       await mkdir(join(resourcesPath, "prebundled", "daemon"), { recursive: true });
       await mkdir(join(resourcesPath, "prebundled", "web"), { recursive: true });
@@ -94,8 +94,8 @@ describe("resolvePackagedLauncherRuntime", () => {
         `${JSON.stringify({
           channel: "beta",
           entry: {
-            cwd: "payload/Open Design Beta.app",
-            executable: "payload/Open Design Beta.app/Contents/MacOS/Open Design Beta",
+            cwd: "payload/Pixflow Design Beta.app",
+            executable: "payload/Pixflow Design Beta.app/Contents/MacOS/Pixflow Design Beta",
           },
           namespace: config.namespace,
           payloadRoot: "payload",
@@ -119,7 +119,7 @@ describe("resolvePackagedLauncherRuntime", () => {
         join(paths.installationRoot, "launcher", "channels", "beta", "namespaces", config.namespace, "install.json"),
         `${JSON.stringify({
           channel: "beta",
-          launchPath: "/Applications/Open Design Beta.app",
+          launchPath: "/Applications/Pixflow Design Beta.app",
           namespace: config.namespace,
           schemaVersion: LAUNCHER_SCHEMA_VERSION,
         })}\n`,
@@ -128,7 +128,7 @@ describe("resolvePackagedLauncherRuntime", () => {
       const runtime = await resolvePackagedLauncherRuntime(config, paths);
 
       expect(runtime.source).toBe("payload");
-      expect(runtime.installedLaunchPath).toBe("/Applications/Open Design Beta.app");
+      expect(runtime.installedLaunchPath).toBe("/Applications/Pixflow Design Beta.app");
       expect(runtime.targetVersion).toBe("1.2.3-beta.5");
       expect(runtime.config.appVersion).toBe("1.2.3-beta.5");
       expect(runtime.config.resourceRoot).toBe(join(resourcesPath, "open-design"));

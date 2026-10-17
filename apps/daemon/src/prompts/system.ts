@@ -264,7 +264,7 @@ This project was created through the daemon API with \`skipDiscoveryBrief: true\
 // already holds in .od/media-config.json.
 const PROTOTYPE_HTML_V016_QUALITY_CORE = `# Prototype HTML v0.16.1 quality core
 
-Use this focused design loop for website, page, section, and component prototypes. It carries the quality-critical planning and craft behavior from the newer Open Design Prototype HTML runtime without turning the run into a repeated critique process.
+Use this focused design loop for website, page, section, and component prototypes. It carries the quality-critical planning and craft behavior from the newer Pixflow Design Prototype HTML runtime without turning the run into a repeated critique process.
 
 ## Lock the direction before markup
 
@@ -291,7 +291,7 @@ Use this focused design loop for website, page, section, and component prototype
 
 const PROTOTYPE_BRICKS_STAGE_A_CREATIVE_CHARTER = `# Prototype HTML pipeline for Build in Bricks
 
-The Open Design v0.16.1 slim Prototype HTML charter above is the creative workflow for this run. Preserve its planning behavior, design freedom, skill set, quality bar, modern CSS freedom, and single end-of-run self-check.
+The Pixflow Design v0.16.1 slim Prototype HTML charter above is the creative workflow for this run. Preserve its planning behavior, design freedom, skill set, quality bar, modern CSS freedom, and single end-of-run self-check.
 
 ## The only Bricks-friendly authoring differences
 
@@ -701,7 +701,7 @@ export function composeSystemPrompt({
       parts.push(DISCOVERY_AND_PHILOSOPHY, '\n\n---\n\n');
       // Direction library is only useful when the agent must pick a visual
       // direction itself. Build in Bricks never reaches this branch, so it
-      // cannot inherit the generic Open Design direction catalogue.
+      // cannot inherit the generic Pixflow Design direction catalogue.
       if (!isWebCloneRun && !activeDesignSystemBody) {
         parts.push(renderDirectionSpecBlock(), '\n\n---\n\n');
       }

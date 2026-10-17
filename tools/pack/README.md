@@ -1,6 +1,6 @@
 # tools/pack
 
-Local packaging control plane for Open Design.
+Local packaging control plane for Pixflow Design.
 
 The active slice is mac-first local packaging and smoke lifecycle control:
 
@@ -16,8 +16,8 @@ The active slice is mac-first local packaging and smoke lifecycle control:
 - `tools-pack mac cleanup`
 
 Build artifacts are namespace-scoped under `.tmp/tools-pack/out/mac/namespaces/<namespace>/`.
-Release artifacts keep the canonical `Open Design.app` bundle shape; local `tools-pack install` copies it as
-`Open Design.<namespace>.app` so developer namespaces can coexist without affecting runtime data/log/cache paths.
+Release artifacts keep the canonical `Pixflow Design.app` bundle shape; local `tools-pack install` copies it as
+`Pixflow Design.<namespace>.app` so developer namespaces can coexist without affecting runtime data/log/cache paths.
 
 Packaged runtime state is namespace-scoped under `.tmp/tools-pack/runtime/mac/namespaces/<namespace>/`:
 
@@ -64,7 +64,7 @@ from the user's Electron `userData` root instead of the build machine's `.tmp` p
 ### macOS compatibility notes
 
 - `tools-pack mac build --portable --to zip` is the safest manual-install artifact for Intel Macs. This path was smoke-tested on macOS 12.7.6 Monterey on a 2015 Intel iMac and the app launched successfully from `/Applications`.
-- Finder/manual launches on macOS may not inherit your shell-managed `PATH`. If packaged Open Design cannot detect agent CLIs that work in Terminal, expose those binaries to the GUI login environment or launch the packaged app from a shell session that already sees them.
+- Finder/manual launches on macOS may not inherit your shell-managed `PATH`. If packaged Pixflow Design cannot detect agent CLIs that work in Terminal, expose those binaries to the GUI login environment or launch the packaged app from a shell session that already sees them.
 
 ## Windows
 
@@ -114,7 +114,7 @@ Build artifacts are namespace-scoped under `.tmp/tools-pack/out/linux/namespaces
 
 Local installs use XDG paths:
 
-- AppImage: `~/.local/bin/Open-Design.<namespace>.AppImage`
+- AppImage: `~/.local/bin/Open-Design.<namespace>.AppImage` (retained installation path for compatibility)
 - Menu entry: `~/.local/share/applications/open-design-<namespace>.desktop`
 - Icon: `~/.local/share/icons/hicolor/512x512/apps/open-design-<namespace>.png`
 

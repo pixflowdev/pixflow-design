@@ -166,7 +166,7 @@ If mood is also unspecified, all defaults fall back to the safe neutral set: `pa
 
 This skill generates a new DESIGN.md from scratch based on the resolved brief dimensions. If a DESIGN.md already exists in the working directory, the agent should ask the user whether to overwrite or skip.
 
-Produce a DESIGN.md following Open Design's 9-section convention. All color hex values, font stacks, and spacing values must come from the resolved tokens in Section 2.1 — do not invent values outside the resolution table.
+Produce a DESIGN.md following Pixflow Design's 9-section convention. All color hex values, font stacks, and spacing values must come from the resolved tokens in Section 2.1 — do not invent values outside the resolution table.
 
 ```markdown
 # [Project Name] Design System

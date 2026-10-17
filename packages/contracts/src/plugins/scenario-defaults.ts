@@ -57,7 +57,7 @@ export const DEFAULT_SCENARIO_PLUGIN_BY_KIND: Record<ProjectKind, DefaultScenari
   // 1280×800 frame, section layouts library, P0 checklist).
   prototype: 'example-web-prototype',
   // Ordinary Build owns a dedicated HTML-first prompt contract. Binding any
-  // scenario plugin here would reintroduce Prototype/Open Design instructions
+  // scenario plugin here would reintroduce Prototype/Pixflow Design instructions
   // before the Build prompt assembler isolates its effective stack.
   'build-in-bricks': null,
   // Decks bind to simple-deck's seed (1920×1080 canvas, 8-pattern

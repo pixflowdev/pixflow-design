@@ -29,7 +29,7 @@ function snapshot(
   };
 }
 
-describe('Open Design Cloud pre-run balance gate', () => {
+describe('AMR pre-run balance gate', () => {
   beforeEach(() => {
     fetchAmrWalletSnapshot.mockReset();
     window.localStorage.clear();

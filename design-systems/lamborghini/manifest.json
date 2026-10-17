@@ -3,7 +3,7 @@
   "id": "lamborghini",
   "name": "Lamborghini",
   "category": "Automotive",
-  "description": "Bundled Open Design package for Lamborghini, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
+  "description": "Bundled Pixflow Design package for Lamborghini, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
   "source": {
     "type": "bundled",
     "origin": "Open Design curated bundled fixture"

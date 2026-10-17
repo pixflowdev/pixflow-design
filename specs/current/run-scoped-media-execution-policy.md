@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the smallest Open Design patch that lets an upstream orchestrator call
+Define the smallest Pixflow Design patch that lets an upstream orchestrator call
 OD as a creative runtime adapter while the upstream orchestrator keeps authority
 over media provider use.
 
@@ -31,7 +31,7 @@ first code patch small, and do not make OD a provider router or account owner.
 
 ## Background
 
-Open Design already has a media dispatcher. It is local-first and daemon-owned:
+Pixflow Design already has a media dispatcher. It is local-first and daemon-owned:
 
 - `apps/daemon/src/media-routes.ts` exposes the project media endpoints,
   including `POST /api/projects/:id/media/generate`.

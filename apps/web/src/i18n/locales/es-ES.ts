@@ -914,7 +914,7 @@ export const esES: Dict = {
   'pluginCard.contributeAria': 'Contribuir con {title} a Pixflow Design',
   'pluginCard.contributeTitle': 'Contribuir con el plugin a Pixflow Design mediante un pull request',
   'skillPluginCandidate.createForMe': 'Crear plugin/plantilla',
-  'skillPluginCandidate.contributeToMain': 'Contribuir a open-design',
+  'skillPluginCandidate.contributeToMain': 'Contribuir a Pixflow Design',
   'skillPluginCandidate.repoDescription': 'Este repositorio parece que podría funcionar como plugin.',
   'integrations.kicker': 'Integración',
   'integrations.lede': 'Conecta sistemas externos, incorpora herramientas MCP a tu bucle de agente y usa Pixflow Design desde otros IDE, scripts y automatizaciones.',
@@ -5104,7 +5104,7 @@ export const esES: Dict = {
   "ui.sitemapView.sitemapBrief": "Resumen del mapa del sitio",
 
   // Pixflow interface copy.
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Consulta tu saldo de Open Design Cloud",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Consulta tu saldo de AMR",
   "ui.chatComposer.odPluginInstallLtSourceGt": "od plugin install <source>",
   "ui.designBrowserPanel.aCuratedSetOfReferencesAcrossInspiration": "Una selección de inspiración, interfaces reales, animación, color, tipografía, recursos y sistemas de diseño. Abre una referencia para explorarla mientras defines el lenguaje visual de tu próxima creación.",
   "ui.entryShell.frameworksExtraResourcesMediaProvidersAndDictation": "Los frameworks, recursos adicionales, proveedores multimedia y dictado se pueden configurar después en Ajustes.",

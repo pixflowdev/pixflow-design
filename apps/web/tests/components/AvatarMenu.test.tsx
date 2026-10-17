@@ -334,7 +334,7 @@ describe('AvatarMenu', () => {
       agents: [
         {
           id: 'amr',
-          name: 'Open Design AMR',
+          name: 'AMR',
           bin: 'vela',
           available: true,
           models: [{ id: 'default', label: 'Default (CLI config)' }],

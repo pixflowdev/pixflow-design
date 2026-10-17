@@ -914,7 +914,7 @@ export const id: Dict = {
   'pluginCard.contributeAria': 'Kontribusikan {title} ke Pixflow Design',
   'pluginCard.contributeTitle': 'Kontribusikan plugin ke Pixflow Design dengan pull request',
   'skillPluginCandidate.createForMe': 'Buat plugin/templat',
-  'skillPluginCandidate.contributeToMain': 'Kontribusikan ke open-design',
+  'skillPluginCandidate.contributeToMain': 'Kontribusikan ke Pixflow Design',
   'skillPluginCandidate.repoDescription': 'Repo ini sepertinya bisa berfungsi sebagai plugin.',
   'integrations.kicker': 'Integrasi',
   'integrations.lede': 'Hubungkan sistem eksternal, bawa alat MCP ke dalam loop agent Anda, dan gunakan Pixflow Design dari IDE, skrip, dan otomatisasi lainnya.',
@@ -3288,7 +3288,7 @@ export const id: Dict = {
 
   "ui.app.licenseRequired": "Lisensi diperlukan",
   "ui.amrRunGateDialog.signInBeforeStarting": "Masuk sebelum memulai",
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Periksa saldo Open Design Cloud Anda",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Periksa saldo AMR Anda",
   "ui.amrRunGateDialog.signInToStartThisRun": "Masuk untuk memulai proses ini",
   "ui.amrRunGateDialog.yourPromptIsStillHereSignIn": "Prompt Anda masih ada. Masuk, lalu periksa lagi untuk melanjutkan tanpa menulis ulang.",
   "ui.amrRunGateDialog.topUpBalance": "Isi ulang saldo",

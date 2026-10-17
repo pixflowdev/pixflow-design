@@ -914,7 +914,7 @@ export const it: Dict = {
   'pluginCard.contributeAria': 'Contribuisci con {title} a Pixflow Design',
   'pluginCard.contributeTitle': 'Contribuisci con il plugin a Pixflow Design tramite una pull request',
   'skillPluginCandidate.createForMe': 'Crea plugin/template',
-  'skillPluginCandidate.contributeToMain': 'Contribuisci a open-design',
+  'skillPluginCandidate.contributeToMain': 'Contribuisci a Pixflow Design',
   'skillPluginCandidate.repoDescription': 'Questo repo sembra poter funzionare come plugin.',
   'integrations.kicker': 'Integrazione',
   'integrations.lede': 'Collega sistemi esterni, porta gli strumenti MCP nel loop del tuo agent e usa Pixflow Design da altri IDE, script e automazioni.',
@@ -2937,7 +2937,7 @@ export const it: Dict = {
   'settings.memory': 'Memoria',
   'settings.memoryHint': 'Fatti personali estratti automaticamente dalle conversazioni',
   'settings.customInstructionsTitle': 'Regole globali',
-  'settings.customInstructionsHint': 'Istruzioni fisse che OpenDesign deve seguire in ogni chat. Salva fatti, preferenze e contesto del progetto come memorie.',
+  'settings.customInstructionsHint': 'Istruzioni fisse che Pixflow Design deve seguire in ogni chat. Salva fatti, preferenze e contesto del progetto come memorie.',
   'settings.customInstructionsPlaceholder': 'es. "Usa sempre TypeScript. Preferisci i componenti funzionali. Mantieni le risposte concise."',
   'settings.memoryDescription': 'Fatti sulle tue preferenze estratti automaticamente, salvati in Markdown e reinseriti in ogni chat.',
   'settings.memoryEnabled': 'Abilitata',
@@ -5104,7 +5104,7 @@ export const it: Dict = {
   "ui.sitemapView.sitemapBrief": "Brief della mappa del sito",
 
   // Pixflow interface copy.
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Controlla il saldo Open Design Cloud",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Controlla il saldo AMR",
   "ui.chatComposer.odPluginInstallLtSourceGt": "od plugin install <source>",
   "ui.designBrowserPanel.aCuratedSetOfReferencesAcrossInspiration": "Una selezione di ispirazioni, interfacce reali, movimento, colore, tipografia, risorse e sistemi di design. Apri un riferimento per esplorarlo e definire il linguaggio visivo della prossima creazione.",
   "ui.entryShell.frameworksExtraResourcesMediaProvidersAndDictation": "Framework, risorse aggiuntive, fornitori multimediali e dettatura si possono configurare in seguito nelle Impostazioni.",

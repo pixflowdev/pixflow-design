@@ -36,7 +36,7 @@ describe('Pixflow fallback router across packaged resources and API/CLI prompts'
     expect(manifest.od.capabilities).toEqual(['prompt:inject', 'genui:choice']);
     expect(manifest.od.pipeline.stages.flatMap((stage: { atoms: string[] }) => stage.atoms)).toEqual([]);
     expect(taskOptions(skill)).toEqual(options);
-    expect(skill).not.toMatch(/Open Design|OD media generation|HyperFrames/);
+    expect(skill).not.toMatch(/Pixflow Design|OD media generation|HyperFrames/);
   });
 
   for (const [surface, compose, discovery] of [['API', apiPrompt, apiDiscovery], ['CLI', cliPrompt, cliDiscovery]] as const) {

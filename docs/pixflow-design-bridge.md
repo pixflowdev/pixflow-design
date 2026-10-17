@@ -1,6 +1,6 @@
 # Pixflow Design Bridge
 
-Pixflow Design Bridge is the local-machine wrapper for the Open Design daemon.
+Pixflow Design Bridge is the local-machine wrapper for the Pixflow Design daemon.
 
 It supplies installed local agent discovery and CLI execution while WordPress owns the embedded UI and site APIs. Shared browser/Bridge contracts live here; premium site modules are maintained separately.
 
@@ -8,7 +8,7 @@ It supplies installed local agent discovery and CLI execution while WordPress ow
 
 Included:
 
-- Open Design daemon/runtime.
+- Pixflow Design daemon/runtime.
 - Local loopback start/stop/status supervision.
 - Local bridge config under the user's app data folder.
 - Installer/package scripts for the OD-based bridge.
@@ -26,7 +26,7 @@ Excluded:
 WordPress builder page
   -> Pixflow Design React overlay
     -> local Pixflow Design Bridge URL
-      -> Open Design daemon routes
+      -> Pixflow Design daemon routes
 ```
 
 The React app still calls OD paths such as:

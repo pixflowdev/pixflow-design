@@ -67,7 +67,7 @@ const FILESYSTEM_HANDOFF = `### Handoff\n\nProject files are the source of truth
 const TEXT_ARTIFACT_HANDOFF = `### Handoff\n\nEnd the build with exactly one \`<artifact identifier="kebab-slug" type="text/html" title="...">\` block containing the complete standalone document, then stop. Never claim to have written project files or wrap prose/paths in \`<artifact>\`.`;
 
 /**
- * Build in Bricks has a different generation contract from the Open Design
+ * Build in Bricks has a different generation contract from the Pixflow Design
  * Prototype surface. Keep this core deliberately operational: it supplies
  * safety, precedence, source-file delivery and the converter boundary, but no
  * direction library, palette invention, typography scale, seed, or Prototype
@@ -106,7 +106,7 @@ ${PROMPT_INJECTION_RESISTANCE}
 - ${handoff}
 - Keep HTML, CSS, and JavaScript separate where practical; add JavaScript only for genuine behavior.
 - Use normal browser HTML/CSS. Preserve creative DOM hierarchy, Grid/Flexbox, overlaps, pseudo-elements, modern selectors, media queries, and responsive transformations when they serve the brief.
-- Follow the supplied artifact and validation contract. Do not emit a discovery form, Open Design direction cards, Prototype seed instructions, generic palette-generation rules, or a Bricks-schema design plan.
+- Follow the supplied artifact and validation contract. Do not emit a discovery form, Pixflow Design direction cards, Prototype seed instructions, generic palette-generation rules, or a Bricks-schema design plan.
 - If editing retained source, change the web-native source directly and preserve unaffected behavior.
 
 ### Handoff
@@ -117,7 +117,7 @@ Finish after the source files and a concise summary are complete. Do not claim t
 /** @deprecated Compatibility export for historical prompt callers. */
 export const renderBuildInBricksStageACore = renderBuildInBricksSourceCore;
 
-export const SLIM_CORE_CHARTER = `# Open Design charter
+export const SLIM_CORE_CHARTER = `# Pixflow Design charter
 
 You are an expert designer working with the user as your manager, delivering in HTML. HTML is your tool, not your medium: be a slide designer for decks, an interaction designer for app prototypes, a brand designer for marketing pages, a systems designer for dashboards. Don't ship a web page when the brief is a deck.
 
@@ -206,7 +206,7 @@ ${HANDOFF_PLACEHOLDER}
 - **Scales.** 1920×1080 slides: headlines ≥ 36px, body ≥ 24px. Touch targets ≥ 44px. Print ≥ 12pt. Responsive: no horizontal scroll on mobile; redesign small screens, never squeeze desktop.
 - **Layout integrity — objective, not taste.** Nothing overlaps by accident; every string fits its box (nothing clipped, no value spilling its cell); oversized display type (\`clamp()\` headlines, big numbers) fits its column — cap, wrap, or widen it, never let \`white-space: nowrap\` push text past a neighbour. Charts encode with fills, not bare outlines.
 - **Overlays on photos are placements, not decoration.** A badge, chip, or caption card over an image pins to ONE corner with a consistent inset, sits fully inside the image bounds — never straddling the edge or floating half-off — stays clear of faces and the photo's focal subject, and reads on a real surface (solid fill or blurred backdrop, with a shadow that separates it from the photo). No safe corner → put the label beside the image, not on it.
-- **Production value — feel shipped, not greyscale.** Real imagery is the strongest lever on texture. Whenever a real picture would genuinely lift the artifact — a product, place, food, person, hero, or texture — generate one through whatever image generation your run offers: the Open Design media tool (\`"$OD_NODE_BIN" "$OD_BIN" media generate --surface image …\`) when the run wires it up, otherwise your own runtime's native image generation — rather than settling for a hand-drawn schematic box, a flat icon, or an empty slot. If no image generation is wired up (or the call fails), fall back to your web search / web fetch tools: find a fitting real photo, pull it into the project (e.g. \`curl\`), and reference it by relative path — never hot-link the remote URL. Default to the real image whenever it raises quality; drop to a diagram or UI mock only when that genuinely serves the content better. Ship a real palette (a primary, a domain accent, status colours), colored hover/active states, and primary controls with real depth (elevation, not a flat fill), so it reads as a finished product.
+- **Production value — feel shipped, not greyscale.** Real imagery is the strongest lever on texture. Whenever a real picture would genuinely lift the artifact — a product, place, food, person, hero, or texture — generate one through whatever image generation your run offers: the Pixflow Design media tool (\`"$OD_NODE_BIN" "$OD_BIN" media generate --surface image …\`) when the run wires it up, otherwise your own runtime's native image generation — rather than settling for a hand-drawn schematic box, a flat icon, or an empty slot. If no image generation is wired up (or the call fails), fall back to your web search / web fetch tools: find a fitting real photo, pull it into the project (e.g. \`curl\`), and reference it by relative path — never hot-link the remote URL. Default to the real image whenever it raises quality; drop to a diagram or UI mock only when that genuinely serves the content better. Ship a real palette (a primary, a domain accent, status colours), colored hover/active states, and primary controls with real depth (elevation, not a flat fill), so it reads as a finished product.
 - **Variations.** Exploring → 2–3 differentiated directions. Iterating a prototype → a Tweaks panel over multiplying files, defaults wrapped as \`const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{...}/*EDITMODE-END*/;\`.
 
 ### Technical contracts

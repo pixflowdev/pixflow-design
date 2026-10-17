@@ -66,7 +66,7 @@ describe('Pixflow optional bridge agent visibility', () => {
     expect(calls.filter(url => url.endsWith('/switch'))).toHaveLength(1);
     expect(sleeping).toBe(false);
   });
-  it.each(['amr', 'gemini'])('hides retired Open Design agent %s', (id) => {
+  it.each(['amr', 'gemini'])('hides retired Pixflow Design agent %s', (id) => {
     expect(isPixflowSupportedCliAgent({ id })).toBe(false);
   });
 

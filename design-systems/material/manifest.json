@@ -3,7 +3,7 @@
   "id": "material",
   "name": "Material",
   "category": "Professional & Corporate",
-  "description": "Bundled Open Design package for Material, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
+  "description": "Bundled Pixflow Design package for Material, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
   "source": {
     "type": "bundled",
     "origin": "Open Design curated bundled fixture"

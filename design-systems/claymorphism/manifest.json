@@ -3,7 +3,7 @@
   "id": "claymorphism",
   "name": "Claymorphism",
   "category": "Morphism & Effects",
-  "description": "Bundled Open Design package for Claymorphism, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
+  "description": "Bundled Pixflow Design package for Claymorphism, derived from curated DESIGN.md, tokens.css, and components.html fixtures.",
   "source": {
     "type": "bundled",
     "origin": "Open Design curated bundled fixture"

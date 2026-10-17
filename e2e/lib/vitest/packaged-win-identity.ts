@@ -33,10 +33,10 @@ function channelFromNamespace(namespace: string): ReleaseChannelIdentity | null 
 }
 
 function displayNameForChannel(channel: ReleaseChannelIdentity): string {
-  if (channel === "beta") return "Open Design Beta";
-  if (channel === "nightly") return "Open Design Nightly";
-  if (channel === "preview") return "Open Design Preview";
-  return "Open Design";
+  if (channel === "beta") return "Pixflow Design Beta";
+  if (channel === "nightly") return "Pixflow Design Nightly";
+  if (channel === "preview") return "Pixflow Design Preview";
+  return "Pixflow Design";
 }
 
 export function resolvePackagedWinInstallIdentity(options: {
@@ -45,6 +45,6 @@ export function resolvePackagedWinInstallIdentity(options: {
 }): PackagedWinInstallIdentity {
   const namespaceToken = sanitizeNamespace(options.namespace);
   const channel = channelFromVersion(options.releaseVersion) ?? channelFromNamespace(options.namespace);
-  const displayName = channel == null ? `Open Design ${namespaceToken}` : displayNameForChannel(channel);
+  const displayName = channel == null ? `Pixflow Design ${namespaceToken}` : displayNameForChannel(channel);
   return { displayName, namespaceToken };
 }

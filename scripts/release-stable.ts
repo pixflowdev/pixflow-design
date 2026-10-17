@@ -532,7 +532,7 @@ if (latestStable != null && compareVersions(packagedParsed, latestStable.parsed)
 }
 
 let releaseVersion = packagedVersion;
-let releaseName = `Open Design ${packagedVersion}`;
+let releaseName = `Pixflow Design ${packagedVersion}`;
 let nightlyNumber = "";
 let stateSource = channel === "nightly" ? "R2 metadata.json" : "GitHub Releases";
 
@@ -574,7 +574,7 @@ if (channel === "nightly") {
 
   nightlyNumber = String(nextNightlyNumber);
   releaseVersion = `${packagedVersion}.nightly.${nightlyNumber}`;
-  releaseName = `Open Design Nightly ${releaseVersion}`;
+  releaseName = `Pixflow Design Nightly ${releaseVersion}`;
   console.log(`[release-stable] latest nightly: ${latestNightly.nightlyVersion}`);
 } else if (process.env.OPEN_DESIGN_SKIP_STABLE_NIGHTLY_GATE === "true") {
   // Escape hatch (skip_nightly_gate input). The stable-promotion gate validates

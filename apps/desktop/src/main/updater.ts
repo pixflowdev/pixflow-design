@@ -719,7 +719,7 @@ async function ensureOwnedUpdateRoot(
           ok: false,
           error: createError(
             "update-root-not-owned",
-            `update root is not empty and has no Open Design updater ownership marker: ${realRoot}`,
+            `update root is not empty and has no Pixflow Design updater ownership marker: ${realRoot}`,
           ),
         };
       }

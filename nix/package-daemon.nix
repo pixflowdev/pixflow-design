@@ -176,7 +176,7 @@ in
     };
 
     meta = with lib; {
-      description = "Open Design daemon — local agent orchestrator + API (`od` CLI)";
+      description = "Pixflow Design daemon — local agent orchestrator + API (`od` CLI)";
       homepage = "https://github.com/nexu-io/open-design";
       license = licenses.asl20;
       mainProgram = "od";

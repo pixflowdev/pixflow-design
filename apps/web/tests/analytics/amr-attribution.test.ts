@@ -21,7 +21,7 @@ describe.skip('AMR attribution helper', () => {
     vi.unstubAllGlobals();
   });
 
-  it('accepts every AMR entry source defined for Open Design entry points', () => {
+  it('accepts every AMR entry source defined for Pixflow Design entry points', () => {
     const track = vi.fn();
     const sources = [
       'onboarding_amr_card',
@@ -136,7 +136,7 @@ describe.skip('AMR attribution helper', () => {
     expect(readAmrAttribution(new Date('2026-06-10T12:00:01.000Z'))).toBeNull();
   });
 
-  it('adds Open Design attribution params to AMR wallet URLs', () => {
+  it('adds Pixflow Design attribution params to AMR wallet URLs', () => {
     expect(
       attributedAmrUrl('https://open-design.ai/amr/wallet?tab=recharge', {
         entryId: 'od-amr-entry-123',

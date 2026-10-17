@@ -619,7 +619,7 @@ describe('POST /api/test/connection provider mode', () => {
     expect(upstream).toHaveBeenCalled();
   });
 
-  it('retires Open Design community lookup without contacting Discord', async () => {
+  it('retires Pixflow Design community lookup without contacting Discord', async () => {
     const upstream = vi.fn(() => jsonResponse({}));
     vi.stubGlobal('fetch', passThroughOrUpstream(upstream));
     const res = await realFetch(`${baseUrl}/api/community/discord`);

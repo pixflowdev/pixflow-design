@@ -61,7 +61,7 @@ const PROMPT_SAFE_HTTP_STATUS_LABELS: Record<string, string> = {
 
 const PROTOTYPE_HTML_V016_QUALITY_CORE = `# Prototype HTML v0.16.1 quality core
 
-Use this focused design loop for website, page, section, and component prototypes. It carries the quality-critical planning and craft behavior from the newer Open Design Prototype HTML runtime without turning the run into a repeated critique process.
+Use this focused design loop for website, page, section, and component prototypes. It carries the quality-critical planning and craft behavior from the newer Pixflow Design Prototype HTML runtime without turning the run into a repeated critique process.
 
 ## Lock the direction before markup
 

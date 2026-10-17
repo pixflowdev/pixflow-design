@@ -1121,7 +1121,7 @@ async function readInstalledAppName(installDir: string): Promise<string> {
   ) as InstalledAppPackage;
   if (typeof appPackage.productName === 'string' && appPackage.productName.length > 0) return appPackage.productName;
   if (typeof appPackage.name === 'string' && appPackage.name.length > 0) return appPackage.name;
-  return 'Open Design';
+  return 'Pixflow Design';
 }
 
 async function resolveInstalledPackagedConfigPath(installDir: string): Promise<string> {

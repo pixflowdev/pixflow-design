@@ -7,7 +7,7 @@ import {
 } from "../src/windows-lifecycle.js";
 
 describe("Windows packaged lifecycle", () => {
-  it("updates the branded bridge registration without touching Open Design", async () => {
+  it("updates the branded bridge registration without touching the legacy installation", async () => {
     const calls: string[][] = [];
     await syncWindowsUninstallDisplayVersion({
       namespace: 'release-stable-win', version: '1.1.6', platform: 'win32',

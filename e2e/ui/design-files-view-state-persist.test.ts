@@ -94,7 +94,7 @@ test.beforeEach(async ({ page }) => {
 
 async function waitForLoadingToClear(page: Page): Promise<void> {
   await page
-    .getByText('Loading Open Design…')
+    .getByText('Loading Pixflow Design…')
     .waitFor({ state: 'detached', timeout: 15_000 })
     .catch(() => {});
 }
@@ -104,7 +104,7 @@ async function gotoEntryHome(page: Page): Promise<void> {
   await waitForLoadingToClear(page);
   const privacyDialog = page
     .getByRole('dialog')
-    .filter({ hasText: 'Help us improve Open Design' });
+    .filter({ hasText: 'Help us improve Pixflow Design' });
   if (await privacyDialog.isVisible().catch(() => false)) {
     await privacyDialog.getByRole('button', { name: /I get it|not now|got it|don't share/i }).click();
     await expect(privacyDialog).toHaveCount(0);

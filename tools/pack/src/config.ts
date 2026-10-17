@@ -104,7 +104,7 @@ export type ToolPackConfig = {
    */
   posthogCliApiKey?: string | undefined;
   /**
-   * PostHog project ID (e.g. `420348` for the official Open Design project)
+   * PostHog project ID for the operator's configured telemetry project,
    * used by `@posthog/cli sourcemap upload`. Sourced from
    * `POSTHOG_CLI_PROJECT_ID` (or the alias `POSTHOG_PROJECT_ID`) in CI.
    * Required for upload to be attempted; missing → strip-only path.
@@ -117,7 +117,7 @@ export type ToolPackConfig = {
    * `posthogHost` above, which is the **ingest** host (`us.i.posthog.com`)
    * used by the runtime SDK and accepts `/capture/` traffic only. Sourced
    * from `POSTHOG_CLI_HOST`; when missing, the CLI defaults to the US Cloud
-   * app host on its own, which is correct for the official project.
+   * app host on its own; other regions need an explicit management host.
    */
   posthogCliHost?: string | undefined;
   to: ToolPackBuildOutput;

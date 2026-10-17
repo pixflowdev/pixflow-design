@@ -16,6 +16,7 @@ import {
   resolveToolPackLauncherChannel,
   resolveToolPackLauncherRoot,
 } from "../launcher-layout.js";
+import { PRODUCT_NAME } from "./constants.js";
 import { readPackagedVersion } from "./manifest.js";
 import type { WinBuiltAppManifest, WinPackTiming, WinPaths } from "./types.js";
 
@@ -26,7 +27,7 @@ export type WinLauncherPayloadManifest = {
   channel: string;
   entry: {
     cwd: "payload";
-    executable: "payload/Open Design.exe";
+    executable: string;
   };
   namespace: string;
   payloadRoot: "payload";
@@ -44,7 +45,7 @@ export function buildWinLauncherPayloadManifest(input: {
     channel: input.channel,
     entry: {
       cwd: "payload",
-      executable: "payload/Open Design.exe",
+      executable: `payload/${PRODUCT_NAME}.exe`,
     },
     namespace: input.namespace,
     payloadRoot: "payload",

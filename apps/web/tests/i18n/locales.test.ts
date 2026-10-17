@@ -37,6 +37,21 @@ function explicitLocaleKeys(locale: Locale): string[] {
 }
 
 describe('i18n locales', () => {
+  it('uses the product brand and AMR provider name in visible copy while retaining compatibility examples', async () => {
+    for (const locale of LOCALES) {
+      const dict = await loadDict(locale);
+      for (const [key, value] of Object.entries(dict)) {
+        // Package names and saved data paths in executable examples remain
+        // compatibility contracts. The toolbox label uses "open" as a verb.
+        if (key === 'chat.designToolbox.aria') continue;
+        const visibleCopy = value.replace(/`[^`]*`/g, '');
+        expect(visibleCopy, `${locale}.${key}`).not.toMatch(/open[ -]?design/i);
+      }
+      expect(dict['ui.amrRunGateDialog.checkYourOpenDesignCloudBalance'], locale).toContain('AMR');
+    }
+    expect(en['chat.designToolbox.aria']).toBe('Open design toolbox');
+  });
+
   it('resolves the initial locale from browser language preferences', () => {
     expect(resolveSystemLocale(['zh-Hans-CN', 'en-US'])).toBe('zh-CN');
     expect(resolveSystemLocale(['zh-Hant-HK', 'en-US'])).toBe('zh-TW');

@@ -8,49 +8,49 @@ import { resolveWinInstallIdentity } from "../src/win/identity.js";
 describe("resolveWinInstallIdentity", () => {
   it("keeps the default namespace on the canonical Windows display name", () => {
     expect(resolveWinInstallIdentity({ namespace: "default" })).toMatchObject({
-      displayName: "Open Design",
-      shortcutName: "Open Design.lnk",
-      uninstallerName: "Uninstall Open Design.exe",
+      displayName: "Pixflow Design",
+      shortcutName: "Pixflow Design.lnk",
+      uninstallerName: "Uninstall Pixflow Design.exe",
     });
   });
 
   it("uses the canonical Windows display name for stable release namespaces", () => {
     expect(resolveWinInstallIdentity({ namespace: "release-stable-win" })).toMatchObject({
-      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design.exe",
-      displayName: "Open Design",
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Pixflow Design.exe",
+      displayName: "Pixflow Design",
       registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-release-stable-win",
-      shortcutName: "Open Design.lnk",
-      uninstallerName: "Uninstall Open Design.exe",
+      shortcutName: "Pixflow Design.lnk",
+      uninstallerName: "Uninstall Pixflow Design.exe",
     });
   });
 
   it("uses first-class beta display identity for beta release namespaces", () => {
     expect(resolveWinInstallIdentity({ namespace: "release-beta-win" })).toMatchObject({
-      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design Beta.exe",
-      displayName: "Open Design Beta",
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Pixflow Design Beta.exe",
+      displayName: "Pixflow Design Beta",
       registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-release-beta-win",
-      shortcutName: "Open Design Beta.lnk",
-      uninstallerName: "Uninstall Open Design Beta.exe",
+      shortcutName: "Pixflow Design Beta.lnk",
+      uninstallerName: "Uninstall Pixflow Design Beta.exe",
     });
   });
 
   it("keeps non-release beta-like namespaces isolated from the real beta channel identity", () => {
     expect(resolveWinInstallIdentity({ namespace: "beta-local-flow" })).toMatchObject({
-      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design beta-local-flow.exe",
-      displayName: "Open Design beta-local-flow",
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Pixflow Design beta-local-flow.exe",
+      displayName: "Pixflow Design beta-local-flow",
       registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-beta-local-flow",
-      shortcutName: "Open Design beta-local-flow.lnk",
-      uninstallerName: "Uninstall Open Design beta-local-flow.exe",
+      shortcutName: "Pixflow Design beta-local-flow.lnk",
+      uninstallerName: "Uninstall Pixflow Design beta-local-flow.exe",
     });
   });
 
   it("uses first-class preview display identity for preview release namespaces", () => {
     expect(resolveWinInstallIdentity({ namespace: "release-preview-win" })).toMatchObject({
-      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design Preview.exe",
-      displayName: "Open Design Preview",
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Pixflow Design Preview.exe",
+      displayName: "Pixflow Design Preview",
       registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-release-preview-win",
-      shortcutName: "Open Design Preview.lnk",
-      uninstallerName: "Uninstall Open Design Preview.exe",
+      shortcutName: "Pixflow Design Preview.lnk",
+      uninstallerName: "Uninstall Pixflow Design Preview.exe",
     });
   });
 
@@ -59,15 +59,15 @@ describe("resolveWinInstallIdentity", () => {
       appVersion: "0.8.0.nightly.2",
       namespace: "release-stable-win",
     })).toMatchObject({
-      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design Nightly.exe",
-      displayName: "Open Design Nightly",
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Pixflow Design Nightly.exe",
+      displayName: "Pixflow Design Nightly",
       registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-release-stable-win",
-      shortcutName: "Open Design Nightly.lnk",
-      uninstallerName: "Uninstall Open Design Nightly.exe",
+      shortcutName: "Pixflow Design Nightly.lnk",
+      uninstallerName: "Uninstall Pixflow Design Nightly.exe",
     });
     expect(resolveWinInstallIdentity({ namespace: "release-nightly-win" })).toMatchObject({
-      displayName: "Open Design Nightly",
-      shortcutName: "Open Design Nightly.lnk",
+      displayName: "Pixflow Design Nightly",
+      shortcutName: "Pixflow Design Nightly.lnk",
     });
   });
 
@@ -131,7 +131,7 @@ describe("resolveWinInstallIdentity", () => {
     expect(bridgeScripts.install).toContain('"$INSTDIR\\Pixflow Design Bridge.exe"');
     expect(bridgeScripts.install).toContain('"$INSTDIR\\resources\\icon.ico"');
     expect(bridgeScripts.uninstall).toContain('Delete "$SMSTARTUP\\Pixflow Design Bridge.lnk"');
-    expect(createBridgeStartupShortcutScripts(false, "Open Design.lnk", "Open Design.exe", "$INSTDIR\\resources\\icon.ico"))
+    expect(createBridgeStartupShortcutScripts(false, "Pixflow Design.lnk", "Pixflow Design.exe", "$INSTDIR\\resources\\icon.ico"))
       .toEqual({ install: "", uninstall: "" });
   });
 

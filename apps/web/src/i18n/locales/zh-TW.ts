@@ -914,7 +914,7 @@ export const zhTW: Dict = {
   'pluginCard.contributeAria': '將 {title} 貢獻至 Pixflow Design',
   'pluginCard.contributeTitle': '透過 pull request 將外掛貢獻至 Pixflow Design',
   'skillPluginCandidate.createForMe': '建立外掛/範本',
-  'skillPluginCandidate.contributeToMain': '貢獻到 open-design',
+  'skillPluginCandidate.contributeToMain': '貢獻到 Pixflow Design',
   'skillPluginCandidate.repoDescription': '這個倉庫看起來可以做成外掛。',
   'integrations.kicker': '整合',
   'integrations.lede': '連接外部系統，把 MCP 工具帶入智能體迴圈，並在其他 IDE、腳本與自動化流程中使用 Pixflow Design。',
@@ -3289,7 +3289,7 @@ export const zhTW: Dict = {
 
   "ui.app.licenseRequired": "需要授權",
   "ui.amrRunGateDialog.signInBeforeStarting": "開始前請登入",
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "查看您的 Open Design Cloud 餘額",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "查看您的 AMR 餘額",
   "ui.amrRunGateDialog.signInToStartThisRun": "登入以開始此次執行",
   "ui.amrRunGateDialog.yourPromptIsStillHereSignIn": "您的提示仍在。登入後再次檢查即可繼續，無需重新輸入。",
   "ui.amrRunGateDialog.topUpBalance": "儲值餘額",

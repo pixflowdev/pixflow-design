@@ -6,12 +6,12 @@ import {
 } from '../src/api/social-share';
 
 describe('social-share contract', () => {
-  it('builds Open Design repository share targets', () => {
+  it('builds Pixflow Design repository share targets', () => {
     const payload = buildSocialSharePayload({
       kind: 'open-design-repo',
       locale: 'zh-CN',
-      title: 'Open Design GitHub',
-      text: '推荐 Open Design',
+      title: 'Pixflow Design GitHub',
+      text: '推荐 Pixflow Design',
     });
 
     expect(payload.url).toBe(OPEN_DESIGN_GITHUB_REPO_URL);
@@ -26,7 +26,7 @@ describe('social-share contract', () => {
       locale: 'en',
       url: 'https://example.com/open-design-demo',
       title: 'Demo',
-      text: `Built with Open Design. Repo: ${OPEN_DESIGN_GITHUB_REPO_URL}`,
+      text: `Built with Pixflow Design. Repo: ${OPEN_DESIGN_GITHUB_REPO_URL}`,
       copyText: `Demo\nhttps://example.com/open-design-demo\n${OPEN_DESIGN_GITHUB_REPO_URL}`,
     });
 

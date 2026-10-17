@@ -914,7 +914,7 @@ export const ptBR: Dict = {
   'pluginCard.contributeAria': 'Contribuir com {title} para o Pixflow Design',
   'pluginCard.contributeTitle': 'Contribuir com plugin para o Pixflow Design por meio de um pull request',
   'skillPluginCandidate.createForMe': 'Criar plugin/modelo',
-  'skillPluginCandidate.contributeToMain': 'Contribuir para o open-design',
+  'skillPluginCandidate.contributeToMain': 'Contribuir para o Pixflow Design',
   'skillPluginCandidate.repoDescription': 'Este repositório parece que poderia funcionar como um plugin.',
   'integrations.kicker': 'Integração',
   'integrations.lede': 'Conecte sistemas externos, traga ferramentas MCP para o loop do seu agent e use o Pixflow Design a partir de outras IDEs, scripts e automações.',
@@ -2937,7 +2937,7 @@ export const ptBR: Dict = {
   'settings.memory': 'Memória',
   'settings.memoryHint': 'Personal facts auto-extracted from chats',
   'settings.customInstructionsTitle': 'Regras globais',
-  'settings.customInstructionsHint': 'Instruções fixas que o OpenDesign deve seguir em todos os chats. Salve fatos, preferências e contexto do projeto como memórias.',
+  'settings.customInstructionsHint': 'Instruções fixas que o Pixflow Design deve seguir em todos os chats. Salve fatos, preferências e contexto do projeto como memórias.',
   'settings.customInstructionsPlaceholder': 'ex.: "Sempre use TypeScript. Prefira componentes funcionais. Mantenha as respostas concisas."',
   'settings.memoryDescription': 'Auto-extracted facts about you and your preferences. Saved as Markdown files and folded into every chat.',
   'settings.memoryEnabled': 'Ativada',
@@ -5104,7 +5104,7 @@ export const ptBR: Dict = {
   "ui.sitemapView.sitemapBrief": "Briefing do mapa do site",
 
   // Pixflow interface copy.
-  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Confira seu saldo do Open Design Cloud",
+  "ui.amrRunGateDialog.checkYourOpenDesignCloudBalance": "Confira seu saldo do AMR",
   "ui.chatComposer.odPluginInstallLtSourceGt": "od plugin install <source>",
   "ui.designBrowserPanel.aCuratedSetOfReferencesAcrossInspiration": "Uma seleção de inspiração, interfaces reais, animação, cor, tipografia, recursos e sistemas de design. Abra uma referência para explorá-la enquanto define a linguagem visual da próxima criação.",
   "ui.entryShell.frameworksExtraResourcesMediaProvidersAndDictation": "Frameworks, recursos extras, provedores de mídia e ditado podem ser configurados depois nas Configurações.",

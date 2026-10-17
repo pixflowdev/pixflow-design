@@ -1163,7 +1163,7 @@ export class ComposioConnectorProvider {
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
-        'user-agent': 'OpenDesign/0.1 ComposioConnectorProvider',
+        'user-agent': 'PixflowDesign/0.1 ComposioConnectorProvider',
         'x-api-key': apiKey,
       },
       ...(input.body ? { body: input.body } : {}),

@@ -107,13 +107,13 @@ async function createUpdaterFixture(options: {
     ? `open-design-${version}-win-x64-setup.exe`
     : `open-design-${version}-mac-arm64.dmg`;
   const artifactPath = `/artifact.${artifactExt}`;
-  const artifactBody = Buffer.from(options.artifactBody ?? "open design updater fixture");
+  const artifactBody = Buffer.from(options.artifactBody ?? "pixflow design updater fixture");
   const digest = createHash("sha256").update(artifactBody).digest("hex");
   const payloadName = platform === "win"
     ? `open-design-${version}-win-x64-payload.7z`
     : `open-design-${version}-mac-arm64-payload.zip`;
   const payloadPath = platform === "win" ? "/payload.7z" : "/payload.zip";
-  const payloadBody = Buffer.from(options.payloadBody ?? "open design updater payload fixture");
+  const payloadBody = Buffer.from(options.payloadBody ?? "pixflow design updater payload fixture");
   const payloadDigest = createHash("sha256").update(payloadBody).digest("hex");
   const artifactRanges: string[] = [];
   let artifactRequests = 0;
@@ -363,7 +363,7 @@ describe("desktop updater", () => {
       expect(checked.paths?.manifestPath).toBe(join(root, "metadata.json"));
       expect(checked.active?.path).toBe(checked.downloadPath);
       expect(relative(await realpath(root), checked.downloadPath ?? "")).not.toMatch(/^\.\./);
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design updater fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design updater fixture");
 
       const restored = await updater.status();
       expect(restored.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
@@ -398,7 +398,7 @@ describe("desktop updater", () => {
       expect(checked.artifact?.platformKey).toBe("win");
       expect(checked.artifact?.type).toBe("installer");
       expect(checked.downloadPath).toEqual(expect.stringMatching(/\.exe$/));
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design updater fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design updater fixture");
 
       const installed = await updater.installUpdate();
       expect(installed.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
@@ -414,7 +414,7 @@ describe("desktop updater", () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
     });
     try {
@@ -429,7 +429,7 @@ describe("desktop updater", () => {
 
       expect(checked.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
       expect(checked.artifact?.type).toBe("installer");
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design updater fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design updater fixture");
     } finally {
       await fixture.close();
       rmSync(root, { force: true, recursive: true });
@@ -439,13 +439,13 @@ describe("desktop updater", () => {
   it("falls back to the installer when launcher context is valid but metadata has no payload artifact", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       platform: "win",
       version: "1.0.0-beta.3",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.exe");
     try {
       await mkdir(join(root, "installed"), { recursive: true });
       await writeFile(launcherLaunchPath, "");
@@ -482,7 +482,7 @@ describe("desktop updater", () => {
 
       expect(checked.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
       expect(checked.artifact?.type).toBe("installer");
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design windows installer fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design windows installer fixture");
     } finally {
       await fixture.close();
       rmSync(root, { force: true, recursive: true });
@@ -492,17 +492,17 @@ describe("desktop updater", () => {
   it("downloads and applies launcher payload only when launcher runtime context validates", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.2",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
     const versionRoot = join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win", "versions");
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.exe");
     const launches: Array<{ appPid: number; launchPath: string; root: string }> = [];
     let extractCount = 0;
     try {
@@ -539,14 +539,14 @@ describe("desktop updater", () => {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           extractCount += 1;
           await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(
             join(destinationRoot, "manifest.json"),
             `${JSON.stringify({
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -565,7 +565,7 @@ describe("desktop updater", () => {
           });
           return { helperLogPath: join(root, "updates", "helpers", "open-app-after-quit-test.log") };
         },
-        processExecPath: "C:\\Program Files\\Open Design Beta\\Open Design Beta.exe",
+        processExecPath: "C:\\Program Files\\Pixflow Design Beta\\Pixflow Design Beta.exe",
         processPid: 4242,
       });
 
@@ -574,7 +574,7 @@ describe("desktop updater", () => {
       expect(checked.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
       expect(checked.artifact?.type).toBe("payload");
       expect(checked.artifact?.name).toBe("open-design-1.0.0-beta.2-win-x64-payload.7z");
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design windows payload fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design windows payload fixture");
       expect(extractCount).toBe(1);
       expect(await readFile(join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win", "versions", "1.0.0-beta.2", "manifest.json"), "utf8")).toContain("1.0.0-beta.2");
       expect(JSON.parse(await readFile(launcherRuntimePath, "utf8"))).toMatchObject({
@@ -617,17 +617,17 @@ describe("desktop updater", () => {
   it("rejects launcher payloads that change before activation", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.2",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
     const versionRoot = join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win", "versions");
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.exe");
     const launches: Array<{ appPid: number; launchPath: string; root: string }> = [];
     let extractCount = 0;
     try {
@@ -663,14 +663,14 @@ describe("desktop updater", () => {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           extractCount += 1;
           await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(
             join(destinationRoot, "manifest.json"),
             `${JSON.stringify({
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -689,7 +689,7 @@ describe("desktop updater", () => {
           });
           return { helperLogPath: join(root, "updates", "helpers", "open-app-after-quit-test.log") };
         },
-        processExecPath: "C:\\Program Files\\Open Design Beta\\Open Design Beta.exe",
+        processExecPath: "C:\\Program Files\\Pixflow Design Beta\\Pixflow Design Beta.exe",
         processPid: 4242,
       });
 
@@ -720,13 +720,13 @@ describe("desktop updater", () => {
     const fixture = await createUpdaterFixture({
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design payload without packaged config",
+      payloadBody: "pixflow design payload without packaged config",
       platform: "win",
       version: "1.0.0-beta.2",
     });
     const namespaceRoot = join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win");
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.exe");
     try {
       await mkdir(join(root, "installed"), { recursive: true });
       await writeFile(launcherLaunchPath, "");
@@ -758,14 +758,14 @@ describe("desktop updater", () => {
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           await mkdir(join(destinationRoot, "payload", "resources"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(
             join(destinationRoot, "manifest.json"),
             `${JSON.stringify({
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -796,15 +796,15 @@ describe("desktop updater", () => {
   it("keeps using the installer when launcher context has a missing installed launch path", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.2",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
-    const launcherLaunchPath = join(root, "missing", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "missing", "Pixflow Design Beta.exe");
     try {
       await mkdir(join(root, "launcher"), { recursive: true });
       await mkdir(join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win", "versions", "1.0.0-beta.1"), { recursive: true });
@@ -832,14 +832,14 @@ describe("desktop updater", () => {
         namespace: "release-beta-win",
         source: SIDECAR_SOURCES.PACKAGED,
       }, {
-        processExecPath: "C:\\Users\\runneradmin\\AppData\\Roaming\\Open Design Beta\\launcher\\channels\\beta\\namespaces\\release-beta-win\\versions\\1.0.0-beta.1\\payload\\Open Design.exe",
+        processExecPath: "C:\\Users\\runneradmin\\AppData\\Roaming\\Pixflow Design Beta\\launcher\\channels\\beta\\namespaces\\release-beta-win\\versions\\1.0.0-beta.1\\payload\\Pixflow Design.exe",
       });
 
       const checked = await updater.checkForUpdates();
 
       expect(checked.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
       expect(checked.artifact?.type).toBe("installer");
-      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("open design windows installer fixture");
+      expect(await readFile(checked.downloadPath ?? "", "utf8")).toBe("pixflow design windows installer fixture");
     } finally {
       await fixture.close();
       rmSync(root, { force: true, recursive: true });
@@ -849,16 +849,16 @@ describe("desktop updater", () => {
   it("relaunches mac launcher payloads through the installed app bundle from a payload-backed process", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design mac dmg fixture",
+      artifactBody: "pixflow design mac dmg fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design mac payload fixture",
+      payloadBody: "pixflow design mac payload fixture",
       platform: "mac",
       version: "1.0.0-beta.3",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.app");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.app");
     const launches: Array<{ appPid: number; launchPath: string; root: string }> = [];
     try {
       await mkdir(launcherLaunchPath, { recursive: true });
@@ -890,17 +890,17 @@ describe("desktop updater", () => {
         source: SIDECAR_SOURCES.PACKAGED,
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
-          await mkdir(join(destinationRoot, "payload", "Open Design Beta.app", "Contents", "MacOS"), { recursive: true });
-          await mkdir(join(destinationRoot, "payload", "Open Design Beta.app", "Contents", "Resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design Beta.app", "Contents", "MacOS", "Open Design Beta"), "");
-          await writeFile(join(destinationRoot, "payload", "Open Design Beta.app", "Contents", "Resources", "open-design-config.json"), "{}\n");
+          await mkdir(join(destinationRoot, "payload", "Pixflow Design Beta.app", "Contents", "MacOS"), { recursive: true });
+          await mkdir(join(destinationRoot, "payload", "Pixflow Design Beta.app", "Contents", "Resources", "open-design"), { recursive: true });
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design Beta.app", "Contents", "MacOS", "Pixflow Design Beta"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design Beta.app", "Contents", "Resources", "open-design-config.json"), "{}\n");
           await writeFile(
             join(destinationRoot, "manifest.json"),
             `${JSON.stringify({
               channel: "beta",
               entry: {
-                cwd: "payload/Open Design Beta.app",
-                executable: "payload/Open Design Beta.app/Contents/MacOS/Open Design Beta",
+                cwd: "payload/Pixflow Design Beta.app",
+                executable: "payload/Pixflow Design Beta.app/Contents/MacOS/Pixflow Design Beta",
               },
               namespace: "release-beta",
               payloadRoot: "payload",
@@ -918,7 +918,7 @@ describe("desktop updater", () => {
           });
           return {};
         },
-        processExecPath: join(root, "launcher", "channels", "beta", "namespaces", "release-beta", "versions", "1.0.0-beta.2", "payload", "Open Design Beta.app", "Contents", "MacOS", "Open Design Beta"),
+        processExecPath: join(root, "launcher", "channels", "beta", "namespaces", "release-beta", "versions", "1.0.0-beta.2", "payload", "Pixflow Design Beta.app", "Contents", "MacOS", "Pixflow Design Beta"),
         processPid: 4243,
       });
 
@@ -946,16 +946,16 @@ describe("desktop updater", () => {
   it("relaunches Windows launcher payloads through the installed executable from a payload-backed process", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.3",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
-    const launcherLaunchPath = join(root, "installed", "Open Design.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design.exe");
     const launches: Array<{ appPid: number; launchPath: string; root: string }> = [];
     try {
       await mkdir(join(root, "installed"), { recursive: true });
@@ -989,7 +989,7 @@ describe("desktop updater", () => {
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(join(destinationRoot, "payload", "resources", "open-design-config.json"), "{}\n");
           await writeFile(
             join(destinationRoot, "manifest.json"),
@@ -997,7 +997,7 @@ describe("desktop updater", () => {
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -1015,7 +1015,7 @@ describe("desktop updater", () => {
           });
           return {};
         },
-        processExecPath: "C:\\Users\\runneradmin\\AppData\\Roaming\\Open Design Beta\\launcher\\channels\\beta\\namespaces\\release-beta-win\\versions\\1.0.0-beta.2\\payload\\Open Design.exe",
+        processExecPath: "C:\\Users\\runneradmin\\AppData\\Roaming\\Pixflow Design Beta\\launcher\\channels\\beta\\namespaces\\release-beta-win\\versions\\1.0.0-beta.2\\payload\\Pixflow Design.exe",
         processPid: 4244,
       });
 
@@ -1043,16 +1043,16 @@ describe("desktop updater", () => {
   it("fails launcher payload relaunch when the stable launcher entry is unavailable", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.3",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
-    const launcherLaunchPath = join(root, "installed", "Open Design.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design.exe");
     const launches: Array<{ appPid: number; launchPath: string; root: string }> = [];
     try {
       await mkdir(join(root, "installed"), { recursive: true });
@@ -1086,7 +1086,7 @@ describe("desktop updater", () => {
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(join(destinationRoot, "payload", "resources", "open-design-config.json"), "{}\n");
           await writeFile(
             join(destinationRoot, "manifest.json"),
@@ -1094,7 +1094,7 @@ describe("desktop updater", () => {
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -1123,7 +1123,7 @@ describe("desktop updater", () => {
 
       expect(installed.state).toBe(DESKTOP_UPDATE_STATES.ERROR);
       expect(installed.error?.code).toBe("payload-relaunch-failed");
-      expect(installed.error?.message).toContain("Open Design.exe");
+      expect(installed.error?.message).toContain("Pixflow Design.exe");
       expect(launches).toEqual([]);
     } finally {
       await fixture.close();
@@ -1134,16 +1134,16 @@ describe("desktop updater", () => {
   it("starts the stable Windows launcher in after-quit mode for payload installs", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design windows installer fixture",
+      artifactBody: "pixflow design windows installer fixture",
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design windows payload fixture",
+      payloadBody: "pixflow design windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.3",
     });
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const launcherRoot = root;
-    const launcherLaunchPath = join(root, "installed", "Open Design.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design.exe");
     const spawned: Array<{ args: string[]; command: string; options: unknown }> = [];
     const unref = vi.fn();
     try {
@@ -1178,7 +1178,7 @@ describe("desktop updater", () => {
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(join(destinationRoot, "payload", "resources", "open-design-config.json"), "{}\n");
           await writeFile(
             join(destinationRoot, "manifest.json"),
@@ -1186,7 +1186,7 @@ describe("desktop updater", () => {
               channel: "beta",
               entry: {
                 cwd: "payload",
-                executable: "payload/Open Design.exe",
+                executable: "payload/Pixflow Design.exe",
               },
               namespace: "release-beta-win",
               payloadRoot: "payload",
@@ -1233,14 +1233,14 @@ describe("desktop updater", () => {
     const fixture = await createUpdaterFixture({
       channel: "beta",
       includePayload: true,
-      payloadBody: "open design bad windows payload fixture",
+      payloadBody: "pixflow design bad windows payload fixture",
       platform: "win",
       version: "1.0.0-beta.2",
     });
     const namespaceRoot = join(root, "launcher", "channels", "beta", "namespaces", "release-beta-win");
     const launcherRuntimePath = join(root, "launcher", "runtime.json");
     const existingVersionRoot = join(namespaceRoot, "versions", "1.0.0-beta.2");
-    const launcherLaunchPath = join(root, "installed", "Open Design Beta.exe");
+    const launcherLaunchPath = join(root, "installed", "Pixflow Design Beta.exe");
     try {
       await mkdir(join(root, "installed"), { recursive: true });
       await writeFile(launcherLaunchPath, "");
@@ -1273,12 +1273,12 @@ describe("desktop updater", () => {
       }, {
         extractLauncherPayloadArchive: async ({ destinationRoot }) => {
           await mkdir(join(destinationRoot, "payload"), { recursive: true });
-          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "Pixflow Design.exe"), "");
           await writeFile(
             join(destinationRoot, "manifest.json"),
             `${JSON.stringify({
               channel: "beta",
-              entry: { cwd: "payload", executable: "payload/Open Design.exe" },
+              entry: { cwd: "payload", executable: "payload/Pixflow Design.exe" },
               namespace: "release-beta-win",
               payloadRoot: "payload",
               platform: "win32",
@@ -1313,7 +1313,7 @@ describe("desktop updater", () => {
       // flushed partial bytes on Windows as well as POSIX. A tiny one-chunk
       // body can be discarded by undici before the file stream observes it,
       // turning this resume assertion into a platform timing test.
-      artifactBody: "open design updater fixture with retry ".repeat(16_384),
+      artifactBody: "pixflow design updater fixture with retry ".repeat(16_384),
       failFirstArtifactWithTerminated: true,
       platform: "win",
     });
@@ -1345,7 +1345,7 @@ describe("desktop updater", () => {
   it("does not expose raw terminated transport errors when update download retries are exhausted", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
-      artifactBody: "open design updater fixture that keeps failing",
+      artifactBody: "pixflow design updater fixture that keeps failing",
       failArtifactAttempts: 3,
       platform: "win",
     });

@@ -200,13 +200,13 @@ describe('QuestionsPanel staggered reveal', () => {
     const first = render(<QuestionsPanel {...props} />);
     revealAll();
     fireEvent.change(textInputAt(0), {
-      target: { value: 'open design' },
+      target: { value: 'Pixflow Design' },
     });
     first.unmount();
 
     render(<QuestionsPanel {...props} />);
 
-    expect(textInputAt(0).value).toBe('open design');
+    expect(textInputAt(0).value).toBe('Pixflow Design');
   });
 
   it('clears restored draft answers after submitting the form', () => {
@@ -223,7 +223,7 @@ describe('QuestionsPanel staggered reveal', () => {
     const first = render(<QuestionsPanel {...props} />);
     revealAll();
     fireEvent.change(textInputAt(0), {
-      target: { value: 'open design' },
+      target: { value: 'Pixflow Design' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onSubmit).toHaveBeenCalledTimes(1);

@@ -8123,7 +8123,7 @@ export async function startServer({
       finishWithError(missingPixflowBricksHandoffCliMessage());
       return;
     }
-    // Local CLI media generation writes into an Open Design project. Give the
+    // Local CLI media generation writes into an Pixflow Design project. Give the
     // floating-panel turn a private project id up front so the selected CLI
     // can call `od media generate` without needing a browser BYOK key. The
     // WordPress host imports the resulting project file into Media Library
@@ -10368,7 +10368,7 @@ export async function startServer({
     }
   });
 
-  // Retired Open Design promotion endpoint. Keep an explicit response for old clients.
+  // Retired Pixflow Design promotion endpoint. Keep an explicit response for old clients.
   app.get('/api/community/discord', (_req, res) => {
     res.status(410).json({ error: 'community_endpoint_retired' });
   });
@@ -11721,7 +11721,7 @@ export async function startServer({
           fetchedAt,
           stale: false,
           source: 'unavailable',
-          error: { code: 'signed_out', message: 'Sign in to Open Design Cloud before starting a run.' },
+          error: { code: 'signed_out', message: 'Sign in to Pixflow Design Cloud before starting a run.' },
         });
         return;
       }
@@ -11764,7 +11764,7 @@ export async function startServer({
             source: 'daemon_cache',
             error: {
               code: 'upstream',
-              message: 'Open Design Cloud balance is temporarily unavailable.',
+              message: 'Pixflow Design Cloud balance is temporarily unavailable.',
             },
           });
           return;

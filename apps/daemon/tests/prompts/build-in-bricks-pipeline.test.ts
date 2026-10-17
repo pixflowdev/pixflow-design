@@ -17,7 +17,7 @@ describe('Build in Bricks source pipeline ownership', () => {
 
     expect(prompt).toContain('# Build in Bricks HTML-first source generation');
     expect(prompt).toContain('# Pixflow Build in Bricks source-generation core');
-    expect(prompt).not.toContain('# Open Design charter');
+    expect(prompt).not.toContain('# Pixflow Design charter');
     expect(prompt).not.toContain('# Prototype HTML pipeline for Build in Bricks');
     expect(prompt).not.toContain('v0.16.1 slim Prototype HTML charter above is the creative workflow');
   });
@@ -34,7 +34,7 @@ describe('Build in Bricks source pipeline ownership', () => {
       skillName: 'build-in-bricks-html-first',
       skillBody: 'Build skill body',
       craftBody: '# Anti-AI slop craft that must not be implicitly staged',
-      pluginBlock: '# Open Design plugin block that must not be staged',
+      pluginBlock: '# Pixflow Design plugin block that must not be staged',
       activeStageBlocks: ['# Prototype stage atom that must not be staged'],
       critique: { enabled: true } as any,
       critiqueBrand: { name: 'Test', design_md: 'palette' },
@@ -42,7 +42,7 @@ describe('Build in Bricks source pipeline ownership', () => {
     });
 
     expect(prompt).not.toContain('Anti-AI slop craft that must not be implicitly staged');
-    expect(prompt).not.toContain('Open Design plugin block that must not be staged');
+    expect(prompt).not.toContain('Pixflow Design plugin block that must not be staged');
     expect(prompt).not.toContain('Prototype stage atom that must not be staged');
     expect(prompt).not.toContain('CRITIQUE_RUN');
     expect(prompt).not.toContain('920px');

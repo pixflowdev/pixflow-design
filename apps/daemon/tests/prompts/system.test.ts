@@ -64,7 +64,7 @@ describe('composeSystemPrompt - Prototype Bricks Stage A profile', () => {
       },
     });
 
-    expect(prompt).toContain('# Open Design charter');
+    expect(prompt).toContain('# Pixflow Design charter');
     expect(prompt).toContain('### Once direction locks — plan, build, self-check');
     expect(prompt).toContain('**Plan first.**');
     expect(prompt).toContain('**Read once, in batches.**');

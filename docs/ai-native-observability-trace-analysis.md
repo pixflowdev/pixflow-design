@@ -1,6 +1,6 @@
 # AI Native Observability Trace Analysis Guide
 
-This shared-runtime reference describes the Open Design Langfuse trace shape for
+This shared-runtime reference describes the Pixflow Design Langfuse trace shape for
 AI Native observability. It is intended for product, engineering, and Agent
 reviewers who need to decide whether an Agent candidate improves quality,
 stability, latency, and cost without weakening user trust.
@@ -87,7 +87,7 @@ it stays available even when a reviewer does not expand individual observations.
 
 The section list is enough to analyze prompt composition, size, truncation, and
 fingerprint changes. It is not a full raw prompt archive. Heavy or sensitive
-content should remain in Open Design object storage and be referenced by
+content should remain in Pixflow Design object storage and be referenced by
 `storage_ref`, hash, and retention policy rather than inlining full raw prompt
 text into Langfuse.
 
@@ -280,7 +280,7 @@ references:
 - `sensitivity`
 - `approved_by`
 
-Raw sensitive content belongs in Open Design object storage with access control,
+Raw sensitive content belongs in Pixflow Design object storage with access control,
 retention policy, and deletion semantics. Langfuse should remain the
 observability surface, not the source-of-truth storage surface for private
 customer materials.

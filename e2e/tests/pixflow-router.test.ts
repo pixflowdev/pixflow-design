@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PluginManifestSchema } from '@open-design/contracts';
@@ -27,6 +27,44 @@ function taskOptions(text: string) {
 }
 
 describe('Pixflow fallback router across packaged resources and API/CLI prompts', () => {
+  it('keeps essential guidance and active assets inside the Nix daemon source closure', () => {
+    const flake = readFileSync(`${root}/flake.nix`, 'utf8');
+    const resourceList = flake.match(/daemonSrc = filterProjectSource \(\[([\s\S]*?)\]\s*\+\+ daemonWorkspacePaths/);
+    expect(resourceList, 'Nix daemon resource roots must remain explicitly reviewable').toBeTruthy();
+    const included = [...resourceList![1]!.matchAll(/"([^"\n]+)"/g)].map(match => match[1]);
+    for (const resource of ['guidance', 'skills', 'assets', 'prompt-templates']) {
+      expect(included, `${resource} must survive the Nix source filter`).toContain(resource);
+    }
+    for (const retired of ['plugins', 'craft', 'design-templates', 'design-systems', 'data', '.od', '.tmp']) {
+      expect(included, `${retired} must not enter the immutable daemon source closure`).not.toContain(retired);
+    }
+    for (const router of ['scenarios/od-default', 'examples/web-clone']) {
+      const parsed = JSON.parse(readFileSync(`${root}/guidance/${router}/open-design.json`, 'utf8'));
+      expect(PluginManifestSchema.safeParse(parsed).success, router).toBe(true);
+      expect(parsed.name, router).toBe(router.endsWith('od-default') ? 'od-default' : 'example-web-clone');
+    }
+  });
+
+  it('keeps Docker COPY sources valid and ships essential guidance with active generic assets', () => {
+    const dockerfile = readFileSync(`${root}/deploy/Dockerfile`, 'utf8');
+    const copies = dockerfile.split(/\r?\n/).filter(line => line.startsWith('COPY '));
+    const contextCopies = copies.filter(line => !line.includes('--from='));
+    const contextSources = contextCopies.flatMap(line => line.slice('COPY '.length).trim().split(/\s+/).slice(0, -1));
+    for (const source of contextSources) {
+      expect(existsSync(`${root}/${source}`), `Docker build context source ${source} must exist`).toBe(true);
+    }
+    expect(contextSources).toContain('guidance');
+    for (const retired of ['craft', 'plugins/_official', 'design-templates', 'design-systems']) {
+      expect(contextSources).not.toContain(retired);
+    }
+    const runtimeSources = copies.filter(line => line.includes('--from=build')).map(line => line.trim().split(/\s+/).at(-2));
+    for (const resource of ['guidance', 'skills', 'prompt-templates', 'assets/frames', 'assets/community-pets']) {
+      expect(runtimeSources, `${resource} must survive the Docker runtime stage`).toContain(`/app/${resource}`);
+    }
+    const compose = readFileSync(`${root}/deploy/docker-compose.yml`, 'utf8');
+    expect(compose).toContain('open_design_data:/app/.od');
+  });
+
   it('retains the stored router ID but advertises only baseline tasks and no media atoms', () => {
     expect(PluginManifestSchema.safeParse(manifest).success).toBe(true);
     expect(manifest.name).toBe('od-default');

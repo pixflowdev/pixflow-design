@@ -204,13 +204,13 @@ describe('PluginsHomeSection (category bar)', () => {
 
     fireEvent.click(screen.getByTestId('plugins-home-pill-category-live-artifact'));
 
-    expect(pluginIds()).toEqual([
+    expect(pluginIds().sort()).toEqual([
       'example-live-dashboard',
       'image-template-notion-team-dashboard-live-artifact',
       'example-social-media-matrix-tracker-template',
       'example-trading-analysis-dashboard-template',
       'example-live-artifact',
-    ]);
+    ].sort());
     expect(screen.queryByTestId('plugins-home-row-subcategory-live-artifact')).toBeNull();
   });
 

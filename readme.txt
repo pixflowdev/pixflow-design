@@ -1,5 +1,5 @@
 === Pixflow Design ===
-Contributors: pixflow
+Contributors: pixflowdev
 Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8

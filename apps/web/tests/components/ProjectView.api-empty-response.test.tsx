@@ -198,7 +198,7 @@ vi.mock('../../src/components/ChatPane', () => ({
         send
       </button>
       {messages.map((message) => (
-        <article key={message.id} data-testid={`message-${message.role}`}>
+        <article key={message.id} data-testid={`message-${message.role}`} data-message-id={message.id}>
           <span>{message.content}</span>
           <span>{message.runStatus ?? 'no-run-status'}</span>
           {(message.events ?? []).map((event, index) => (
@@ -310,6 +310,7 @@ describe('ProjectView API empty response handling', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -363,6 +364,8 @@ describe('ProjectView API empty response handling', () => {
     await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(JSON.parse(localStorage.getItem('od:chat-queued-sends:project-1:v1')!)[0].dispatchState).toBe('unconfirmed'));
     expect(screen.getAllByTestId('queued-request')).toHaveLength(1);
+    const failedAssistantId = latestRenderedAssistantId();
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', failedAssistantId)).toBe(true));
     first.unmount();
     renderProjectView();
     await waitFor(() => expect(screen.getAllByTestId('queued-request')).toHaveLength(1));
@@ -398,10 +401,14 @@ describe('ProjectView API empty response handling', () => {
     fireEvent.click(screen.getByRole('button', { name: 'queue follow-up' }));
     await waitFor(() => expect(JSON.parse(localStorage.getItem('od:chat-queued-sends:project-1:v1')!)[0].dispatchState).toBe('unconfirmed'));
     expect(runByokSite).toHaveBeenCalledTimes(1);
+    const failedAssistantId = latestRenderedAssistantId();
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', failedAssistantId)).toBe(true));
     fireEvent.click(screen.getByRole('button', { name: 'send queued' }));
     await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryAllByTestId('queued-request')).toHaveLength(0));
     expect(vi.mocked(runByokSite).mock.calls.map(([input]) => input.prompt)).toEqual(['Queued follow-up', 'Queued follow-up']);
+    const confirmedAssistantId = latestRenderedAssistantId();
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.endedAt !== undefined && message.content === 'Confirmed once', confirmedAssistantId)).toBe(true));
   });
 
   it.each(['direct', 'composio'] as const)('accepts a normal Send into the busy %s queue so the composer can clear its draft', async apiTransport => {
@@ -432,11 +439,52 @@ describe('ProjectView API empty response handling', () => {
     renderProjectView();
     await sendTestPrompt();
     await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(1));
+    const assistantId = latestRenderedAssistantId();
     fireEvent.click(screen.getByRole('button', { name: 'stop run' }));
     await act(async () => { finish(); });
-    expect(hasSavedAssistantMessage(message => message.runStatus === 'canceled')).toBe(true);
-    expect(hasSavedAssistantMessage(message => message.events?.some(event => event.kind === 'status' && event.label === 'empty_response') === true)).toBe(false);
-    expect(hasSavedAssistantMessage(message => message.runStatus === 'failed')).toBe(false);
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'canceled', assistantId)).toBe(true));
+    expect(hasSavedAssistantMessage(message => message.events?.some(event => event.kind === 'status' && event.label === 'empty_response') === true, assistantId)).toBe(false);
+    expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', assistantId)).toBe(false);
+  });
+
+  it('preserves cancellation while a previous failed attempt finishes persistence', async () => {
+    chatPaneMockState.wordpress = true;
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ body: '', handoff: null })));
+    let finish!: () => void;
+    let failPrevious!: () => void;
+    vi.mocked(runByokSite)
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { failPrevious = () => reject(new Error('Earlier preparation failed')); }))
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => {
+        finish = () => reject(new DOMException('Stopped', 'AbortError'));
+      }));
+    renderProjectView();
+    await sendTestPrompt();
+    await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(1));
+    const deferredPersistence: Array<() => void> = [];
+    const schedule = globalThis.setTimeout.bind(globalThis);
+    const timerSpy = vi.spyOn(window, 'setTimeout').mockImplementation((handler, delay, ...args) => {
+      if (delay === 0 && typeof handler === 'function') {
+        deferredPersistence.push(() => handler(...args));
+        const timer = schedule(() => {}, 0);
+        globalThis.clearTimeout(timer);
+        return timer;
+      }
+      return schedule(handler, delay, ...args);
+    });
+    await act(async () => { failPrevious(); });
+    timerSpy.mockRestore();
+    await waitFor(() => expect(screen.getByTestId('message-assistant').textContent).toContain('failed'));
+    expect(deferredPersistence.length).toBeGreaterThan(0);
+    const earlierAssistantId = latestRenderedAssistantId();
+    await sendTestPrompt();
+    await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(2));
+    const assistantId = latestRenderedAssistantId();
+    fireEvent.click(screen.getByRole('button', { name: 'stop run' }));
+    await act(async () => { deferredPersistence.forEach(persist => persist()); finish(); });
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'canceled', assistantId)).toBe(true));
+    expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', earlierAssistantId)).toBe(true);
+    expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', assistantId)).toBe(false);
+    expect(hasSavedAssistantMessage(message => message.events?.some(event => event.kind === 'status' && event.label === 'empty_response') === true, assistantId)).toBe(false);
   });
 
   it('pauses Workspace preparation and remaining queued requests on Stop, ignoring late acceptance', async () => {
@@ -1143,9 +1191,16 @@ async function sendTestPrompt() {
   fireEvent.click(screen.getByRole('button', { name: 'send' }));
 }
 
-function hasSavedAssistantMessage(predicate: (message: ChatMessage) => boolean): boolean {
+function latestRenderedAssistantId(): string {
+  const message = screen.getAllByTestId('message-assistant').at(-1);
+  const id = message?.getAttribute('data-message-id');
+  expect(id).toBeTruthy();
+  return id!;
+}
+
+function hasSavedAssistantMessage(predicate: (message: ChatMessage) => boolean, assistantId?: string): boolean {
   return mockedSaveMessage.mock.calls.some((call) => {
     const message = call[2] as ChatMessage;
-    return message.role === 'assistant' && predicate(message);
+    return message.role === 'assistant' && (!assistantId || message.id === assistantId) && predicate(message);
   });
 }

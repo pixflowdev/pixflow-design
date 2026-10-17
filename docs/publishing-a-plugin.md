@@ -1,68 +1,41 @@
-# Publishing An Pixflow Design Plugin
+# Share a personal Pixflow Design plugin
 
-Pixflow Design registry publishing is GitHub-backed in v1. The CLI remains the
-canonical workflow; the product UI and agent flows wrap these commands.
+Personal plugins remain supported. The inherited Pixflow community catalogue and its submission commands are retired. This guide covers local authoring and an optional publication to your own GitHub repository; it does not submit anything to a Pixflow registry.
 
-## 1. Scaffold
+## Create, validate and pack
 
-```bash
-od plugin scaffold --id figma-workflow --title "Figma workflow" --out ./plugins/community
+Use a working directory outside the Pixflow source tree:
+
+```sh
+od plugin scaffold --id my-workflow --title "My workflow" --out ./personal-plugins
+od plugin validate ./personal-plugins/my-workflow --no-daemon --json
+od plugin pack ./personal-plugins/my-workflow --json
 ```
 
-The scaffold command creates `./plugins/community/figma-workflow/`. Plugin IDs
-must be lowercase, start with a letter, and use only `[a-z0-9._-]`; slash-
-separated registry paths are used by catalogs, not by `od plugin scaffold`.
-The generated `open-design.json` is the Pixflow Design sidecar next to `SKILL.md`.
+Replace the scaffold instructions before using it. The folder contains `SKILL.md` and `open-design.json`, with optional references and assets. Keep the source author's licence, credits and attribution when adapting an existing skill. See the [manifest reference](plugins-spec.md) and [skills protocol](skills-protocol.md).
 
-## 2. Validate And Pack
+## Install locally
 
-```bash
-od plugin validate ./plugins/community/figma-workflow --no-daemon
-od plugin pack ./plugins/community/figma-workflow
+With the daemon running:
+
+```sh
+od plugin install ./personal-plugins/my-workflow --json
+od plugin list --json
+od plugin info my-workflow --json
 ```
 
-The registry accepts anything that validates and packs. The source repository
-does not need a special layout beyond `SKILL.md` plus `open-design.json`.
-`od plugin pack` writes the archive next to the plugin folder by default.
+Installation preserves resource identity and provenance. It does not connect external accounts, authorize remote actions or activate premium integrations.
 
-## 3. Authenticate
+## Publish to your own repository
 
-```bash
+Review the folder and repository target before publishing. This command can create a **public** repository and push plugin files and version tags:
+
+```sh
 od plugin login
 od plugin whoami --json
+od plugin publish-repo ./personal-plugins/my-workflow --owner YOUR_GITHUB_LOGIN --dry-run --json
 ```
 
-These commands wrap GitHub CLI. Tokens stay in `gh`; Pixflow Design does not store
-GitHub credentials.
+The dry run prepares the workflow without publishing. After reviewing its target, repeat the last command without `--dry-run` to publish. GitHub authentication remains in `gh`; Pixflow does not store those credentials. The command uses the manifest's `plugin.repo` or resolves the target owner through the supported GitHub workflow. Never include customer data, credentials or private operational files in the plugin folder.
 
-## 4. Publish
-
-```bash
-od plugin publish figma-workflow --to open-design --repo https://github.com/acme/figma-workflow
-```
-
-v1 opens the GitHub registry review flow. The publish payload includes the
-plugin ID, version, repo, capability summary, and target registry entry path.
-After merge, CI regenerates `open-design-marketplace.json`.
-
-## 5. Install From The Registry
-
-```bash
-od marketplace refresh official
-od plugin install figma-workflow
-od plugin info figma-workflow --json
-```
-
-Installs preserve marketplace provenance, resolved source, manifest digest, and
-archive integrity. `official` and `trusted` sources install as trusted;
-`restricted` sources stay restricted until the user grants more trust.
-
-## 6. Yank A Version
-
-```bash
-od plugin yank figma-workflow@1.0.0 --reason "Security issue"
-```
-
-Yanking never deletes metadata or bytes. New installs refuse yanked versions;
-existing exact lockfile replays can still warn and proceed if the archive
-remains reachable and integrity matches.
+For an external catalogue you manage, see [user-managed registries](self-hosting-a-registry.md). The retired `od plugin publish`, `od plugin open-design-pr` and `od plugin yank` commands are unavailable. Existing installed content and saved snapshots are preserved.

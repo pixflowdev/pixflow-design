@@ -1,66 +1,36 @@
-# Self-hosting An Pixflow Design Registry
+# User-managed plugin registries
 
-An Pixflow Design registry is a source of `open-design-marketplace.json` plus the
-review process that produces it. In v1 this can be a static GitHub repository,
-GitHub Enterprise, S3/R2, or any HTTPS host.
+Pixflow can read an external HTTPS catalogue that you manage. It does not ship a default community registry or a catalogue publication service. A catalogue is an `open-design-marketplace.json` document using the [marketplace index schema](schemas/open-design.marketplace.v1.json).
 
-## Static Catalog Shape
+Keep the catalogue and plugin sources in your own repository or storage. Its layout is independent of the Pixflow source tree. Each entry identifies its plugin name, version and supported source; preserve licence, publisher and integrity metadata when distributing third-party content.
 
-This is an example layout for an external, user-managed registry. Pixflow does not ship the inherited repository registry catalogue.
+## Add and inspect a catalogue
 
-```text
-plugins/registry/
-  official/open-design-marketplace.json
-  community/open-design-marketplace.json
-plugins/community/<vendor>/<plugin-name>/
-  SKILL.md
-  open-design.json
-```
+With the daemon running, use the raw JSON URL:
 
-The machine-readable URL is the raw JSON file:
-
-```bash
+```sh
 od marketplace add https://example.com/open-design-marketplace.json --trust restricted
-od marketplace refresh <id>
-od marketplace search "deck" --json
+od marketplace list --json
+od marketplace refresh CATALOGUE_ID
+od marketplace search "my workflow" --json
+od marketplace doctor CATALOGUE_ID --strict --json
 ```
 
-Do not add a GitHub tree page. The daemon validates the response as JSON and
-rejects HTML.
+Replace `CATALOGUE_ID` with the ID returned by the add or list command. A GitHub tree page is HTML and cannot replace the raw JSON document. `restricted` discovery does not grant execution capabilities; inspect the source and required permissions before trusting it.
 
-## Private GitHub Or GitHub Enterprise
+Install an entry by its exact catalogue name, then inspect its recorded provenance:
 
-```bash
-od marketplace login https://github.example.com/org/plugin-registry
-od marketplace add https://raw.github.example.com/org/plugin-registry/main/open-design-marketplace.json --trust trusted
+```sh
+od plugin install vendor/my-workflow --json
+od plugin info vendor/my-workflow --json
 ```
 
-Authentication is delegated to `gh auth login --hostname <host>`. Tokens stay
-inside GitHub CLI.
+Version, dist-tag, integrity and yanked-version metadata remain supported by the catalogue format. Catalogue authors maintain those bytes through their own publication process. Pixflow no longer provides catalogue publish/yank commands or a GitHub PR publication backend.
 
-## Doctor
+## Authentication and preservation
 
-```bash
-od marketplace doctor <id> --strict --json
-```
+`od marketplace login` delegates GitHub authentication to `gh`; tokens stay in GitHub CLI. It does not configure arbitrary HTTPS server credentials or guarantee that a private raw endpoint is readable by the catalogue fetcher. Configure and verify the chosen host's supported access before relying on a private catalogue.
 
-Doctor checks stable `vendor/plugin-name` IDs, source/archive presence,
-archive integrity, yanking reasons, dist-tag consistency, publisher identity,
-license, and capability summaries.
+The former Pixflow/Open Design official and community catalogue URLs return a retirement error before fetching. Their saved metadata and installed resources remain intact, but they cannot resolve new installations. Use an explicit URL for your own catalogue rather than refreshing a retired default.
 
-## Database Backend Path
-
-The runtime code talks to `RegistryBackend`. A static JSON registry, GitHub PR
-registry, and database registry expose the same list/search/resolve/publish/yank
-contract. A commercial deployment can replace the static backend with a managed
-database for:
-
-- private catalogs
-- organization allowlists
-- approval workflows
-- SSO-backed publisher identity
-- audit logs
-- entitlements and paid distribution
-
-The CLI vocabulary stays the same: `od marketplace add/search/doctor`,
-`od plugin install/upgrade/publish/yank`.
+For local authoring and publication to your own GitHub repository, see [sharing a personal plugin](publishing-a-plugin.md). Keep customer data, credentials and internal operational evidence outside resource sources and archives.

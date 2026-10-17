@@ -1,64 +1,41 @@
-# 发布 Pixflow Design 插件
+# 分享个人 Pixflow Design 插件
 
-Pixflow Design registry v1 复用 GitHub 作为后端。CLI 是 canonical workflow；
-产品 UI 和 agent 创建流程只是包装这些命令。
+Pixflow 继续支持个人插件。继承的 Pixflow 社区资源目录及其提交命令已退役。本指南介绍本地创作，以及可选的发布到您自己的 GitHub 仓库；这些操作不会向 Pixflow 注册表提交资源。
 
-## 1. 创建
+## 创建、校验和打包
 
-```bash
-od plugin scaffold --id vendor/plugin-name --title "Plugin name" --out ./plugins/community
+请使用 Pixflow 源码树以外的工作目录：
+
+```sh
+od plugin scaffold --id my-workflow --title "My workflow" --out ./personal-plugins
+od plugin validate ./personal-plugins/my-workflow --no-daemon --json
+od plugin pack ./personal-plugins/my-workflow --json
 ```
 
-公开 registry ID 必须是 `vendor/plugin-name`。生成的 `open-design.json`
-需要包含 `plugin.repo`，指向插件的源码仓库或源码子目录。
+使用前请替换脚手架中的指令。文件夹包含 `SKILL.md` 和 `open-design.json`，并可附带参考资料和资源文件。改编现有技能时，请保留原作者的许可证、署名和归属声明。参见[清单参考](plugins-spec.zh-CN.md)和[技能协议](skills-protocol.md)。
 
-## 2. 校验和打包
+## 本地安装
 
-```bash
-od plugin validate ./plugins/community/plugin-name
-od plugin pack ./plugins/community/plugin-name --out ./dist
+在守护进程运行时执行：
+
+```sh
+od plugin install ./personal-plugins/my-workflow --json
+od plugin list --json
+od plugin info my-workflow --json
 ```
 
-registry 接受任何能通过 validate 和 pack 的插件。源码仓库不需要特殊结构，
-只需要 `SKILL.md` 和 `open-design.json`。
+安装保留资源标识和来源信息，但不会连接外部账户、授权远程操作或激活付费集成。
 
-## 3. 登录
+## 发布到自己的仓库
 
-```bash
+发布前请检查文件夹内容和目标仓库。此命令可以创建**公开**仓库，并推送插件文件和版本标签：
+
+```sh
 od plugin login
 od plugin whoami --json
+od plugin publish-repo ./personal-plugins/my-workflow --owner YOUR_GITHUB_LOGIN --dry-run --json
 ```
 
-这两个命令包装 GitHub CLI。token 留在 `gh`，Pixflow Design 不保存 GitHub
-凭据。
+试运行会准备工作流程，不会发布。检查目标后，移除最后一条命令中的 `--dry-run` 再执行即可发布。GitHub 身份验证保留在 `gh` 中；Pixflow 不保存这些凭据。命令使用清单中的 `plugin.repo`，或通过受支持的 GitHub 流程确定目标所有者。请勿将客户数据、凭据或内部运维文件放入插件文件夹。
 
-## 4. 发布
-
-```bash
-od plugin publish vendor/plugin-name --to open-design --repo https://github.com/vendor/plugin-name
-```
-
-v1 会打开 GitHub registry review flow。发布 payload 包含插件 ID、版本、
-源码仓库、能力摘要、包 digest 和 registry entry path。合并之后，CI 重新生成
-`open-design-marketplace.json`。
-
-## 5. 从 registry 安装
-
-```bash
-od marketplace refresh official
-od plugin install vendor/plugin-name
-od plugin info vendor/plugin-name --json
-```
-
-安装记录会保留 marketplace provenance、resolved source、manifest digest 和
-archive integrity。`official` / `trusted` 来源默认安装为 trusted；`restricted`
-来源仍然保持 restricted，直到用户主动授权。
-
-## 6. Yank 版本
-
-```bash
-od plugin yank vendor/plugin-name@1.0.0 --reason "Security issue"
-```
-
-Yank 不删除元数据和包。新安装会拒绝 yanked version；已经存在的精确 lockfile
-重放可以在 integrity 匹配且 archive 仍可访问时带警告继续。
+如需使用自己管理的外部目录，请参见[用户管理的注册表](self-hosting-a-registry.md)。已退役的 `od plugin publish`、`od plugin open-design-pr` 和 `od plugin yank` 命令不可用。现有安装内容和已保存快照会保留。

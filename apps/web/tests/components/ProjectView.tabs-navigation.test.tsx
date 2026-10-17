@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -292,6 +292,8 @@ describe('ProjectView tab URL hydration', () => {
   });
 
   it('closing the summary preserves the selected file and saved data', async () => {
+    let resolveMessages!: (messages: []) => void;
+    mockedListMessages.mockReturnValue(new Promise(resolve => { resolveMessages = resolve; }));
     mockedLoadTabs.mockResolvedValue({ tabs: [], active: null });
     mockedFetchProjectFiles.mockResolvedValue([
       {
@@ -322,7 +324,11 @@ describe('ProjectView tab URL hydration', () => {
     // write so the test stays deterministic without driving the debounce timer.
     expect(mockedCacheTabsLocally).toHaveBeenCalledWith(project.id, { tabs: ['index.html'], active: 'index.html' });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+    // File tabs can hydrate while chat history is still pending. The toggle
+    // belongs to ChatPane, so its own readiness must precede the interaction.
+    expect(screen.queryByRole('button', { name: 'Summary' })).toBeNull();
+    await act(async () => { resolveMessages([]); });
+    fireEvent.click(await screen.findByRole('button', { name: 'Summary' }));
     expect(screen.getByTestId('summary').getAttribute('data-open')).toBe('true');
     fireEvent.click(screen.getByTestId('close-summary'));
     expect(screen.getByTestId('summary').getAttribute('data-open')).toBe('false');

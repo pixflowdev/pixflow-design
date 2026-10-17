@@ -237,6 +237,18 @@ expected hash from the failure output, writes it back into
 `node --experimental-strip-types`, so CI can invoke it without first
 installing the workspace.
 
+## Daemon resource source boundary
+
+The daemon source closure includes maintained `guidance/`, the four Free skills,
+active `assets/` and `prompt-templates/`, alongside its workspace dependencies.
+The retired plugin, craft, design-template and design-system catalogue roots are
+excluded. Generic design-system schemas remain owned by `packages/contracts`;
+personal resources and runtime data remain outside the immutable Nix store.
+
+The focused `e2e/tests/pixflow-router.test.ts` resource check guards this source
+selection and validates the essential router manifests. It is a source contract
+check; successful native packaging still requires `nix flake check`.
+
 ## CI
 
 `.github/workflows/nix-check.yml` runs `nix flake check` on pushes to

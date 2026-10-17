@@ -70,11 +70,8 @@
         "pnpm-workspace.yaml"
         "tsconfig.json"
         "assets"
-        "plugins"
+        "guidance"
         "skills"
-        "design-systems"
-        "design-templates"
-        "craft"
         "prompt-templates"
       ]
       ++ daemonWorkspacePaths);

@@ -42,5 +42,7 @@ jobs:
         run: pnpm i18n:check
       - name: Directory attribution
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
+      - name: Legacy chat compatibility
+        run: php wordpress/tests/workspace-legacy-message.test.php
       - name: Build Free browser assets
         run: pnpm wordpress:web

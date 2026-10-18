@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import JSZip from 'jszip';
 import { createHash } from 'node:crypto';
 
-const directoryZipBytes = await readFile(process.env.PIXFLOW_DESIGN_DIRECTORY_TEST_ZIP || new URL('../dist/wordpress-directory/pixflow-design-2.0.4.zip', import.meta.url));
+const directoryZipBytes = await readFile(process.env.PIXFLOW_DESIGN_DIRECTORY_TEST_ZIP || new URL('../dist/wordpress-directory/pixflow-design-2.0.5.zip', import.meta.url));
 const directoryZip = await JSZip.loadAsync(directoryZipBytes);
 const prefix = 'pixflow-ai/';
 

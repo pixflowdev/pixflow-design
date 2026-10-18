@@ -4,7 +4,7 @@ Tags: gutenberg, ai, workflow
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -80,6 +80,12 @@ Free uses native operations for posts, pages, taxonomies, existing media metadat
 Pro's advanced operations still require WordPress's edit_plugins capability, honour DISALLOW_FILE_EDIT and DISALLOW_FILE_MODS, and require a super administrator on multisite. PHP execution has the privileges of the WordPress server process; it is not a restricted sandbox. Review the requested task and configured AI service before sharing site data or authorising code changes. WordPress's own native editing is unchanged.
 
 == Changelog ==
+
+= 2.0.5 =
+
+* Prepare WordPress.org distribution with native directory updates.
+* Clean up retired catalogue code and branding while preserving saved chats, settings and content.
+* Improve WordPress compatibility and include readable build sources and updated third-party credits.
 
 = 2.0.4 =
 

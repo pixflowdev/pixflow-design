@@ -36,7 +36,8 @@ test('built directory archive has no updater or nested archives and retains the 
   assert.match(entry, /Text Domain: pixflow-ai/);
   assert.match(entry, /Requires at least: 6\.2/);
   const readme = await directoryZip.file(prefix + 'readme.txt')!.async('string');
-  assert.equal(entry.match(/Tested up to: ([^\r\n]+)/)?.[1], readme.match(/Tested up to: ([^\r\n]+)/)?.[1]);
+  assert.doesNotMatch(entry, /Tested up to:/);
+  assert.match(readme, /Tested up to: 7\.1/);
   assert.doesNotMatch(entry, /\r/);
 });
 

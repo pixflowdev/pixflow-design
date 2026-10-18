@@ -19,7 +19,7 @@ test('directory entry keeps activation migrations and identity while removing ev
   assert.match(directory, /\\PixflowDesign\\WordPress\\Plugin::boot\(\)/);
   assert.match(directory, /PIXFLOW_DESIGN_DISTRIBUTION', 'directory'/);
   assert.match(directory, /Requires at least: 6\.2/);
-  assert.match(directory, /Tested up to: 7\.1/);
+  assert.doesNotMatch(directory, /Tested up to:/);
   assert.doesNotMatch(directory, /\r/);
   assert.match(directory, /Text Domain: pixflow-ai/);
   assert.doesNotMatch(directory, /load_plugin_textdomain/);

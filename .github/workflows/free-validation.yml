@@ -40,6 +40,8 @@ jobs:
         run: pnpm typecheck
       - name: Translation consistency
         run: pnpm i18n:check
+      - name: Directory packaging regression
+        run: node --import tsx --test scripts/wordpress-directory-package.test.ts
       - name: Directory attribution
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
       - name: Legacy chat compatibility

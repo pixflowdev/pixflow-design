@@ -55,7 +55,7 @@ export function directoryPluginEntry(source: string): string {
     + source.slice(end);
   source = source.replace(/^ \* Update URI:.*\r?\n/m, '')
     .replace(/^ \* Text Domain:.*$/m, ' * Text Domain: pixflow-ai')
-    .replace(/^ \* Tested up to:.*$/m, ' * Tested up to: 7.1')
+    .replace(/^ \* Tested up to:.*\r?\n/m, '')
     .replace(/^ \* Requires at least:.*$/m, ' * Requires at least: 6.2')
     .replace("define('PIXFLOW_DESIGN_VERSION',", "define('PIXFLOW_DESIGN_DISTRIBUTION', 'directory');\ndefine('PIXFLOW_DESIGN_VERSION',");
   return directoryTranslationDomains(source).replace(/\r\n?/g, '\n');

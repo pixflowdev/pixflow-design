@@ -25,7 +25,7 @@ $transport = static function($pre, $args, $url) use (&$published, &$requests, $b
     $requests++;
     $payload = json_decode((string) ($args['body']['plugins'] ?? ''), true);
     if (!isset($payload['plugins'][$basename])) throw new RuntimeException('Native request lost the existing installed identity.');
-    $entry = ['slug'=>'pixflow-ai', 'plugin'=>$basename, 'new_version'=>$published ? '2.0.5' : $plugins[$basename]['Version'], 'package'=>$published ? 'https://downloads.wordpress.org/plugin/pixflow-ai.2.0.5.zip' : ''];
+    $entry = ['slug'=>'pixflow-ai', 'plugin'=>$basename, 'new_version'=>$published ? '2.0.6' : $plugins[$basename]['Version'], 'package'=>$published ? 'https://downloads.wordpress.org/plugin/pixflow-ai.2.0.6.zip' : ''];
     $body = ['plugins'=>$published ? [$basename=>$entry] : [], 'no_update'=>[], 'translations'=>[]];
     return ['headers'=>['content-type'=>'application/json'], 'body'=>wp_json_encode($body), 'response'=>['code'=>200,'message'=>'OK'], 'cookies'=>[]];
 };
@@ -40,7 +40,7 @@ try {
     wp_update_plugins();
     $updated = get_site_transient('update_plugins');
     $offer = $updated->response[$basename] ?? null;
-    if (!is_object($offer) || $offer->new_version !== '2.0.5' || $offer->slug !== 'pixflow-ai' || !str_starts_with($offer->package, 'https://downloads.wordpress.org/')) throw new RuntimeException('Native discovery failed for a simulated published directory update.');
+    if (!is_object($offer) || $offer->new_version !== '2.0.6' || $offer->slug !== 'pixflow-ai' || !str_starts_with($offer->package, 'https://downloads.wordpress.org/')) throw new RuntimeException('Native discovery failed for a simulated published directory update.');
     if ($requests !== 2) throw new RuntimeException('Unexpected discovery request count.');
     echo wp_json_encode(['passed'=>true,'wordpress'=>get_bloginfo('version'),'php'=>PHP_VERSION,'initialNoUpdate'=>true,'laterNativeOffer'=>true,'requests'=>$requests,'downloaded'=>false,'published'=>false], JSON_PRETTY_PRINT);
 } finally {

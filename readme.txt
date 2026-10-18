@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,12 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= 2.0.5 =
+
+* Prepare WordPress.org distribution with native directory updates.
+* Clean up retired catalogue code and branding while preserving saved chats, settings and content.
+* Improve WordPress compatibility and include readable build sources and updated third-party credits.
 
 = 2.0.4 =
 

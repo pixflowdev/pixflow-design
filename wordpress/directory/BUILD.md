@@ -8,7 +8,7 @@ For a directory candidate, set `PIXFLOW_DESIGN_WORDPRESS_DISTRIBUTION=directory`
 for both `pnpm exec tsx scripts/build-wordpress-web.mjs` and
 `node scripts/build-wordpress-plugin.mjs`. The first command writes isolated assets
 to `.tmp/wordpress-directory/assets/app`; the second writes
-`dist/wordpress-directory/pixflow-design-2.0.4.zip` and `pixflow-ai.zip`.
+`dist/wordpress-directory/pixflow-design-2.0.5.zip` and `pixflow-ai.zip`.
 Packaging rejects assets with the wrong distribution marker. The current candidate
 slug is `pixflow-ai`; an approved different slug needs an explicit migration review.
 

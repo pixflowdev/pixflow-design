@@ -868,7 +868,8 @@ class RestController
             if ($method !== 'GET') return $this->json_response(['message' => 'Use GET to read messages.'], 405);
             $result = (new \PixflowDesign\WordPress\Chat\HistoryService())->page($project_id, $conversation_id,
                 $request->get_param('limit') === null ? null : (int) $request->get_param('limit'), (string) $request->get_param('before'), false);
-            return is_wp_error($result) ? $this->project_file_response($result) : $this->json_response($result);
+            return is_wp_error($result) ? $this->project_file_response($result)
+                : $this->json_response(\PixflowDesign\WordPress\Od\ProjectAdapter::to_app_message_page($result));
         }
 
         if (preg_match('#^projects/([^/]+)/conversations/([^/]+)/messages/([^/]+)$#', $path, $match)) {

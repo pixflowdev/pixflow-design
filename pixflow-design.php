@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Pixflow Design
  * Description: AI assistance for WordPress and Gutenberg, with optional Pixflow Design Pro integrations.
- * Version: 2.0.4
+ * Version: 2.0.5
  * Author: Pixflow
  * Author URI: https://pixflow.dev
  * Update URI: https://pixflow.dev
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PIXFLOW_DESIGN_VERSION', '2.0.4');
+define('PIXFLOW_DESIGN_VERSION', '2.0.5');
 // Pixflow-owned: WordPress plugin declares the minimum compatible local bridge.
 define('PIXFLOW_DESIGN_BRIDGE_VERSION', '2.0.4');
 define('PIXFLOW_DESIGN_PLUGIN_FILE', __FILE__);

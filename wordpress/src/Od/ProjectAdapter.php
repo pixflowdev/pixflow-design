@@ -10,6 +10,18 @@ if (!defined('ABSPATH')) {
 
 final class ProjectAdapter
 {
+    /** Adapt older floating-panel text for Workspace readers without rewriting history. */
+    public static function to_app_message_page(array $page): array
+    {
+        foreach ($page['messages'] as &$message) {
+            if (!is_string($message['content'] ?? null)) {
+                $message['content'] = is_string($message['text'] ?? null) ? $message['text'] : '';
+            }
+        }
+        unset($message);
+        return $page;
+    }
+
     /** Legacy transcripts are a server-side migration backup, not list/detail payloads. */
     public static function without_chat_backup(array $project): array
     {

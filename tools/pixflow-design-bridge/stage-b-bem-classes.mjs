@@ -40,6 +40,10 @@ function publicClassName(value) {
     .replace(/^-+|-+$/g, '');
 }
 
+function isCompilerInheritanceClass(classItem) {
+  return /^(?:stage-a|pixflow)-inherited-(?:foreground|icon-style)-/.test(firstString(classItem?.name));
+}
+
 export function shouldWarnStageBReservedButtonClass(name, sourceOwnedClassNames = []) {
   const normalizedName = firstString(name);
   if (!/(?:^|[-_])(primary|secondary)(?:$|[-_])/i.test(normalizedName)) return false;
@@ -248,7 +252,10 @@ export function enforceStageBSourceClassInventory(result, sourceClassNames = [],
   const baselineClassIds = new Set(arrayValue(
     options?.baselineResult?.global_classes || options?.baselineResult?.globalClasses,
   ).map((classItem) => firstString(classItem?.id)).filter(Boolean));
-  const authoritativeClassIds = new Set([...sourceClassIds, ...baselineClassIds]);
+  // Only IDs actively derived by the current compiler pass are trusted.
+  // Reserved helper names supplied by a model do not confer ownership.
+  const compilerClassIds = new Set(uniqueStrings(options.compilerClassIds));
+  const authoritativeClassIds = new Set([...sourceClassIds, ...baselineClassIds, ...compilerClassIds]);
   const mergedTargetIds = new Set();
   let removedElementReferences = 0;
   let mergedHelperClasses = 0;
@@ -259,7 +266,9 @@ export function enforceStageBSourceClassInventory(result, sourceClassNames = [],
     const settings = objectValue(element?.settings);
     const refs = uniqueStrings(arrayValue(settings._cssGlobalClasses));
     const sourceRefs = refs.filter((id) => sourceClassIds.has(id));
-    const baselineHelperRefs = refs.filter((id) => baselineClassIds.has(id) && !sourceClassIds.has(id));
+    const baselineHelperRefs = refs.filter((id) => (
+      authoritativeClassIds.has(id) && !sourceClassIds.has(id)
+    ));
     const helperRefs = refs.filter((id) => !authoritativeClassIds.has(id));
     if (helperRefs.length === 0) continue;
     const preservedRefs = uniqueStrings([...sourceRefs, ...baselineHelperRefs]);
@@ -270,6 +279,7 @@ export function enforceStageBSourceClassInventory(result, sourceClassNames = [],
 
     for (const helperId of helperRefs) {
       const helperClass = classById.get(helperId);
+      if (isCompilerInheritanceClass(helperClass)) continue;
       const helperSettings = objectValue(helperClass?.settings);
       const patch = {};
       for (const [key, value] of Object.entries(helperSettings)) {
@@ -313,7 +323,7 @@ export function enforceStageBSourceClassInventory(result, sourceClassNames = [],
   };
 }
 
-export function preserveStageBBaselineClassStructure(result, baselineResult) {
+export function preserveStageBBaselineClassStructure(result, baselineResult, options = {}) {
   const baselineClasses = arrayValue(baselineResult?.global_classes || baselineResult?.globalClasses);
   if (baselineClasses.length === 0) {
     return {
@@ -334,6 +344,7 @@ export function preserveStageBBaselineClassStructure(result, baselineResult) {
     .map((classItem) => [firstString(classItem?.id), classItem])
     .filter(([id]) => id));
   const baselineClassIds = new Set(baselineClassById.keys());
+  const compilerClassIds = new Set(uniqueStrings(options.compilerClassIds));
   const resultClassById = new Map(resultClasses
     .map((classItem) => [firstString(classItem?.id), classItem])
     .filter(([id]) => id));
@@ -404,6 +415,7 @@ export function preserveStageBBaselineClassStructure(result, baselineResult) {
   const inventedClasses = resultClasses.filter((classItem) => (
     !baselineClassIds.has(firstString(classItem?.id))
     && !preservedSourceIdClassIds.has(firstString(classItem?.id))
+    && !compilerClassIds.has(firstString(classItem?.id))
   ));
   const mergedTargets = new Set();
   let skippedUnclassedRepairs = 0;
@@ -418,6 +430,10 @@ export function preserveStageBBaselineClassStructure(result, baselineResult) {
       settings._cssGlobalClasses = refs.filter((id) => id !== inventedId);
       if (settings._cssGlobalClasses.length === 0) delete settings._cssGlobalClasses;
       element.settings = settings;
+
+      // A stale/forged inheritance helper is not an ordinary model repair.
+      // Do not fold its unverified patch back into an authoritative class.
+      if (isCompilerInheritanceClass(inventedClass)) continue;
 
       // Baseline classes are the source-CSS authority. A measured/model helper
       // may add controls the source class does not own, but it must never
@@ -441,6 +457,7 @@ export function preserveStageBBaselineClassStructure(result, baselineResult) {
   const preservedClasses = resultClasses.filter((classItem) => (
     baselineClassIds.has(firstString(classItem?.id))
     || preservedSourceIdClassIds.has(firstString(classItem?.id))
+    || compilerClassIds.has(firstString(classItem?.id))
   ));
   if (Array.isArray(result.global_classes)) result.global_classes = preservedClasses;
   if (Array.isArray(result.globalClasses)) result.globalClasses = preservedClasses;

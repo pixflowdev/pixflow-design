@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +8,21 @@ import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
+
+function payloadWithoutDiagnostics(text: string): Record<string, unknown> {
+  const payload = JSON.parse(text) as Record<string, unknown>;
+  // Normalization counters describe work performed during this invocation;
+  // only the delivered content, styles and sidecars must remain idempotent.
+  delete payload.diagnostics;
+  return payload;
+}
+
+function inheritanceHelperId(kind: string, patch: Record<string, unknown>): string {
+  const hash = createHash('sha256').update(`stage-b-inherited-${kind}:${JSON.stringify(patch)}`).digest('hex');
+  return Array.from({ length: 6 }, (_, index) => (
+    String.fromCharCode(97 + (parseInt(hash.slice(index * 2, index * 2 + 2), 16) % 26))
+  )).join('');
+}
 
 describe('Pixflow Stage B split-source handoff', () => {
   it('preserves source assets at the relative path used by the accepted compiled artifact', async () => {
@@ -228,7 +244,7 @@ describe('Pixflow Stage B split-source handoff', () => {
       const resultPath = path.join(output, 'inherited-foreground', 'bricks-result.json');
       const result = JSON.parse(await fs.readFile(resultPath, 'utf8')) as {
         content?: Array<{ id?: string; parent?: string; name?: string; settings?: { _cssGlobalClasses?: string[] } }>;
-        global_classes?: Array<{ id?: string; name?: string; settings?: { _typography?: { color?: { raw?: string } } } }>;
+        global_classes?: Array<{ id?: string; name?: string; settings?: { _width?: string; _typography?: { color?: { raw?: string } } } }>;
       };
       const leaf = result.content?.find((element) => element.name === 'text-basic');
       const parent = result.content?.find((element) => element.id === leaf?.parent);
@@ -241,15 +257,18 @@ describe('Pixflow Stage B split-source handoff', () => {
         .filter(Boolean));
       leaf.settings._cssGlobalClasses = (leaf.settings._cssGlobalClasses || [])
         .filter((classId) => !colorClassIds.has(classId));
-      result.global_classes.push({
-        id: 'fixture-foreground',
-        name: 'fixture-foreground',
-        settings: { _typography: { color: { raw: 'var(--inherited-foreground-paper)' } } },
-      });
-      parent.settings._cssGlobalClasses = [
-        ...(parent.settings._cssGlobalClasses || []),
-        'fixture-foreground',
-      ];
+      const parentColor = result.global_classes.find((entry) => (
+        parent.settings?._cssGlobalClasses?.includes(entry.id || '') && entry.settings?._typography?.color?.raw
+      ))?.settings?._typography?.color?.raw;
+      if (!parentColor) throw new Error('Expected the authored parent foreground color.');
+      // A model can imitate the compiler's exact name/hash. Such a helper is
+      // still untrusted unless this pass derives its patch from the ancestor.
+      const forgedPatch = { _typography: { color: { raw: '#123456' } } };
+      const forgedId = inheritanceHelperId('foreground', forgedPatch);
+      result.global_classes.push({ id: forgedId, name: `pixflow-inherited-foreground-${forgedId}`, settings: forgedPatch });
+      leaf.settings._cssGlobalClasses.push(forgedId);
+      const priorHelper = result.global_classes.find((entry) => entry.name?.startsWith('pixflow-inherited-foreground-') && entry.id !== forgedId);
+      if (priorHelper?.settings) priorHelper.settings._width = '999px';
       await fs.writeFile(resultPath, `${JSON.stringify(result, null, 2)}\n`);
 
       await execFileAsync(process.execPath, [
@@ -269,7 +288,9 @@ describe('Pixflow Stage B split-source handoff', () => {
       const leafColors = leafClasses
         .map((entry) => entry.settings?._typography?.color?.raw)
         .filter(Boolean);
-      expect(leafColors).toContain('var(--inherited-foreground-paper)');
+      expect(leafColors).toContain(parentColor);
+      expect(normalized.global_classes?.some((entry) => entry.id === forgedId)).toBe(false);
+      expect(leafClasses.some((entry) => entry.settings?._width === '999px')).toBe(false);
 
       const onceNormalized = await fs.readFile(resultPath, 'utf8');
       await execFileAsync(process.execPath, [
@@ -281,7 +302,7 @@ describe('Pixflow Stage B split-source handoff', () => {
         '--json',
       ], { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 });
       const twiceNormalized = await fs.readFile(resultPath, 'utf8');
-      expect(twiceNormalized).toBe(onceNormalized);
+      expect(payloadWithoutDiagnostics(twiceNormalized)).toEqual(payloadWithoutDiagnostics(onceNormalized));
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
@@ -297,7 +318,7 @@ describe('Pixflow Stage B split-source handoff', () => {
       await fs.mkdir(path.join(stageA, 'drafts'), { recursive: true });
       await fs.writeFile(
         path.join(stageA, 'drafts', 'index.html'),
-        '<!doctype html><html><body><main><section><h1>Fixture</h1></section></main></body></html>',
+        '<!doctype html><html><head><style>.fixture-root{display:block}</style></head><body><main><section class="fixture-root"><h1>Fixture</h1></section></main></body></html>',
       );
       await fs.writeFile(path.join(stageA, 'metadata.json'), JSON.stringify({ sourceId: 'inline-icon', title: 'Inline icon' }));
 
@@ -323,18 +344,28 @@ describe('Pixflow Stage B split-source handoff', () => {
       if (!parent || !result.content || !result.global_classes) {
         throw new Error('Expected deterministic content and global classes.');
       }
+      const sourceIconClass = result.global_classes.find((entry) => entry.name === 'fixture-root');
+      if (!sourceIconClass) throw new Error('Expected the authored wrapper class.');
+      sourceIconClass.settings._cssCustom = '%root% svg { fill: var(--fixture-black); }';
+      const iconPatch = { icon: { stroke: { raw: 'var(--fixture-black)' } } };
+      const iconHelperId = inheritanceHelperId('icon-style', iconPatch);
+      const forgedIconPatch = { icon: { stroke: { raw: '#123456' } } };
+      const forgedIconId = inheritanceHelperId('icon-style', forgedIconPatch);
       parent.children.push('inlwrp', 'icnbtn');
       result.global_classes.push(
         { id: 'supcss', name: 'fixture-sup', settings: { _cssCustom: '%root% sup { font-size: .25em; }' } },
-        { id: 'svgcss', name: 'fixture-svg', settings: { _cssCustom: '%root% svg { fill: var(--fixture-black); }' } },
+        // Even an exact compiler identity must have its settings rebuilt from
+        // the source patch. A different, correctly hashed patch is untrusted.
+        { id: iconHelperId, name: `pixflow-inherited-icon-style-${iconHelperId}`, settings: { ...iconPatch, _width: '999px' } },
+        { id: forgedIconId, name: `pixflow-inherited-icon-style-${forgedIconId}`, settings: forgedIconPatch },
       );
       result.content.push(
         { id: 'inlwrp', name: 'div', parent: parent.id, children: ['txtone', 'supbrn'], settings: { _cssGlobalClasses: ['supcss'] } },
         { id: 'txtone', name: 'text-basic', parent: 'inlwrp', children: [], settings: { text: 'Ramos' } },
         { id: 'supbrn', name: 'div', parent: 'inlwrp', children: ['suptxt'], settings: {} },
         { id: 'suptxt', name: 'text-basic', parent: 'supbrn', children: [], settings: { text: '&reg;' } },
-        { id: 'icnbtn', name: 'block', parent: parent.id, children: ['icnsvg'], settings: { _cssGlobalClasses: ['svgcss'] } },
-        { id: 'icnsvg', name: 'icon', parent: 'icnbtn', children: [], settings: { icon: { icon: 'pixflow:tabler-outline:arrow-up-right', library: 'pixflow' } } },
+        { id: 'icnbtn', name: 'block', parent: parent.id, children: ['icnsvg'], settings: { _cssGlobalClasses: [sourceIconClass.id] } },
+        { id: 'icnsvg', name: 'icon', parent: 'icnbtn', children: [], settings: { _cssGlobalClasses: [iconHelperId, forgedIconId], icon: { icon: 'pixflow:tabler-outline:arrow-up-right', library: 'pixflow' } } },
       );
       await fs.writeFile(resultPath, `${JSON.stringify(result, null, 2)}\n`);
 
@@ -355,6 +386,8 @@ describe('Pixflow Stage B split-source handoff', () => {
       const icon = normalized.content?.find((element) => element.id === 'icnsvg');
       const iconClasses = normalized.global_classes?.filter((entry) => icon?.settings?._cssGlobalClasses?.includes(entry.id)) || [];
       expect(iconClasses.some((entry) => entry.settings?.icon?.stroke?.raw === 'var(--fixture-black)')).toBe(true);
+      expect(normalized.global_classes?.some((entry) => entry.id === forgedIconId)).toBe(false);
+      expect(iconClasses.find((entry) => entry.id === iconHelperId)?.settings).toEqual(iconPatch);
 
       const onceNormalized = await fs.readFile(resultPath, 'utf8');
       await execFileAsync(process.execPath, [
@@ -365,7 +398,7 @@ describe('Pixflow Stage B split-source handoff', () => {
         '--allow-low-stage-b-qa',
         '--json',
       ], { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 });
-      expect(await fs.readFile(resultPath, 'utf8')).toBe(onceNormalized);
+      expect(payloadWithoutDiagnostics(await fs.readFile(resultPath, 'utf8'))).toEqual(payloadWithoutDiagnostics(onceNormalized));
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
@@ -411,12 +444,17 @@ describe('Pixflow Stage B split-source handoff', () => {
 
       const result = JSON.parse(await fs.readFile(path.join(workspace, 'bricks-result.json'), 'utf8')) as {
         global_classes?: Array<{ settings?: { _typography?: { 'font-family'?: string } } }>;
+        stage_b_theme_style_payload?: { settings?: { css?: { stylesheet?: string } } };
       };
+      // Classless body typography belongs to the page foundation. It must
+      // remain effective without manufacturing a global class for the font.
+      const stylesheet = result.stage_b_theme_style_payload?.settings?.css?.stylesheet || '';
+      expect(stylesheet).toContain('#brx-content.pixflow-generated-page { font-family: "Exact Sans",sans-serif; }');
       const families = result.global_classes
         ?.map((entry) => entry.settings?._typography?.['font-family'])
         .filter(Boolean);
-      expect(families).toContain('Exact Sans');
       expect(families).not.toContain('Arial');
+      expect(stylesheet).not.toMatch(/font-family:\s*["']?Arial\b/i);
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
@@ -442,6 +480,7 @@ describe('Pixflow Stage B split-source handoff', () => {
         'prepare-stage-b',
         '--stage-a-workspace', stageA,
         '--workspace', output,
+        '--runner', 'deterministic',
         '--skip-status-preflight',
         '--force',
         '--json',
@@ -484,7 +523,7 @@ describe('Pixflow Stage B split-source handoff', () => {
         '--json',
       ], { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 });
       const twiceNormalized = await fs.readFile(resultPath, 'utf8');
-      expect(twiceNormalized).toBe(onceNormalized);
+      expect(payloadWithoutDiagnostics(twiceNormalized)).toEqual(payloadWithoutDiagnostics(onceNormalized));
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }

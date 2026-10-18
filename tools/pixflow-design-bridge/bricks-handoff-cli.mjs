@@ -22065,8 +22065,10 @@ async function normalizeStageBGeneratedArtifacts(prepared) {
   normalizeStageBPageColorVariables(result, colorSystem);
   normalizeStageBTypographyFontFamilies(result, fontSystem, priorResultFontSystem);
   normalizeStageBPageForegroundInheritance(result);
-  normalizeStageBInheritedForegroundColors(result);
-  normalizeStageBInheritedIconStyles(result);
+  const compilerInheritanceClassIds = [
+    ...normalizeStageBInheritedForegroundColors(result),
+    ...normalizeStageBInheritedIconStyles(result),
+  ];
   normalizeStageBNativeButtonVariants(result);
   normalizeStageBStaticLinkSettings(result);
   normalizeStageBInvalidNativeForms(result, stageAHtml);
@@ -22168,7 +22170,9 @@ async function normalizeStageBGeneratedArtifacts(prepared) {
     result.font_system = structuredClone(stagedFontSystem);
   }
   result.diagnostics = objectValue(result.diagnostics);
-  const baselineClassPreservation = preserveStageBBaselineClassStructure(result, baselineResult);
+  const baselineClassPreservation = preserveStageBBaselineClassStructure(result, baselineResult, {
+    compilerClassIds: compilerInheritanceClassIds,
+  });
   result.diagnostics.baselineClassPreservation = baselineClassPreservation;
   result.diagnostics.bemClassPreservation = baselineClassPreservation;
   result.diagnostics.directStyleClassPromotion = promoteStageBDirectStylesToClasses(result);
@@ -22223,6 +22227,7 @@ async function normalizeStageBGeneratedArtifacts(prepared) {
     const sourceClassNames = extractStageBClassUsage(stageAHtml).map((item) => firstString(item?.name)).filter(Boolean);
     result.diagnostics.sourceClassInventory = enforceStageBSourceClassInventory(result, sourceClassNames, {
       baselineResult,
+      compilerClassIds: compilerInheritanceClassIds,
     });
     result.diagnostics.classAttributeDeduplication = dedupeStageBClassAttributesAgainstGlobalClasses(result);
     const sourceCss = extractStageBStyleText(stageAHtml).trim();
@@ -23393,6 +23398,21 @@ function stageBExplicitForegroundColor(value) {
 }
 
 /**
+ * Rebuild each inheritance helper from the patch derived in this pass. An
+ * incoming class with a matching name/id cannot add unrelated controls or
+ * override the derived patch. Only these actively derived IDs bypass cleanup.
+ */
+function ensureStageBCompilerInheritanceClass(globalClasses, kind, patch) {
+  const id = deterministicBricksId(`stage-b-inherited-${kind}:${JSON.stringify(patch)}`);
+  const name = `pixflow-inherited-${kind}-${id}`;
+  const existing = globalClasses.find((item) => firstString(item?.id) === id || firstString(item?.name) === name);
+  const classItem = existing || {};
+  Object.assign(classItem, { id, name, settings: structuredClone(patch) });
+  if (!existing) globalClasses.push(classItem);
+  return classItem;
+}
+
+/**
  * Materialize inherited section/container foregrounds on Bricks text-bearing
  * leaves. Bricks theme styles target leaf elements directly, so browser CSS
  * inheritance alone is not strong enough to preserve a dark/light contrast
@@ -23400,7 +23420,8 @@ function stageBExplicitForegroundColor(value) {
  * typography patch, making this pass shared, deterministic, and idempotent.
  */
 function normalizeStageBInheritedForegroundColors(result) {
-  if (!result || typeof result !== 'object') return;
+  if (!result || typeof result !== 'object') return [];
+  const compilerClassIds = new Set();
 
   const globalClasses = arrayValue(result.global_classes || result.globalClasses);
   const classById = new Map(globalClasses
@@ -23427,7 +23448,10 @@ function normalizeStageBInheritedForegroundColors(result) {
     let color = null;
     for (const classId of arrayValue(settings._cssGlobalClasses)) {
       const classItem = classById.get(firstString(classId));
-      if (options.ignoreCompilerFallbacks && isCompilerFallbackClass(classItem)) continue;
+      if (options.ignoreCompilerFallbacks && (
+        isCompilerFallbackClass(classItem)
+        || /^(?:stage-a|pixflow)-inherited-foreground-/.test(firstString(classItem?.name))
+      )) continue;
       const classSettings = objectValue(classItem?.settings);
       const candidate = stageBExplicitForegroundColor(objectValue(classSettings[typographyKey]).color);
       if (candidate !== null) color = candidate;
@@ -23451,10 +23475,6 @@ function normalizeStageBInheritedForegroundColors(result) {
   };
 
   const classByPatch = new Map();
-  for (const classItem of globalClasses) {
-    if (!/^(?:stage-a|pixflow)-inherited-foreground-/.test(firstString(classItem?.name))) continue;
-    classByPatch.set(JSON.stringify(objectValue(classItem.settings)), classItem);
-  }
 
   for (const element of elements) {
     if (!PIXFLOW_STAGE_B_FOREGROUND_LEAF_NAMES.has(firstString(element?.name).toLowerCase())) continue;
@@ -23470,15 +23490,11 @@ function normalizeStageBInheritedForegroundColors(result) {
     const signature = JSON.stringify(patch);
     let classItem = classByPatch.get(signature);
     if (!classItem) {
-      const id = deterministicBricksId(`stage-b-inherited-foreground:${signature}`);
-      classItem = ensureStageBGlobalClass(globalClasses, {
-        id,
-        name: `pixflow-inherited-foreground-${id}`,
-        settings: patch,
-      });
-      classById.set(id, classItem);
+      classItem = ensureStageBCompilerInheritanceClass(globalClasses, 'foreground', patch);
+      classById.set(classItem.id, classItem);
       classByPatch.set(signature, classItem);
     }
+    compilerClassIds.add(classItem.id);
     settings._cssGlobalClasses = uniqueStrings([
       ...arrayValue(settings._cssGlobalClasses),
       classItem.id,
@@ -23487,10 +23503,12 @@ function normalizeStageBInheritedForegroundColors(result) {
   }
 
   result.global_classes = globalClasses;
+  return [...compilerClassIds];
 }
 
 function normalizeStageBInheritedIconStyles(result) {
-  if (!result || typeof result !== 'object') return;
+  if (!result || typeof result !== 'object') return [];
+  const compilerClassIds = new Set();
   const globalClasses = arrayValue(result.global_classes || result.globalClasses);
   const classById = new Map(globalClasses
     .map((classItem) => [firstString(classItem?.id), classItem])
@@ -23521,18 +23539,14 @@ function normalizeStageBInheritedIconStyles(result) {
     }
     if (!stroke || /^(?:none|inherit|initial|unset|transparent)$/i.test(stroke)) continue;
     const patch = { icon: { stroke: { raw: stroke } } };
-    const signature = JSON.stringify(patch);
-    const id = deterministicBricksId(`stage-b-inherited-icon-style:${signature}`);
-    const classItem = ensureStageBGlobalClass(globalClasses, {
-      id,
-      name: `pixflow-inherited-icon-style-${id}`,
-      settings: patch,
-    });
+    const classItem = ensureStageBCompilerInheritanceClass(globalClasses, 'icon-style', patch);
+    compilerClassIds.add(classItem.id);
     const settings = objectValue(element.settings);
     settings._cssGlobalClasses = uniqueStrings([...arrayValue(settings._cssGlobalClasses), classItem.id]);
     element.settings = settings;
   }
   result.global_classes = globalClasses;
+  return [...compilerClassIds];
 }
 
 function normalizeStageBInlineTextWrappers(result) {

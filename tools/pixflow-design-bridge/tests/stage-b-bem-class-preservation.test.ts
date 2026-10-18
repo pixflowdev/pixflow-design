@@ -517,4 +517,28 @@ describe('Stage B BEM class preservation', () => {
       removedHelperClassCount: 1,
     });
   });
+
+  it.each(['baseline', 'source'])('keeps only actively derived inheritance helpers during %s cleanup', (cleanup) => {
+    const baselineResult = {
+      content: [{ id: 'copy', settings: { _cssGlobalClasses: ['source-copy'] } }],
+      global_classes: [{ id: 'source-copy', name: 'copy', settings: { _display: 'block' } }],
+    };
+    const result = {
+      content: [{ id: 'copy', settings: { _cssGlobalClasses: ['source-copy', 'derived', 'forged'] } }],
+      global_classes: [
+        ...structuredClone(baselineResult.global_classes),
+        { id: 'derived', name: 'pixflow-inherited-foreground-derived', settings: { _typography: { color: { raw: '#fff' } } } },
+        { id: 'forged', name: 'pixflow-inherited-foreground-forged', settings: { _typography: { color: { raw: '#123456' } }, _width: '999px' } },
+      ],
+    };
+    const options = { baselineResult, compilerClassIds: ['derived'] };
+
+    if (cleanup === 'baseline') preserveStageBBaselineClassStructure(result, baselineResult, options);
+    else enforceStageBSourceClassInventory(result, ['copy'], options);
+
+    expect(result.global_classes.map((entry) => entry.id)).toEqual(['source-copy', 'derived']);
+    expect(result.content[0].settings._cssGlobalClasses).toEqual(['source-copy', 'derived']);
+    expect(result.global_classes[0].settings).toEqual({ _display: 'block' });
+    expect(result.global_classes[1].settings).toEqual({ _typography: { color: { raw: '#fff' } } });
+  });
 });

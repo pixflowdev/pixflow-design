@@ -108,6 +108,7 @@ describe('Stage B source class vocabulary', () => {
       'prepare-stage-b',
       '--stage-a-workspace', stageA,
       '--workspace', stageB,
+      '--runner', 'deterministic',
       '--force',
       '--skipStatusPreflight', 'true',
       '--json',

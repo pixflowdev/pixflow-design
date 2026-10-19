@@ -1,3 +1,4 @@
+import { decodeWorkspaceRouteHash } from '../pixflow/workspace-route-hash';
 import type {
   ConnectorAuthConfigPrepareResponse,
   ConnectorDetail,
@@ -2063,13 +2064,8 @@ function isActiveProjectWorkspace(projectId: string): boolean {
   const locations = [window.location.pathname];
   if (hasPixflowWordPressContext()) {
     try {
-      const hash = window.location.hash.replace(/^#/, '');
-      locations.push(hash);
-      if (hash.startsWith('pixflow=')) {
-        const encodedHashRoute = hash.slice('pixflow='.length);
-        locations.push(encodedHashRoute);
-        locations.push(safeDecodeProjectRoute(encodedHashRoute));
-      }
+      const route = decodeWorkspaceRouteHash(window.location.hash);
+      if (route) locations.push(route);
     } catch {
       // Ignore malformed hash routes and fall back to the pathname.
     }

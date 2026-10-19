@@ -1,3 +1,4 @@
+import { migrateWorkspaceRouteHash } from './workspace-route-hash';
 import { createRoot, type Root } from 'react-dom/client';
 import { installPixflowInputAutofillProtection } from './input-autofill';
 import { installPixflowClientDiagnostics } from './client-diagnostics';
@@ -57,6 +58,8 @@ declare global {
     };
   }
 }
+
+migrateWorkspaceRouteHash();
 
 let bridgeInstalled = false;
 

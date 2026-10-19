@@ -1,3 +1,4 @@
+import { encodeWorkspaceRouteHash } from '../pixflow/workspace-route-hash';
 import { useState } from 'react';
 import type { ConversationForkOrigin } from '@open-design/contracts';
 import { IconGitFork } from '@tabler/icons-react';
@@ -16,7 +17,7 @@ export function ChatForkOrigin({ origin }: { origin: ConversationForkOrigin }) {
   const path = buildPath(route);
   return <span className={styles.origin}>
     <IconGitFork size={15} stroke={1.6} aria-hidden="true" />
-    {unavailable ? <span role="status">{t('chat.forkSourceUnavailable')}</span> : <a href={isPixflowWordPressEmbed() ? `#pixflow=${encodeURIComponent(path)}` : path}
+    {unavailable ? <span role="status">{t('chat.forkSourceUnavailable')}</span> : <a href={isPixflowWordPressEmbed() ? encodeWorkspaceRouteHash(path) : path}
       aria-busy={opening || undefined} onClick={async event => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         event.preventDefault(); if (opening) return; setOpening(true);

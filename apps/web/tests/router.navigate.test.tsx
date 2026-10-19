@@ -100,3 +100,11 @@ describe('navigate / useRoute timing', () => {
     delete (window as typeof window & { pixflowDesignShell?: Record<string, unknown> }).pixflowDesignShell;
   });
 });
+
+it('writes WordPress routes as selector-safe fragments',()=>{
+ (window as any).pixflowDesignShell={runtime:'wordpress',version:'test'};
+ window.history.replaceState(null,'','/wp-admin/');
+ try{navigate({kind:'project',projectId:'hash-test',conversationId:'chat',fileName:null});
+ expect(()=>document.querySelector(window.location.hash)).not.toThrow();}
+ finally{delete (window as any).pixflowDesignShell;window.history.replaceState(null,'','/');}
+});

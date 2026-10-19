@@ -1,3 +1,4 @@
+import { encodeWorkspaceRouteHash } from '../../src/pixflow/workspace-route-hash';
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -12,7 +13,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 it('shows a persistent WordPress source link and navigates to the original saved chat', async () => {
   mocks.get.mockResolvedValue({ id: 'original' }); mocks.list.mockResolvedValue([{ id: 'original-chat' }]);
   const view = render(<ChatForkOrigin origin={origin} />);
-  expect(screen.getByRole('link').getAttribute('href')).toBe('#pixflow=%2Fprojects%2Foriginal%2Fconversations%2Foriginal-chat');
+  expect(screen.getByRole('link').getAttribute('href')).toBe(encodeWorkspaceRouteHash('/projects/original/conversations/original-chat'));
   view.rerender(<ChatForkOrigin origin={{ ...origin }} />);
   fireEvent.click(screen.getByRole('link', { name: 'Continued from Original title' }));
   await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ kind: 'project', projectId: 'original', conversationId: 'original-chat', fileName: null }));

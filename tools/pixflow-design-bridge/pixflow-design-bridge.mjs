@@ -13,7 +13,7 @@ import { exportProject, importProject, readSyncState, resolveSyncContext } from 
 
 // Pixflow-owned: wrapper version follows the packaged bridge/daemon version
 // required by the WordPress plugin.
-const VERSION = '2.0.4';
+const VERSION = '2.0.6';
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 7456;
 const CONFIG_FILE = 'bridge.json';

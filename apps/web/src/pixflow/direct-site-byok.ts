@@ -213,7 +213,9 @@ export async function runByokSite(input: ByokSiteInput): Promise<PixflowDirectSi
       // Only a completed tool boundary can be summarized. Keep the original
       // opaque checkpoint until the tool-free summary has fully succeeded.
       if (checkpoint.historyBinding && checkpoint.turns.length && !checkpoint.inFlight) {
-        const bytes = workingContextBytes({messages:checkpoint.messages,turns:checkpoint.turns,results:checkpoint.results});
+        // Static provider instructions are supplied again after compaction.
+        const workingTurns = checkpoint.turns.filter(turn => !turn || typeof turn !== 'object' || !['system', 'developer'].includes(String((turn as {role?:string}).role)));
+        const bytes = workingContextBytes({messages:checkpoint.messages,turns:workingTurns,results:checkpoint.results});
         if (bytes >= 48000 && bytes >= (checkpoint.contextCompactionBytes || 0) + 24000) {
           events.push({kind:'status',label:'compacting'});publish();
           let compacted: Awaited<ReturnType<typeof compactWorkingRun>> = {status:'fallback',reason:'compaction_unavailable'};

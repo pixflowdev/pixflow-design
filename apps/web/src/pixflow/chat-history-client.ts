@@ -19,6 +19,37 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 class ChatHistoryRequestError extends Error {
   constructor(message: string, readonly status: number, readonly body: {code?:string;data?:{message?:HistoryMessage}}) { super(message); }
 }
+/** Old Bricks caches added display defaults and dropped revision metadata.
+ * Acknowledge an identical terminal row, never overwrite or rebase its data.
+ */
+function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.id !== prior.id || !['user', 'assistant'].includes(String(next.role)) || next.role !== prior.role
+    || !['session_restore_v2', 'device_restore_v2'].includes(String(next.provenance))
+    || (next.role === 'assistant' && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+  const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
+    if (['historyRevision', 'historySequence', 'provenance'].includes(key)) return false;
+    if (row.role === 'user' && prior[key] === undefined && (
+      (key === 'endedAt' && typeof value === 'number') || (key === 'status' && value === 'complete')
+      || (key === 'runStatus' && value === 'succeeded') || (key === 'sessionMode' && value === 'design')
+      || (key === 'events' && Array.isArray(value) && value.length === 0))) return false;
+    if (key === 'startedAt' && value === row.createdAt) return false;
+    if (key === 'attachments' && Array.isArray(value) && value.length === 0) return false;
+    if (key === 'awaitingInput' && value === false) return false;
+    return value !== undefined;
+  }).sort(([a], [b]) => a.localeCompare(b)));
+  // Legacy caches also clipped nested tool input objects. Accept only a
+  // subset already present in the durable row; return that full row unchanged.
+  const contains = (full: unknown, cached: unknown): boolean => {
+    if (Array.isArray(cached)) return Array.isArray(full) && full.length === cached.length && cached.every((item, index) => contains(full[index], item));
+    if (cached && typeof cached === 'object') return !!full && typeof full === 'object' && !Array.isArray(full)
+      && Object.entries(cached).every(([key, value]) => Object.hasOwn(full, key) && contains((full as Record<string, unknown>)[key], value));
+    return full === cached;
+  };
+  return next.content === prior.content && contains(normalize(prior), normalize(next));
+}
+
 /** A terminal durable replay can acknowledge a previously truncated tail only
  * when its exact content, events and metadata are already present there.
  */
@@ -76,6 +107,18 @@ export async function importChatHistory<T extends HistoryMessage>(binding: ChatH
   for (let offset = 0; offset < messages.length; offset += 100) {
     if (ownerScope() !== owner) throw new Error('The signed-in account changed before chat history could be saved.');
     const page = await request<PixflowChatHistoryImportResponse<T>>(base(binding), json('POST', { messages: messages.slice(offset, offset + 100), importOnly: true }));
+    if (ownerScope() !== owner) throw new Error('The signed-in account changed before chat history could be saved.');
+    // An exact imported snapshot is our own acknowledged baseline. A different
+    // server payload belongs to another writer and must retain CAS protection.
+    for (const saved of page.messages || []) {
+      const sent = messages.slice(offset, offset + 100).find(item => item.id === saved.id);
+      if (!sent || !saved.id || !Number.isInteger(saved.historyRevision)
+        || historyMessageFingerprint(sent) !== historyMessageFingerprint(saved)) continue;
+      const key = `${owner}:${base(binding)}/${encodeURIComponent(saved.id)}`;
+      const prior = acknowledged.get(key);
+      if (prior && prior.revision > saved.historyRevision!) continue;
+      acknowledged.set(key, { revision: saved.historyRevision!, inputs: new Set([...(prior?.inputs || []), sent.historyRevision ?? 0, saved.historyRevision!]) });
+    }
     result.messages.push(...(page.messages || []));
     result.deletedMessageIds.push(...(page.deletedMessageIds || []));
   }
@@ -106,7 +149,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       result = await request(path, json('PUT', { ...message, historyRevision: revision }));
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
-        && completedReplayContains(message,error.body.data?.message) && ownerScope()===owner) {
+        && (completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'

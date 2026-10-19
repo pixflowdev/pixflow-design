@@ -5,6 +5,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.6]
+
+### Fixed
+
+- Let WordPress and builders own native saving instead of blocking it with Pixflow's additional HTTP 409 save guard. Agent editing remains available through the live editor.
+- Preserve full durable chat history when an older browser cache is replayed, and acknowledge saved revisions without weakening real conflict checks.
+- Avoid redundant context compaction when provider history includes echoed system instructions.
+
+### Compatibility
+
+- Local CLI requires Pixflow Design Bridge 2.0.6. Install the Bridge update before updating the plugin; API execution remains independent of the Bridge.
+- Website packages retain the existing website updater. The separate WordPress.org candidate uses directory updates and preserves the installed pixflow-ai identity.
+
 ## [2.0.4]
 
 Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, complete chat history and a refreshed Workspace. Existing customers keep their licence, saved chats, content and settings.

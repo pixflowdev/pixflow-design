@@ -1,6 +1,6 @@
 # Generated from the typed Pixflow language catalogues. Edit the source catalogues.
 msgid ""
-msgstr "Project-Id-Version: pixflow-design 2.0.5\nLanguage: de_DE\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
+msgstr "Project-Id-Version: pixflow-design 2.0.6\nLanguage: de_DE\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Generator: Pixflow translation build\n"
 
 #: wordpress/src/Modules/ModuleHost.php:54
 msgid "A Pixflow add-on could not start. Check that your Pixflow plugins are compatible, then reload. Other features may still be available."

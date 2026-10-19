@@ -20,9 +20,10 @@ const iconSourcePath = join(iconRoot, 'pixflow-design-bridge-icon.svg');
 const iconPath = join(iconRoot, 'pixflow-design-bridge.ico');
 const bridgeBaseUrl = 'https://pixflow.dev/downloads/pixflow-design-bridge';
 const namespace = 'release-stable-win';
-const namespaceRoot = join(root, '.tmp', 'tools-pack', 'out', 'win', 'namespaces', namespace);
-const workspaceBuildCacheRoot = join(root, '.tmp', 'tools-pack', 'cache', 'entries', 'win.workspace-build');
-const nsisInstallerCacheRoot = join(root, '.tmp', 'tools-pack', 'cache', 'entries', 'win.nsis-installer');
+const packRoot = resolve(process.env.PIXFLOW_DESIGN_BRIDGE_PACK_DIR || join(root, '.tmp', 'tools-pack'));
+const namespaceRoot = join(packRoot, 'out', 'win', 'namespaces', namespace);
+const workspaceBuildCacheRoot = join(packRoot, 'cache', 'entries', 'win.workspace-build');
+const nsisInstallerCacheRoot = join(packRoot, 'cache', 'entries', 'win.nsis-installer');
 const version = await readBridgeVersion();
 
 await mkdir(iconRoot, { recursive: true });
@@ -37,6 +38,8 @@ runChecked('pnpm', [
   'tools-pack',
   'win',
   'stop',
+  '--dir',
+  packRoot,
   '--namespace',
   namespace,
   '--json',
@@ -56,6 +59,8 @@ const output = runChecked('pnpm', [
   'build',
   '--to',
   'nsis',
+  '--dir',
+  packRoot,
   '--namespace',
   namespace,
   '--app-version',

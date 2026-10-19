@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.0.5
+Stable tag: 2.0.6
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,13 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= 2.0.6 =
+
+* Let WordPress and builders manage native saving without Pixflow rejecting saves with an additional HTTP 409 guard.
+* Preserve complete saved chat messages when older browser history is replayed, while retaining protection against conflicting changes.
+* Avoid repeated working-context compaction caused by counting echoed instructions as new conversation content.
+* Require Pixflow Design Bridge 2.0.6 for Local CLI. API execution does not require the Bridge.
 
 = 2.0.5 =
 

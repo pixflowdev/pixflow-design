@@ -4,6 +4,7 @@
 // that in the URL is the simplest way to make it deep-linkable.
 
 import { useSyncExternalStore } from 'react';
+import { decodeWorkspaceRouteHash, encodeWorkspaceRouteHash } from './pixflow/workspace-route-hash';
 import { hasPixflowWordPressContext } from './pixflow/wordpress-context';
 
 // Entry-shell sub-views. The home/project landing renders one of three
@@ -129,7 +130,6 @@ export function buildPath(route: Route): string {
   return file ? `/projects/${id}/files/${file}` : `/projects/${id}`;
 }
 
-const WORDPRESS_ROUTE_HASH_PREFIX = 'pixflow=';
 const EMBEDDED_ROUTE_CHANGE_EVENT = 'pixflow-design:embedded-route-change';
 let embeddedRoutePath: string | null = null;
 
@@ -149,18 +149,7 @@ function isBricksBuilderRouteRuntime(): boolean {
 
 function readWordPressHashRoute(): string | null {
   if (!isWordPressRouteRuntime()) return null;
-  const hash = window.location.hash.replace(/^#/, '');
-  if (!hash.startsWith(WORDPRESS_ROUTE_HASH_PREFIX)) return null;
-
-  const encoded = hash.slice(WORDPRESS_ROUTE_HASH_PREFIX.length);
-  if (!encoded) return '/';
-
-  try {
-    const decoded = decodeURIComponent(encoded);
-    return decoded.startsWith('/') ? decoded : `/${decoded}`;
-  } catch {
-    return '/';
-  }
+  return decodeWorkspaceRouteHash(window.location.hash);
 }
 
 function readActiveRoutePath(): string {
@@ -177,7 +166,7 @@ function buildBrowserTarget(path: string): string {
   if (path === '/') {
     next.hash = '';
   } else {
-    next.hash = `${WORDPRESS_ROUTE_HASH_PREFIX}${encodeURIComponent(path)}`;
+    next.hash = encodeWorkspaceRouteHash(path);
   }
 
   return `${next.pathname}${next.search}${next.hash}`;

@@ -34,7 +34,9 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.0.7 =
+* Hotfix for restored chat history and Workspace links.
 * Fix restored chat history blocking new agent requests when a display cache omitted saved events. Complete saved replies remain intact.
+* Preserve full saved event history when restoring a chat, and fix Workspace links triggering a WordPress dashboard error.
 * Compatible with Pixflow Design Bridge 2.0.6; no Bridge update is required.
 
 = 2.0.6 =

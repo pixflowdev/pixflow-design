@@ -78,7 +78,7 @@ final class Plugin
         (new \PixflowDesign\WordPress\Modules\ModuleHost())->register();
         \PixflowDesign\WordPress\Modules\SavedExtensionState::register();
         \PixflowDesign\WordPress\Languages\LanguagePackService::register();
-        (new \PixflowDesign\WordPress\Admin\EditorSaveGuard())->register();
+        // Native editor saves remain owned by WordPress and each builder.
         (new \PixflowDesign\WordPress\Media\UnsplashMediaLibrary())->register();
         (new \PixflowDesign\WordPress\License\CentralEntitlements())->register();
         (new \PixflowDesign\WordPress\License\ProInstallation())->register();

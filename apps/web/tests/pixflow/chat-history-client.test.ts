@@ -168,3 +168,20 @@ it('acknowledges legacy user display defaults without changing the stored user m
  await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it.each(['session_restore_v2', 'device_restore_v2'])('recovers %s terminal display snapshots with omitted events', async provenance => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`empty-events-${provenance}`,role:'assistant',content:'Complete reply',createdAt:1,endedAt:2,status:'complete',runStatus:'failed',events:[{kind:'tool_use',input:{text:'retain all details'}}],historyRevision:31};
+ const incoming={...saved,historyRevision:0,events:[],provenance,startedAt:1,attachments:[]};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+it.each(['running', 'unknown-provenance', 'different-content'])('does not accept omitted events for %s', async scenario => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`empty-events-reject-${scenario}`,role:'assistant',content:'Reply',status:'complete',runStatus:scenario==='running'?'running':'succeeded',events:[{kind:'tool_use',input:{text:'keep'}}],historyRevision:31};
+ const incoming={...saved,historyRevision:0,events:[],provenance:scenario==='unknown-provenance'?'other':'session_restore_v2',content:scenario==='different-content'?'Edited reply':saved.content};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

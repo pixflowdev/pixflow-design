@@ -41,14 +41,12 @@ final class WpAdminGutenbergEditorBridge
         if (!$site_editor && (!$screen || $screen->base !== 'post' || !$screen->is_block_editor() || !$post)) return;
         if ($site_editor && !current_user_can('edit_theme_options')) return;
         if (!$site_editor) { try { self::require_post((int) $post->ID); } catch (\Throwable) { return; } }
-        $guard = new \PixflowDesign\WordPress\Admin\EditorSaveGuard();
-        $guard->enqueue_gutenberg($site_editor ? 0 : (int) $post->ID);
         wp_enqueue_script('pixflow-gutenberg-workspace-menu', PIXFLOW_DESIGN_ASSETS_URL . 'builder/workspace-menu.js', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'builder/workspace-menu.js'), true);
         wp_enqueue_style('pixflow-native-workspace', PIXFLOW_DESIGN_ASSETS_URL . 'builder/native-workspace.css', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'builder/native-workspace.css'));
         wp_enqueue_style('pixflow-gutenberg-editor', PIXFLOW_DESIGN_ASSETS_URL . 'app/pixflow-gutenberg-editor.css', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'app/pixflow-gutenberg-editor.css'));
         $dependencies = GutenbergExtensions::enqueue();
         $path = PIXFLOW_DESIGN_ASSETS_DIR . 'app/pixflow-gutenberg-editor.js';
-        wp_enqueue_script('pixflow-gutenberg-editor', PIXFLOW_DESIGN_ASSETS_URL . 'app/pixflow-gutenberg-editor.js', array_merge(['wp-data', 'wp-blocks', 'wp-editor', 'pixflow-editor-save-guard', 'pixflow-gutenberg-workspace-menu', \PixflowDesign\WordPress\Assets\AssetRegistrar::WP_ADMIN_SCRIPT_HANDLE], $dependencies), (string) filemtime($path), true);
+        wp_enqueue_script('pixflow-gutenberg-editor', PIXFLOW_DESIGN_ASSETS_URL . 'app/pixflow-gutenberg-editor.js', array_merge(['wp-data', 'wp-blocks', 'wp-editor', 'pixflow-gutenberg-workspace-menu', \PixflowDesign\WordPress\Assets\AssetRegistrar::WP_ADMIN_SCRIPT_HANDLE], $dependencies), (string) filemtime($path), true);
         wp_add_inline_script('pixflow-gutenberg-editor', 'window.pixflowGutenbergEditor=true;', 'before');
     }
 

@@ -150,7 +150,23 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
     const revision = previous?.inputs.has(inputRevision) ? previous.revision : inputRevision;
     let result: PixflowChatHistorySaveResponse<T>;
     try {
-      result = await request(path, json('PUT', { ...message, historyRevision: revision }));
+      // Restore snapshots are display projections, not edits. Read/insert without
+      // replacing a durable row, even when this browser acknowledged its revision.
+      const provenance = (message as HistoryMessage & { provenance?: string }).provenance;
+      if (provenance === 'session_restore_v2' || provenance === 'device_restore_v2') {
+        const imported = await request<PixflowChatHistoryImportResponse<T>>(base(binding), json('POST', { messages: [message], importOnly: true }));
+        if (ownerScope() !== owner) throw new Error('The signed-in account changed before chat history could be saved.');
+        const saved = imported.messages.find(item => item.id === message.id);
+        if (!saved || !Number.isInteger(saved.historyRevision)) {
+          throw new ChatHistoryRequestError('This message is no longer available.', 410, { code: 'pixflow_history_deleted' });
+        }
+        if (historyMessageFingerprint(saved) !== historyMessageFingerprint(message) && !legacyDisplayReplayMatches(message, saved)) {
+          throw new ChatHistoryRequestError('This message has a newer saved version.', 409, { code: 'pixflow_history_conflict', data: { message: saved } });
+        }
+        result = { ok: true, message: saved, revision: saved.historyRevision! };
+      } else {
+        result = await request(path, json('PUT', { ...message, historyRevision: revision }));
+      }
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
         && (completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {

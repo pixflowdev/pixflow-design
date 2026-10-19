@@ -185,3 +185,35 @@ it.each(['running', 'unknown-provenance', 'different-content'])('does not accept
  await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('Conflict');
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it('does not overwrite durable events after an exact import acknowledged revision zero', async()=>{
+ transport.mockReset(); owner.id=1;
+ const saved={id:'warm-restore',role:'assistant',content:'Complete',runStatus:'succeeded',events:[{kind:'tool_use',input:{keep:true}}],historyRevision:1};
+ transport.mockResolvedValueOnce(response({messages:[saved],deletedMessageIds:[]}));
+ await importChatHistory(binding,[{...saved,historyRevision:undefined}]);
+ transport.mockImplementation(async(_url,init)=>{
+  if(init.method==='POST')return response({messages:[saved],deletedMessageIds:[]});
+  const sent=JSON.parse(init.body);return response({message:{...sent,historyRevision:2},revision:2});
+ });
+ const restored=await saveChatHistoryMessage(binding,{...saved,historyRevision:0,events:[],provenance:'session_restore_v2'});
+ expect(restored).toEqual(saved);
+ expect(transport.mock.calls.some(([,init])=>init.method==='PUT')).toBe(false);
+});
+
+it('keeps a genuinely different restored reply pending without overwriting the canonical reply', async()=>{
+ transport.mockReset(); owner.id=1;
+ const saved={id:'restore-real-conflict',role:'assistant',content:'Newer reply',runStatus:'succeeded',events:[],historyRevision:9};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,{...saved,content:'Unsaved different reply',historyRevision:0,provenance:'session_restore_v2'})).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+ expect(JSON.parse(transport.mock.calls[0]![1].body).importOnly).toBe(true);
+});
+
+it('does not recreate a deleted message from a restore snapshot', async()=>{
+ transport.mockReset(); owner.id=1;
+ transport.mockResolvedValue(response({messages:[],deletedMessageIds:['restore-deleted']}));
+ await expect(saveChatHistoryMessage(binding,{id:'restore-deleted',role:'assistant',content:'Old reply',provenance:'device_restore_v2'})).rejects.toThrow('no longer available');
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+});

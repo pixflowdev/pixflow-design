@@ -5,6 +5,17 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.7]
+
+### Fixed
+
+- Recover restored chat display copies without overwriting complete saved replies or blocking subsequent agent requests.
+- Preserve genuine conflict protection for changed messages and active runs.
+
+### Compatibility
+
+- Continues to use Pixflow Design Bridge 2.0.6. No Bridge update is required.
+
 ## [2.0.6]
 
 ### Fixed

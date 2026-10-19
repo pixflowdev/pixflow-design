@@ -11,7 +11,7 @@ test("stops the previous unpacked bridge namespace before deleting build output"
   const toolsPackBuild = source.indexOf(
     "runChecked('pnpm', ['--filter', '@open-design/tools-pack', 'build']",
   );
-  const namespaceStop = source.indexOf("'stop',\n  '--namespace',\n  namespace");
+  const namespaceStop = source.indexOf("'stop',\n  '--dir',\n  packRoot,\n  '--namespace',\n  namespace");
   const namespaceCleanup = source.indexOf("await removeTree(namespaceRoot)");
 
   assert.ok(toolsPackBuild >= 0, "tools-pack must be built before lifecycle use");
@@ -23,4 +23,10 @@ test("uses extended Windows deletion retries for transient filesystem locks", ()
   assert.match(source, /maxRetries:\s*20/);
   assert.match(source, /retryDelay:\s*250/);
   assert.match(source, /'EACCES'.*'EBUSY'.*'ENOTEMPTY'.*'EPERM'.*'UNKNOWN'/s);
+});
+
+test("short pack roots apply consistently to stop, build and output cleanup", () => {
+  assert.match(source, /process\.env\.PIXFLOW_DESIGN_BRIDGE_PACK_DIR/);
+  assert.equal(source.match(/'--dir',\n  packRoot,/g)?.length, 2);
+  assert.match(source, /const namespaceRoot = join\(packRoot, 'out'/);
 });

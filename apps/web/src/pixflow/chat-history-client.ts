@@ -34,6 +34,10 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
       (key === 'endedAt' && typeof value === 'number') || (key === 'status' && value === 'complete')
       || (key === 'runStatus' && value === 'succeeded') || (key === 'sessionMode' && value === 'design')
       || (key === 'events' && Array.isArray(value) && value.length === 0))) return false;
+    // Restore caches can omit all events. Only the incoming display projection
+    // may omit them; the acknowledged result remains the complete durable row.
+    if (row === next && next.role === 'assistant' && key === 'events'
+      && Array.isArray(value) && value.length === 0 && Array.isArray(prior.events)) return false;
     if (key === 'startedAt' && value === row.createdAt) return false;
     if (key === 'attachments' && Array.isArray(value) && value.length === 0) return false;
     if (key === 'awaitingInput' && value === false) return false;

@@ -102,3 +102,13 @@ it('does not repeatedly retry an unavailable summary without meaningful context 
   .mockResolvedValueOnce({text:'Complete.',turns:[],calls:[]});
  await runByokSite(test.input);expect(mocks.compact).toHaveBeenCalledTimes(1);expect(mocks.provider).toHaveBeenCalledTimes(3);expect(test.mutations).toHaveBeenCalledTimes(1);
 });
+
+it('does not compact a small tool cycle just because the provider echoes a large system prompt', async()=>{
+ const test=setup('direct');
+ mocks.provider.mockReset();
+ mocks.provider.mockResolvedValueOnce({text:'Updating.',turns:[{role:'system',content:'instructions'.repeat(6000)},{role:'assistant',tool_calls:[{id:'edit',function:{name:'site_tool',arguments:'{}'}}]}],calls:[{id:'edit',function:'site_tool',input:{name:'wordpress.run',arguments:{code:'Native fixture edit'}}}]})
+ .mockResolvedValueOnce({text:'Complete.',turns:[],calls:[]});
+ await runByokSite(test.input);
+ expect(mocks.compact).not.toHaveBeenCalled();
+ expect(test.mutations).toHaveBeenCalledTimes(1);
+});

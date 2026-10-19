@@ -117,3 +117,54 @@ describe('durable transcript client', () => {
     expect(transport).toHaveBeenCalledTimes(2);
   });
 });
+
+it('acknowledges an exact insert-only import before streaming its next revision',async()=>{
+ transport.mockReset(); owner.id=1;
+ const initial={id:'import-then-stream',role:'assistant',content:'',status:'streaming'};
+ transport.mockResolvedValueOnce(response({messages:[{...initial,historyRevision:1}],deletedMessageIds:[]}));
+ await importChatHistory(binding,[initial]);
+ transport.mockImplementationOnce(async(_url,init)=>{
+  const next=JSON.parse(init.body);
+  expect(next.historyRevision).toBe(1);
+  return response({message:{...next,historyRevision:2},revision:2});
+ });
+ await saveChatHistoryMessage(binding,{...initial,content:'Completed answer'});
+});
+it('does not acknowledge a different payload returned by an insert-only import',async()=>{
+ transport.mockReset(); owner.id=1;
+ const initial={id:'import-other-tab',role:'assistant',content:'old'};
+ transport.mockResolvedValueOnce(response({messages:[{...initial,content:'newer',historyRevision:9}],deletedMessageIds:[]}));
+ await importChatHistory(binding,[initial]);
+ transport.mockResolvedValueOnce(response({code:'pixflow_history_conflict',message:'Conflict'},409));
+ await expect(saveChatHistoryMessage(binding,{...initial,content:'stale edit'})).rejects.toThrow('Conflict');
+ expect(JSON.parse(transport.mock.calls[1]![1].body).historyRevision).toBe(0);
+});
+
+it('recovers a legacy Bricks display-only cache of an identical saved terminal reply without rewriting it',async()=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:'legacy-display',role:'assistant',content:'Complete',createdAt:1,endedAt:2,status:'complete',runStatus:'succeeded',awaitingInput:false,events:[{kind:'tool_use',input:{settings:{text:'preserved'}}}],historyRevision:7};
+ const incoming={id:saved.id,role:saved.role,content:saved.content,createdAt:1,startedAt:1,endedAt:2,status:'complete',runStatus:'succeeded',events:[{kind:'tool_use',input:{settings:{}}}],provenance:'session_restore_v2',attachments:[]};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+it.each(['content','events','attachment','metadata'])('does not discard a real %s difference as legacy display metadata',async field=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:`legacy-difference-${field}`,role:'assistant',content:'Complete',createdAt:1,endedAt:2,status:'complete',runStatus:'succeeded',events:[],historyRevision:7};
+ const incoming:Record<string,any>={...saved,historyRevision:0,provenance:'session_restore_v2'};
+ if(field==='content')incoming.content='Different';
+ if(field==='events')incoming.events=[{kind:'text',text:'Different'}];
+ if(field==='attachment')incoming.attachments=[{path:'keep.png'}];
+ if(field==='metadata')incoming.runId='different-run';
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+it('acknowledges legacy user display defaults without changing the stored user message',async()=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:'legacy-user',role:'user',content:'Keep my request',createdAt:1,commentAttachments:[],historyRevision:1};
+ const incoming={...saved,historyRevision:0,provenance:'session_restore_v2',startedAt:1,endedAt:42,status:'complete',runStatus:'succeeded',sessionMode:'design',events:[],attachments:[]};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+});

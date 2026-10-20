@@ -217,3 +217,28 @@ it('does not recreate a deleted message from a restore snapshot', async()=>{
  expect(transport).toHaveBeenCalledTimes(1);
  expect(transport.mock.calls[0]![1].method).toBe('POST');
 });
+
+it.each(['session_restore_v2', 'device_restore_v2'])('recovers coalesced text chunks from %s without changing durable events', async provenance => {
+ transport.mockReset(); owner.id=1;
+ const start={kind:'assistant_message_boundary',phase:'started'};
+ const end={kind:'assistant_message_boundary',phase:'completed'};
+ const saved={id:`coalesced-${provenance}`,role:'assistant',content:'Hello world',runStatus:'succeeded',events:[start,{kind:'text',text:'Hello'},{kind:'text',text:' world'},end],historyRevision:3};
+ const incoming={...saved,historyRevision:0,provenance,events:[start,{kind:'text',text:'Hello world'},end]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+ expect(saved.events).toHaveLength(4);
+});
+
+it.each(['different-text','intervening-tool','text-metadata'])('does not coalesce away a %s conflict', async scenario => {
+ transport.mockReset(); owner.id=1;
+ const events:Record<string,unknown>[]=[{kind:'text',text:'Hello'},{kind:'text',text:' world'}];
+ if(scenario==='intervening-tool')events.splice(1,0,{kind:'tool_use',name:'read'});
+ if(scenario==='text-metadata')events[0]!.channel='analysis';
+ const saved={id:`coalesced-reject-${scenario}`,role:'assistant',content:'Hello world',runStatus:'succeeded',events,historyRevision:3};
+ const incoming={...saved,historyRevision:0,provenance:'session_restore_v2',events:[{kind:'text',text:scenario==='different-text'?'Different':'Hello world'}]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

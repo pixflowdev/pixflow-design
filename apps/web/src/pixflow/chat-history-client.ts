@@ -28,6 +28,24 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
   if (!prior || next.id !== prior.id || !['user', 'assistant'].includes(String(next.role)) || next.role !== prior.role
     || !['session_restore_v2', 'device_restore_v2'].includes(String(next.provenance))
     || (next.role === 'assistant' && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+  // The legacy display cache joins adjacent plain text deltas. Compare their
+  // text, not transport chunk boundaries, without crossing activity boundaries
+  // or dropping event metadata. The durable row itself is never modified.
+  const coalesceDisplayText = (events: unknown[]) => {
+    const result: unknown[] = [];
+    const plainText = (event: unknown): event is { kind: 'text'; text: string } =>
+      !!event && typeof event === 'object' && !Array.isArray(event)
+      && (event as Record<string, unknown>).kind === 'text'
+      && typeof (event as Record<string, unknown>).text === 'string'
+      && Object.keys(event).every(key => key === 'kind' || key === 'text');
+    for (const event of events) {
+      const last = result[result.length - 1];
+      if (plainText(event) && plainText(last)) {
+        result[result.length - 1] = { kind: 'text', text: last.text + event.text };
+      } else result.push(event);
+    }
+    return result;
+  };
   const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
     if (['historyRevision', 'historySequence', 'provenance'].includes(key)) return false;
     if (row.role === 'user' && prior[key] === undefined && (
@@ -42,7 +60,8 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
     if (key === 'attachments' && Array.isArray(value) && value.length === 0) return false;
     if (key === 'awaitingInput' && value === false) return false;
     return value !== undefined;
-  }).sort(([a], [b]) => a.localeCompare(b)));
+  }).map(([key, value]) => [key, key === 'events' && Array.isArray(value) ? coalesceDisplayText(value) : value] as const)
+    .sort(([a], [b]) => a.localeCompare(b)));
   // Legacy caches also clipped nested tool input objects. Accept only a
   // subset already present in the durable row; return that full row unchanged.
   const contains = (full: unknown, cached: unknown): boolean => {

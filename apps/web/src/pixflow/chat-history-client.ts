@@ -67,7 +67,7 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
     if (row === next && next.role === 'assistant' && key === 'events'
       && Array.isArray(value) && value.length === 0 && Array.isArray(prior.events)) return false;
     if (key === 'startedAt' && value === row.createdAt) return false;
-    if (key === 'attachments' && Array.isArray(value) && value.length === 0) return false;
+    if (['attachments', 'commentAttachments'].includes(key) && Array.isArray(value) && value.length === 0) return false;
     if (key === 'awaitingInput' && value === false) return false;
     return value !== undefined;
   }).map(([key, value]) => [key, key === 'events' && Array.isArray(value) ? coalesceDisplayText(value) : value] as const)
@@ -78,6 +78,9 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
     if (Array.isArray(cached)) return Array.isArray(full) && full.length === cached.length && cached.every((item, index) => contains(full[index], item));
     if (cached && typeof cached === 'object') return !!full && typeof full === 'object' && !Array.isArray(full)
       && Object.entries(cached).every(([key, value]) => Object.hasOwn(full, key) && contains((full as Record<string, unknown>)[key], value));
+    // The legacy cache clipped nested strings at exactly 4,000 characters.
+    // This is read-only acknowledgement; keep the complete canonical value.
+    if (typeof full === 'string' && typeof cached === 'string' && cached.length === 4000 && full.length > 4000) return full.startsWith(cached);
     return full === cached;
   };
   return next.content === prior.content && contains(normalize(prior), normalize(next));

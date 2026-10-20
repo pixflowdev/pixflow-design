@@ -330,3 +330,13 @@ it('never grants an event-less replay the newer write revision',async()=>{
  await saveChatHistoryMessage(binding,pending);await saveChatHistoryMessage(binding,pending);
  expect(transport.mock.calls.map(([,init])=>JSON.parse(init.body).historyRevision)).toEqual([1,1]);
 });
+
+it.each(['prefix','edited'])('handles legacy clipped tool-result strings: %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:`clipped-result-${scenario}`,role:'assistant',content:'Done',runStatus:'succeeded',events:[{kind:'tool_result',content:'a'.repeat(6000)}],historyRevision:9};
+ const pending={...saved,historyRevision:0,provenance:'session_restore_v2',events:[{kind:'tool_result',content:(scenario==='prefix'?'a':'b').repeat(4000)}]};
+ transport.mockResolvedValue(response({messages:[saved]},200));
+ if(scenario==='prefix')await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ else await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

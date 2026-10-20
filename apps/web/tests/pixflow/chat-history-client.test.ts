@@ -321,3 +321,12 @@ it.each(['same','changed-text','changed-status','explicit-empty-events'])('handl
  else await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it('never grants an event-less replay the newer write revision',async()=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:'eventless-twice',role:'assistant',content:'Keep',runStatus:'failed',historyRevision:4,events:[{kind:'text',text:'Keep'}]};
+ const {events,...old}=saved;const pending={...old,historyRevision:1};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await saveChatHistoryMessage(binding,pending);await saveChatHistoryMessage(binding,pending);
+ expect(transport.mock.calls.map(([,init])=>JSON.parse(init.body).historyRevision)).toEqual([1,1]);
+});

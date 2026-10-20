@@ -245,6 +245,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
     const previous = acknowledged.get(writerKey);
     const revision = previous?.inputs.has(inputRevision) ? previous.revision : inputRevision;
     let result: PixflowChatHistorySaveResponse<T>;
+    let readOnlyReplay = false;
     try {
       // Restore snapshots are display projections, not edits. Read/insert without
       // replacing a durable row, even when this browser acknowledged its revision.
@@ -266,6 +267,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
         && (eventlessRecoveryReplayMatches(message,error.body.data?.message) || legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        readOnlyReplay = true;
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
@@ -275,7 +277,10 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       result = await request(path, json('PUT',{...message,historyRevision:recovered}));
       }
     }
-    acknowledged.set(writerKey, { revision: result.revision, inputs: new Set([...(previous?.inputs || []), inputRevision, result.revision]) });
+    const inputs = new Set([...(previous?.inputs || []), result.revision]);
+    // A read-only replay is not authority to write using the newer revision.
+    if (readOnlyReplay) inputs.delete(inputRevision); else inputs.add(inputRevision);
+    acknowledged.set(writerKey, { revision: result.revision, inputs });
     return result.message;
   });
   writers.set(writerKey, task);

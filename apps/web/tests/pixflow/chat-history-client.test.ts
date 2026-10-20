@@ -287,3 +287,26 @@ it.each(['event-edit','other-run','no-progress','newer-terminal','second-conflic
  await expect(saveChatHistoryMessage(binding,next)).rejects.toThrow('Conflict');
  expect(transport).toHaveBeenCalledTimes(scenario==='second-conflict'?2:1);
 });
+
+
+it.each(['user','assistant'])('acknowledges an unversioned %s outbox row already saved with legacy display metadata', async role => {
+ transport.mockReset(); owner.id=1;
+ const pending={id:`raw-${role}`,role,content:'Retained content',createdAt:100,...(role==='user'?{commentAttachments:[]}:{status:'error',runStatus:'failed',endedAt:200,events:[{kind:'text',text:'Retained content'}]})};
+ const saved={...pending,commentAttachments:undefined,historyRevision:1,historySequence:12,provenance:'floating_panel_live_v2',authority:'fluency_only',startedAt:100,...(role==='user'?{endedAt:200,status:'complete',events:[],sessionMode:'design',awaitingInput:false}:{})};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+it.each(['content','events','run','revision','attachment'])('rejects changed %s in an unversioned legacy live replay',async field=>{
+ transport.mockReset(); owner.id=1;
+ const pending:Record<string,unknown>={id:`raw-reject-${field}`,role:'assistant',content:'Original',createdAt:100,runId:'run',status:'complete',runStatus:'succeeded',events:[{kind:'text',text:'Original'}]};
+ const saved={...pending,historyRevision:7,provenance:'floating_panel_live_v2',authority:'fluency_only',startedAt:100};
+ if(field==='content')pending.content='Changed';
+ if(field==='events')pending.events=[];
+ if(field==='run')pending.runId='another';
+ if(field==='revision')pending.historyRevision=2;
+ if(field==='attachment')pending.attachments=[{id:123}];
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

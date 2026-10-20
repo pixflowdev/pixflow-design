@@ -83,6 +83,29 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
   return next.content === prior.content && contains(normalize(prior), normalize(next));
 }
 
+/** A legacy live cache can add display metadata before the original outbox drains.
+ * Acknowledge only identical unversioned payloads; never write or rebase them.
+ */
+function legacyLiveReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.historyRevision || next.provenance || next.id !== prior.id || next.role !== prior.role
+    || !['user', 'assistant'].includes(String(next.role)) || prior.provenance !== 'floating_panel_live_v2'
+    || prior.authority !== 'fluency_only') return false;
+  const normalize = (row: Record<string, unknown>): unknown => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
+    if (value === undefined || ['historyRevision', 'historySequence'].includes(key)) return false;
+    if (['attachments', 'commentAttachments'].includes(key) && Array.isArray(value) && value.length === 0) return false;
+    if (row === prior && next[key] === undefined) {
+      if (['provenance', 'authority'].includes(key) || (key === 'startedAt' && value === row.createdAt)) return false;
+      if (next.role === 'user' && ((key === 'endedAt' && typeof value === 'number')
+        || (key === 'status' && value === 'complete') || (key === 'sessionMode' && value === 'design')
+        || (key === 'awaitingInput' && value === false) || (key === 'events' && Array.isArray(value) && value.length === 0))) return false;
+    }
+    return true;
+  }).sort(([a], [b]) => a.localeCompare(b)));
+  return JSON.stringify(normalize(next)) === JSON.stringify(normalize(prior));
+}
+
 /** A terminal durable replay can acknowledge a previously truncated tail only
  * when its exact content, events and metadata are already present there.
  */
@@ -224,7 +247,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       }
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
-        && (completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        && (legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'

@@ -5,6 +5,18 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.8] - Hotfix
+
+### Fixed
+
+- Recover restored and interrupted chats without repeatedly reporting that messages have a newer saved version.
+- Preserve complete saved replies and tool activity when older browser caches contain shortened display copies.
+- Resume the same interrupted run safely while retaining protection against conflicting changes.
+
+### Compatibility
+
+- Continues to use Pixflow Design Bridge 2.0.6. No Bridge update is required.
+
 ## [2.0.7] - Hotfix
 
 ### Fixed

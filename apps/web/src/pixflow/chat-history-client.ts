@@ -83,6 +83,24 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
   return next.content === prior.content && contains(normalize(prior), normalize(next));
 }
 
+/** Old recovery records omitted events but retained the durable revision.
+ * Only acknowledge an otherwise identical terminal reply; never persist that
+ * event-less projection or accept changed text/metadata as a replay.
+ */
+function eventlessRecoveryReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.role !== 'assistant' || prior.role !== 'assistant' || next.id !== prior.id
+    || !Number.isInteger(next.historyRevision) || !(next.historyRevision! > 0)
+    || !(prior.historyRevision! > next.historyRevision!) || next.events !== undefined
+    || !Array.isArray(prior.events) || prior.events.length === 0
+    || !['succeeded', 'failed', 'canceled', 'interrupted'].includes(String(prior.runStatus))) return false;
+  const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row)
+    .filter(([key, value]) => value !== undefined && !['historyRevision', 'historySequence', 'events'].includes(key))
+    .sort(([a], [b]) => a.localeCompare(b)));
+  return JSON.stringify(normalize(next)) === JSON.stringify(normalize(prior));
+}
+
 /** A legacy live cache can add display metadata before the original outbox drains.
  * Acknowledge only identical unversioned payloads; never write or rebase them.
  */
@@ -247,7 +265,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       }
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
-        && (legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        && (eventlessRecoveryReplayMatches(message,error.body.data?.message) || legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'

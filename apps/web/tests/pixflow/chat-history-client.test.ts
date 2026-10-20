@@ -310,3 +310,14 @@ it.each(['content','events','run','revision','attachment'])('rejects changed %s 
  await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it.each(['same','changed-text','changed-status','explicit-empty-events'])('handles event-less recovery projection: %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:`lost-events-${scenario}`,role:'assistant',content:'Preserved',status:'error',runStatus:'failed',historyRevision:4,events:[{kind:'text',text:'Preserved'}]};
+ const {events,...prior}=saved;
+ const pending={...prior,historyRevision:1,...(scenario==='changed-text'?{content:'Different'}:{}),...(scenario==='changed-status'?{runStatus:'succeeded'}:{}),...(scenario==='explicit-empty-events'?{events:[]}: {})};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ if(scenario==='same')await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ else await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

@@ -169,9 +169,9 @@ it('acknowledges legacy user display defaults without changing the stored user m
  expect(transport).toHaveBeenCalledTimes(1);
 });
 
-it.each(['session_restore_v2', 'device_restore_v2'])('recovers %s terminal display snapshots with omitted events', async provenance => {
+it.each(['session_restore_v2', 'device_restore_v2'].flatMap(provenance => ['failed', 'interrupted'].map(runStatus => [provenance, runStatus])))('recovers %s %s terminal display snapshots with omitted events', async (provenance, runStatus) => {
  transport.mockReset(); owner.id=1;
- const saved={id:`empty-events-${provenance}`,role:'assistant',content:'Complete reply',createdAt:1,endedAt:2,status:'complete',runStatus:'failed',events:[{kind:'tool_use',input:{text:'retain all details'}}],historyRevision:31};
+ const saved={id:`empty-events-${provenance}`,role:'assistant',content:'Complete reply',createdAt:1,endedAt:2,status:'complete',runStatus,events:[{kind:'tool_use',input:{text:'retain all details'}}],historyRevision:31};
  const incoming={...saved,historyRevision:0,events:[],provenance,startedAt:1,attachments:[]};
  transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
  await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
@@ -216,4 +216,127 @@ it('does not recreate a deleted message from a restore snapshot', async()=>{
  await expect(saveChatHistoryMessage(binding,{id:'restore-deleted',role:'assistant',content:'Old reply',provenance:'device_restore_v2'})).rejects.toThrow('no longer available');
  expect(transport).toHaveBeenCalledTimes(1);
  expect(transport.mock.calls[0]![1].method).toBe('POST');
+});
+
+it.each(['session_restore_v2', 'device_restore_v2'])('recovers coalesced text chunks from %s without changing durable events', async provenance => {
+ transport.mockReset(); owner.id=1;
+ const start={kind:'assistant_message_boundary',phase:'started'};
+ const end={kind:'assistant_message_boundary',phase:'completed'};
+ const saved={id:`coalesced-${provenance}`,role:'assistant',content:'Hello world',runStatus:'succeeded',events:[start,{kind:'text',text:'Hello'},{kind:'text',text:' world'},end],historyRevision:3};
+ const incoming={...saved,historyRevision:0,provenance,events:[start,{kind:'text',text:'Hello world'},end]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+ expect(saved.events).toHaveLength(4);
+});
+
+it.each(['different-text','intervening-tool','text-metadata'])('does not coalesce away a %s conflict', async scenario => {
+ transport.mockReset(); owner.id=1;
+ const events:Record<string,unknown>[]=[{kind:'text',text:'Hello'},{kind:'text',text:' world'}];
+ if(scenario==='intervening-tool')events.splice(1,0,{kind:'tool_use',name:'read'});
+ if(scenario==='text-metadata')events[0]!.channel='analysis';
+ const saved={id:`coalesced-reject-${scenario}`,role:'assistant',content:'Hello world',runStatus:'succeeded',events,historyRevision:3};
+ const incoming={...saved,historyRevision:0,provenance:'session_restore_v2',events:[{kind:'text',text:scenario==='different-text'?'Different':'Hello world'}]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it.each(['session_restore_v2','device_restore_v2'])('acknowledges inferred completion in %s without completing the saved run', async provenance => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`interrupted-${provenance}`,role:'assistant',content:'Retained reply',createdAt:1,status:'streaming',runStatus:'running',events:[{kind:'tool_use',name:'read',input:{keep:true}}],historyRevision:78};
+ const incoming={...saved,historyRevision:0,provenance,startedAt:1,endedAt:10,status:'complete',runStatus:'succeeded',events:[]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+ expect(saved.runStatus).toBe('running');
+ expect(saved.events).toHaveLength(1);
+});
+
+it.each(['changed-content','changed-run','terminal-saved'])('rejects inferred completion with %s', async scenario => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`interrupted-reject-${scenario}`,role:'assistant',content:'Retained reply',status:'streaming',runStatus:scenario==='terminal-saved'?'failed':'running',runId:'original',events:[],historyRevision:78};
+ const incoming={...saved,historyRevision:0,provenance:'session_restore_v2',endedAt:10,status:'complete',runStatus:'succeeded',content:scenario==='changed-content'?'Unsaved edit':saved.content,runId:scenario==='changed-run'?'other':saved.runId};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it('saves the exact native event continuation after losing the envelope revision', async()=>{
+ transport.mockReset(); owner.id=1;
+ const boundary={kind:'assistant_message_boundary',runId:'native-run',sequence:4};
+ const saved={id:'native-recovered',role:'assistant',content:'First',status:'streaming',runStatus:'running',events:[boundary],historyRevision:78};
+ const next={...saved,historyRevision:0,content:'First and last',status:'error',runStatus:'interrupted',endedAt:20,events:[boundary,{...boundary,sequence:10}]};
+ transport.mockResolvedValueOnce(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ transport.mockImplementationOnce(async(_url,init)=>{
+  const sent=JSON.parse(init.body); expect(sent.historyRevision).toBe(78);
+  expect(sent.events).toEqual(next.events);
+  return response({message:{...sent,historyRevision:79},revision:79});
+ });
+ await expect(saveChatHistoryMessage(binding,next)).resolves.toMatchObject({content:'First and last',historyRevision:79,runStatus:'interrupted'});
+ expect(transport).toHaveBeenCalledTimes(2);
+});
+it.each(['event-edit','other-run','no-progress','newer-terminal','second-conflict'])('protects native recovery against %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const boundary={kind:'assistant_message_boundary',runId:'native-run',sequence:4};
+ const saved={id:`native-reject-${scenario}`,role:'assistant',content:'First',status:'streaming',runStatus:scenario==='newer-terminal'?'succeeded':'running',events:[boundary],historyRevision:78};
+ const next={...saved,historyRevision:0,content:'First and last',runStatus:'interrupted',events:[scenario==='event-edit'?{...boundary,sequence:3}:boundary,{...boundary,runId:scenario==='other-run'?'other':'native-run',sequence:scenario==='no-progress'?4:10}]};
+ transport.mockImplementation(async()=>response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,next)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(scenario==='second-conflict'?2:1);
+});
+
+
+it.each(['user','assistant'])('acknowledges an unversioned %s outbox row already saved with legacy display metadata', async role => {
+ transport.mockReset(); owner.id=1;
+ const pending={id:`raw-${role}`,role,content:'Retained content',createdAt:100,...(role==='user'?{commentAttachments:[]}:{status:'error',runStatus:'failed',endedAt:200,events:[{kind:'text',text:'Retained content'}]})};
+ const saved={...pending,commentAttachments:undefined,historyRevision:1,historySequence:12,provenance:'floating_panel_live_v2',authority:'fluency_only',startedAt:100,...(role==='user'?{endedAt:200,status:'complete',events:[],sessionMode:'design',awaitingInput:false}:{})};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+it.each(['content','events','run','revision','attachment'])('rejects changed %s in an unversioned legacy live replay',async field=>{
+ transport.mockReset(); owner.id=1;
+ const pending:Record<string,unknown>={id:`raw-reject-${field}`,role:'assistant',content:'Original',createdAt:100,runId:'run',status:'complete',runStatus:'succeeded',events:[{kind:'text',text:'Original'}]};
+ const saved={...pending,historyRevision:7,provenance:'floating_panel_live_v2',authority:'fluency_only',startedAt:100};
+ if(field==='content')pending.content='Changed';
+ if(field==='events')pending.events=[];
+ if(field==='run')pending.runId='another';
+ if(field==='revision')pending.historyRevision=2;
+ if(field==='attachment')pending.attachments=[{id:123}];
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it.each(['same','changed-text','changed-status','explicit-empty-events'])('handles event-less recovery projection: %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:`lost-events-${scenario}`,role:'assistant',content:'Preserved',status:'error',runStatus:'failed',historyRevision:4,events:[{kind:'text',text:'Preserved'}]};
+ const {events,...prior}=saved;
+ const pending={...prior,historyRevision:1,...(scenario==='changed-text'?{content:'Different'}:{}),...(scenario==='changed-status'?{runStatus:'succeeded'}:{}),...(scenario==='explicit-empty-events'?{events:[]}: {})};
+ transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ if(scenario==='same')await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ else await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it('never grants an event-less replay the newer write revision',async()=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:'eventless-twice',role:'assistant',content:'Keep',runStatus:'failed',historyRevision:4,events:[{kind:'text',text:'Keep'}]};
+ const {events,...old}=saved;const pending={...old,historyRevision:1};
+ transport.mockImplementation(async()=>response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await saveChatHistoryMessage(binding,pending);await saveChatHistoryMessage(binding,pending);
+ expect(transport.mock.calls.map(([,init])=>JSON.parse(init.body).historyRevision)).toEqual([1,1]);
+});
+
+it.each(['prefix','edited'])('handles legacy clipped tool-result strings: %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const saved={id:`clipped-result-${scenario}`,role:'assistant',content:'Done',runStatus:'succeeded',events:[{kind:'tool_result',content:'a'.repeat(6000)}],historyRevision:9};
+ const pending={...saved,historyRevision:0,provenance:'session_restore_v2',events:[{kind:'tool_result',content:(scenario==='prefix'?'a':'b').repeat(4000)}]};
+ transport.mockResolvedValue(response({messages:[saved]},200));
+ if(scenario==='prefix')await expect(saveChatHistoryMessage(binding,pending)).resolves.toEqual(saved);
+ else await expect(saveChatHistoryMessage(binding,pending)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
 });

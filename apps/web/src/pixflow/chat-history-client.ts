@@ -25,11 +25,39 @@ class ChatHistoryRequestError extends Error {
 function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
   const next = incoming as HistoryMessage & Record<string, unknown>;
   const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  // Older panel restores inferred completion from visible text after losing
+  // their transport. That is not evidence that the durable run completed.
+  // A matching display projection may acknowledge the canonical row, never
+  // promote its status or replace its retained activity.
+  const inferredCompletion = prior?.role === 'assistant'
+    && prior.runStatus === 'running' && prior.status === 'streaming'
+    && prior.endedAt === undefined && next.status === 'complete'
+    && next.runStatus === 'succeeded' && typeof next.endedAt === 'number'
+    && Number.isFinite(next.endedAt);
   if (!prior || next.id !== prior.id || !['user', 'assistant'].includes(String(next.role)) || next.role !== prior.role
     || !['session_restore_v2', 'device_restore_v2'].includes(String(next.provenance))
-    || (next.role === 'assistant' && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+    || (next.role === 'assistant' && !inferredCompletion && (!['succeeded', 'failed', 'canceled', 'interrupted'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+  // The legacy display cache joins adjacent plain text deltas. Compare their
+  // text, not transport chunk boundaries, without crossing activity boundaries
+  // or dropping event metadata. The durable row itself is never modified.
+  const coalesceDisplayText = (events: unknown[]) => {
+    const result: unknown[] = [];
+    const plainText = (event: unknown): event is { kind: 'text'; text: string } =>
+      !!event && typeof event === 'object' && !Array.isArray(event)
+      && (event as Record<string, unknown>).kind === 'text'
+      && typeof (event as Record<string, unknown>).text === 'string'
+      && Object.keys(event).every(key => key === 'kind' || key === 'text');
+    for (const event of events) {
+      const last = result[result.length - 1];
+      if (plainText(event) && plainText(last)) {
+        result[result.length - 1] = { kind: 'text', text: last.text + event.text };
+      } else result.push(event);
+    }
+    return result;
+  };
   const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
     if (['historyRevision', 'historySequence', 'provenance'].includes(key)) return false;
+    if (inferredCompletion && ['status', 'runStatus', 'endedAt'].includes(key)) return false;
     if (row.role === 'user' && prior[key] === undefined && (
       (key === 'endedAt' && typeof value === 'number') || (key === 'status' && value === 'complete')
       || (key === 'runStatus' && value === 'succeeded') || (key === 'sessionMode' && value === 'design')
@@ -39,19 +67,64 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
     if (row === next && next.role === 'assistant' && key === 'events'
       && Array.isArray(value) && value.length === 0 && Array.isArray(prior.events)) return false;
     if (key === 'startedAt' && value === row.createdAt) return false;
-    if (key === 'attachments' && Array.isArray(value) && value.length === 0) return false;
+    if (['attachments', 'commentAttachments'].includes(key) && Array.isArray(value) && value.length === 0) return false;
     if (key === 'awaitingInput' && value === false) return false;
     return value !== undefined;
-  }).sort(([a], [b]) => a.localeCompare(b)));
+  }).map(([key, value]) => [key, key === 'events' && Array.isArray(value) ? coalesceDisplayText(value) : value] as const)
+    .sort(([a], [b]) => a.localeCompare(b)));
   // Legacy caches also clipped nested tool input objects. Accept only a
   // subset already present in the durable row; return that full row unchanged.
   const contains = (full: unknown, cached: unknown): boolean => {
     if (Array.isArray(cached)) return Array.isArray(full) && full.length === cached.length && cached.every((item, index) => contains(full[index], item));
     if (cached && typeof cached === 'object') return !!full && typeof full === 'object' && !Array.isArray(full)
       && Object.entries(cached).every(([key, value]) => Object.hasOwn(full, key) && contains((full as Record<string, unknown>)[key], value));
+    // The legacy cache clipped nested strings at exactly 4,000 characters.
+    // This is read-only acknowledgement; keep the complete canonical value.
+    if (typeof full === 'string' && typeof cached === 'string' && cached.length === 4000 && full.length > 4000) return full.startsWith(cached);
     return full === cached;
   };
   return next.content === prior.content && contains(normalize(prior), normalize(next));
+}
+
+/** Old recovery records omitted events but retained the durable revision.
+ * Only acknowledge an otherwise identical terminal reply; never persist that
+ * event-less projection or accept changed text/metadata as a replay.
+ */
+function eventlessRecoveryReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.role !== 'assistant' || prior.role !== 'assistant' || next.id !== prior.id
+    || !Number.isInteger(next.historyRevision) || !(next.historyRevision! > 0)
+    || !(prior.historyRevision! > next.historyRevision!) || next.events !== undefined
+    || !Array.isArray(prior.events) || prior.events.length === 0
+    || !['succeeded', 'failed', 'canceled', 'interrupted'].includes(String(prior.runStatus))) return false;
+  const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row)
+    .filter(([key, value]) => value !== undefined && !['historyRevision', 'historySequence', 'events'].includes(key))
+    .sort(([a], [b]) => a.localeCompare(b)));
+  return JSON.stringify(normalize(next)) === JSON.stringify(normalize(prior));
+}
+
+/** A legacy live cache can add display metadata before the original outbox drains.
+ * Acknowledge only identical unversioned payloads; never write or rebase them.
+ */
+function legacyLiveReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.historyRevision || next.provenance || next.id !== prior.id || next.role !== prior.role
+    || !['user', 'assistant'].includes(String(next.role)) || prior.provenance !== 'floating_panel_live_v2'
+    || prior.authority !== 'fluency_only') return false;
+  const normalize = (row: Record<string, unknown>): unknown => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
+    if (value === undefined || ['historyRevision', 'historySequence'].includes(key)) return false;
+    if (['attachments', 'commentAttachments'].includes(key) && Array.isArray(value) && value.length === 0) return false;
+    if (row === prior && next[key] === undefined) {
+      if (['provenance', 'authority'].includes(key) || (key === 'startedAt' && value === row.createdAt)) return false;
+      if (next.role === 'user' && ((key === 'endedAt' && typeof value === 'number')
+        || (key === 'status' && value === 'complete') || (key === 'sessionMode' && value === 'design')
+        || (key === 'awaitingInput' && value === false) || (key === 'events' && Array.isArray(value) && value.length === 0))) return false;
+    }
+    return true;
+  }).sort(([a], [b]) => a.localeCompare(b)));
+  return JSON.stringify(normalize(next)) === JSON.stringify(normalize(prior));
 }
 
 /** A terminal durable replay can acknowledge a previously truncated tail only
@@ -77,6 +150,32 @@ function completedReplayContains<T extends HistoryMessage>(incoming:T,saved?:His
 function appendOnlyRecoveryRevision(incoming: HistoryMessage, saved?: HistoryMessage): number | null {
   type Snapshot = HistoryMessage & {runId?:string;runStatus?:string;lastRunEventId?:string;events?:unknown[]};
   const next=incoming as Snapshot, prior=saved as Snapshot | undefined;
+  // Bricks native replays historically carried identity on boundary events,
+  // not the message envelope. Require that identity plus an exact event prefix
+  // before a single CAS retry can append recovered output or its terminal state.
+  if (prior && next.id === prior.id && next.role === 'assistant' && prior.role === 'assistant'
+    && prior.runStatus === 'running' && Number.isInteger(prior.historyRevision)
+    && typeof next.content === 'string' && typeof prior.content === 'string'
+    && next.content.startsWith(prior.content)
+    && ['running', 'succeeded', 'failed', 'canceled', 'interrupted'].includes(next.runStatus || '')) {
+    const identity = (events: unknown[] = []) => {
+      const rows = events.filter((event): event is Record<string, unknown> => !!event && typeof event === 'object');
+      const ids = new Set(rows.map(row => row.runId).filter(value => typeof value === 'string' && value));
+      const boundaries = rows.filter(row => row.kind === 'assistant_message_boundary'
+        && typeof row.runId === 'string' && Number.isSafeInteger(row.sequence));
+      return { id: ids.size === 1 ? [...ids][0] : undefined,
+        sequence: Math.max(0, ...boundaries.map(row => Number(row.sequence))) };
+    };
+    const before = identity(prior.events), after = identity(next.events);
+    const prefix = Array.isArray(prior.events) && prior.events.length > 0 && Array.isArray(next.events)
+      && next.events.length >= prior.events.length
+      && prior.events.every((event, index) => JSON.stringify(event) === JSON.stringify(next.events![index]));
+    const changing = new Set(['content', 'events', 'historyRevision', 'historySequence', 'runStatus', 'status', 'endedAt']);
+    if (before.id && before.id === after.id && after.sequence > before.sequence && prefix
+      && (!next.runId || next.runId === before.id) && (!prior.runId || prior.runId === before.id)
+      && Object.entries(prior).every(([key, value]) => changing.has(key)
+        || JSON.stringify(value) === JSON.stringify((next as unknown as Record<string, unknown>)[key]))) return prior.historyRevision!;
+  }
   if (!prior || next.id!==prior.id || next.role!=='assistant' || prior.role!=='assistant'
     || !next.runId || next.runId!==prior.runId || !['queued','running'].includes(prior.runStatus || '')
     || !Number.isInteger(prior.historyRevision) || !next.content?.startsWith(prior.content || '')
@@ -149,6 +248,7 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
     const previous = acknowledged.get(writerKey);
     const revision = previous?.inputs.has(inputRevision) ? previous.revision : inputRevision;
     let result: PixflowChatHistorySaveResponse<T>;
+    let readOnlyReplay = false;
     try {
       // Restore snapshots are display projections, not edits. Read/insert without
       // replacing a durable row, even when this browser acknowledged its revision.
@@ -169,7 +269,8 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       }
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
-        && (completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        && (eventlessRecoveryReplayMatches(message,error.body.data?.message) || legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        readOnlyReplay = true;
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
@@ -179,7 +280,10 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       result = await request(path, json('PUT',{...message,historyRevision:recovered}));
       }
     }
-    acknowledged.set(writerKey, { revision: result.revision, inputs: new Set([...(previous?.inputs || []), inputRevision, result.revision]) });
+    const inputs = new Set([...(previous?.inputs || []), result.revision]);
+    // A read-only replay is not authority to write using the newer revision.
+    if (readOnlyReplay) inputs.delete(inputRevision); else inputs.add(inputRevision);
+    acknowledged.set(writerKey, { revision: result.revision, inputs });
     return result.message;
   });
   writers.set(writerKey, task);

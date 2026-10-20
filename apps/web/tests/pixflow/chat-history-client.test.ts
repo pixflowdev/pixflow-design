@@ -169,9 +169,9 @@ it('acknowledges legacy user display defaults without changing the stored user m
  expect(transport).toHaveBeenCalledTimes(1);
 });
 
-it.each(['session_restore_v2', 'device_restore_v2'])('recovers %s terminal display snapshots with omitted events', async provenance => {
+it.each(['session_restore_v2', 'device_restore_v2'].flatMap(provenance => ['failed', 'interrupted'].map(runStatus => [provenance, runStatus])))('recovers %s %s terminal display snapshots with omitted events', async (provenance, runStatus) => {
  transport.mockReset(); owner.id=1;
- const saved={id:`empty-events-${provenance}`,role:'assistant',content:'Complete reply',createdAt:1,endedAt:2,status:'complete',runStatus:'failed',events:[{kind:'tool_use',input:{text:'retain all details'}}],historyRevision:31};
+ const saved={id:`empty-events-${provenance}`,role:'assistant',content:'Complete reply',createdAt:1,endedAt:2,status:'complete',runStatus,events:[{kind:'tool_use',input:{text:'retain all details'}}],historyRevision:31};
  const incoming={...saved,historyRevision:0,events:[],provenance,startedAt:1,attachments:[]};
  transport.mockResolvedValue(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
  await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);

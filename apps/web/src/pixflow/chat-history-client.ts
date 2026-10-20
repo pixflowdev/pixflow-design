@@ -36,7 +36,7 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
     && Number.isFinite(next.endedAt);
   if (!prior || next.id !== prior.id || !['user', 'assistant'].includes(String(next.role)) || next.role !== prior.role
     || !['session_restore_v2', 'device_restore_v2'].includes(String(next.provenance))
-    || (next.role === 'assistant' && !inferredCompletion && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+    || (next.role === 'assistant' && !inferredCompletion && (!['succeeded', 'failed', 'canceled', 'interrupted'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
   // The legacy display cache joins adjacent plain text deltas. Compare their
   // text, not transport chunk boundaries, without crossing activity boundaries
   // or dropping event metadata. The durable row itself is never modified.

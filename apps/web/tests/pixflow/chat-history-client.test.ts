@@ -242,3 +242,24 @@ it.each(['different-text','intervening-tool','text-metadata'])('does not coalesc
  await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it.each(['session_restore_v2','device_restore_v2'])('acknowledges inferred completion in %s without completing the saved run', async provenance => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`interrupted-${provenance}`,role:'assistant',content:'Retained reply',createdAt:1,status:'streaming',runStatus:'running',events:[{kind:'tool_use',name:'read',input:{keep:true}}],historyRevision:78};
+ const incoming={...saved,historyRevision:0,provenance,startedAt:1,endedAt:10,status:'complete',runStatus:'succeeded',events:[]};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).resolves.toEqual(saved);
+ expect(transport).toHaveBeenCalledTimes(1);
+ expect(transport.mock.calls[0]![1].method).toBe('POST');
+ expect(saved.runStatus).toBe('running');
+ expect(saved.events).toHaveLength(1);
+});
+
+it.each(['changed-content','changed-run','terminal-saved'])('rejects inferred completion with %s', async scenario => {
+ transport.mockReset(); owner.id=1;
+ const saved={id:`interrupted-reject-${scenario}`,role:'assistant',content:'Retained reply',status:'streaming',runStatus:scenario==='terminal-saved'?'failed':'running',runId:'original',events:[],historyRevision:78};
+ const incoming={...saved,historyRevision:0,provenance:'session_restore_v2',endedAt:10,status:'complete',runStatus:'succeeded',content:scenario==='changed-content'?'Unsaved edit':saved.content,runId:scenario==='changed-run'?'other':saved.runId};
+ transport.mockResolvedValue(response({messages:[saved],deletedMessageIds:[]}));
+ await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
+ expect(transport).toHaveBeenCalledTimes(1);
+});

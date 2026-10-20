@@ -25,9 +25,18 @@ class ChatHistoryRequestError extends Error {
 function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
   const next = incoming as HistoryMessage & Record<string, unknown>;
   const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  // Older panel restores inferred completion from visible text after losing
+  // their transport. That is not evidence that the durable run completed.
+  // A matching display projection may acknowledge the canonical row, never
+  // promote its status or replace its retained activity.
+  const inferredCompletion = prior?.role === 'assistant'
+    && prior.runStatus === 'running' && prior.status === 'streaming'
+    && prior.endedAt === undefined && next.status === 'complete'
+    && next.runStatus === 'succeeded' && typeof next.endedAt === 'number'
+    && Number.isFinite(next.endedAt);
   if (!prior || next.id !== prior.id || !['user', 'assistant'].includes(String(next.role)) || next.role !== prior.role
     || !['session_restore_v2', 'device_restore_v2'].includes(String(next.provenance))
-    || (next.role === 'assistant' && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
+    || (next.role === 'assistant' && !inferredCompletion && (!['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus)) || next.runStatus !== prior.runStatus))) return false;
   // The legacy display cache joins adjacent plain text deltas. Compare their
   // text, not transport chunk boundaries, without crossing activity boundaries
   // or dropping event metadata. The durable row itself is never modified.
@@ -48,6 +57,7 @@ function legacyDisplayReplayMatches(incoming: HistoryMessage, saved?: HistoryMes
   };
   const normalize = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key, value]) => {
     if (['historyRevision', 'historySequence', 'provenance'].includes(key)) return false;
+    if (inferredCompletion && ['status', 'runStatus', 'endedAt'].includes(key)) return false;
     if (row.role === 'user' && prior[key] === undefined && (
       (key === 'endedAt' && typeof value === 'number') || (key === 'status' && value === 'complete')
       || (key === 'runStatus' && value === 'succeeded') || (key === 'sessionMode' && value === 'design')

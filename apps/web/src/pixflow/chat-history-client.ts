@@ -106,6 +106,32 @@ function completedReplayContains<T extends HistoryMessage>(incoming:T,saved?:His
 function appendOnlyRecoveryRevision(incoming: HistoryMessage, saved?: HistoryMessage): number | null {
   type Snapshot = HistoryMessage & {runId?:string;runStatus?:string;lastRunEventId?:string;events?:unknown[]};
   const next=incoming as Snapshot, prior=saved as Snapshot | undefined;
+  // Bricks native replays historically carried identity on boundary events,
+  // not the message envelope. Require that identity plus an exact event prefix
+  // before a single CAS retry can append recovered output or its terminal state.
+  if (prior && next.id === prior.id && next.role === 'assistant' && prior.role === 'assistant'
+    && prior.runStatus === 'running' && Number.isInteger(prior.historyRevision)
+    && typeof next.content === 'string' && typeof prior.content === 'string'
+    && next.content.startsWith(prior.content)
+    && ['running', 'succeeded', 'failed', 'canceled', 'interrupted'].includes(next.runStatus || '')) {
+    const identity = (events: unknown[] = []) => {
+      const rows = events.filter((event): event is Record<string, unknown> => !!event && typeof event === 'object');
+      const ids = new Set(rows.map(row => row.runId).filter(value => typeof value === 'string' && value));
+      const boundaries = rows.filter(row => row.kind === 'assistant_message_boundary'
+        && typeof row.runId === 'string' && Number.isSafeInteger(row.sequence));
+      return { id: ids.size === 1 ? [...ids][0] : undefined,
+        sequence: Math.max(0, ...boundaries.map(row => Number(row.sequence))) };
+    };
+    const before = identity(prior.events), after = identity(next.events);
+    const prefix = Array.isArray(prior.events) && prior.events.length > 0 && Array.isArray(next.events)
+      && next.events.length >= prior.events.length
+      && prior.events.every((event, index) => JSON.stringify(event) === JSON.stringify(next.events![index]));
+    const changing = new Set(['content', 'events', 'historyRevision', 'historySequence', 'runStatus', 'status', 'endedAt']);
+    if (before.id && before.id === after.id && after.sequence > before.sequence && prefix
+      && (!next.runId || next.runId === before.id) && (!prior.runId || prior.runId === before.id)
+      && Object.entries(prior).every(([key, value]) => changing.has(key)
+        || JSON.stringify(value) === JSON.stringify((next as unknown as Record<string, unknown>)[key]))) return prior.historyRevision!;
+  }
   if (!prior || next.id!==prior.id || next.role!=='assistant' || prior.role!=='assistant'
     || !next.runId || next.runId!==prior.runId || !['queued','running'].includes(prior.runStatus || '')
     || !Number.isInteger(prior.historyRevision) || !next.content?.startsWith(prior.content || '')

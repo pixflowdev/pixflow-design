@@ -263,3 +263,27 @@ it.each(['changed-content','changed-run','terminal-saved'])('rejects inferred co
  await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('newer saved version');
  expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it('saves the exact native event continuation after losing the envelope revision', async()=>{
+ transport.mockReset(); owner.id=1;
+ const boundary={kind:'assistant_message_boundary',runId:'native-run',sequence:4};
+ const saved={id:'native-recovered',role:'assistant',content:'First',status:'streaming',runStatus:'running',events:[boundary],historyRevision:78};
+ const next={...saved,historyRevision:0,content:'First and last',status:'error',runStatus:'interrupted',endedAt:20,events:[boundary,{...boundary,sequence:10}]};
+ transport.mockResolvedValueOnce(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ transport.mockImplementationOnce(async(_url,init)=>{
+  const sent=JSON.parse(init.body); expect(sent.historyRevision).toBe(78);
+  expect(sent.events).toEqual(next.events);
+  return response({message:{...sent,historyRevision:79},revision:79});
+ });
+ await expect(saveChatHistoryMessage(binding,next)).resolves.toMatchObject({content:'First and last',historyRevision:79,runStatus:'interrupted'});
+ expect(transport).toHaveBeenCalledTimes(2);
+});
+it.each(['event-edit','other-run','no-progress','newer-terminal','second-conflict'])('protects native recovery against %s',async scenario=>{
+ transport.mockReset();owner.id=1;
+ const boundary={kind:'assistant_message_boundary',runId:'native-run',sequence:4};
+ const saved={id:`native-reject-${scenario}`,role:'assistant',content:'First',status:'streaming',runStatus:scenario==='newer-terminal'?'succeeded':'running',events:[boundary],historyRevision:78};
+ const next={...saved,historyRevision:0,content:'First and last',runStatus:'interrupted',events:[scenario==='event-edit'?{...boundary,sequence:3}:boundary,{...boundary,runId:scenario==='other-run'?'other':'native-run',sequence:scenario==='no-progress'?4:10}]};
+ transport.mockImplementation(async()=>response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+ await expect(saveChatHistoryMessage(binding,next)).rejects.toThrow('Conflict');
+ expect(transport).toHaveBeenCalledTimes(scenario==='second-conflict'?2:1);
+});

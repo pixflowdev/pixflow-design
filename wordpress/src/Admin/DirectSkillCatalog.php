@@ -80,6 +80,8 @@ final class DirectSkillCatalog
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
             foreach ($iterator as $file) {
                 if (!$file->isFile() || $file->isLink() || $file->getFilename() !== 'manifest.php' || $prefix === 'bundled/') continue;
+                // Preserved resources are data. Only packaged native manifests execute.
+                if (\PixflowDesign\WordPress\Storage\EncryptedResourceReader::is_resource($root)) continue;
                 $manifest = (static fn(string $path): mixed => require $path)($file->getPathname());
                 foreach ((array) $manifest as $item) {
                     if (!is_array($item) || empty($item['file'])) continue;

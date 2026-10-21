@@ -3,6 +3,7 @@ declare(strict_types=1);
 define('ABSPATH', __DIR__.'/');
 function wp_normalize_path($p){return str_replace('\\','/',$p);}
 function trailingslashit($p){return rtrim($p,'/').'/';}
+require __DIR__.'/../src/Storage/EncryptedResourceReader.php';
 require __DIR__.'/../src/Od/RegistryService.php';
 $type=new ReflectionClass(PixflowDesign\WordPress\Od\RegistryService::class);$service=$type->newInstanceWithoutConstructor();$method=$type->getMethod('safe_plugin_asset_path');
 $root=sys_get_temp_dir().'/resource-path-'.bin2hex(random_bytes(8));mkdir($root);file_put_contents($root.'/index.html','preserve');

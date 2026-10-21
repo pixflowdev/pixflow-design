@@ -46,5 +46,10 @@ jobs:
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
       - name: Legacy chat compatibility
         run: php wordpress/tests/workspace-legacy-message.test.php
+      - name: Resource storage recovery
+        run: |
+          for test in encrypted-resource-store encrypted-resource-tree encrypted-resource-migration resource-private-storage resource-empty-recovery resource-notice bundled-guidance-storage-failure bundled-resources-private resource-asset-path resource-archive-security retired-resource-cleanup project-private-storage; do
+            php "wordpress/tests/$test.test.php"
+          done
       - name: Build Free browser assets
         run: pnpm wordpress:web

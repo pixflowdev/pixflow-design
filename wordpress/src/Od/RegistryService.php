@@ -951,8 +951,8 @@ final class RegistryService
             $path .= '/' . $segment;
             if (is_link($path)) return null;
         }
-        $resolved = realpath($path);
-        $base = realpath($plugin_root);
+        $resolved = \PixflowDesign\WordPress\Storage\EncryptedResourceReader::canonical($path);
+        $base = \PixflowDesign\WordPress\Storage\EncryptedResourceReader::canonical($plugin_root);
         if ($resolved === false || $base === false || is_link($plugin_root)) return null;
         $resolved = wp_normalize_path($resolved);
         return str_starts_with($resolved, trailingslashit(wp_normalize_path($base))) ? $resolved : null;

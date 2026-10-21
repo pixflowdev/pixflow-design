@@ -19,6 +19,8 @@ file_put_contents($legacy.'/plugins/1/plugins/demo/recipe.py','print("preserve r
 $options['pixflow_design_resource_packs']=['plugins'=>['slug'=>'plugins','version'=>'1','path'=>$legacy.'/plugins/1','status'=>'installed','contentRoots'=>['plugins'=>'plugins']]];
 try {
  $paths=new PixflowDesign\WordPress\Resources\ResourcePackPathService();
+ $expected=$fixture.'/.pixflow-private-'.substr(hash('sha256',wp_normalize_path(ABSPATH.'uploads')),0,20).'/resource-packs';
+ mkdir($expected.'/empty',0700,true);
  $base=$paths->base_dir();
  if(str_starts_with($base,ABSPATH))throw new RuntimeException('Resource HTML must not live in the public root');
  if(is_dir($legacy))throw new RuntimeException('Legacy public copies must be gone');

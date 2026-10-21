@@ -53,7 +53,7 @@ try {
     check($filters['rest_pre_dispatch'](null, null, $request('/pixflow-design/v1/od/skills')) === null, 'Skill listing is not blocked by legacy storage');
     check($filters['rest_pre_dispatch'](null, null, $request('/pixflow-design/v1/od/plugins/od-default')) === null, 'Required router is not blocked by legacy storage');
     check($filters['rest_pre_dispatch'](null, null, $request('/pixflow-design/v1/od/plugins/example')) instanceof WP_Error, 'Legacy resource access remains fail closed');
-    unset($options['pixflow_design_private_resource_error']);
+    unset($options['pixflow_design_private_resource_error'], $options['pixflow_design_private_resource_diagnostic']);
     $registry = new PixflowDesign\WordPress\Od\RegistryService();
     check(in_array('agent-browser', array_column($registry->skills(), 'id'), true), 'Bundled skill still listed');
     check($registry->skill('agent-browser')['body'] === $body, 'Bundled skill remains readable');

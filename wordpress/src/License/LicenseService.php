@@ -115,6 +115,15 @@ final class LicenseService
             && (string) ($body['status'] ?? '') === 'active';
 
         if (!$valid) {
+            // A failed transport or malformed response is not a licence refusal.
+            // Keep the encrypted credential so the next refresh can recover.
+            $explicit_refusal = $status >= 200 && $status < 500
+                && !in_array($status, [408, 429], true)
+                && ($body['valid'] ?? null) === false
+                && ($body['access_granted'] ?? null) === false;
+            if (!$explicit_refusal) return $this->denied('license_verification_unavailable',
+                'Pixflow could not verify the saved licence. Your saved key has been kept; retry verification shortly.',
+                ['http_status' => $status]);
             $this->cache->clear();
             return array_merge($this->denied(
                 (string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),

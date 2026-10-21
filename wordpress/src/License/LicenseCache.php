@@ -40,13 +40,14 @@ final class LicenseCache
         }
 
         $expired = $this->is_expired($cache);
-        $present = !$expired && !empty($cache['encrypted_license_key']) && !empty($cache['site_fingerprint']);
+        $present = !empty($cache['encrypted_license_key']) && !empty($cache['site_fingerprint']);
+        $readable = $present && SecretBox::decrypt((string) $cache['encrypted_license_key']) !== '';
 
         return [
             'present' => $present,
-            'valid' => $present,
-            'status' => $expired ? 'expired' : ($present ? 'active' : 'missing'),
-            'message' => $expired ? 'Your Pixflow Design Pro licence has expired. Free WordPress and Gutenberg editing remains available.' : '',
+            'valid' => $present && $readable && !$expired,
+            'status' => $expired ? 'expired' : ($present ? ($readable ? 'active' : 'unreadable') : 'missing'),
+            'message' => $expired ? 'Your Pixflow Design Pro licence has expired. Free WordPress and Gutenberg editing remains available.' : ($present && !$readable ? 'The saved licence key cannot be decrypted. WordPress security keys may have changed. Restore those keys or reconnect your licence. Your encrypted key and content have been kept.' : ''),
             'site_fingerprint' => (string) ($cache['site_fingerprint'] ?? ''),
             'license_id' => (string) ($cache['license_id'] ?? ''),
             'purchase_id' => (string) ($cache['purchase_id'] ?? ''),

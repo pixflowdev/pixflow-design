@@ -245,3 +245,32 @@ $attempts=count($GLOBALS['requests']);
 check((new CentralEntitlements())->status()['code']==='license_revoked' && !(new CentralEntitlements())->allows('wordpress:mutate'), 'Concurrent denial overwritten during installation preparation');
 check(count($GLOBALS['requests'])===$attempts, 'Changed installation contacted licensing authority');
 echo "Concurrent denial during saved licence recovery preserved.\n";
+
+// An old client made a consumed/expired challenge a permanent denial. Recover
+// only through a fresh signed exchange, retaining identity and saved content.
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+(new CentralEntitlements())->deny('invalid_challenge');
+$original_installation=$GLOBALS['options']['pixflow_design_central_entitlements_v2']['installation'];
+$GLOBALS['responses']=[response(200,$challenge),response(200,$grants),response(200,$jwks)];
+(new CentralEntitlements())->recover_saved_license();
+check((new CentralEntitlements())->allows('wordpress:mutate'),'Old protocol failure did not recover');
+check($GLOBALS['options']['pixflow_design_central_entitlements_v2']['installation']===$original_installation,'Recovery replaced installation');
+echo "Historical challenge failure recovers through fresh signed authority proof.\n";
+
+// Invalid challenge payloads and authority-consumed challenges are temporary;
+// they cannot mint access or erase a prior explicit revocation.
+foreach ([response(200,['unexpected'=>'payload']), response(200,$challenge)] as $index=>$challenge_response) {
+ $GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+ $before=$GLOBALS['options']['pixflow_design_site_license_cache'];
+ $GLOBALS['responses']=$index===0?[$challenge_response]:[$challenge_response,response(401,['code'=>'invalid_challenge'])];
+ check(!(new CentralEntitlements())->refresh()['ok'],'Bad challenge minted a grant');
+ check(empty($GLOBALS['options']['pixflow_design_central_entitlements_v2']['denied']),'Protocol failure became permanent refusal');
+ check($GLOBALS['options']['pixflow_design_site_license_cache']===$before,'Protocol failure erased licence');
+ $GLOBALS['responses']=[response(200,$challenge),response(200,$grants),response(200,$jwks)];
+ check((new CentralEntitlements())->refresh()['ok'],'Next fresh proof failed recovery');
+}
+$GLOBALS['options']=$domain_baseline;(new CentralEntitlements())->deny('license_revoked');
+$GLOBALS['responses']=[response(200,['unexpected'=>'payload'])];
+(new CentralEntitlements())->refresh();
+check((new CentralEntitlements())->status()['code']==='license_revoked' && !(new CentralEntitlements())->allows('wordpress:mutate'),'Malformed challenge erased explicit revocation');
+echo "Malformed and consumed challenge recovery retains denial boundaries.\n";

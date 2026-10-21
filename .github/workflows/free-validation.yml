@@ -46,5 +46,12 @@ jobs:
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
       - name: Legacy chat compatibility
         run: php wordpress/tests/workspace-legacy-message.test.php
+      - name: Licence retention and authorization recovery
+        run: |
+          php wordpress/tests/license-retention.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/signed-entitlement.test.php
+          php wordpress/tests/licensing-staging-origin.test.php
+          php wordpress/tests/directory-license-http.test.php
       - name: Build Free browser assets
         run: pnpm wordpress:web

@@ -1,3 +1,4 @@
+import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 'use client';
 
 import { TranslatedText } from '../i18n/TranslatedText';
@@ -26,6 +27,7 @@ import { useComposerQueue, type ComposerQueueItem } from './composer-queue';
 import composerStyles from './ComposerQueue.module.css';
 import pickerStyles from './ComposerPicker.module.css';
 import type { PixflowDirectSiteSteerResponse, LockedSkillSummary } from '@open-design/contracts';
+
 import { CodexVoiceControl } from './CodexVoiceControl';
 import { DictationControl } from './DictationControl';
 import { PageAnnotationControl } from './PageAnnotationControl';
@@ -212,7 +214,7 @@ interface Props {
   initialDraft?: string;
   onDraftChange?: (text: string) => void;
   draftStorageKey?: string;
-  // Lazy ensure — the composer calls this before its first upload, so the
+  // Lazy ensure â€” the composer calls this before its first upload, so the
   // project folder exists on disk before files land in it. Returns the
   // project id when ready.
   onEnsureProject: () => Promise<string | null>;
@@ -237,14 +239,14 @@ interface Props {
   // Opens the global settings dialog (CLI / model / agent picker). The
   // composer's leading gear icon routes here so users can switch models
   // without leaving the chat.
-  onOpenSettings?: (section?: 'execution' | 'dictation') => void;
-  // Opens settings on the External MCP tab. Wired from ChatPane → App.
+  onOpenSettings?: (section?: 'execution' | 'dictation' | 'designSystems') => void;
+  // Opens settings on the External MCP tab. Wired from ChatPane â†’ App.
   // The composer's `/mcp` slash command and the MCP picker button route here.
   onOpenMcpSettings?: () => void;
   onOpenBuilderHandoff?: () => void;
   // The "+" menu's "add plugin" / "add connector" rows route to the home
   // surfaces (plugin registry / connector integrations). Wired from
-  // ChatPane → ProjectView → App. Omitted → the add rows are hidden.
+  // ChatPane â†’ ProjectView â†’ App. Omitted â†’ the add rows are hidden.
   onBrowsePlugins?: () => void;
   onOpenConnectors?: () => void;
   // Optional pet wiring. The composer no longer renders a visible pet
@@ -278,8 +280,8 @@ interface Props {
   // (PluginLoopHome on Home). When provided, the in-composer plugin
   // rail collapses to the single pinned plugin so the user can see
   // which plugin is active without being offered every other installed
-  // plugin (the user reported "选了 new-generation, 结果 composer 显
-  // 示了多个 plugin"). The active plugin still appears as an
+  // plugin (the user reported "é€‰äº† new-generation, ç»“æžœ composer æ˜¾
+  // ç¤ºäº†å¤šä¸ª plugin"). The active plugin still appears as an
   // ActivePluginChip on each user message (see UserMessage in
   // ChatPane). Pass `null` (or omit) to render the full rail.
   pinnedPluginId?: string | null;
@@ -302,7 +304,7 @@ interface Props {
   currentDesignSystemId?: string | null;
   // Fires after a successful `PATCH /api/projects/:id` from the mid-chat
   // design-system picker. Receives the full patched `Project` straight
-  // from the PATCH response so the parent replaces its mirror wholesale —
+  // from the PATCH response so the parent replaces its mirror wholesale â€”
   // rebuilding from a stale `project` prop would drop server-owned fields
   // the daemon refreshes on every PATCH (e.g. `updatedAt`).
   onActiveDesignSystemChange?: (project: Project) => void;
@@ -339,7 +341,7 @@ export interface ChatComposerHandle {
    * Run a design-toolbox action by id from outside the composer (e.g. the
    * assistant "next step" card). Resolves the action, matches its preferred
    * skill, and seeds the composer draft with the action prompt + `@skill`
-   * mention — identical to picking the action inside the toolbox panel, so the
+   * mention â€” identical to picking the action inside the toolbox panel, so the
    * draft still waits for the user to send. No-op for an unknown id.
    */
   applyDesignToolboxAction: (
@@ -525,17 +527,17 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const previousWorkspaceContextIdRef = useRef<string | null>(activeWorkspaceContextId);
     const [dragActive, setDragActive] = useState(false);
     // Lexical owns the caret, so the mention/slash trigger state only carries
-    // the typed query — no cursor offset.
+    // the typed query â€” no cursor offset.
     const [mention, setMention] = useState<{ q: string } | null>(null);
-    // Active-row index for the @-popover's visible union (files → tabs →
-    // plugins → skills → mcp → connectors). Resets to 0 whenever the query
+    // Active-row index for the @-popover's visible union (files â†’ tabs â†’
+    // plugins â†’ skills â†’ mcp â†’ connectors). Resets to 0 whenever the query
     // identity or tab changes; drives the visual highlight + Enter/Tab target.
     const [mentionIndex, setMentionIndex] = useState(0);
     const [mentionTab, setMentionTab] = useState<MentionTab>('all');
     // Viewport caret box the floating popover anchors against. Sampled by the
     // editor at trigger-detection time; null when no trigger is live.
     const [caretRect, setCaretRect] = useState<CaretRect | null>(null);
-    // Slash-command popover state — when the draft starts with `/` and the
+    // Slash-command popover state â€” when the draft starts with `/` and the
     // cursor is still inside that token (no space committed yet), we show a
     // small palette of supported commands. The query is the text after `/`
     // so the user can type-to-filter.
@@ -553,20 +555,20 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // the @-mention picker. Both surfaces share the same list so applying
     // a plugin from either path lands on the same project context.
     const [installedPlugins, setInstalledPlugins] = useState<InstalledPluginRecord[]>([]);
-    // Detail modal — opened from a context chip click (kind === 'plugin')
+    // Detail modal â€” opened from a context chip click (kind === 'plugin')
     // or from the tools-menu "Details" affordance.
     const [detailsRecord, setDetailsRecord] = useState<InstalledPluginRecord | null>(null);
     const [activeAppliedPlugin, setActiveAppliedPlugin] =
       useState<AppliedPluginSnapshot | null>(null);
     const pluginsSectionRef = useRef<PluginsSectionHandle | null>(null);
     const inlineBackedPluginRef = useRef<{ id: string; label: string } | null>(null);
-    // Consolidated "tools" popover — a single dropdown anchored to the
+    // Consolidated "tools" popover â€” a single dropdown anchored to the
     // leading sliders icon that hosts project context, MCP, Import actions,
     // and a shortcut to open the full Settings dialog. Replaces the previous
     // row of three standalone buttons (which overflowed in narrow chats).
     // The "+" menu (ComposerPlusMenu) owns its own open / submenu state.
     // Defer the (large) plugin / MCP / connector fetches until the composer is
-    // actually used — first focus, the tools popover opening, an @/slash
+    // actually used â€” first focus, the tools popover opening, an @/slash
     // trigger, or a pre-seeded draft. An untouched empty composer (e.g. a home
     // surface the user bounces off, or a background chat) never pays for the
     // full plugin-manifest list. Latches once true and never resets.
@@ -576,7 +578,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const contextPickerRef = useRef<ContextPickerHandle>(null);
     const pixflowContextPicker = hasPixflowWordPressContext();
-    // The Lexical editor handle — drives text/mention/clear/focus from the
+    // The Lexical editor handle â€” drives text/mention/clear/focus from the
     // host. Replaces the old textareaRef + manual selection plumbing. IME
     // composition guarding now lives inside the editor's command handlers.
     const editorRef = useRef<LexicalComposerInputHandle | null>(null);
@@ -610,7 +612,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     }, [stagedWorkspaceContexts, visibleWorkspaceContext]);
     // initialDraft is only honored on the first non-empty value the parent
     // hands us. After we seed once, the composer is fully under user control
-    // — re-renders that pass the same prompt back must not reseed. If the
+    // â€” re-renders that pass the same prompt back must not reseed. If the
     // initial useState above already consumed a non-empty initialDraft we
     // mark it seeded immediately, so an early clear by the user (typing or
     // backspace before the parent stops passing initialDraft) does not get
@@ -691,7 +693,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       return () => { cancelled = true; window.removeEventListener('pixflow:mcp-settings-saved', refresh); window.removeEventListener('pixflow-design:bridge-status', bridgeChanged); };
     }, [composerEngaged, Boolean(mention), mcpProvider, pixflowContextPicker]);
 
-    // Skills now come from the parent (App.tsx → ProjectView → ChatPane → ChatComposer)
+    // Skills now come from the parent (App.tsx â†’ ProjectView â†’ ChatPane â†’ ChatComposer)
     // pre-filtered by enabled/disabled state. We no longer fetch a fresh list
     // here to avoid showing skills the user has disabled via Settings.
 
@@ -808,14 +810,19 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // Catalog of supported slash commands. Each entry shows up in the
     // popover when the user types `/` in the composer. The `insert`
     // value is what we drop into the draft when the user picks the
-    // entry — usually the canonical command form with a trailing space
+    // entry â€” usually the canonical command form with a trailing space
     // ready for an argument.
+    const featureRevision = usePixflowFeatureRuntime();
     const slashCommands = useMemo<SlashCommand[]>(() => {
       const list: SlashCommand[] = [];
+      if (pixflowContextPicker && planningAvailable()) for (const operation of (pixflowFeatureConfiguration('planning')?.operations ?? []) as string[]) {
+        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: 'pixflow.guidance.hint', icon: 'sparkles' });
+      }
+      if (onOpenSettings && planningAvailable()) list.push({ id: 'design-settings', label: '/design-settings', insert: '', descKey: 'guidance.title', icon: 'sliders' });
       if (onOpenBuilderHandoff) {
         list.push({id:'handoff',label:'/handoff',insert:'/handoff ',descKey:'builderDestination.handoffToBuilder',icon:'sparkles',argHint:''});
       }
-      // External MCP servers — `/mcp` opens settings, `/mcp <id>` inserts a
+      // External MCP servers â€” `/mcp` opens settings, `/mcp <id>` inserts a
       // prompt-side hint nudging the model to use that server's tools. The
       // hint flows through to the agent verbatim; the daemon already wired
       // the MCP config into the agent's launch so the tools are callable.
@@ -826,7 +833,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           insert: '/mcp ',
           descKey: 'chat.pickerMcp',
           icon: 'sliders',
-          argHint: 'open settings · <server-id> to insert hint',
+          argHint: 'open settings Â· <server-id> to insert hint',
         });
       }
       for (const s of pixflowContextPicker ? [] : enabledMcpServers) {
@@ -872,7 +879,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         list.push({id: `locked-skill-${skill.id}`, label: localizeSkillName(locale, skill), descText: localizeSkillDescription(locale, skill), argHint: `/${skill.id}`, insert: '', icon: 'sparkles', requiresPro: true});
       }
       return list;
-    }, [researchAvailable, t, enabledMcpServers, onOpenMcpSettings, onOpenBuilderHandoff, skills, lockedSkills, locale, pixflowContextPicker]);
+    }, [featureRevision, researchAvailable, t, enabledMcpServers, onOpenSettings, onOpenMcpSettings, onOpenBuilderHandoff, skills, lockedSkills, locale, pixflowContextPicker]);
 
     const filteredSlash = useMemo(() => {
       if (!slash) return [] as SlashCommand[];
@@ -883,6 +890,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
 
     function pickSlash(cmd: SlashCommand) {
       if (!slash || cmd.requiresPro) return;
+      if (cmd.id === 'design-settings' && onOpenSettings && planningAvailable()) {
+        editorRef.current?.replaceActiveTrigger(''); setSlash(null); onOpenSettings('designSystems'); return;
+      }
       if (cmd.id === 'handoff' && onOpenBuilderHandoff) {
         editorRef.current?.replaceActiveTrigger('');
         setSlash(null);
@@ -928,11 +938,11 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         '4. Run the deterministic scripts (extract / compose / validate / contact-sheet / videos).',
         '5. Package the result into ${CODEX_HOME:-$HOME/.codex}/pets/<pet-name>/ with pet.json + spritesheet.webp.',
         '',
-        'When the spritesheet is saved, tell me the absolute path and the pet folder name. I will adopt it from Settings → Pets → Recently hatched.',
+        'When the spritesheet is saved, tell me the absolute path and the pet folder name. I will adopt it from Settings â†’ Pets â†’ Recently hatched.',
       ].join('\n');
     }
 
-    // `/mcp` (no arg) opens settings on the External MCP tab — pure UX hook,
+    // `/mcp` (no arg) opens settings on the External MCP tab â€” pure UX hook,
     // never sent to the agent. `/mcp <id>` is intentionally NOT intercepted
     // here: the slash palette already replaces it with a natural-language
     // hint sentence ("Use the `<id>` MCP server tools."), and the user is
@@ -1845,7 +1855,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // entity list the editor's text currently references (MentionNodes plus
     // plain `@token`s matched against composerMentionEntities, deduped by
     // kind:id). We prune the staged skill/mcp/connector chips to whatever the
-    // text still references — generalizing the old skill-only regex prune so a
+    // text still references â€” generalizing the old skill-only regex prune so a
     // hand-deleted token also drops its chip and never leaks into the run
     // context. `staged` (files) is intentionally NOT pruned: users attach
     // files via the upload button without leaving an `@<path>` token.
@@ -1986,8 +1996,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     }
 
     // Resolve a flat visible-section index to the right insert call. Section
-    // order MUST match MentionPopover's render order (files→tabs→plugins
-    // →skills→mcp→connectors); the activeIndex highlight and Enter target stay in
+    // order MUST match MentionPopover's render order (filesâ†’tabsâ†’plugins
+    // â†’skillsâ†’mcpâ†’connectors); the activeIndex highlight and Enter target stay in
     // lockstep across "All" and individual tabs.
     function pickMentionByFlatIndex(flat: number) {
       let i = flat;
@@ -2125,17 +2135,20 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     async function submit() {
       const prompt = currentEditorDraft().trim();
       if (effectiveSendDisabled || uploading) return;
-      // Intercept `/pet …` and `/mcp` before sending so the slash command
-      // never hits the agent — these are local UX hooks, not model prompts.
+      // Intercept `/pet â€¦` and `/mcp` before sending so the slash command
+      // never hits the agent â€” these are local UX hooks, not model prompts.
       if (tryHandlePetSlash(prompt)) return;
       if (tryHandleMcpSlash(prompt)) return;
+      if (onOpenSettings && planningAvailable() && /^\/design-settings\s*$/i.test(prompt)) {
+        setDraft(''); editorRef.current?.clear(); onOpenSettings('designSystems'); return;
+      }
       // An exact explicit command opens the shared selector; ordinary language
       // is always left to the agent's semantic decision and structured tools.
       if (onOpenBuilderHandoff && /^\/handoff\s*$/i.test(prompt)) {
         setDraft(''); editorRef.current?.clear(); onOpenBuilderHandoff(); return;
       }
       // `/hatch <concept>` expands into the canonical hatch-pet skill
-      // prompt and *is* sent to the agent — the agent runs the skill,
+      // prompt and *is* sent to the agent â€” the agent runs the skill,
       // packages a Codex pet under `~/.codex/pets/`, and the user
       // adopts it from "Recently hatched" in pet settings afterwards.
       const contextMeta = currentRunContextMeta();
@@ -2169,10 +2182,10 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // The suggestion lists below only matter while the @-popover is open
     // (each is `[]` otherwise). Memoize them on `[mention, mentionQuery,
     // <source>]` so the filter/sort passes run only when the query or the
-    // backing list actually changes — not on every unrelated composer render
+    // backing list actually changes â€” not on every unrelated composer render
     // (streaming flips, draft typing routed through Lexical, staged-chip churn).
     // `mention` is in the deps (not just `mentionQuery`) so the open/close gate
-    // re-evaluates: a null→{q:''} transition keeps the query '' but must flip
+    // re-evaluates: a nullâ†’{q:''} transition keeps the query '' but must flip
     // the list from `[]` to live results.
     const filteredWorkspaceContexts = useMemo(
       () =>
@@ -2303,7 +2316,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           }} />}
         <div className="composer-shell">
           {/*
-            Spec §8.4 — context bar above the composer input. The
+            Spec Â§8.4 â€” context bar above the composer input. The
             section now behaves as a pure context bar: it renders the
             active plugin's chips + inputs form when one is applied,
             but never the always-on rail. Plugins are picked from the
@@ -2391,7 +2404,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           {/* The inline BYOK media-model pickers (image / video / speech +
               voice) were removed pending a unified model-selection surface.
               The selected models still flow into the run from the project's
-              creation-time pick (see ProjectView byok*ModelOverride → submit);
+              creation-time pick (see ProjectView byok*ModelOverride â†’ submit);
               this only drops the per-composer override UI. The byok* props and
               handlers are intentionally retained as the plumbing the unified
               picker will reuse. */}
@@ -2998,7 +3011,7 @@ function projectFileMentionTitle(file: ProjectFile, fallback: string): string {
 function projectFileMentionDescription(file: ProjectFile, fallback: string): string {
   const label = projectFileMentionTitle(file, fallback);
   if (fallback && fallback !== label) return fallback;
-  return [file.kind, file.mime].filter(Boolean).join(' · ');
+  return [file.kind, file.mime].filter(Boolean).join(' Â· ');
 }
 
 function workspaceContextSearchText(item: WorkspaceContextItem): string {
@@ -3105,8 +3118,8 @@ function StagedRunContexts({
       ) : null}
       {pluginChip ? (
         <div className="staged-chip staged-context staged-context--plugin">
-          {/* Two sibling controls — a details button (icon + name) and the
-              remove button — rather than a role=button wrapper containing the
+          {/* Two sibling controls â€” a details button (icon + name) and the
+              remove button â€” rather than a role=button wrapper containing the
               remove button. Nested interactive controls break focus order and
               assistive-tech announcements. */}
           <button
@@ -3561,7 +3574,7 @@ function ToolsMcpPanel({
                 <strong>{tpl.label}</strong>
                 <span className="composer-tools-row-meta">
                   {tpl.transport}
-                  {tpl.category ? ` · ${tpl.category}` : ''}
+                  {tpl.category ? ` Â· ${tpl.category}` : ''}
                 </span>
               </span>
             </button>
@@ -3666,7 +3679,7 @@ function DesignToolboxPanel({
     [actions, query, resources],
   );
 
-  // One shared hover-detail panel for the whole list — swapping a single
+  // One shared hover-detail panel for the whole list â€” swapping a single
   // portaled panel as the cursor sweeps rows, instead of one panel per row
   // (which ghosted: the close delay left several stacked on screen at once).
   const [toolboxDetail, setToolboxDetail] = useState<{
@@ -3840,7 +3853,7 @@ function DesignToolboxPanel({
 // panel is PORTALED to <body> because the parent flyout uses `overflow-y: auto`
 // (height-capped scroll) which would otherwise clip a nested panel.
 // The hover detail panel is owned by the PARENT
-// (DesignToolboxPanel) as ONE shared panel — not per-row — so sweeping across
+// (DesignToolboxPanel) as ONE shared panel â€” not per-row â€” so sweeping across
 // rows swaps the single panel in place instead of stacking several portaled
 // panels that briefly coexist (the close delay would otherwise leave 2-4 of
 // them on screen at once, reading as ghosting). The row just reports hover
@@ -3948,7 +3961,7 @@ function ToolsSkillsPanel({
                   <strong>{localizeSkillName(locale, skill)}</strong>
                   <span className="composer-tools-row-meta">
                     {skill.mode}
-                    {skill.surface ? ` · ${skill.surface}` : ''}
+                    {skill.surface ? ` Â· ${skill.surface}` : ''}
                   </span>
                 </span>
                 {pendingId === skill.id ? (
@@ -4101,7 +4114,7 @@ function buildDesignToolboxResources({
         connector.description ?? connector.provider,
         toolCount > 0 ? `${toolCount} tools` : null,
         connector.accountLabel ?? null,
-      ].filter(Boolean).join(' · '),
+      ].filter(Boolean).join(' Â· '),
       badge: connector.category || 'connector',
       icon: 'link',
       searchText: [
@@ -4131,7 +4144,7 @@ function buildDesignToolboxResources({
       kind: 'file',
       id: path,
       title: path,
-      subtitle: [file.kind, file.mime, file.artifactKind ?? ''].filter(Boolean).join(' · '),
+      subtitle: [file.kind, file.mime, file.artifactKind ?? ''].filter(Boolean).join(' Â· '),
       badge: file.artifactKind ?? file.kind,
       icon: looksLikeImage(path) ? 'image' : 'file',
       searchText: [
@@ -4723,7 +4736,7 @@ function SlashPopover({
             className={`slash-item${active ? ' active' : ''}${cmd.requiresPro ? ` ${pickerStyles.locked}` : ''}`}
             onMouseDown={(e) => {
               // Prevent the textarea from losing focus before the click
-              // handler fires — otherwise selectionStart resets and the
+              // handler fires â€” otherwise selectionStart resets and the
               // pick replacement targets the wrong substring.
               e.preventDefault();
             }}

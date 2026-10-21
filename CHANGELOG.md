@@ -5,6 +5,20 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-rc.1] - Unreleased candidate
+
+### Improved
+
+- Preserve conflicting saved chat versions and refresh newer messages across open surfaces.
+- Keep provider selection and credentials consistent across mounted settings surfaces.
+- Use model-aware working-context budgets and smaller tool results to avoid repeated compaction.
+- Improve native CLI startup instructions, tool arguments and result retrieval.
+
+### Integration
+
+- Add shared composer references, clarification and optional Pro design-guidance contracts. The Impeccable foundation, design-source settings and audit engine remain Pro-only.
+- Pair with Pixflow Design Pro and Bridge 2.1.0-rc.1. This candidate does not change published update feeds or the WordPress submission.
+
 ## [2.0.8] - Hotfix
 
 ### Fixed

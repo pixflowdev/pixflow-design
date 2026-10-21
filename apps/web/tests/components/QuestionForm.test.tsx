@@ -308,3 +308,15 @@ describe('QuestionFormView', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
+
+it('shows processing status rather than previous-turn copy while a host submits answers', () => {
+  render(<QuestionFormView form={form} interactive={false} pendingLabel="Preparing guidance…" onSubmit={() => {}} />);
+  expect(screen.getAllByText('Preparing guidance…')).toHaveLength(2);
+  expect(screen.queryByText('This form is from a previous turn.')).toBeNull();
+});
+
+it('names free-text clarification fields for keyboard and screen-reader users', () => {
+  render(<QuestionFormView form={{id:'brief',title:'Brief',questions:[{id:'a',label:'Audience',type:'text'},{id:'b',label:'Constraints',type:'textarea'}]}} interactive onSubmit={() => {}} />);
+  expect(screen.getByRole('textbox', { name: 'Audience' })).toBeTruthy();
+  expect(screen.getByRole('textbox', { name: 'Constraints' })).toBeTruthy();
+});

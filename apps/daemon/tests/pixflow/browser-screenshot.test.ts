@@ -132,7 +132,9 @@ describe('Pixflow browser screenshot capture', () => {
       context.skip();
       return;
     }
-    const server = createServer((_request, response) => {
+    let navigations = 0;
+    const server = createServer((request, response) => {
+      if (request.url === '/fresh-bricks-page') navigations++;
       response.statusCode = 404;
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       response.end('<!doctype html><body><main>A styled WordPress 404 page</main></body>');
@@ -148,8 +150,9 @@ describe('Pixflow browser screenshot capture', () => {
       });
 
       expect(result.captures).toEqual([]);
+      expect(navigations).toBe(1);
       expect(result.errors).toEqual([
-        'desktop: Visual capture target returned HTTP 404.',
+        'desktop: Visual capture target returned HTTP 404. Capture is anonymous; private drafts require authenticated editor inspection. No screenshot was captured.',
       ]);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));

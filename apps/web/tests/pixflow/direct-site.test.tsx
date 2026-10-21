@@ -506,3 +506,14 @@ describe('direct site panel', () => {
     expect(requests.daemon).not.toHaveBeenCalled();
   });
 });
+
+it.each(['admin','workspace','bricks','etch','elementor','gutenberg'])('passes server guidance to the CLI on %s without changing explicit references',async surface=>{
+ const guidance={revision:3,source:'existing',product:'Confirmed product',instructions:'Preserve existing styles.'};
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true,designGuidance:guidance}));
+ requests.daemon.mockResolvedValue(new Response('{"type":"done","sequence":1,"ok":true,"outcome":"completed"}\n'));
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({closed:true})));
+ const context={siteDesignGuidance:'stale',workspaceItems:[{label:'Explicit reference'}]};
+ await runDirectSite({agentId:'codex',prompt:'Review this',history:[],mode:'design',persistenceSurface:surface,context,signal:new AbortController().signal,onUpdate:vi.fn()});
+ const body=JSON.parse(requests.daemon.mock.calls.at(-1)![1].body);
+ expect(body.context).toEqual({siteDesignGuidance:guidance,workspaceItems:context.workspaceItems});expect(context.siteDesignGuidance).toBe('stale');
+});

@@ -18,12 +18,26 @@ export interface PreparedHistory {
 
 export const workingContextBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 
+/** Count summarizable run history, without static instructions or opaque provider payloads. */
+export function workingRunContextBytes(state: { messages: unknown[]; turns: unknown[]; results: unknown[] }): number {
+  const turns = state.turns.filter(turn => !turn || typeof turn !== 'object' || !['system', 'developer'].includes(String((turn as { role?: string }).role)));
+  const existing = new Set(turns.map(turn => JSON.stringify(turn)));
+  const messages = state.messages.filter(message => !existing.has(JSON.stringify(message)));
+  const serialized = JSON.stringify({ messages, turns, results: state.results }, (key, value) => {
+    if (['encrypted_content', 'thoughtSignature', 'signature', 'reasoning_content', 'base64', 'inlineData'].includes(key)) return undefined;
+    if (value && typeof value === 'object' && (['thinking', 'redacted_thinking', 'reasoning', 'image', 'input_image', 'image_url'].includes(value.type) || value.thought)) return undefined;
+    return value;
+  });
+  return new TextEncoder().encode(serialized).length;
+}
+
 export async function compactWorkingRun(binding: ChatHistoryBinding, config: AppConfig,
   state: Pick<PixflowWorkingRunContextRequest, 'messages' | 'turns' | 'results' | 'calls' | 'inFlight'>, signal: AbortSignal): Promise<PixflowWorkingRunContextResponse> {
   signal.throwIfAborted();
   if (state.calls.length || state.inFlight) return { status: 'fallback', reason: 'unfinished_tools' };
   const owner = chatHistoryOwnerScope();
   const request: PixflowWorkingRunContextRequest = { ...state,
+    maxTokens: config.maxTokens,
     transport: config.apiTransport === 'composio' ? 'composio' : 'api',
     ...(config.apiTransport === 'composio' ? { provider: config.composioProvider, model: config.composioModel } : {
       apiProtocol: config.apiProtocol, baseUrl: config.baseUrl, apiKey: config.apiKey, apiVersion: config.apiVersion, model: config.model,
@@ -104,6 +118,7 @@ export async function compactWorkingContext(history: PreparedHistory, config: Ap
     return value as PixflowWorkingContextResponse;
   };
   const request: PixflowWorkingContextRequest = {
+    maxTokens: config.maxTokens,
     transport: config.apiTransport === 'composio' ? 'composio' : 'api', throughMessageId: history.throughMessageId,
     ...(config.apiTransport === 'composio' ? { provider: config.composioProvider, model: config.composioModel } : {
       apiProtocol: config.apiProtocol, baseUrl: config.baseUrl, apiKey: config.apiKey, apiVersion: config.apiVersion, model: config.model,

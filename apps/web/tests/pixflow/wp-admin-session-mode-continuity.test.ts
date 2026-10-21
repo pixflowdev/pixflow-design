@@ -5,6 +5,7 @@ import {
   wpAdminSessionModeStorageKey,
   resolveWpAdminDirectAgent,
   mergeWpAdminRuntimeConfig,
+  safeConfig,
 } from '../../src/pixflow/WpAdminAgentFrameApp';
 import type { AgentInfo, AppConfig } from '../../src/types';
 
@@ -65,6 +66,11 @@ describe('WP Admin session mode continuity', () => {
       value: new MemoryStorage(),
       configurable: true,
     });
+  });
+
+  it('uses the server provider on reload rather than an older browser-wide CLI cache', () => {
+    localStorage.setItem('open-design:config', JSON.stringify({ mode: 'daemon', agentId: 'codex', agentModels: {} }));
+    expect(safeConfig({ mode: 'api', apiTransport: 'composio', model: 'current' })).toMatchObject({ mode: 'api', apiTransport: 'composio', model: 'current' });
   });
 
   it('persists the selected interaction mode across object-context remounts', () => {

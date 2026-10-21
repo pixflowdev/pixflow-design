@@ -5,6 +5,11 @@ export class SiteResultStore {
   snapshot(): Array<[string, unknown]> { return [...this.values]; }
   restore(values: Array<[string, unknown]>): void { this.values.clear(); for(const [key,value] of values)this.values.set(key,value); }
 
+  private readPaths(resultId: string, value: unknown) {
+    return value && typeof value === 'object'
+      ? Object.keys(value).slice(0, 80).map(key => ({resultId, path:[Array.isArray(value) ? Number(key) : key]})) : [];
+  }
+
   private structure(value: unknown, depth = 0): unknown {
     if (Array.isArray(value)) return {type:'array',length:value.length,...(value.length && depth < 2 ? {item:this.structure(value[0],depth+1)} : {})};
     if (value && typeof value === 'object') return depth < 2
@@ -21,10 +26,23 @@ export class SiteResultStore {
     return {
       resultId: id, characters: text.length,
       keys: value && typeof value === 'object' ? Object.keys(value).slice(0, 80) : [],
+      // Requests are relative to this stored value, not the message wrapper
+      // where its receipt happens to appear (for example initial context).
+      readPaths: this.readPaths(id, value),
       structure: this.structure(value),
       preview: text.slice(0, this.pageSize),
-      read: 'Complete data is retained. Use result.read with resultId, optional path (array of object keys/array indexes), and offset to read selected data or subsequent pages.',
+      read: 'Complete data is retained. Call result.read with a readPaths request or resultId and optional path/offset. Paths start at this stored value: do not prepend the surrounding message field (such as context). Follow the actual keys/structure; nextOffset pages the selected value.',
     };
+  }
+
+  /** A receipt ledger already has recent excerpts in the continuation note.
+   * Retain its full data without copying a second preview into working context.
+   */
+  reference(value: unknown): unknown {
+    const id = `result-${this.values.size + 1}`;
+    this.values.set(id, value);
+    return {resultId:id, characters:(JSON.stringify(value) ?? 'null').length, structure:this.structure(value), readPaths:this.readPaths(id,value),
+      read:'Complete execution receipts are retained. Use a readPaths request to inspect one item. A path traverses nested keys: [0,1] means key 1 inside item 0, never items 0 through 1.'};
   }
 
   read(args: Record<string, unknown>): unknown {

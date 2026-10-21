@@ -32,11 +32,12 @@ namespace {
     }
     $GLOBALS['transients'] = [];
     $GLOBALS['expected_source'] = ['projectId' => 'project-1', 'conversationId' => 'chat-1', 'requestId' => 'source-message-0001'];
+    function apply_filters($name,$value) { return $GLOBALS['run_guidance'] ?? $value; }
     function get_current_user_id(): int { return 1; }
     function get_current_blog_id(): int { return 1; }
     function wp_set_current_user(int $id): void {}
     function current_user_can(string $cap): bool { return true; }
-    function update_user_meta(int $id, string $key, mixed $value): void {}
+    function update_user_meta(int $id, string $key, mixed $value): void { $GLOBALS['settings_writes'] = ($GLOBALS['settings_writes'] ?? 0) + 1; }
     function set_transient(string $key, mixed $value, int $ttl): void { $GLOBALS['transients'][$key] = $value; }
     function get_transient(string $key): mixed { return $GLOBALS['transients'][$key] ?? false; }
     function home_url(string $path): string { return 'https://example.test' . $path; }
@@ -56,7 +57,20 @@ namespace {
     foreach ([['workspaceSource' => ['projectId' => 'another']], ['workspaceSource' => $source, 'editorTarget' => ['builder' => 'etch']], ['workspaceSource' => $source, 'purpose' => 'audio']] as $body) {
         check($controller->sessions(new WP_REST_Request($body)) instanceof WP_Error, 'Invalid/mixed session rejected');
     }
+    $GLOBALS['run_guidance'] = ['revision'=>3,'product'=>'Server saved facts'];
     $ordinary = $controller->sessions(new WP_REST_Request([]));
     check(is_array($ordinary) && $ordinary['workspaceSource'] === null && $ordinary['writable'], 'Ordinary editor/admin sessions remain unchanged');
+    check($ordinary['designGuidance'] === $GLOBALS['run_guidance'], 'Server-owned snapshot included');
+    $forged = $controller->sessions(new WP_REST_Request(['designGuidance'=>['product'=>'forged']]));
+    check($forged['designGuidance'] === $GLOBALS['run_guidance'], 'Client cannot substitute stored guidance');
+    $writes = $GLOBALS['settings_writes'];
+    $draft = $controller->sessions(new WP_REST_Request(['purpose' => 'guidance-draft']));
+    check($draft['designGuidance'] === null, 'Draft excludes automatic guidance');
+    check(is_array($draft) && !$draft['writable'], 'Draft session is read-only on the server');
+    check($GLOBALS['settings_writes'] === $writes, 'Drafting leaves saved access preferences unchanged');
+    $draftRequest = new WP_REST_Request(['tool' => 'site.write', 'arguments' => ['writable' => true]], 'Bearer ' . $draft['token']);
+    check($controller->session_permission($draftRequest), 'Draft authenticates normally');
+    check($controller->tools($draftRequest)['writable'] === false, 'Model arguments cannot upgrade a draft session');
+    check($controller->sessions(new WP_REST_Request(['purpose' => 'guidance-draft', 'workspaceSource' => $source])) instanceof WP_Error, 'Draft cannot start a builder handoff');
     echo "Workspace handoff session tests passed.\n";
 }

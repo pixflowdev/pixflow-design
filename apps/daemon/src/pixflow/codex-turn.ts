@@ -15,13 +15,16 @@ export async function runCodexTurn(options: {
   executable: string; env: NodeJS.ProcessEnv; cwd: string; prompt: string; images: string[];
   mcpServers?: CodexMcpServers | undefined;
   configArgs?: string[];
+  /** Direct-site scratch workspaces own AGENTS.md; ancestor repository guidance is unrelated. */
+  isolateProjectInstructions?: boolean;
   runtimeWorkspaceRoots?: string[];
   onSettled?: (threadId: string, error?: unknown) => void;
   model?: string | undefined; reasoning?: string | undefined; fastMode?: boolean | undefined; resumeSessionId: string | null;
   signal: AbortSignal; onChild: (child: ReturnType<typeof spawn>) => void;
   onEvent: (event: Message) => void; onSteerReady: (steer: CodexSteer | undefined) => void;
 }): Promise<string> {
-  const child = spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? [])], {
+  const child = spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
+    ...(options.isolateProjectInstructions ? ['-c', 'project_root_markers=["AGENTS.md"]'] : [])], {
     cwd: options.cwd, env: options.env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   });
   options.onChild(child);

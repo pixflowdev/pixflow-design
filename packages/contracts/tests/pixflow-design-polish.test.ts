@@ -1,16 +1,15 @@
 import { expect, it } from 'vitest';
-import { pixflowDesignPolishInstruction, pixflowDesignPolishReference } from '../src/prompts/pixflow-design-polish.js';
-
-it.each([
-  ['bricks', 'bricks/workflows/enhanced-design.md'],
-  ['etch', 'etch/design-polish.md'],
-  ['elementor', 'elementor/design-polish.md'],
-])('routes %s independently of other installed builders', (editor, path) => {
-  expect(pixflowDesignPolishReference({ editor, bricksIntegrationActive: true }, 'legacy-canvas')).toBe(path);
-  expect(pixflowDesignPolishInstruction(true, { editor }, 'legacy-canvas')).toContain(path);
+import { optionalRunGuidance } from '../src/prompts/pixflow-design-polish.js';
+import type { PixflowRunDesignGuidance } from '../src/api/pixflow-direct-site.js';
+const guidance: PixflowRunDesignGuidance = {revision: 0, source: 'existing', product: '', instructions: '', extension: {instructions: 'Optional authorized guidance', commands: {'/operation check': 'Read the check reference'}}};
+it('Free never receives premium instructions even with stale enabled preferences or a typed command', () => {
+ expect(optionalRunGuidance(true, null, '/operation check')).toBe('');
+ expect(optionalRunGuidance(false, undefined, '/operation check')).toBe('');
 });
-it('keeps administrative context neutral and off truly off', () => {
-  expect(pixflowDesignPolishReference({ bricksIntegrationActive: true })).toBe('pixflow/frontend-design/SKILL.md');
-  expect(pixflowDesignPolishReference({ editor: 'wp-admin', bricksIntegrationActive: true }, 'stale-canvas')).toBe('pixflow/frontend-design/SKILL.md');
-  expect(pixflowDesignPolishInstruction(false, { editor: 'elementor' })).toBe('');
+it('preserves off and explicit operation semantics', () => {
+ expect(optionalRunGuidance(false, guidance, 'check something')).toBe('');
+ expect(optionalRunGuidance(true, guidance, 'normal request')).toBe('Optional authorized guidance');
+ expect(optionalRunGuidance(false, guidance, '/operation check this')).toContain('Read the check reference');
+ expect(optionalRunGuidance(false, guidance, 'mentions /operation check')).toBe('');
+ expect(optionalRunGuidance(false, guidance, '/operation checker')).toBe('');
 });

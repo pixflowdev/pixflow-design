@@ -40,12 +40,19 @@ final class DirectCanvasRelay
         return $this->prefix() . $id;
     }
 
-    private function canvas(string $id): array
+    /** A tab may reconnect to a new document even when its previous document is no longer editable. */
+    private function ownedCanvas(string $id): array
     {
         $canvas = get_option($this->key($id));
         if (!is_array($canvas) || $canvas['userId'] !== get_current_user_id() || $canvas['blogId'] !== get_current_blog_id()) {
             throw new \RuntimeException('This live canvas is not connected to your site/user.');
         }
+        return $canvas;
+    }
+
+    private function canvas(string $id): array
+    {
+        $canvas = $this->ownedCanvas($id);
         if ($this->builder === 'gutenberg' && isset($canvas['entity'])) Gutenberg\GutenbergEntity::validate($canvas['entity']);
         elseif (!current_user_can('edit_post', $canvas['postId'])) throw new \RuntimeException('This page is no longer editable.');
         return $canvas;
@@ -57,7 +64,7 @@ final class DirectCanvasRelay
         if ($this->builder === 'gutenberg' && $entity) $entity = Gutenberg\GutenbergEntity::validate($entity);
         elseif ($postId <= 0 || !current_user_can('edit_post', $postId)) throw new \RuntimeException('An editable builder document is required.');
         if ($resumeId !== '' && is_array(get_option($this->key($resumeId)))) {
-            $canvas = $this->canvas($resumeId);
+            $canvas = $this->ownedCanvas($resumeId);
             $canvas['postId'] = $postId;
             if ($entity) $canvas['entity'] = $entity;
             $canvas['seenAt'] = time();
@@ -135,7 +142,7 @@ final class DirectCanvasRelay
             throw new \RuntimeException('Unknown live builder tool.');
         }
         $styleRead = $tool === 'gutenberg.styles' && in_array($args['action'] ?? '', ['list', 'read'], true);
-        $readOnly = $styleRead || in_array($tool, array_merge([$this->builder . '.read', 'gutenberg.schema', 'gutenberg.entities'], \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'readCommands', [])), true);
+        $readOnly = ($this->builder === 'gutenberg' && in_array($tool, Gutenberg\GutenbergExtensions::contributions('gutenbergReadCommands'), true)) || $styleRead || in_array($tool, array_merge([$this->builder . '.read', 'gutenberg.schema', 'gutenberg.entities'], \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'readCommands', [])), true);
         // Workspace can inspect a destination, but native edits belong to the
         // destination agent after its tab has claimed the durable handoff.
         if (!empty($session['workspaceSource']) && !$readOnly) throw new \RuntimeException('This is a Workspace planning session. Use builder.destinations and builder.handoff for this page; the selected live editor will start its own agent. No edit was queued.');

@@ -1,3 +1,4 @@
+import { withRunDesignGuidance } from './run-design-guidance';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { secureRandomUUID } from '../utils/uuid';
 import { fetchPixflowOptionalBridgeConfig } from './optional-bridge';
@@ -176,11 +177,13 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
   let continuation = input.resume?.connection;
   {
     const sessionResponse = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
-    method: 'POST', signal: input.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'design', editorTarget: input.editorTarget, workspaceSource: input.workspaceSource }),
+    method: 'POST', signal: input.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'design', purpose: input.purpose, editorTarget: input.editorTarget, workspaceSource: input.workspaceSource }),
     });
     const value = await sessionResponse.json() as PixflowDirectSiteSession & { message?: string };
     if (!sessionResponse.ok) throw new Error(value.message || 'Could not connect to this WordPress site.');
+    if (input.purpose === 'guidance-draft' && value.writable !== false) throw new Error('Update Pixflow Design before generating guidance. A read-only draft session is required.');
     session = value;
+    if (!input.resume) input = { ...input, context: withRunDesignGuidance(input.context, session) };
     timings.siteReadyMs=elapsed();
     if (!input.resume && (input.persistenceMetadata !== undefined || input.voiceConnection)) {
       const candidate = { id: secureRandomUUID().replaceAll('-', ''), token: (secureRandomUUID() + secureRandomUUID()).replaceAll('-', '') };
@@ -422,7 +425,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
 
 /** Release audio even when session preparation fails. */
 export async function runDirectSite(request: Parameters<typeof executeDirectSite>[0] & { config?: AppConfig }): Promise<PixflowDirectSiteOutcome> {
-  if (!request.resume) {
+  if (!request.resume && request.purpose !== 'guidance-draft') {
     const { resolveEditorRunTarget } = await import('./editor-run-target');
     request = { ...request, editorTarget: await resolveEditorRunTarget(request, request.signal) };
   }

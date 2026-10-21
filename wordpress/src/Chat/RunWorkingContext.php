@@ -36,7 +36,11 @@ final class RunWorkingContext
             }
             return $out;
         };
-        $source = ['messages' => $input['messages'] ?? [], 'turns' => $input['turns'] ?? [], 'results' => $input['results'] ?? []];
+        // Static instructions/catalogues are resupplied on continuation. They
+        // are not execution history and must not be summarized repeatedly.
+        $turns = array_values(array_filter($input['turns'] ?? [], static fn($turn) => !is_array($turn) || !in_array($turn['role'] ?? '', ['system','developer'], true)));
+        $messages = array_values(array_filter($input['messages'] ?? [], static fn($message) => !in_array($message, $turns, true)));
+        $source = ['messages' => $messages, 'turns' => $turns, 'results' => $input['results'] ?? []];
         if (strlen((string) wp_json_encode($source)) > 2000000) throw new \RuntimeException('The run context is too large for one safe compaction.');
         $clean = $visit($source);
         foreach ($input['results'] ?? [] as $result) if (isset($result['id'])) {

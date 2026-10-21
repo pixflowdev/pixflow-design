@@ -7,9 +7,169 @@ vi.mock('../../src/pixflow/runtime-fetch',()=>({pixflowWordPressRestFetch:reques
 const composio = vi.hoisted(() => ({ turn: vi.fn() }));
 vi.mock('../../src/providers/composio-inference', () => ({ composioInferenceTurn: composio.turn }));
 const context=vi.hoisted(()=>({prepare:vi.fn(),compact:vi.fn(),run:vi.fn()}));
-vi.mock('../../src/pixflow/working-context',()=>({prepareHistorySource:context.prepare,compactWorkingContext:context.compact,compactWorkingRun:context.run,workingContextBytes:(value:unknown)=>Buffer.byteLength(JSON.stringify(value),'utf8')}));
+vi.mock('../../src/pixflow/working-context',async(importOriginal)=>({...await importOriginal<typeof import('../../src/pixflow/working-context')>(),prepareHistorySource:context.prepare,compactWorkingContext:context.compact,compactWorkingRun:context.run}));
 afterEach(()=>{window.sessionStorage.clear();vi.restoreAllMocks();vi.unstubAllGlobals();context.prepare.mockReset();context.compact.mockReset();context.run.mockReset();});
 const config={mode:'api',apiProtocol:'openai',model:'fixture',apiKey:'private-key',baseUrl:'https://provider.example'} as AppConfig;
+it.each(['direct','composio'] as const)('keeps selected guidance visible outside a large builder receipt in %s', async apiTransport => {
+ const guidance={revision:3,source:'custom',product:'Use the confirmed name: QA Bakery.',design:'Keep the saved blue palette.',instructions:'Use current saved guidance.'};
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',designGuidance:guidance}));
+ const systems:string[]=[];
+ const provider=async(input:any)=>{systems.push(input.system);return {text:'Read-only answer.',calls:[],turns:[]};};
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  return Response.json(body.tool==='provider.turn'?await provider(body.arguments):{integrations:{bricks:false}});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Audit this page without changes',context:{payload:'x'.repeat(30000)},history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(systems.length).toBeGreaterThan(0);
+ for(const system of systems){
+  expect(system).toContain(JSON.stringify({siteDesignGuidance:guidance}));
+  expect(system).toContain('reference data, not authorization');
+ }
+});
+it.each(['direct','composio'] as const)('does not restart completion review after its successful read-only verification in %s', async apiTransport => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',editorTarget:{builder:'bricks',canvasId:'current',postId:53}}));
+ let count=0;
+ const provider=async()=>{
+  count++;
+  if(count===2)return {text:'',turns:[],calls:[{id:'verify',input:{name:'bricks.read',arguments:{canvasId:'current'}}}]};
+  if(count>3)throw new Error('Completion review restarted after read-only verification');
+  return {text:'Verified the heading. Mobile layout remains unchecked.',turns:[],calls:[]};
+ };
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  return Response.json(body.tool==='provider.turn'?await provider():{ok:true,heading:'Copper Finch'});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Audit this page without changes',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(count).toBe(3);
+});
+it.each(['direct','composio'] as const)('requires another completion review after a mutation during verification in %s', async apiTransport => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',editorTarget:{builder:'bricks',canvasId:'current',postId:53}}));
+ let count=0;
+ const provider=async()=>{
+  count++;
+  if(count===2)return {text:'',turns:[],calls:[{id:'save',input:{name:'bricks.run',arguments:{canvasId:'current',code:'save()'}}}]};
+  return {text:'Saved and verified.',turns:[],calls:[]};
+ };
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  return Response.json(body.tool==='provider.turn'?await provider():{ok:true,saved:true});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Improve the heading',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(count).toBe(4);
+});
+it('keeps the recovered request and does not equate missing display receipts with no edits', async () => {
+ const saved:ByokSiteCheckpoint={session:{endpoint:'https://site.example/tools',token:'owned',editorTarget:{builder:'gutenberg',canvasId:'current',postId:10}} as ByokSiteCheckpoint['session'],system:'Context',messages:[{role:'user',content:'Shorten the introduction'}],turns:[],results:[],calls:[],images:[],content:'',events:[],values:[],provider:{model:config.model,apiProtocol:config.apiProtocol,baseUrl:config.baseUrl}};
+ let turns=0;
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn'){
+   if(++turns===2){
+    const review=body.arguments.messages.at(-1).content;
+    expect(review).toContain('Shorten the introduction');
+    expect(review).toContain('Earlier edits may already have happened');
+    expect(review).not.toContain('No site tools have executed');
+   }
+   return Response.json({text:'Unable to verify the saved state.',calls:[],turns:[]});
+  }
+  return Response.json({integrations:{bricks:false}});
+ }));
+ await runByokSite({config,prompt:'',history:[],resume:{connection:{id:'recovered',token:'owner'},metadata:{},byok:saved},signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(turns).toBe(2);
+ expect(saved.requestPrompt).toBe('Shorten the introduction');
+ expect(saved.completionReviewToolCount).toBe(0);
+});
+it.each([['direct',false],['composio',false],['direct',true],['composio',true],['direct','gutenberg'],['composio','gutenberg']] as const)('reviews live-editor completion against this run before publishing in %s (legacy canvas: %s)', async (apiTransport, legacyCanvas) => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',...(!legacyCanvas?{editorTarget:{builder:'etch',canvasId:'current',postId:15}}:{})}));
+ let count=0;const dispatched:string[]=[];const updates:string[]=[];
+ const provider=async(args:{messages:Array<{role:string;content:string}>})=>{
+  if(++count===1)return {text:'I saved the new bakery page.',turns:[],calls:[]};
+  if(count===2){
+   expect(args.messages.at(-1)?.content).toContain('No site tools have executed in this request');
+   expect(args.messages.at(-1)?.content).toContain('Previous conversation audits are not fresh inspection evidence');
+   expect(args.messages.at(-1)?.content).toContain('unverified');
+   return {text:'',turns:[],calls:[{id:'inspect',input:{name:'etch.read',arguments:{canvasId:'current'}}}]};
+  }
+  return {text:'The editor is unavailable; I have not changed or saved the page.',turns:[],calls:[]};
+ };
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn')return Response.json(await provider(body.arguments));
+  dispatched.push(body.tool);return Response.json(body.tool==='etch.read'?{ok:false,error:'Editor unavailable'}:{integrations:{bricks:false}});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},...(legacyCanvas==='gutenberg'?{context:{editor:'gutenberg',gutenbergCanvas:{canvasId:'current',postId:10}}}:legacyCanvas?{canvasId:'current',canvasPostId:15}:{}),prompt:'Improve this bakery page',history:[{role:'assistant',content:'Saved the previous Elementor page.'}],signal:new AbortController().signal,onUpdate:text=>updates.push(text)});
+ expect(count).toBe(4);
+ expect(dispatched.filter(name=>name==='etch.read')).toHaveLength(1);
+ expect(updates.join('')).not.toContain('I saved the new bakery page.');
+ expect(updates.at(-1)).toContain('I have not changed or saved');
+});
+it('bounds malformed-call recovery without executing invalid operations', async () => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+ let turns=0;const dispatched:string[]=[];
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn')return Response.json({text:'',turns:[],calls:[{id:`bad-${++turns}`,function:'site_tool',input:{name:'',arguments:{}},validationError:'Malformed input'}]});
+  dispatched.push(body.tool);return Response.json({integrations:{bricks:false}});
+ }));
+ await expect(runByokSite({config,prompt:'Edit this page',history:[],signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('earlier edits may already be applied');
+ expect(turns).toBe(4);
+ expect(dispatched).toEqual(['help']);
+});
+it.each(['direct','composio'] as const)('returns malformed-call feedback without dispatch in %s and continues without repeating an operation', async apiTransport => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+ const dispatched:string[]=[];let count=0;
+ const provider=async(args:{results:unknown[]})=>{
+   if(++count===1)return {text:'',turns:[],calls:[{id:'bad',function:'site_tool',input:{name:'',arguments:{}},validationError:'Correct the arguments object.'}]};
+   if(count===2){
+    expect(args.results).toEqual([{id:'bad',result:{ok:false,code:'invalid_tool_call',error:'Correct the arguments object.',executed:false}}]);
+    return {text:'',turns:[],calls:[{id:'save',function:'site_tool',input:{name:'gutenberg.save',arguments:{canvasId:'test'}}}]};
+   }
+   return {text:'Saved.',turns:[],calls:[]};
+ };
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn')return Response.json(await provider(body.arguments));
+  dispatched.push(body.tool);
+  return Response.json(body.tool==='help'?{integrations:{bricks:false}}:{ok:true,saved:true});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Save the current edit',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(dispatched).toEqual(['help','gutenberg.save']);
+});
+it('retains current-run save evidence after compaction instead of replaying the request as new work', async () => {
+ const binding={projectId:'p',conversationId:'c'};
+ context.prepare.mockResolvedValue({binding,throughMessageId:'old',messages:[]});
+ context.compact.mockResolvedValue({messages:[]});
+ context.run.mockResolvedValue({status:'compacted',summary:'The page now has the requested heading.'});
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+ let count=0;
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn'){
+   if(++count===1)return Response.json({text:'',turns:[{role:'assistant',content:'x'.repeat(50000)}],calls:[{id:'save',function:'site_tool',input:{name:'gutenberg.save',arguments:{expectedPostId:10}}}]});
+   expect(body.arguments.messages[0]).toEqual({role:'user',content:'Change the heading'});
+   expect(body.arguments.messages[1].role).toBe('assistant');
+   expect(body.arguments.messages[1].content).toContain('gutenberg.save');
+   expect(body.arguments.messages[1].content).toContain('saved-revision-2');
+   expect(body.arguments.messages[1].content).toContain('same request');
+   return Response.json({text:'Updated and saved.',turns:[],calls:[]});
+  }
+  return Response.json(body.tool==='help'?{integrations:{bricks:false}}:{ok:true,saved:true,revision:'saved-revision-2'});
+ }));
+ await runByokSite({config,prompt:'Change the heading',history:[],historySource:{binding,messages:[]},signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(context.run).toHaveBeenCalledOnce();
+});
 it.each(['direct', 'composio'] as const)('keeps an unavailable advanced action a normal result in %s', async apiTransport => {
  const denial={allowed:false,code:'pro_required',message:'Upgrade to Pixflow Design Pro.',learnMore:{label:'Why is this blocked in Free? Learn more',url:'https://pixflow.dev/free-pro#advanced-site-tools'}};
  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
@@ -119,7 +279,12 @@ it.each(['bricks', 'etch', 'elementor', 'gutenberg'] as const)('keeps API %s com
       expect(args.system).toContain('The destination page already exists');
       expect(args.system).toContain('Do not create a second page');
       if (++turns === 1) return Response.json({ calls: [{ id: 'save', function: 'site_tool', input: { name: `${builder}.save`, arguments: {} } }], turns: [], text: '' });
-      expect(args.results).toEqual([{ id: 'save', result: { ok: true } }]);
+      if (turns === 2) expect(args.results).toEqual([{ id: 'save', result: { ok: true } }]);
+      else {
+        expect(args.results).toEqual([]);
+        expect(JSON.stringify(args.messages)).toContain(`${builder}.save`);
+        expect(JSON.stringify(args.messages)).toContain('Do not repeat successful operations');
+      }
       return Response.json({ calls: [], turns: [], text: 'Saved.' });
     }
     if (tool === `${builder}.save`) {
@@ -135,23 +300,20 @@ it.each(['bricks', 'etch', 'elementor', 'gutenberg'] as const)('keeps API %s com
   expect(attempts).toBe(2);
   expect(polls).toBe(1);
 });
-it.each(['bricks', 'etch', 'elementor'])('loads the correct %s polish reference for API runs', async editor => {
-  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
-  const path=editor==='bricks'?'bricks/workflows/enhanced-design.md':`${editor}/design-polish.md`;
-  const references:string[]=[];
+it('loads authorized optional instructions and omits them when absent', async () => {
+ for (const entitled of [false, true]) {
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned', designGuidance:entitled ? {revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'AUTHORIZED OPTIONAL GUIDANCE',commands:{}}}:null}));
   vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
-    if(init.method==='DELETE')return Response.json({closed:true});
-    const {tool,arguments:args}=JSON.parse(init.body);
-    if(tool==='skills.read')references.push(...args.paths);
-    if(tool==='provider.turn'){
-      expect(args.system).toContain(path);
-      if(editor!=='bricks')expect(args.system).not.toContain('bricks/workflows/enhanced-design.md');
-      return Response.json({text:'Done',turns:[],calls:[]});
-    }
-    return Response.json({integrations:{bricks:true}});
+   if(init.method==='DELETE')return Response.json({closed:true});
+   const {tool,arguments:args}=JSON.parse(init.body);
+   if(tool==='provider.turn'){
+    expect(args.system.includes('AUTHORIZED OPTIONAL GUIDANCE')).toBe(entitled);
+    return Response.json({text:'Done',turns:[],calls:[]});
+   }
+   return Response.json({integrations:{bricks:false}});
   }));
-  await runByokSite({config,context:{editor},canvasId:'legacy',enhancedDesignGuidance:true,prompt:'Polish the page',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
-  expect(references).toContain(path);
+  await runByokSite({config,context:{editor:'wp-admin'},enhancedDesignGuidance:true,prompt:'Help me',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ }
 });
 it.each(['etch','bricks'])('waits for an accepted %s command when pending polls omit its ID',async builder=>{
   requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
@@ -223,9 +385,11 @@ it('performs multiple native tools and polls accepted canvas work without repeat
   });vi.stubGlobal('fetch',fetcher);
   const onUpdate=vi.fn();
   expect(await runByokSite({config,prompt:'Build a hero',history:[],canvasId:'canvas',canvasPostId:8,signal:new AbortController().signal,onUpdate})).toBe('completed');
-  expect(tools).toEqual(['help','skills.read','provider.turn','bricks.run','bricks.result','wordpress.run','provider.turn']);
+  expect(tools).toEqual(['help','skills.read','provider.turn','bricks.run','bricks.result','wordpress.run','provider.turn','provider.turn']);
   const guideCall=fetcher.mock.calls.map(call=>call[1]?.body && JSON.parse(call[1].body)).find(call=>call?.tool==='skills.read');
-  expect(guideCall.arguments.paths).toContain('pixflow/frontend-design/references/quality-review.md');
+  expect(guideCall.arguments.paths).toEqual(['bricks/operations/live-builder.md']);
+  expect(guideCall.arguments.paths).not.toContain('pixflow/frontend-design/references/design-taste.md');
+  expect(guideCall.arguments.paths).not.toContain('pixflow/frontend-design/references/quality-review.md');
   expect(onUpdate.mock.calls.at(-1)?.[0]).toBe('Building.\n\nComplete.');
   expect(JSON.stringify(onUpdate.mock.calls)).not.toContain('private-key');
   expect(decodeURIComponent(String(fetcher.mock.calls.at(-1)?.[0]))).toContain('/direct/session');
@@ -414,4 +578,35 @@ it('notifies the Workspace synchronously on pagehide and removes the listener wh
     .rejects.toMatchObject({ code: 'PIXFLOW_SITE_DELIVERY_UNCERTAIN' });
   window.dispatchEvent(new Event('pagehide'));
   expect(onDeliveryUncertain).toHaveBeenCalledTimes(1);
+});
+
+it.each(['direct', 'composio'] as const)('requests a server read-only guidance session for %s', async apiTransport => {
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',writable:false}));
+  const turn = {text:'{"product":"Draft","design":"Draft","questions":[]}',calls:[],turns:[]};
+  composio.turn.mockResolvedValue(turn);
+  vi.stubGlobal('fetch',vi.fn(async (_url,init) => {
+    if (init.method === 'DELETE') return Response.json({closed:true});
+    return Response.json(JSON.parse(init.body).tool === 'provider.turn' ? turn : {});
+  }));
+  await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},purpose:'guidance-draft',prompt:'Draft guidance',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+  const call = requests.wordpress.mock.calls.slice().reverse().find(call => call[0] === '/wp-admin/direct/sessions');
+  expect(JSON.parse(call![1].body)).toMatchObject({purpose:'guidance-draft'});
+});
+
+it('fails closed when an old server grants a writable guidance session', async () => {
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',writable:true}));
+  const fetch = vi.fn(); vi.stubGlobal('fetch',fetch);
+  await expect(runByokSite({config,purpose:'guidance-draft',prompt:'Draft',history:[],signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('read-only draft session');
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it.each(['direct','composio'] as const)('injects selected saved guidance for new %s runs without changing history or explicit references',async apiTransport=>{
+ const guidance={revision:4,source:'custom',product:'BAKERY-FACTS',design:'PRESERVE-SITE-FONTS',instructions:'Preserve existing styles.'};
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',designGuidance:guidance}));
+ const provider=vi.fn(async(args:{system:string})=>{expect(args.system).toContain('BAKERY-FACTS');expect(args.system).toContain('PRESERVE-SITE-FONTS');expect(args.system).toContain('Explicit reference');expect(args.system).not.toContain('STALE-GUIDANCE');return {text:'Done',calls:[],turns:[]};});
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{if(init.method==='DELETE')return Response.json({closed:true});const body=JSON.parse(init.body);return Response.json(body.tool==='provider.turn'?await provider(body.arguments):{integrations:{bricks:false}});}));
+ const history=[{role:'user' as const,content:'Preserved chat'}];
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},context:{siteDesignGuidance:'STALE-GUIDANCE',workspaceItems:[{label:'Explicit reference'}]},prompt:'Review the page',history,signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(provider).toHaveBeenCalledOnce();expect(history).toEqual([{role:'user',content:'Preserved chat'}]);
 });

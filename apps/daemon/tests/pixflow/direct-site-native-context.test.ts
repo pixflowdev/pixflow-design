@@ -113,3 +113,15 @@ it.each([false,true])('resumes a compacted native session after accepted steerin
   await(await post('run-stream',{...next,history:[...steeredHistory,{role:'user',content:'Changed queued follow-up'},{role:'assistant',content:'Follow-up answer'}],continuation:{id:'7'.repeat(32),token:'8'.repeat(64)}})).text();
   expect(native.calls.at(-1)?.resumeSessionId).toBeNull();
 });
+
+it('bounds direct-site instructions to its generated workspace while preserving native continuity',async()=>{
+  const {request,post}=await setup();
+  const first=native.calls[0]!;
+  expect(first.isolateProjectInstructions).toBe(true);
+  expect(await fs.readFile(path.join(first.cwd,'AGENTS.md'),'utf8')).toContain('Pixflow Direct WordPress workspace');
+  await(await post('run-stream',request)).text();
+  expect(native.calls[1]!.isolateProjectInstructions).toBe(true);
+  expect(native.calls[1]!.resumeSessionId).toBe('saved-native');
+  expect(native.calls[1]!.cwd).toBe(first.cwd);
+  expect(JSON.parse(native.calls[1]!.prompt).history).toEqual([]);
+});

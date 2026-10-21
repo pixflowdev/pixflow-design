@@ -19,7 +19,20 @@ export interface PixflowDirectSiteAttachment {
   kind: 'image' | 'file';
   annotationScreenshot?: boolean;
 }
+/** Saved site guidance snapshot, supplied by WordPress for a new run. No history or credentials. */
+export interface PixflowRunDesignGuidance {
+  revision: number;
+  source: 'existing' | 'custom' | 'system';
+  product: string;
+  design?: string;
+  system?: { id: string; title: string; profile: unknown };
+  unavailable?: boolean;
+  instructions: string;
+  /** Optional, authorized add-on instructions and explicit command hints. */
+  extension?: { instructions: string; commands: Record<string, string> };
+}
 export interface PixflowDirectSiteSession {
+  designGuidance?: PixflowRunDesignGuidance | null;
   editorTarget?: PixflowEditorTarget;
   workspaceSource?: PixflowWorkspaceSource;
   endpoint: string;
@@ -93,6 +106,8 @@ export interface PixflowDirectSiteVoiceEndResponse {
   outcome: PixflowDirectSiteOutcome | null;
 }
 export interface PixflowDirectSiteRunRequest {
+  /** Draft guidance may inspect the site but must never change its content. */
+  purpose?: 'guidance-draft';
   editorTarget?: PixflowEditorTarget;
   /** Browser-created WebRTC offer. Credentials and native execution stay in the Bridge. */
   voice?: { sdp: string; name?: string };
@@ -177,6 +192,6 @@ export interface PixflowBricksLiveContext {
 /** One native BYOK provider turn transported through the owned WordPress session. */
 export interface PixflowSiteProviderTurn {
   text: string;
-  calls: Array<{ id: string; function: 'site_tool'; input: { name: string; arguments: Record<string, unknown> } }>;
+  calls: Array<{ id: string; function: 'site_tool'; input: { name: string; arguments: Record<string, unknown> }; validationError?: string }>;
   turns: unknown[];
 }

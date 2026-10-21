@@ -188,6 +188,26 @@ export function resolveSettingsCloseConfig(
   return base;
 }
 
+/**
+ * Public cross-surface notifications omit credentials. Read the latest local
+ * snapshot before merging them, so a stale mounted root cannot erase a key
+ * just saved by another root (or resurrect a key the user removed).
+ */
+export function mergeIncomingWordPressConfig(
+  current: AppConfig,
+  persisted: AppConfig,
+  patch: Partial<AppConfig> | NonNullable<Awaited<ReturnType<typeof fetchDaemonConfig>>>,
+): AppConfig {
+  const next = mergeDaemonConfig({ ...current, ...persisted }, patch as AppConfig);
+  // WordPress owns execution preferences; Bridge discovery must remain limited
+  // to CLI metadata. Public preferences never replace browser-owned secrets.
+  for (const key of ['mode', 'apiTransport', 'apiProtocol', 'apiVersion', 'baseUrl',
+    'model', 'apiProviderBaseUrl', 'composioProvider', 'composioModel', 'maxTokens'] as const) {
+    if (patch[key] !== undefined) Object.assign(next, { [key]: patch[key] });
+  }
+  return next;
+}
+
 
 function hasPixflowCliConfigChange(next: AppConfig, previous: AppConfig): boolean {
   return next.agentId !== previous.agentId
@@ -784,7 +804,7 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
         const next = clearStaleAmrModelChoiceOnProfileChange(
           baseConfig,
           applyPixflowOnboardingProfile(
-            mergeDaemonConfig(baseConfig, daemonConfig),
+            hasPixflowWordPressContext() ? mergeIncomingWordPressConfig(baseConfig, baseConfig, daemonConfig ?? {}) : mergeDaemonConfig(baseConfig, daemonConfig),
             onboardingProfile,
           ),
         );
@@ -1358,7 +1378,9 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
       if (!payload || typeof payload !== 'object') return false;
       const next = clearStaleAmrModelChoiceOnProfileChange(
         latestPersistedConfigRef.current,
-        mergeDaemonConfig(latestPersistedConfigRef.current, payload as AppConfig),
+        hasPixflowWordPressContext()
+          ? mergeIncomingWordPressConfig(latestPersistedConfigRef.current, loadConfig(), payload)
+          : mergeDaemonConfig(latestPersistedConfigRef.current, payload as AppConfig),
       );
       latestPersistedConfigRef.current = next;
       saveConfig(next);

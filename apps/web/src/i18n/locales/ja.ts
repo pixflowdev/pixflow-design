@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "history.recoverCopies": "復元用コピーを保存",
+  "history.recoveryTitle": "復元したチャット履歴",
+  "history.recoveryExplanation": "両方のバージョンを別々の非公開履歴として保存し、ここでは保存済みのバージョンを使用します。",
   "composio.proRequired": "Composio には Pro が必要です。保存済みの接続は保持されます。続行するには API または Local CLI を選択してください。",
   'assistant.compactingContext': 'コンテキストを要約中…',
   "builderDestination.handoffToBuilder": "ページビルダーに引き継ぐ",

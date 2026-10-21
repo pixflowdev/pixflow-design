@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "history.recoverCopies": "حفظ نسخ الاسترداد",
+  "history.recoveryTitle": "سجل محادثة مسترد",
+  "history.recoveryExplanation": "احتفظ بالنسختين كسجلين خاصين منفصلين، ثم استخدم النسخة المحفوظة هنا.",
   "composio.proRequired": "يتطلب Composio إصدار Pro. اتصالاتك المحفوظة محفوظة. اختر API أو Local CLI للمتابعة.",
   'assistant.compactingContext': 'جارٍ تلخيص السياق…',
   "builderDestination.handoffToBuilder": "نقل إلى منشئ الصفحات",

@@ -138,4 +138,13 @@ history_sqlite_check($pdo->query("SELECT payload FROM qa_pixflow_design_chat_mes
 history_sqlite_check(PixflowDesign\WordPress\Chat\HistoryStorage::batch($id - 1, 1)['rowsCompressed'] === 1, 'Failed migration retries safely');
 $history->remove('project-1', 'storage', 'storage-api');
 history_sqlite_check(PixflowDesign\WordPress\Chat\HistoryStorage::batch($id - 1, 1)['rowsCompressed'] === 0, 'Deleted rows never resurrected');
+$history->migrate(['uuid' => 'project-1', 'title' => 'Recovery'], 'recovery');
+$copy = ['id' => 'recovered', 'content' => 'Reconnecting to the previous run…', 'historyRevision' => 2];
+$recovered = $history->write('project-1', 'recovery', ['id' => 'recovered', 'content' => 'Complete retained reply', 'historyRecoverySnapshots' => [$copy]]);
+$continued = $history->write('project-1', 'recovery', ['id' => 'recovered', 'content' => 'Complete retained reply plus continuation', 'historyRevision' => $recovered['revision']]);
+history_sqlite_check($continued['message']['historyRecoverySnapshots'] === [$copy], 'Older clients cannot discard recovery evidence');
+$exported = (new PixflowDesign\WordPress\Chat\HistoryArchive($history))->export_page('project-1', 'recovery');
+history_sqlite_check($exported['messages'][0]['historyRecoverySnapshots'] === [$copy], 'Full export retains recovery evidence');
+$history->remove('project-1', 'recovery', 'recovered');
+history_sqlite_check($history->page('project-1', 'recovery', null, '')['messages'] === [], 'Deletion hides message and recovery evidence together');
 echo "chat-history-sqlite: {$checks} checks passed\n";

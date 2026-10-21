@@ -7,6 +7,52 @@ import { importChatHistory, mergeChatHistory, readChatHistory, saveChatHistoryMe
 
 const binding = { projectId: 'history-project', conversationId: 'history-conversation' };
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+it.each(['prefix', 'changed-text', 'changed-event', 'changed-agent', 'same-revision'])('acknowledges only a contained streaming observer: %s', async scenario => {
+  transport.mockReset(); owner.id = 1;
+  const incoming = {id:`observer-prefix-${scenario}`,role:'assistant',content:'Inspecting.',createdAt:100,
+    agentId:'codex',agentName:'Codex',sessionMode:'design',status:'streaming',runStatus:'running',historyRevision:2,
+    events:[{kind:'text',text:'Inspecting.'},{kind:'tool_use',id:'read',name:'Bash',input:{command:'read'}}]};
+  const saved = {...incoming,content:'Inspecting.\n\nVerified.',status:'complete',runStatus:'succeeded',endedAt:200,
+    historyRevision:scenario === 'same-revision' ? 2 : 4,
+    events:[...incoming.events,{kind:'text',text:'\n\nVerified.'}]};
+  if(scenario === 'changed-text') incoming.content='Different.';
+  if(scenario === 'changed-event') incoming.events[1]={kind:'tool_use',id:'read',name:'Bash',input:{command:'different'}};
+  if(scenario === 'changed-agent') incoming.agentId='other';
+  transport.mockImplementation(async()=>response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+  if(scenario === 'prefix') expect(await saveChatHistoryMessage(binding,incoming)).toEqual(saved);
+  else await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('Conflict');
+  expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it('acknowledges the exact recovered copy from a second tab without dropping the archive', async () => {
+  transport.mockReset(); owner.id = 1;
+  const incoming = {id:'recovered-observer-replay',role:'assistant',content:'Stopped.',historyRevision:1};
+  const saved = {...incoming,historyRevision:3,historyRecoverySnapshots:[{content:'Reconnecting to the previous run…'}]};
+  transport.mockImplementation(async () => response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+  expect(await saveChatHistoryMessage(binding,incoming)).toEqual(saved);
+  expect(transport).toHaveBeenCalledTimes(1);
+  await expect(saveChatHistoryMessage(binding,{...incoming,content:'Different reply'})).rejects.toThrow('Conflict');
+});
+
+it.each(['placeholder', 'real-reply', 'other-agent', 'newer-revision', 'second-conflict'])('recovers only the known observer placeholder: %s', async scenario => {
+  transport.mockReset(); owner.id = 1;
+  const incoming = { id: `observer-recovery-${scenario}`, role: 'assistant', content: 'Stopped.', historyRevision: 1,
+    createdAt: 100, endedAt: 500, agentId: 'openai-api', agentName: 'OpenAI API', sessionMode: 'design',
+    status: 'complete', runStatus: 'canceled', events: [{kind:'tool_use',id:'tool-1',name:'elementor.read'}, {kind:'tool_result',toolUseId:'tool-1',content:'retained'}] };
+  const saved = { ...incoming, historyRevision: scenario === 'newer-revision' ? 3 : 2,
+    agentId: scenario === 'other-agent' ? 'codex' : incoming.agentId,
+    content: scenario === 'real-reply' ? 'A real response' : 'Reconnecting to the previous run…',
+    status: undefined, runStatus:'interrupted', endedAt:200, events:[{kind:'status',label:'interrupted'}] };
+  transport.mockResolvedValueOnce(response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409));
+  transport.mockImplementation(async (_url, init) => scenario === 'second-conflict'
+    ? response({code:'pixflow_history_conflict',message:'Conflict',data:{message:saved}},409)
+    : response({message:{...JSON.parse(init.body),historyRevision:3},revision:3}));
+  if (scenario !== 'placeholder') { await expect(saveChatHistoryMessage(binding,incoming)).rejects.toThrow('Conflict'); return; }
+  const recovered = await saveChatHistoryMessage(binding,incoming);
+  expect(recovered).toMatchObject({content:'Stopped.',events:incoming.events,historyRecoverySnapshots:[JSON.parse(JSON.stringify(saved))]});
+  expect(JSON.parse(transport.mock.calls[1]![1].body).historyRevision).toBe(2);
+});
 describe('durable transcript client', () => {
   beforeEach(() => { transport.mockReset(); owner.id = 1; });
   it('stops a multi-batch import when the account changes between requests', async () => {

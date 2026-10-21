@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "history.recoverCopies": "Kurtarma kopyalarını kaydet",
+  "history.recoveryTitle": "Kurtarılan sohbet geçmişi",
+  "history.recoveryExplanation": "Her iki sürümü ayrı özel geçmişler olarak saklayın, ardından burada kayıtlı sürümü kullanın.",
   "composio.proRequired": "Composio için Pro gerekir. Kayıtlı bağlantılarınız korunur. Devam etmek için API veya Local CLI seçin.",
   'assistant.compactingContext': 'Bağlam özetleniyor…',
   "builderDestination.handoffToBuilder": "Sayfa oluşturucuya devret",

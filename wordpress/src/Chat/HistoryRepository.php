@@ -159,6 +159,16 @@ final class HistoryRepository
             if (!$conversationRow || (int) $conversationRow['deleted']) return new \WP_Error('pixflow_history_deleted', 'This conversation was deleted.', ['status' => 410]);
             $row = $this->row($key, $message['id']);
             if ($row && (int) $row['deleted']) return new \WP_Error('pixflow_history_deleted', 'This message was deleted.', ['status' => 410]);
+            // Recovery evidence belongs to the durable message. Older clients
+            // may omit this metadata, but ordinary saves must not discard it.
+            if ($row) {
+                $prior = $this->payload($row);
+                $copies = is_array($prior['historyRecoverySnapshots'] ?? null) ? $prior['historyRecoverySnapshots'] : [];
+                foreach (is_array($message['historyRecoverySnapshots'] ?? null) ? $message['historyRecoverySnapshots'] : [] as $copy) {
+                    if (!in_array($copy, $copies, true)) $copies[] = $copy;
+                }
+                if ($copies !== []) $message['historyRecoverySnapshots'] = $copies;
+            }
             $changed = !$row;
             if (!$row) $this->insert($key, $message);
             elseif (!$importOnly && $this->clean($this->payload($row)) != $this->clean($message)) {

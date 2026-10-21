@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const { save, config } = vi.hoisted(() => ({ save: vi.fn(), config: {siteHash:'site',userId:1} }));
-vi.mock('../../src/pixflow/chat-history-client', () => ({saveChatHistoryMessage:save}));
+const { save, preserve, importing, config } = vi.hoisted(() => ({ save: vi.fn(), preserve: vi.fn(), importing: vi.fn(), config: {siteHash:'site',userId:1} }));
+vi.mock('../../src/pixflow/chat-history-client', () => ({saveChatHistoryMessage:save, importChatHistory:importing, historyMessageFingerprint:(value:unknown)=>JSON.stringify(value)}));
 vi.mock('../../src/pixflow/wordpress-context', () => ({getPixflowWordPressConfig:()=>config}));
-import {queueWorkspaceHistoryMessage,retryWorkspaceHistoryWrites,workspaceHistoryWriteFailed,workspaceHistoryPendingMessages} from '../../src/state/workspace-history-persistence';
+vi.mock('../../src/pixflow/history-recovery',()=>({preserveHistoryCopies:preserve}));
+import {recoverWorkspaceHistoryWrites,queueWorkspaceHistoryMessage,retryWorkspaceHistoryWrites,workspaceHistoryWriteFailed,workspaceHistoryPendingMessages} from '../../src/state/workspace-history-persistence';
 
 describe('Workspace durable write outbox', () => {
   beforeEach(() => { localStorage.clear(); save.mockReset(); config.userId=1; });
@@ -74,3 +75,21 @@ describe('Workspace durable write outbox', () => {
   });
 });
 function queueMicrotaskPromise() { return new Promise<void>(resolve=>queueMicrotask(resolve)); }
+
+it('recovers Workspace conflicts only after verified private preservation',async()=>{
+  config.userId=1;save.mockRejectedValue(new Error('conflict'));preserve.mockResolvedValue(undefined);
+  const copy={id:'recovery',role:'assistant' as const,content:'Divergent reply'};
+  await queueWorkspaceHistoryMessage('recovery-p','recovery-c',copy);
+  const canonical={...copy,content:'Canonical reply',historyRevision:4};
+  importing.mockResolvedValue({messages:[canonical]});
+  expect(await recoverWorkspaceHistoryWrites('recovery-p','recovery-c','Recovered history')).toEqual([canonical]);
+  expect(preserve).toHaveBeenCalledWith({projectId:'recovery-p',conversationId:'recovery-c'},[copy],'Recovered history');
+  expect(workspaceHistoryPendingMessages('recovery-p','recovery-c')).toEqual([]);
+});
+it('retains Workspace conflicts when private recovery fails',async()=>{
+  config.userId=1;save.mockRejectedValue(new Error('conflict'));preserve.mockRejectedValue(new Error('offline'));
+  const copy={id:'failed',role:'assistant' as const,content:'Keep all data'};
+  await queueWorkspaceHistoryMessage('failed-p','failed-c',copy);
+  await expect(recoverWorkspaceHistoryWrites('failed-p','failed-c','Recovery')).rejects.toThrow('offline');
+  expect(workspaceHistoryPendingMessages('failed-p','failed-c')).toEqual([copy]);
+});

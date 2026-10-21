@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "history.recoverCopies": "ذخیره نسخه‌های بازیابی",
+  "history.recoveryTitle": "تاریخچه گفت‌وگوی بازیابی‌شده",
+  "history.recoveryExplanation": "هر دو نسخه را در تاریخچه‌های خصوصی جداگانه نگه دارید و نسخه ذخیره‌شده را اینجا استفاده کنید.",
   "composio.proRequired": "Composio به Pro نیاز دارد. اتصال‌های ذخیره‌شده شما حفظ می‌شوند. برای ادامه API یا Local CLI را انتخاب کنید.",
   'assistant.compactingContext': 'در حال فشرده‌سازی زمینه…',
   "builderDestination.handoffToBuilder": "انتقال به صفحه‌ساز",

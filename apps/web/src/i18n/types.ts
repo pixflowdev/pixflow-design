@@ -30,6 +30,9 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // flat (not deeply nested) so missing-key TS errors point straight at the
 // offending string instead of a generic object mismatch.
 export interface Dict {
+  "history.recoverCopies": string;
+  "history.recoveryTitle": string;
+  "history.recoveryExplanation": string;
   "composio.proRequired": string;
   "license.featureRefreshError": string;
   'assistant.compactingContext': string;

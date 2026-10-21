@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "history.recoverCopies": "Helyreállítási másolatok mentése",
+  "history.recoveryTitle": "Helyreállított csevegési előzmények",
+  "history.recoveryExplanation": "Mindkét változat külön privát előzményként marad meg, itt pedig a mentett változat használható.",
   "composio.proRequired": "A Composio használatához Pro szükséges. A mentett kapcsolatok megmaradnak. A folytatáshoz válaszd az API vagy a Local CLI módot.",
   'assistant.compactingContext': 'Kontextus tömörítése…',
   "builderDestination.handoffToBuilder": "Átadás az oldalszerkesztőnek",

@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "history.recoverCopies": "Simpan salinan pemulihan",
+  "history.recoveryTitle": "Riwayat percakapan dipulihkan",
+  "history.recoveryExplanation": "Simpan kedua versi sebagai riwayat pribadi terpisah, lalu gunakan versi tersimpan di sini.",
   "composio.proRequired": "Composio memerlukan Pro. Koneksi tersimpan Anda tetap dipertahankan. Pilih API atau Local CLI untuk melanjutkan.",
   'assistant.compactingContext': 'Meringkas konteks…',
   "builderDestination.handoffToBuilder": "Serahkan ke editor halaman",

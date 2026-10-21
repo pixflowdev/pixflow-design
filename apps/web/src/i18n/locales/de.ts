@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const de: Dict = {
+  "history.recoverCopies": "Wiederherstellungskopien speichern",
+  "history.recoveryTitle": "Wiederhergestellter Chatverlauf",
+  "history.recoveryExplanation": "Beide Versionen als separate private Verläufe behalten und hier die gespeicherte Version verwenden.",
   "composio.proRequired": "Composio benötigt Pro. Deine gespeicherten Verbindungen bleiben erhalten. Wähle API oder Local CLI, um fortzufahren.",
   'assistant.compactingContext': 'Kontext wird verdichtet…',
   "builderDestination.handoffToBuilder": "An den Seiteneditor übergeben",

@@ -19,6 +19,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 class ChatHistoryRequestError extends Error {
   constructor(message: string, readonly status: number, readonly body: {code?:string;data?:{message?:HistoryMessage}}) { super(message); }
 }
+
+/** Repair the old observer's first synthetic interruption, retaining its exact
+ * payload as a recovery snapshot. This is not a general stale-revision rebase.
+ */
+function recoverObserverPlaceholder(incoming: HistoryMessage, saved?: HistoryMessage): HistoryMessage | null {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.id !== prior.id || next.role !== 'assistant' || prior.role !== 'assistant'
+    || next.historyRevision !== 1 || prior.historyRevision !== 2
+    || prior.content !== 'Reconnecting to the previous run…' || prior.runStatus !== 'interrupted'
+    || prior.status != null || next.status !== 'complete'
+    || !['succeeded', 'failed', 'canceled'].includes(String(next.runStatus))
+    || !next.content || typeof next.createdAt !== 'number' || typeof next.endedAt !== 'number'
+    || typeof prior.endedAt !== 'number' || next.endedAt < prior.endedAt
+    || !next.agentId || ['createdAt','agentId','agentName','sessionMode','runId'].some(key => next[key] !== prior[key])
+    || JSON.stringify(prior.events) !== JSON.stringify([{kind:'status',label:'interrupted'}])
+    || !Array.isArray(next.events) || !next.events.some(event => event?.kind === 'tool_result')) return null;
+  return { ...next, historyRevision: prior.historyRevision,
+    historyRecoverySnapshots: [...(Array.isArray(next.historyRecoverySnapshots) ? next.historyRecoverySnapshots : []), prior] } as HistoryMessage;
+}
+
+function recoveredReplayMatches(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const prior = saved as (HistoryMessage & {historyRecoverySnapshots?: unknown[]}) | undefined;
+  if (!prior || !Array.isArray(prior.historyRecoverySnapshots) || !prior.historyRecoverySnapshots.length) return false;
+  const {historyRecoverySnapshots: _copies, ...original} = prior;
+  return historyMessageFingerprint(incoming) === historyMessageFingerprint(original);
+}
 /** Old Bricks caches added display defaults and dropped revision metadata.
  * Acknowledge an identical terminal row, never overwrite or rebase its data.
  */
@@ -125,6 +152,28 @@ function legacyLiveReplayMatches(incoming: HistoryMessage, saved?: HistoryMessag
     return true;
   }).sort(([a], [b]) => a.localeCompare(b)));
   return JSON.stringify(normalize(next)) === JSON.stringify(normalize(prior));
+}
+
+/** A stale observer may use a newer completed record only when all of its
+ * content, events and identity are already present in that record.
+ */
+function streamingObserverIsContained(incoming: HistoryMessage, saved?: HistoryMessage): boolean {
+  const next = incoming as HistoryMessage & Record<string, unknown>;
+  const prior = saved as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!prior || next.id !== prior.id || next.role !== 'assistant' || prior.role !== 'assistant'
+    || next.status !== 'streaming' || next.runStatus !== 'running' || prior.status !== 'complete'
+    || !['succeeded', 'failed', 'canceled'].includes(String(prior.runStatus))
+    || !Number.isSafeInteger(next.historyRevision) || !Number.isSafeInteger(prior.historyRevision)
+    || Number(next.historyRevision) < 1 || Number(next.historyRevision) >= Number(prior.historyRevision)
+    || !next.agentId || typeof next.createdAt !== 'number' || next.createdAt !== prior.createdAt
+    || typeof next.content !== 'string' || typeof prior.content !== 'string' || !prior.content.startsWith(next.content)
+    || !Array.isArray(next.events) || !next.events.length || !Array.isArray(prior.events)
+    || next.events.length > prior.events.length
+    || next.events.some((event, index) => JSON.stringify(event) !== JSON.stringify((prior.events as unknown[])[index]))) return false;
+  // This is a read-only acknowledgement, never authority to append or replace.
+  // Every incoming detail must already be retained in the completed record.
+  const changing = new Set(['content', 'events', 'historyRevision', 'historySequence', 'status', 'runStatus']);
+  return Object.entries(next).every(([key, value]) => changing.has(key) || JSON.stringify(value) === JSON.stringify(prior[key]));
 }
 
 /** A terminal durable replay can acknowledge a previously truncated tail only
@@ -269,15 +318,17 @@ export function saveChatHistoryMessage<T extends HistoryMessage>(binding: ChatHi
       }
     } catch (error) {
       if (error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
-        && (eventlessRecoveryReplayMatches(message,error.body.data?.message) || legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
+        && (streamingObserverIsContained(message,error.body.data?.message) || recoveredReplayMatches(message,error.body.data?.message) || eventlessRecoveryReplayMatches(message,error.body.data?.message) || legacyLiveReplayMatches(message,error.body.data?.message) || completedReplayContains(message,error.body.data?.message) || legacyDisplayReplayMatches(message,error.body.data?.message)) && ownerScope()===owner) {
         readOnlyReplay = true;
         result={message:error.body.data!.message!,revision:error.body.data!.message!.historyRevision!} as PixflowChatHistorySaveResponse<T>;
       } else {
+      const observerRecovery = error instanceof ChatHistoryRequestError && error.status === 409 && error.body.code === 'pixflow_history_conflict'
+        ? recoverObserverPlaceholder(message, error.body.data?.message) : null;
       const recovered = error instanceof ChatHistoryRequestError && error.status===409 && error.body.code==='pixflow_history_conflict'
         ? appendOnlyRecoveryRevision(message,error.body.data?.message) : null;
-      if (recovered===null || ownerScope()!==owner) throw error;
+      if ((recovered===null && !observerRecovery) || ownerScope()!==owner) throw error;
       // One compare-and-swap retry; a concurrent edit still wins a real conflict.
-      result = await request(path, json('PUT',{...message,historyRevision:recovered}));
+      result = await request(path, json('PUT',observerRecovery ?? {...message,historyRevision:recovered}));
       }
     }
     const inputs = new Set([...(previous?.inputs || []), result.revision]);

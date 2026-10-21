@@ -422,7 +422,7 @@ function chatArtifactKindLabel(kind: ProjectFile['kind'], t: TranslateFn): strin
 interface Props {
   messages: ChatMessage[];
   olderHistory?: { loading: boolean; error: boolean; load: () => Promise<void> };
-  historyPersistence?: { retry: () => Promise<void> };
+  historyPersistence?: { retry: () => Promise<void>; recover?: (title: string) => Promise<void>; recovering?: boolean };
   streaming: boolean;
   loading?: boolean;
   error: string | null;
@@ -1989,7 +1989,7 @@ export function ChatPane({
                   void olderHistory.load();
                 }} /> : null}
               {chatRowsNode}
-              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} /> : null}
+              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /> : null}
             </>}
             errorNode={chatErrorNode}
             guidanceNode={amrGuidanceNode}

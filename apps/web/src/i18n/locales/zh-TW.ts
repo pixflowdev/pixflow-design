@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const zhTW: Dict = {
+  "history.recoverCopies": "儲存復原副本",
+  "history.recoveryTitle": "已復原的聊天記錄",
+  "history.recoveryExplanation": "將兩個版本保留為獨立的私人記錄，然後在此使用已儲存的版本。",
   "composio.proRequired": "Composio 需要 Pro。已儲存的連線會保留。請選擇 API 或 Local CLI 繼續。",
   'assistant.compactingContext': '正在壓縮上下文…',
   "builderDestination.handoffToBuilder": "移交至頁面編輯器",

@@ -19,7 +19,7 @@ final class LicenseCache
     public function summary(): array
     {
         $cache = $this->read();
-        if ($cache === []) {
+        if ($cache === [] || isset($cache['reset_marker'])) {
             return [
                 'present' => false,
                 'valid' => false,
@@ -88,11 +88,22 @@ final class LicenseCache
         ];
     }
 
-    public function persist(string $site_fingerprint, string $license_key, array $upstream_body, string $validation_url = 'https://pixflow.dev/api/licensing/v1/validate'): void
+    /** Expired credentials may request fresh validation, never authorize access. */
+    public function renewal_credentials(): array
+    {
+        $cache = $this->read();
+        if (!$this->is_expired($cache)) return [];
+        $key = SecretBox::decrypt((string) ($cache['encrypted_license_key'] ?? ''));
+        if ($key === '') return [];
+        return ['license_key' => $key, 'site_fingerprint' => (string) ($cache['site_fingerprint'] ?? ''),
+            'validation_url' => (string) ($cache['validation_url'] ?? '')];
+    }
+
+    public function persist(string $site_fingerprint, string $license_key, array $upstream_body, string $validation_url = 'https://pixflow.dev/api/licensing/v1/validate', ?array $expected = null): bool
     {
         $license_key = trim($license_key);
         if ($site_fingerprint === '' || $license_key === '') {
-            return;
+            return false;
         }
 
         $license_key_masked = trim((string) ($upstream_body['license_key_masked'] ?? ''));
@@ -115,14 +126,11 @@ final class LicenseCache
             && hash_equals((string) ($existing_cache['site_fingerprint'] ?? ''), $site_fingerprint)
             && hash_equals(SecretBox::decrypt((string) ($existing_cache['encrypted_license_key'] ?? '')), $license_key)
             && ($existing_cache['validation_url'] ?? 'https://pixflow.dev/wp-json/pixflow-ai/v1/license/validate') === $validation_url;
-        if (!$same_site_existing_cache && class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) {
-            \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
-        }
         $encrypted_template_access_token = $template_access_token !== ''
             ? SecretBox::encrypt($template_access_token)
             : ($same_site_existing_cache ? (string) ($existing_cache['encrypted_template_access_token'] ?? '') : '');
 
-        update_option(self::OPTION_KEY, [
+        $replacement = [
             'validation_url' => $validation_url,
             'site_fingerprint' => $site_fingerprint,
             'encrypted_license_key' => SecretBox::encrypt($license_key),
@@ -139,21 +147,57 @@ final class LicenseCache
             'template_access_token_ttl_seconds' => (int) ($upstream_body['template_access_token_ttl_seconds'] ?? ($same_site_existing_cache ? (int) ($existing_cache['template_access_token_ttl_seconds'] ?? 0) : 0)),
             'last_validated_at' => (string) ($upstream_body['last_validated_at'] ?? gmdate('c')),
             'updated_at' => gmdate('c'),
-        ], false);
+        ];
+        $committed = $expected === null ? update_option(self::OPTION_KEY, $replacement, false) : $this->replace($expected, $replacement);
+        if ($committed && !$same_site_existing_cache && class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) {
+            \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
+        }
+        return $committed;
     }
 
-    public function clear(): void
+    public function clear(?array $expected = null): bool
     {
+        // Keep a non-secret tombstone: reset must also invalidate an in-flight
+        // first activation whose initial cache was empty.
+        $replacement = ['reset_marker' => bin2hex(random_bytes(16))];
+        $committed = $expected === null ? update_option(self::OPTION_KEY, $replacement, false) : $this->replace($expected, $replacement);
+        if (!$committed) return false;
         if (class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) {
             \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
         }
-        delete_option(self::OPTION_KEY);
         delete_option(self::LEGACY_OPTION_KEY);
 
         // Pixflow-owned: resetting a site license must be final. Mark legacy
         // migration as consumed so old Pixflow AI cache data cannot repopulate
         // the new site-scoped license during the next async status refresh.
         update_option(self::LEGACY_MIGRATION_OPTION_KEY, gmdate('c'), false);
+        return true;
+    }
+
+    /** Opaque server-only snapshot taken before a remote validation request. */
+    public function snapshot(): array
+    {
+        return $this->read();
+    }
+
+    /** Compare database bytes, not a possibly stale per-request option cache. */
+    private function replace(array $expected, array $replacement): bool
+    {
+        global $wpdb;
+        if (isset($wpdb) && isset($wpdb->options)) {
+            $changed = $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND BINARY option_value = BINARY %s",
+                maybe_serialize($replacement), self::OPTION_KEY, maybe_serialize($expected)
+            ));
+            if ($changed === 1) {
+                wp_cache_delete(self::OPTION_KEY, 'options');
+                wp_cache_delete('alloptions', 'options');
+                return true;
+            }
+            return $expected === [] && $changed !== false && add_option(self::OPTION_KEY, $replacement, '', false);
+        }
+        if ($this->read() !== $expected) return false;
+        return update_option(self::OPTION_KEY, $replacement, false);
     }
 
     private function read(): array

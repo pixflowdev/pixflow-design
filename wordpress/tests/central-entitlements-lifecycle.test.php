@@ -274,3 +274,51 @@ $GLOBALS['responses']=[response(200,['unexpected'=>'payload'])];
 (new CentralEntitlements())->refresh();
 check((new CentralEntitlements())->status()['code']==='license_revoked' && !(new CentralEntitlements())->allows('wordpress:mutate'),'Malformed challenge erased explicit revocation');
 echo "Malformed and consumed challenge recovery retains denial boundaries.\n";
+
+// Cached subscription dates must not hide a renewal at the authority.
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']['denial_code']='';
+$GLOBALS['options']['pixflow_design_site_license_cache']['license_expires_at_source']='license_expires_at';
+$GLOBALS['options']['pixflow_design_site_license_cache']['license_expires_at']=gmdate('c',time()-60);
+$GLOBALS['responses']=[response(200,['valid'=>true,'access_granted'=>true,'status'=>'active','license_id'=>'native-qa','license_expires_at'=>gmdate('c',time()+86400)]),response(200,$challenge),response(200,$grants),response(200,$jwks)];
+$renewed=(new \PixflowDesign\WordPress\License\LicenseService())->status();
+check($renewed['license']['valid'],'Cached expiry prevented online renewal discovery');
+echo "Expired cached subscription revalidates automatically.\n";
+
+// Simulate a full outage past the signed 24-hour limit without changing clocks.
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+$state=$GLOBALS['options']['pixflow_design_central_entitlements_v2'];
+$state['denial_code']='';$state['denied']=false;$state['network_unavailable']=true;
+$state['tokens']['wordpress']=SecretBox::encrypt(central_token('pixflow-design-wordpress-local',-90000));
+$state['tokens']['bridge']=SecretBox::encrypt(central_token('pixflow-design-bridge',-90000));
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+$key_before=$GLOBALS['options']['pixflow_design_site_license_cache'];
+$GLOBALS['responses']=[new WP_Error()];
+$status=(new \PixflowDesign\WordPress\License\LicenseService())->status();
+check(!$status['license']['valid'] && $status['runtime_ready'],'Expired offline grant continued Pro or blocked Free');
+check($GLOBALS['options']['pixflow_design_site_license_cache']===$key_before,'Offline limit erased key');
+$GLOBALS['transients']=[]; // Recovery cooldown has elapsed.
+$GLOBALS['responses']=[response(200,$challenge),response(200,$grants),response(200,$jwks)];
+$status=(new \PixflowDesign\WordPress\License\LicenseService())->status();
+check($status['license']['valid'],'Restored connectivity did not recover without key entry');
+check($GLOBALS['options']['pixflow_design_site_license_cache']===$key_before,'Recovery replaced saved credential');
+
+foreach(['outage','still_expired','revoked','other_site','other_authority','unreadable'] as $condition){
+ $GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+ $GLOBALS['options']['pixflow_design_central_entitlements_v2']['denial_code']='';
+ $GLOBALS['options']['pixflow_design_site_license_cache']['license_expires_at_source']='license_expires_at';
+ $GLOBALS['options']['pixflow_design_site_license_cache']['license_expires_at']=gmdate('c',time()-60);
+ if($condition==='revoked')(new CentralEntitlements())->deny('license_revoked');
+ if($condition==='other_site')$GLOBALS['options']['pixflow_design_site_license_cache']['site_fingerprint']='different-site';
+ if($condition==='other_authority')$GLOBALS['options']['pixflow_design_site_license_cache']['validation_url']='https://elsewhere.invalid/validate';
+ if($condition==='unreadable')$GLOBALS['options']['pixflow_design_site_license_cache']['encrypted_license_key']='pfdesign-secret:v1:bad';
+ $before=$GLOBALS['options']['pixflow_design_site_license_cache'];$calls=count($GLOBALS['requests']);
+ $GLOBALS['responses']=[$condition==='outage'?new WP_Error():response(403,['valid'=>false,'access_granted'=>false,'status'=>'expired'])];
+ for($i=0;$i<3;$i++)check(!(new \PixflowDesign\WordPress\License\LicenseService())->status()['license']['valid'],'Unsafe renewal granted access');
+ $expected_calls=in_array($condition,['outage','still_expired'],true)?1:0;
+ check(count($GLOBALS['requests'])===$calls+$expected_calls,'Renewal polling was unbounded or crossed authority/site boundary');
+ check($GLOBALS['options']['pixflow_design_site_license_cache']===$before,'Failed renewal lost saved credential');
+}
+echo "Full offline-window recovery and bounded renewal refusal/isolation checks passed.\n";
+// Leave the shared lifecycle fixture usable by installation-recovery.test.php.
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];$GLOBALS['responses']=[];

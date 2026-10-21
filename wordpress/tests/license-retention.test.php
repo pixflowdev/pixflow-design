@@ -18,7 +18,7 @@ function esc_url_raw($s){return $s;}function untrailingslashit($s){return rtrim(
 function add_query_arg($a,$url){return $url.(str_contains($url,'?')?'&':'?').http_build_query($a);}
 class WP_Error{function __construct(public string $code='', public string $message='fixture network failure', public array $data=[]){} function get_error_message(){return $this->message;}}
 function is_wp_error($x){return $x instanceof WP_Error;}
-function wp_remote_get($url,$args){$GLOBALS['requests'][]=[$url,$args];return array_shift($GLOBALS['responses']);}
+function wp_remote_get($url,$args){$GLOBALS['requests'][]=[$url,$args];if(isset($GLOBALS['during_http'])){$callback=$GLOBALS['during_http'];unset($GLOBALS['during_http']);$callback();}return array_shift($GLOBALS['responses']);}
 function wp_remote_post($url,$args){return wp_remote_get($url,$args);}
 function wp_remote_retrieve_response_code($r){return $r['status'];}function wp_remote_retrieve_body($r){return $r['body'];}function wp_remote_retrieve_header($r,$h){return $r['headers'][$h]??'';}
 spl_autoload_register(function($name){$prefix='PixflowDesign\\WordPress\\';if(str_starts_with($name,$prefix)){$path=dirname(__DIR__).'/src/'.str_replace('\\','/',substr($name,strlen($prefix))).'.php';if(is_file($path))require_once $path;}});
@@ -77,3 +77,25 @@ check($GLOBALS['options']===$before,'Network exception changed saved data');
 $c=seed_license();$method->invoke(new CentralEntitlements(),response(401,['code'=>'invalid_challenge']),[],'keys');
 check((new CentralEntitlements())->status()['code']==='invalid_challenge','Unrelated endpoint gained challenge retry');
 echo "Licence retention, unreadable-key and bounded challenge recovery checks passed.\n";
+
+// A delayed refusal must not erase an activation committed while HTTP was pending.
+$c=seed_license();$GLOBALS['responses']=[response(403,['valid'=>false,'access_granted'=>false,'status'=>'revoked'])];
+$GLOBALS['during_http']=function()use($c){$i=new SiteIdentity();$c->persist($i->fingerprint($i->current_payload()),'new-key',['license_id'=>'new-license'],PIXFLOW_DESIGN_LICENSE_VALIDATION_URL);};
+$r=(new \PixflowDesign\WordPress\License\LicenseService())->validate('synthetic-key');
+check(($c->private_payload()['license_key']??'')==='new-key','Stale refusal erased newer activation');
+// A delayed success must not resurrect credentials after reset, even on first activation.
+foreach([false,true] as $initially_empty){
+ $c=seed_license();if($initially_empty)$GLOBALS['options']=[];
+ $GLOBALS['responses']=[response(200,['valid'=>true,'access_granted'=>true,'status'=>'active','license_id'=>'synthetic-id'])];
+ $GLOBALS['during_http']=function()use($c){(new CentralEntitlements())->deny('license_reset');$c->clear();};
+ $r=(new \PixflowDesign\WordPress\License\LicenseService())->validate('synthetic-key');
+ check(!$r['valid'] && !$c->summary()['present'],'Delayed success resurrected reset licence');
+ check((new CentralEntitlements())->status()['code']==='license_reset','Delayed success replaced reset denial');
+}
+echo "Delayed validation preserves reset and newer activation.\n";
+
+$c=seed_license();$GLOBALS['responses']=[response(200,['valid'=>true,'access_granted'=>true,'status'=>'active','license_id'=>'synthetic-id'])];
+$GLOBALS['deny_during_proof']=true;
+(new \PixflowDesign\WordPress\License\LicenseService())->validate('synthetic-key');
+check((new CentralEntitlements())->status()['code']==='license_revoked','Concurrent denial overwritten by manual validation enrollment');
+echo "Manual validation enrollment preserves concurrent denial.\n";

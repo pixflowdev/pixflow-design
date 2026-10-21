@@ -9,6 +9,7 @@ define('WPMU_PLUGIN_DIR', sys_get_temp_dir().'/pixflow-qa-no-mu-plugins');
 define('DISABLE_WP_CRON', true);
 require $root.'/wp-load.php';
 require dirname(__DIR__).'/src/License/CentralEntitlements.php';
+require dirname(__DIR__).'/src/License/LicenseCache.php';
 use PixflowDesign\WordPress\License\CentralEntitlements;
 function atomic_check(bool $ok, string $message): void { if (!$ok) throw new RuntimeException($message); }
 global $wpdb;
@@ -35,6 +36,21 @@ try {
     $renewed = ['epoch'=>3, 'denied'=>false, 'tokens'=>['wordpress'=>'renewed']];
     atomic_check($method->invoke($client, $denied, $renewed)===true, 'Matching state failed to commit');
     atomic_check(get_option($option)===$renewed, 'Successful commit failed to invalidate stale cache');
+    $licence = new \PixflowDesign\WordPress\License\LicenseCache();
+    $cacheMethod = new ReflectionMethod($licence, 'replace');
+    $cacheOption = 'pixflow_design_site_license_cache';
+    $old = ['encrypted_license_key'=>'old-ciphertext'];
+    $new = ['encrypted_license_key'=>'new-ciphertext'];
+    $wpdb->insert($table, ['option_name'=>$cacheOption,'option_value'=>maybe_serialize($old),'autoload'=>'no']);
+    wp_cache_set($cacheOption, $old, 'options');
+    $wpdb->update($table,['option_value'=>maybe_serialize($new)],['option_name'=>$cacheOption]);
+    atomic_check(!$cacheMethod->invoke($licence,$old,['reset_marker'=>'stale-refusal']),'Stale refusal erased new activation');
+    atomic_check($licence->clear(),'Explicit reset failed');
+    atomic_check(!$cacheMethod->invoke($licence,$new,$old),'Stale success resurrected reset credential');
+    atomic_check(!$cacheMethod->invoke($licence,[],$old),'First activation resurrected reset credential');
+    $current = maybe_unserialize($wpdb->get_var($wpdb->prepare("SELECT option_value FROM `{$table}` WHERE option_name=%s",$cacheOption)));
+    atomic_check($cacheMethod->invoke($licence,$current,$new),'Fresh post-reset activation failed');
+    echo "Real WordPress licence-cache activation/reset compare-and-swap passed.\n";
     echo "Real WordPress stale-cache denial preservation and atomic commit passed.\n";
 } finally {
     $wpdb->query("DROP TEMPORARY TABLE IF EXISTS `{$table}`");

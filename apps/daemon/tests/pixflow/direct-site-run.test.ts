@@ -49,6 +49,40 @@ afterEach(async () => {
 });
 
 describe('direct site agent connection', () => {
+  it('treats CLI help as discovery without executing the named operation', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-help-')); dirs.push(dir);
+    const app = express(); app.use(express.json());
+    const calls: unknown[] = [];
+    app.post('/tools', (req, res) => { calls.push(req.body); res.json({ tools: [] }); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'fixture' }));
+    for (const args of [['--help'], ['elementor.run', '--help'], ['bricks.run', '--help', '--code-file', 'absent.js']]) {
+      await promisify(execFile)(process.execPath, ['site-tool.mjs', ...args], { cwd: dir });
+    }
+    expect(calls).toEqual([{ tool: 'help', arguments: {} }, { tool: 'help', arguments: { topic: 'elementor' } }, { tool: 'help', arguments: { topic: 'bricks' } }]);
+  });
+  it.each([false, true])('describes saved result envelopes without flattening data (wrapped=%s)', async wrapped => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-envelope-')); dirs.push(dir);
+    const value = { inspection: { nodes: [] } };
+    const result = wrapped ? { ok: true, result: { value } } : { ok: true, inspection: value.inspection };
+    const app = express(); app.use(express.json()); app.post('/tools', (_req, res) => res.json(result));
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'fixture' }));
+    const { stdout } = await promisify(execFile)(process.execPath, ['site-tool.mjs', 'bricks.read', '--output', 'result.json'], { cwd: dir });
+    expect(JSON.parse(stdout)).toMatchObject({ keys: Object.keys(result), ...(wrapped ? { valuePath: 'result.value' } : {}) });
+    if (!wrapped) expect(JSON.parse(stdout)).not.toHaveProperty('valuePath');
+    expect(JSON.parse(await fs.readFile(path.join(dir, 'result.json'), 'utf8'))).toEqual(result);
+  });
+  it.each(['gutenberg', 'bricks', 'etch', 'elementor'])('provides file-based quoting guidance in %s', (editor) => {
+    const prompt = directSitePrompt({ agentId: 'codex', prompt: 'Inspect this page', history: [], context: { editor }, session: { endpoint: 'http://127.0.0.1/tools', token: 'fixture', writable: true, expiresAt: 0 } });
+    expect(prompt).toContain('Write multiline JSON or code using your file-editing tool');
+    expect(prompt).toContain('Gutenberg native operations use argument files');
+    expect(prompt).toContain('Local helper scripts that themselves use require belong in .cjs');
+  });
   it('gives CLI agents a normal Pro availability result with the explanation link', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-pro-boundary-')); dirs.push(dir);
     const app = express(); app.use(express.json());
@@ -198,10 +232,11 @@ describe('direct site agent connection', () => {
   it('enables design guidance for an unset preference and preserves explicit opt-out', async () => {
     runner.script=answerScript;
     const {request,post}=await fixture(false);
+    Object.assign(request.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{}}}});
     await(await post('run-stream',request)).text();
-    expect(runner.prompts.at(-1)).toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).toContain('OPTIONAL FOUNDATION');
     await(await post('run-stream',{...request,enhancedDesignGuidance:false,continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
-    expect(runner.prompts.at(-1)).not.toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).not.toContain('OPTIONAL FOUNDATION');
   });
 
   it('documents the optional JSON question format accepted by the panels', async () => {
@@ -221,14 +256,15 @@ describe('direct site agent connection', () => {
 
   it('keeps guidance in compatible follow-ups and removes it after disabling', async () => {
     const {post, request}=await fixture(); runner.script=answerScript;
+    Object.assign(request.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{}}}});
     await(await post('run-stream',{...request,enhancedDesignGuidance:true})).text();
-    expect(runner.prompts[0]).toContain('Design polish is enabled');
+    expect(runner.prompts[0]).toContain('OPTIONAL FOUNDATION');
     const followup={...request,prompt:'Follow up',history:[{role:'user',content:request.prompt},{role:'assistant',content:'First answer'}]};
     await(await post('run-stream',{...followup,enhancedDesignGuidance:true,continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
     expect(runner.contexts.at(-1)?.resumeSessionId).toBe('saved-native');
     await(await post('run-stream',{...followup,enhancedDesignGuidance:false,continuation:{id:'5'.repeat(32),token:'6'.repeat(64)}})).text();
     expect(runner.contexts.at(-1)?.resumeSessionId).toBeNull();
-    expect(runner.prompts.at(-1)).not.toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).not.toContain('OPTIONAL FOUNDATION');
     expect(runner.prompts.at(-1)).toContain('First answer');
   });
 
@@ -498,6 +534,8 @@ describe('direct site agent connection', () => {
       await expect(run(process.execPath, ['site-tool.mjs', 'skills.read', ...flags], { cwd: dir })).rejects.toMatchObject({ code: 1 });
     }
     expect(calls).toHaveLength(2);
+    await expect(run(process.execPath, ['site-tool.mjs', 'batch', '{calls:[]}'], { cwd: dir })).rejects.toMatchObject({stdout:expect.stringContaining('No site operation was dispatched')});
+    expect(calls).toHaveLength(2);
   });
   it('reports invalid argument-file encoding without sending replacement characters to WordPress', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-encoding-')); dirs.push(dir);
@@ -655,6 +693,7 @@ describe('direct site agent connection', () => {
   it.each(['bricks', 'etch', 'elementor'])('routes design polish to the active %s editor, including follow-ups', editor => {
     const input = { agentId: 'codex', prompt: 'Improve this page', history: [], enhancedDesignGuidance: true, canvasId: 'legacy', context: { editor, bricksIntegrationActive: true, etchIntegrationActive: true, elementorIntegrationActive: true }, session: { endpoint: 'https://example.test/tools', token: 'unused', writable: true, expiresAt: 0 } };
     const path = editor === 'bricks' ? 'bricks/workflows/enhanced-design.md' : `${editor}/design-polish.md`;
+    Object.assign(input.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:path,commands:{}}}});
     expect(directSitePrompt(input)).toContain(path);
     expect(directSitePrompt(input, false, true, true)).toContain(path);
     expect(directSitePrompt({ ...input, enhancedDesignGuidance: false })).not.toContain(path);
@@ -802,4 +841,17 @@ describe('direct site agent connection', () => {
     expect(stopped.status).toBe(200);
     await vi.waitFor(async()=>{expect(()=>process.kill(pid,0)).toThrow();await expect(fs.access(path.join(runDir,'site-connection.json'))).rejects.toThrow();},{timeout:15000});
   });
+});
+
+it('CLI uses only the current optional server guidance and preserves off', () => {
+ const input = {session:{endpoint:'https://example.test/tools',token:'fixture',writable:true},context:{},history:[],prompt:'Help with this page',enhancedDesignGuidance:true} as any;
+ expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
+ input.session.designGuidance={revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{'/operation check':'FOCUSED CHECK'}}};
+ expect(directSitePrompt(input)).toContain('OPTIONAL FOUNDATION');
+ input.enhancedDesignGuidance=false;
+ expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
+ input.prompt='/operation check this';
+ expect(directSitePrompt(input)).toContain('FOCUSED CHECK');
+ delete input.session.designGuidance;
+ expect(directSitePrompt(input)).not.toContain('FOCUSED CHECK');
 });

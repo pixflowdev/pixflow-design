@@ -53,12 +53,12 @@ final class DirectSiteRestController
 
     public function sessions(\WP_REST_Request $request): array|\WP_Error
     {
-        update_user_meta(get_current_user_id(), $this->setting_key(), false);
         $body = $request->get_json_params();
+        if (($body['purpose'] ?? '') !== 'guidance-draft') update_user_meta(get_current_user_id(), $this->setting_key(), false);
         $token = 'pfdirect_' . bin2hex(random_bytes(32));
         // Legacy mode values are accepted but no longer restrict a new session.
         // Existing tokens retain their original permissions until expiration.
-        $session = ['userId' => get_current_user_id(), 'blogId' => get_current_blog_id(), 'writable' => !in_array($body['purpose'] ?? '', ['audio', 'external-mcp'], true), 'expiresAt' => time() + 3600];
+        $session = ['userId' => get_current_user_id(), 'blogId' => get_current_blog_id(), 'writable' => !in_array($body['purpose'] ?? '', ['audio', 'external-mcp', 'guidance-draft'], true), 'expiresAt' => time() + 3600];
         if (isset($body['workspaceSource'])) {
             if (isset($body['editorTarget']) || !$session['writable']) return new \WP_Error('workspace_source_invalid', 'Workspace handoff sessions cannot also target an editor or an audio-only connection.', ['status' => 400]);
             $source = (new \PixflowDesign\WordPress\Pages\BuilderHandoffs())->workspace_source($body['workspaceSource']);
@@ -72,8 +72,11 @@ final class DirectSiteRestController
                     ->target((string) ($target['canvasId'] ?? ''), (int) ($target['postId'] ?? 0), is_array($target['entity'] ?? null) ? $target['entity'] : null);
             } catch (\Throwable $error) { return new \WP_Error('editor_unavailable', $error->getMessage(), ['status' => 409]); }
         }
+        // Premium guidance is resolved after authorization, never accepted from request JSON.
+        // Do not retain an extra copy in the credential transient or expose guidance on draft/audio sessions.
+        $guidance = $session['writable'] ? apply_filters('pixflow_design_run_guidance', null) : null;
         set_transient($this->key($token), $session, 3600);
-        return ['token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
+        return ['designGuidance' => is_array($guidance) ? $guidance : null, 'token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
     }
 
     public function session_permission(\WP_REST_Request $request): bool

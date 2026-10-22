@@ -59,10 +59,10 @@ final class GutenbergExtensions
     {
         $type = (string) ($entity['type'] ?? ($post_id && function_exists('get_post_type') ? get_post_type($post_id) : ''));
         $specialist = in_array($tool, ['gutenberg.entities', 'gutenberg.create'], true)
-            || (in_array($type, GutenbergEntity::SHARED, true) && !in_array($tool, ['gutenberg.read', 'gutenberg.schema'], true));
+            || (in_array($type, GutenbergEntity::SHARED, true) && !in_array($tool, array_merge(['gutenberg.read', 'gutenberg.schema'], self::contributions('gutenbergReadCommands')), true));
         if ($specialist && !\PixflowDesign\WordPress\Modules\FeatureContributions::available('site-editor')) throw new \RuntimeException('Pixflow Site Editor, template and shared-pattern authoring requires Pro. Existing content and WordPress native editing remain available.');
         if (isset($args['type'])) self::assert_entity((string) $args['type']);
-        if (!in_array($tool, ['gutenberg.read', 'gutenberg.schema', 'gutenberg.entities'], true)) {
+        if (!in_array($tool, array_merge(['gutenberg.read', 'gutenberg.schema', 'gutenberg.entities'], self::contributions('gutenbergReadCommands')), true)) {
             self::assert_tree((array) ($args['blocks'] ?? []));
             if ($post_id && function_exists('parse_blocks')) self::assert_tree(parse_blocks((string) get_post_field('post_content', $post_id)));
         }

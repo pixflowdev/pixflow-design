@@ -30,9 +30,54 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // flat (not deeply nested) so missing-key TS errors point straight at the
 // offending string instead of a generic object mismatch.
 export interface Dict {
-  "history.recoverCopies": string;
-  "history.recoveryTitle": string;
-  "history.recoveryExplanation": string;
+  "guidance.requestFailed": string;
+  "guidance.recovered": string;
+  "guidance.saved": string;
+  "guidance.chooseAgent": string;
+  "guidance.incomplete": string;
+  "guidance.title": string;
+  "guidance.subtitle": string;
+  "guidance.generateAgent": string;
+  "guidance.conflict": string;
+  "guidance.savedProduct": string;
+  "guidance.savedDesign": string;
+  "guidance.keep": string;
+  "guidance.keepNotice": string;
+  "guidance.useSaved": string;
+  "guidance.retry": string;
+  "guidance.loading": string;
+  "guidance.source": string;
+  "guidance.existing": string;
+  "guidance.system": string;
+  "guidance.custom": string;
+  "guidance.chooseSystem": string;
+  "guidance.unavailable": string;
+  "guidance.sourceHint": string;
+  "guidance.brief": string;
+  "guidance.placeholder": string;
+  "guidance.review": string;
+  "guidance.reviewHint": string;
+  "guidance.useDraft": string;
+  "guidance.draftAdded": string;
+  "guidance.documents": string;
+  "guidance.import": string;
+  "guidance.download": string;
+  "guidance.productHint": string;
+  "guidance.designHint": string;
+  "guidance.fileSize": string;
+  "guidance.imported": string;
+  "guidance.saving": string;
+  "guidance.save": string;
+  "guidance.unsaved": string;
+  "guidance.previous": string;
+  "guidance.restored": string;
+  "guidance.revision": string;
+  "guidance.questions": string;
+  "guidance.generate": string;
+  "guidance.cancel": string;
+  "guidance.preparing": string;
+  "guidance.invalidDraft": string;
+
   "composio.proRequired": string;
   "license.featureRefreshError": string;
   'assistant.compactingContext': string;
@@ -6518,6 +6563,10 @@ export interface Dict {
   "history.saveError": string;
   "history.loadError": string;
   "history.retry": string;
+  "history.recoverCopies": string;
+  "history.recoveryTitle": string;
+  "history.recoveryExplanation": string;
+
   "history.export": string;
   "history.exporting": string;
   "history.exportHint": string;

@@ -12,5 +12,5 @@ export function siteAuthoring(): GutenbergSiteAuthoring {
   return owner;
 }
 export function assertSiteAuthoring(tool: string, shared: boolean): void {
-  if (tool === 'gutenberg.entities' || tool === 'gutenberg.create' || (shared && !['gutenberg.read', 'gutenberg.schema'].includes(tool))) siteAuthoring();
+  if (tool === 'gutenberg.entities' || tool === 'gutenberg.create' || (shared && !['gutenberg.read', 'gutenberg.schema'].includes(tool) && !(window as any).PixflowGutenbergReadCommands?.[tool])) siteAuthoring();
 }

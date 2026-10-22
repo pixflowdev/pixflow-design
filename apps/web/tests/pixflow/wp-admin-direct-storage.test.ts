@@ -20,6 +20,13 @@ it('replaces a stale running shared transcript with completed text when tool eve
 import { directTabStorageKey } from '../../src/pixflow/direct-tab-storage';
 
 afterEach(()=>{vi.restoreAllMocks();sessionStorage.clear();localStorage.clear();});
+it.each([false,true])('does not terminate another tab’s run after an observer reload (tab copy: %s)',tabCopy=>{
+ const key='pixflow-direct:other-tab:1';
+ const rows=[{id:'remote',role:'assistant',content:'',status:'streaming',runStatus:'running',events:[],historyRevision:4}];
+ localStorage.setItem(key,JSON.stringify(rows));
+ if(tabCopy)sessionStorage.setItem(`pixflow:admin-transcript:${key}`,JSON.stringify(rows));
+ expect(restoreMessages(key)).toEqual(rows);
+});
 describe('Direct admin transcript durability',()=>{
   it.each(['etch', 'elementor'] as const)('keeps a %s handoff transcript separate from concurrent ordinary panel writes and recovers its run', builder => {
     const base = 'pixflow-direct:fixture-site:1';
@@ -70,10 +77,10 @@ describe('Direct admin transcript durability',()=>{
     persistMessages(key,[{id:'new',role:'assistant',content:'Current answer',status:'complete',runStatus:'succeeded'}]);
     expect(restoreMessages(key)).toMatchObject([{id:'new',content:'Current answer',runStatus:'succeeded'}]);
   });
-  it('does not claim an unfinished Direct run was canceled on reload',()=>{
+  it('does not infer a terminal state from a transcript without its owning run receipt',()=>{
     const key='pixflow-direct:fixture-site:1';
     persistMessages(key,[{id:'running',role:'assistant',content:'Partial answer',status:'streaming',runStatus:'running'}]);
-    expect(restoreMessages(key)).toMatchObject([{id:'running',content:'Partial answer',runStatus:'interrupted'}]);
+    expect(restoreMessages(key)).toMatchObject([{id:'running',content:'Partial answer',runStatus:'running'}]);
   });
   it('keeps a resumable run nonterminal while the panel reconnects',()=>{
     const key='pixflow-direct:fixture-site:1';
@@ -102,7 +109,7 @@ describe('Direct admin transcript durability',()=>{
       metadata:{sessionKey:scenario==='other-owner'?'pixflow-direct:another-site:1':key,messageId:'running',messages:[]},
       ...(scenario==='completed'?{checkpoint:{outcome:'succeeded'}}:{}),
     }));
-    expect(restoreMessages(key)[0]).toMatchObject({runStatus:'interrupted'});
-    expect(restoreMessages(key)[0]?.status).not.toBe('streaming');
+    expect(restoreMessages(key)[0]).toMatchObject({runStatus:scenario==='other-owner'?'running':'interrupted'});
+    if(scenario==='completed')expect(restoreMessages(key)[0]?.status).not.toBe('streaming');
   });
 });

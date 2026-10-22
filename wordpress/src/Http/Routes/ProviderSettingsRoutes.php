@@ -352,6 +352,7 @@ final class ProviderSettingsRoutes
         if ($protocol === 'openai' && strtolower((string) wp_parse_url($base, PHP_URL_HOST)) === 'api.openai.com') $protocol = 'openai-responses';
         $call = \PixflowDesign\WordPress\Providers\ProviderAgentTurn::prepare($call,$protocol,$input['turns'] ?? [],$input['results'] ?? [],$input['images'] ?? []);
         if (($input['siteTools'] ?? true) === false) unset($call['body']['tools']);
+        if (($input['contextSummary'] ?? false) === true) $call = \PixflowDesign\WordPress\Providers\ProviderAgentTurn::summary_call($call);
         // Agent turns may include reasoning and several tool calls. Connection
         // tests keep their shorter timeout; a valid agent response gets time to finish.
         $remote = $this->remote_request($call['url'],['method'=>'POST','headers'=>$call['headers'],'body'=>wp_json_encode($call['body']),'timeout'=>120]);
@@ -367,7 +368,7 @@ final class ProviderSettingsRoutes
     {
         $input = array_intersect_key($provider, array_flip(['apiProtocol', 'baseUrl', 'apiKey', 'model', 'apiVersion']));
         $result = $this->agent_turn($input + ['system' => $system, 'messages' => [['role' => 'user', 'content' => $text]],
-            'maxTokens' => 4096, 'siteTools' => false]);
+            'maxTokens' => 4096, 'siteTools' => false, 'contextSummary' => true]);
         if ($result['calls']) throw new \RuntimeException('A continuation note cannot run tools.');
         return $result['text'];
     }

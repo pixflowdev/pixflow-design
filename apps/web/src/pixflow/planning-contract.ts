@@ -48,12 +48,13 @@ export interface SitemapViewProps {
   onAgentChange?: (id: string) => void;
   onAgentModelChange?: (id: string, choice: { model?: string; reasoning?: string; fastMode?: boolean }) => void;
   onApiModelChange?: (model: string) => void;
-  onOpenSettings?: (section?: 'execution' | 'dictation') => void;
+  onOpenSettings?: (section?: 'execution' | 'dictation' | 'designSystems') => void;
   onRefreshAgents?: (options?: { useOptionalBridge?: boolean }) => Promise<unknown> | unknown;
 }
 
 /** Public composition boundary; planning implementations and their CSS belong to Pro. */
 export interface PlanningContribution {
+  EnhancedDesignGuidance?: ComponentType<{ enabled?: boolean; surface?: import('@open-design/contracts').PixflowSurface }>;
   PixflowDesignSystemLibrary: ComponentType<{ showHeading?: boolean; config?: AppConfig; onBack?: () => void; onChanged?: () => void; initialId?: string; createInitially?: boolean }>;
   PixflowFrameworkDesignSystemBuilder: ComponentType<{ reusable?: { title: string; profile: PixflowDesignSystemProfile; onSave: (profile: PixflowDesignSystemProfile) => Promise<void>; onClose: () => void } }>;
   DesignSystemCreationFlow: ComponentType<DesignSystemCreationProps>;

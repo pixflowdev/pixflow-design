@@ -8,7 +8,17 @@ vi.mock('../../src/pixflow/chat-history-client',()=>({
   historyMessageFingerprint:(message:Record<string,unknown>)=>{const {historyRevision,historySequence,...payload}=message;return JSON.stringify(payload);},
 }));
 vi.mock('../../src/pixflow/runtime-fetch',()=>({pixflowWordPressRestFetch:mocks.fetch}));
-import { compactWorkingContext, compactWorkingRun, prepareHistorySource, workingContextBytes } from '../../src/pixflow/working-context';
+import { compactWorkingContext, compactWorkingRun, prepareHistorySource, workingContextBytes, workingRunContextBytes } from '../../src/pixflow/working-context';
+
+it('counts completed history once without opaque reasoning or static instructions', () => {
+  const request = {role:'user',content:'Audit the page'};
+  const state = {messages:[request],turns:[{role:'system',content:'x'.repeat(60000)},request,{type:'reasoning',encrypted_content:'y'.repeat(60000)}],results:[]};
+  const original = structuredClone(state);
+  expect(workingRunContextBytes(state)).toBeLessThan(200);
+  expect(workingContextBytes(state)).toBeGreaterThan(120000);
+  expect(state).toEqual(original);
+  expect(workingRunContextBytes({...state,results:[{id:'result',content:'z'.repeat(60000)}]})).toBeGreaterThan(60000);
+});
 
 const binding={projectId:'project',conversationId:'conversation'};
 const message=(index:number)=>({id:`m-${index}`,role:index%2?'user':'assistant',content:`Preserved ${index}`,historySequence:index,historyRevision:1});

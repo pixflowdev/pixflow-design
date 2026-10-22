@@ -62,6 +62,14 @@ final class WordPressAdminOperations
         if (!self::handles($tool)) return $this->error('unknown_wordpress_operation', 'Unknown native WordPress operation.', 400);
         if (!current_user_can('edit_posts')) return $this->error('target_permission_denied', 'WordPress operations require an authenticated editing account.', 403);
         if (!$writable && !in_array($tool, self::READS, true)) return $this->error('read_only_session', 'This session is read-only. Start a writable session before changing the site.', 403);
+        // Provider wrappers sometimes encode IDs as strings. Accept only a
+        // lossless canonical decimal representation; all normal validation and
+        // target permission checks still run before dispatch.
+        foreach (['postId','termId','attachmentId','parent','featuredMediaId','page','perPage'] as $key) {
+            $value = $arguments[$key] ?? null;
+            if (is_string($value) && preg_match('/^(0|[1-9][0-9]*)$/D', $value)
+                && (string) (int) $value === $value) $arguments[$key] = (int) $value;
+        }
         if ($error = $this->validate($tool, $arguments)) return $error;
         if (str_starts_with($tool, 'wordpress.posts.')) {
             // Never turn an executable-snippet plugin's custom post type into

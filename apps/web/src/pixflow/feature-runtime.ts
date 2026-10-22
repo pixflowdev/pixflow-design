@@ -138,3 +138,10 @@ export async function refreshPixflowFeatureRuntime(
   window.dispatchEvent(new Event('pixflow:annotation-availability'));
   window.dispatchEvent(new CustomEvent('pixflow-design:app-config-changed', { detail: patch }));
 }
+
+/** Non-secret configuration supplied by the currently authorized optional module. */
+export function pixflowFeatureConfiguration(id: string): Record<string, unknown> | undefined {
+  if (typeof window === 'undefined' || !pixflowFeatureEnabled(id)) return undefined;
+  const value = (window as RuntimeWindow).__PIXFLOW_FEATURE_RUNTIME__?.configuration?.[id];
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined;
+}

@@ -30,6 +30,7 @@ namespace PixflowDesign\WordPress\Chat {
     }
 }
 namespace {
+    require dirname(__DIR__) . '/src/Chat/ContextBudget.php';
     require dirname(__DIR__) . '/src/Chat/WorkingContext.php';
     require dirname(__DIR__) . '/src/Chat/WorkingContextRepository.php';
     require dirname(__DIR__) . '/src/Chat/WorkingContextService.php';
@@ -48,6 +49,22 @@ namespace {
     $history = [];
     for ($i = 0; $i < 50; $i++) $history[] = ['id' => 'm-' . $i, 'role' => $i % 2 ? 'assistant' : 'user', 'content' => 'Message ' . $i . ' ' . str_repeat('Useful context. ', 150), 'runStatus' => $i % 2 ? 'succeeded' : null, 'settings' => ['untouched' => true]];
     $before = serialize($history);
+    $compactCalls = [];
+    Context::summarize([['role' => 'user', 'content' => str_repeat('x', 30000)]], '', static function ($system, $text) use (&$compactCalls) {
+        $compactCalls[] = $text;
+        return 'All relevant facts retained.';
+    });
+    check(count($compactCalls) === 1, 'Short continuation notes leave room for a larger fragment without another sequential provider request');
+    $unicodeSource = [['role' => 'user', 'content' => str_repeat('界🙂', 15000)]];
+    $fragments = []; $lengths = [];
+    Context::summarize($unicodeSource, str_repeat('n', Context::SUMMARY_BYTES), static function ($system, $text) use (&$fragments, &$lengths) {
+        $lengths[] = strlen($text);
+        $marker = "Next consecutive transcript fragment (JSON may continue in the next fragment):\n";
+        $fragments[] = substr($text, strpos($text, $marker) + strlen($marker));
+        return 'Short note';
+    });
+    check(implode('', $fragments) === wp_json_encode(Context::project($unicodeSource)), 'Adaptive fragments preserve every UTF-8 transcript byte in order');
+    check(max($lengths) < 38000 && count(array_filter($fragments, fn($fragment) => preg_match('//u', $fragment) !== 1)) === 0, 'Adaptive fragments retain the existing total input budget and valid UTF-8 boundaries');
     $service = new Service(); $repository = new Repository(); $calls = [];
     $complete = static function (string $system, string $text) use (&$calls): string { $calls[] = [$system, $text]; return 'Preserved goal, corrections, completed work, assets and pending tasks.'; };
     $prepared = $service->prepare('project', 'chat', [], $complete);
@@ -133,6 +150,11 @@ namespace {
     $runResult = $service->run('project', 'chat', $run, function ($system, $text) use (&$seen) { $seen .= $text; return 'Saved page 99; preserve request.'; });
     check($runResult['status'] === 'compacted' && !str_contains($seen, 'opaque-secret') && str_contains($seen, 'postId'), 'In-run tool-free summary excludes private reasoning and retains completion facts');
     check(serialize($run) === $originalRun, 'Original opaque checkpoint remains intact until browser acknowledgement');
+    $withInstructions=$run;
+    array_unshift($withInstructions['turns'],['role'=>'system','content'=>'STATIC-CATALOGUE-NOT-HISTORY']);
+    $seen='';
+    $service->run('project','chat',$withInstructions,function($system,$text)use(&$seen){$seen.=$text;return 'Keep the request and recorded result.';});
+    check(!str_contains($seen,'STATIC-CATALOGUE-NOT-HISTORY'),'Run compaction excludes static provider instructions that are supplied again');
     check($service->run('project', 'chat', array_replace($run, ['results' => []]), $complete)['status'] === 'fallback', 'Unmatched native tool pair cannot compact');
     check($service->run('project', 'chat', $run + ['inFlight' => ['id' => 'one']], $complete)['status'] === 'fallback', 'In-flight tools prevent compaction');
     check($service->run('project', 'chat', array_replace($run, ['results' => [['id' => 'tool-1', 'result' => ['pending' => true]]]]), $complete)['status'] === 'fallback', 'Pending completed-tool responses remain inspect-first');
@@ -175,5 +197,58 @@ namespace {
     $meta[1][$boundedKey][$bounded[2]] = time() - 1;
     $repository->candidate('bounded', 'chat', [], '');
     check(!isset($pending['pixflow_context_candidate_' . $bounded[2]]), 'Expired candidates are physically removed when the index is renewed');
+    $raw = str_repeat('{"value":"quoted \\"text\\""}', 1200);
+    $seenFragments = [];
+    Context::summarizeText($raw, '', function($system, $text) use (&$seenFragments) {
+        $seenFragments[] = substr($text, strpos($text, ":\n", strpos($text, "Next consecutive transcript fragment")) + 2);
+        return 'Bounded continuation';
+    });
+    check(implode('', $seenFragments) === $raw, 'Run summarization consumes exact evidence without a second JSON encoding');
+    check(count($seenFragments) === 1, 'Quote-heavy run evidence fits one existing-budget call');
+    $legacyCalls = 0;
+    Context::summarize([['role'=>'user','content'=>$raw]], '', function() use (&$legacyCalls) { $legacyCalls++; return 'Bounded continuation'; });
+    check($legacyCalls > count($seenFragments), 'Avoiding double encoding removes a sequential summary call without increasing the budget');
+    $history=[];
+    for($i=0;$i<40;$i++)$history[]=['id'=>'barrier-'.$i,'role'=>$i%2?'assistant':'user','content'=>str_repeat('Completed test context ',160),'status'=>$i%2?'complete':null];
+    $history[1]['status']='streaming';$history[1]['content']='Unfinished operation; no save receipt.';
+    $unchanged=serialize($history);$calls=[];
+    $prepared=$service->prepare('protected-spans','chat',[], $complete);
+    check($prepared['status']==='compacted' && $prepared['coveredMessages']===28,'Old unfinished reply does not block compaction of later completed exchanges');
+    check(array_slice($prepared['messages'],1,2)===Context::project(array_slice($history,0,2)),'Unfinished exchange and its user request remain verbatim outside the summary');
+    check(!str_contains(wp_json_encode($calls),'Unfinished operation'),'Unfinished evidence is never entrusted to the summarizer');
+    $service->commit('protected-spans','chat',$prepared['candidateId']);$calls=[];
+    check($service->prepare('protected-spans','chat',[],$complete)['status']==='reused' && !$calls,'Protected-span checkpoint is reused without repeated compaction');
+    check(serialize($history)===$unchanged,'Protected-span compaction leaves all original history untouched');
+    $checkpoint=$repository->read('protected-spans','chat');
+    $missing=$checkpoint;unset($missing['preserved']);
+    check(!Context::valid($missing,$history),'Checkpoint cannot omit protected unfinished exchanges');
+    $altered=$checkpoint;$altered['preserved'][1]['content']='Claimed completion';
+    check(!Context::valid($altered,$history),'Checkpoint cannot replace protected evidence with a completion claim');
+    $history[1]['content'].=' A new live delta.';
+    check(!Context::valid($repository->read('protected-spans','chat'),$history),'New delta invalidates the checkpoint instead of hiding ongoing work');
+    $runEvidence = ['messages'=>[['role'=>'user','content'=>str_repeat('Completed evidence. ', 3000)]], 'turns'=>[], 'results'=>[]];
+    $runCalls = [];
+    $runResult = $service->run('project', 'chat', $runEvidence, function($system, $text) use (&$runCalls) { $runCalls[]=$text; return 'Complete bounded continuation.'; });
+    check($runResult['status']==='compacted' && count($runCalls)===1, 'Medium completed run evidence should need one summary request');
+    check(str_contains($runCalls[0], $runEvidence['messages'][0]['content']), 'Single run summary includes all evidence');
+    $largeEvidence = str_repeat('Résumé — completed. ', 7000);
+    $fragments = [];
+    Context::summarizeText($largeEvidence, '', function($system, $text) use (&$fragments) {
+        $fragment = explode("Next consecutive transcript fragment (JSON may continue in the next fragment):\n", $text, 2)[1];
+        check(strlen($fragment) <= 64000 && preg_match('//u', $fragment), 'Run fragment is bounded and valid UTF-8');
+        $fragments[] = $fragment;
+        return 'Bounded continuation';
+    }, 64000);
+    check(count($fragments) > 1 && implode('', $fragments) === $largeEvidence, 'Large run evidence remains complete across bounded fragments');
+    $history=[];
+    for($i=0;$i<30;$i++) $history[]=['id'=>'budget-'.$i,'role'=>$i%2?'assistant':'user','content'=>str_repeat('Saved ordinary history. ',150)];
+    $before=serialize($history);$calls=[];
+    $current=['apiProtocol'=>'openai','baseUrl'=>'https://api.openai.com/v1','model'=>'gpt-6-luna'];
+    check($service->prepare('model-budget','chat',$current,$complete)['status']==='unchanged' && !$calls,'Known model retains moderate history without summary');
+    check(serialize($history)===$before,'Budget selection preserves authoritative history');
+    $fragments=[];
+    $text=str_repeat('Complete evidence. ',7000);
+    Context::summarizeText($text,'',function($system,$body)use(&$fragments){$fragments[]=explode("Next consecutive transcript fragment (JSON may continue in the next fragment):\n",$body,2)[1];return 'Bounded note';},192000);
+    check(count($fragments)===1 && implode('',$fragments)===$text,'Known model summary uses one bounded call without omitting source');
     echo $checks . " working-context preservation, concurrency, cancellation and projection checks passed.\n";
 }

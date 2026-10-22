@@ -222,7 +222,7 @@ interface Props {
   executionSwitcher?: ReactNode;
   mcpProvider?: string | null;
   codexVoiceEnabled?: boolean;
-  onOpenExecutionSettings?: (section?: 'execution' | 'dictation') => void;
+  onOpenExecutionSettings?: (section?: 'execution' | 'dictation' | 'designSystems') => void;
 }
 
 const EMPTY_DESIGN_SYSTEMS: DesignSystemSummary[] = [];

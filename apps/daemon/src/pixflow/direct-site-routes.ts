@@ -416,6 +416,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           try {
           capturedSessionId=await (def.id==='codex'?runCodexTurn:runOpenCodeTurn)({executable:launch.launchPath,env,cwd:workspace,prompt,images,
             mcpServers: externalMcp.codex,
+            isolateProjectInstructions: true,
             model:input.model,reasoning:input.reasoning,fastMode:input.fastMode,resumeSessionId,signal:preparation.signal,
             onChild:value=>{child=value;timings.spawnMs=elapsed();},onEvent,
             onSteerReady:steer=>{const live=runs.get(id);if(live)live.steer=steer;},

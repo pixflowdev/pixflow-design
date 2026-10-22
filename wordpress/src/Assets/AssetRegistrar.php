@@ -34,8 +34,12 @@ class AssetRegistrar
         foreach (\PixflowDesign\WordPress\Modules\BuilderIntegrations::all() as $integration) {
             if (isset($integration['enqueueClient'])) $handles[] = ($integration['enqueueClient'])();
         }
+        // Native builders need the same authorized metadata as deferred admin
+        // roots, before any dependent client can request optional capabilities.
+        $shared = self::shared_data_dependencies();
+        $runtime = FeatureRuntime::state($handles);
+        wp_add_inline_script('pixflow-shared-runtime', 'window.__PIXFLOW_FEATURE_RUNTIME__ = ' . wp_json_encode($runtime) . ';', 'before');
         if ($defer_optional) {
-            $this->deferred_feature_runtime = FeatureRuntime::state($handles);
             foreach (FeatureRuntime::DEFERRED_HANDLES as $handle) {
                 wp_dequeue_script($handle);
                 wp_dequeue_style($handle);
@@ -44,10 +48,9 @@ class AssetRegistrar
         }
         // Workspace is registered for lazy loading, never an eager dependency
         // of either the admin panel or a native builder's editor.
-        return array_values(array_unique(array_merge(self::shared_data_dependencies(), array_diff($handles, ['pixflow-workspace']))));
+        return array_values(array_unique(array_merge($shared, array_diff($handles, ['pixflow-workspace']))));
     }
 
-    private ?array $deferred_feature_runtime = null;
 
     public const SCRIPT_HANDLE = 'pixflow-design-builder-shell';
     public const BUILDER_CONTEXT_SCRIPT_HANDLE = 'pixflow-design-builder-context';
@@ -107,9 +110,6 @@ class AssetRegistrar
             $asset_version . '.' . (file_exists($app_script_path) ? (int) filemtime($app_script_path) : 0),
             true
         );
-        if ($this->deferred_feature_runtime !== null) {
-            wp_add_inline_script(self::APP_SCRIPT_HANDLE, 'window.__PIXFLOW_FEATURE_RUNTIME__ = ' . wp_json_encode($this->deferred_feature_runtime) . ';', 'before');
-        }
         wp_enqueue_script(
             self::FLOATING_PANEL_SCRIPT_HANDLE,
             PIXFLOW_DESIGN_ASSETS_URL . 'pixflow-design-floating-panel.js',

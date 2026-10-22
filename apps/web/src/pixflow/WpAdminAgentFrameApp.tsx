@@ -260,11 +260,14 @@ function hasPersistedWpAdminExecutionPreference(): boolean {
   }
 }
 
-function safeConfig(seed: Record<string, unknown> | undefined): AppConfig {
+export function safeConfig(seed: Record<string, unknown> | undefined): AppConfig {
   const local = loadConfig();
   if (!seed) return local;
   return {
-    ...mergeWpAdminRuntimeConfig(seed as Partial<AppConfig>, local, hasPersistedWpAdminExecutionPreference()),
+    // WordPress seeds a fresh document from the signed-in user's saved provider.
+    // The origin-wide browser cache may belong to an older mounted surface.
+    ...mergeWpAdminRuntimeConfig(seed as Partial<AppConfig>, local,
+      seed.mode !== 'api' && seed.mode !== 'daemon' && hasPersistedWpAdminExecutionPreference()),
     apiKey: local.apiKey,
   } as AppConfig;
 }
@@ -560,6 +563,9 @@ export function restoreMessages(key: string, persistenceSurface = 'admin'): WpAd
           .filter((item): item is WpAdminMessage => Boolean(item) && typeof item === 'object' && typeof (item as WpAdminMessage).role === 'string')
           .map((item) => {
             if (item.role !== 'assistant') return item;
+            // A transcript copy (including an observer tab's session cache) is
+            // not run ownership. Reconcile only this tab's matching receipt.
+            if (direct && (recovery?.sessionKey !== key || recovery.messageId !== item.id)) return item;
             const interrupted = item.status === 'streaming' || ['queued', 'running'].includes(String(item.runStatus || '').toLowerCase());
             // A matching resumable run is not terminal while its owner reconnects.
             const reconnecting = interrupted && Boolean(pending && !pending.checkpoint?.outcome
@@ -692,15 +698,16 @@ function contextUserId(context: WpAdminContext): string {
 function contextSiteHash(runtime: WpAdminRuntimeConfig): string { return String(runtime.siteHash || 'site'); }
 
 
-async function persistWpAdminConfig(next: AppConfig): Promise<void> {
-  const notification = createPixflowSharedAppConfigNotification(next, 'wp_admin', 'wp-admin-settings');
+async function persistWpAdminConfig(next: AppConfig, changed?: Partial<AppConfig>): Promise<void> {
+  const prefs = buildPixflowWordPressAppConfigPrefs(next, changed);
+  const notification = createPixflowSharedAppConfigNotification(prefs, 'wp_admin', 'wp-admin-settings');
   if (!notification) return;
   publishPixflowSharedAppConfigNotification(notification);
   saveConfig(next);
   const response = await pixflowRuntimeFetch('/api/app-config', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...buildPixflowWordPressAppConfigPrefs(next), ...notification.patch }),
+    body: JSON.stringify({ ...prefs, ...notification.patch }),
   });
   if (!response.ok) throw new Error(`Could not save shared settings (${response.status}).`);
   // WordPress owns these preferences. An offline optional Bridge must not
@@ -3492,7 +3499,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   const persistExecutionConfig = useCallback((patch: Partial<AppConfig>) => {
     const next = { ...config, ...patch };
     setConfig(next);
-    void persistWpAdminConfig(next).catch(() => undefined);
+    void persistWpAdminConfig(next, patch).catch(() => undefined);
   }, [config]);
 
   const refreshExecutionAgents = useCallback(async (_options?: { useOptionalBridge?: boolean }) => {
@@ -3648,7 +3655,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
             if (!item.projectId) throw new Error(translateUi("ui.wpAdminAgentFrameApp.feedback102", { value1: String(item.name) }));
             return { ...item, projectId: item.projectId };
           }),
-          mode: turnMode, prompt, context: { ...withGutenbergTarget(applyBuilderContext(context || {})), attachments, commentAttachments: _comments, selectedSkills: directSkillMentions(meta), ...directMcpMentionContext(meta) },
+          mode: turnMode, prompt, context: { ...withGutenbergTarget(applyBuilderContext(context || {})), attachments, commentAttachments: _comments, workspaceItems: meta?.context?.workspaceItems, selectedSkills: directSkillMentions(meta), ...directMcpMentionContext(meta) },
           persistenceSurface,persistenceMetadata:{messages:initial.map(message => message.id === id ? { ...message, agentId: resolvedAgent.id, agentName: resolvedAgent.name } : message),messageId:id,sessionKey:directOwner,mode:turnMode,...(handoff ? {handoff:handoff.receipt} : {})},
           history: handoff ? [] : steeringPromptHistory(messages), signal: controller.signal,
           onUpdate: (content, events) => {

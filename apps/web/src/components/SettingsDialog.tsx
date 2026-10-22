@@ -1069,6 +1069,26 @@ export function sanitizeSettingsSavePayload(
   };
 }
 
+const EXECUTION_SELECTION_KEYS = [
+  'mode', 'apiTransport', 'apiProtocol', 'apiVersion', 'apiKey', 'baseUrl',
+  'model', 'apiProviderBaseUrl', 'apiProtocolConfigs', 'maxTokens',
+  'composioProvider', 'composioModel', 'agentId',
+] as const satisfies ReadonlyArray<keyof AppConfig>;
+
+/** Adopt hydrated execution preferences only while the local selection is pristine.
+ * Treat provider fields as one group so a pending user edit is never combined
+ * with an older provider's credentials or model. Unrelated draft fields survive.
+ */
+function reconcileExecutionSelection(current: AppConfig, previous: AppConfig, incoming: AppConfig): AppConfig {
+  const before = normalizeSettingsRuntimeConfig(previous);
+  const next = normalizeSettingsRuntimeConfig(incoming);
+  const same = (a: AppConfig, b: AppConfig) => EXECUTION_SELECTION_KEYS.every(
+    (key) => JSON.stringify(a[key]) === JSON.stringify(b[key]),
+  );
+  if (!same(current, before) || same(current, next)) return current;
+  return { ...current, ...Object.fromEntries(EXECUTION_SELECTION_KEYS.map((key) => [key, next[key]])) };
+}
+
 export function switchApiProtocolConfig(
   config: AppConfig,
   protocol: ApiProtocol,
@@ -1233,22 +1253,24 @@ export function SettingsDialog({
   useEffect(() => {
     const previousInitial = previousInitialRef.current;
     setCfg((current) => {
+      const selection = reconcileExecutionSelection(current, previousInitial, initial);
       const nextAgentCliEnv = reconcileAmrProfileEnv(current.agentCliEnv, initial.agentCliEnv);
       const nextAgentModels = reconcileAmrModelChoice(current.agentModels, previousInitial, initial);
       if (
-        nextAgentCliEnv === current.agentCliEnv
+        selection === current
+        && nextAgentCliEnv === current.agentCliEnv
         && nextAgentModels === current.agentModels
       ) {
         return current;
       }
       return {
-        ...current,
+        ...selection,
         agentCliEnv: nextAgentCliEnv,
         agentModels: nextAgentModels,
       };
     });
     autosaveLastSavedRef.current = {
-      ...autosaveLastSavedRef.current,
+      ...reconcileExecutionSelection(autosaveLastSavedRef.current, previousInitial, initial),
       agentCliEnv: reconcileAmrProfileEnv(
         autosaveLastSavedRef.current.agentCliEnv,
         initial.agentCliEnv,

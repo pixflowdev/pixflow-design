@@ -174,3 +174,19 @@ it('does not add extra whitespace to an existing paragraph boundary', async () =
   await run.done;
   expect(run.events.mock.calls.map(([event]) => event.type === 'text_delta' ? event.delta : '').join('')).toBe('First.\n\nSecond.');
 });
+
+it('isolates direct-site project instructions without disabling personal skills or global config', async () => {
+  const run = fixture(false, undefined, { isolateProjectInstructions: true });
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+  await run.done;
+  expect(mocks.spawn.mock.calls[0]![1]).toContain('project_root_markers=["AGENTS.md"]');
+  expect(mocks.spawn.mock.calls[0]![2].env).toEqual({});
+});
+it('leaves ordinary workspace project discovery unchanged', async () => {
+  const run = fixture();
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+  await run.done;
+  expect(mocks.spawn.mock.calls[0]![1]).not.toContain('project_root_markers=["AGENTS.md"]');
+});

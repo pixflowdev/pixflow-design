@@ -3,6 +3,12 @@ import { buildPixflowWordPressAppConfigPrefs } from '../../src/pixflow/wordpress
 import type { AppConfig } from '../../src/types';
 
 describe('shared WordPress settings persistence', () => {
+  it('saves only the explicitly changed fields for a composer selection', () => {
+    const config = { mode: 'api', theme: 'light', model: 'current', agentId: 'codex' } as AppConfig;
+    expect(buildPixflowWordPressAppConfigPrefs(config, { mode: 'api' })).toEqual({ mode: 'api' });
+    expect(buildPixflowWordPressAppConfigPrefs(config, { model: 'current' })).toEqual({ model: 'current' });
+    expect(buildPixflowWordPressAppConfigPrefs(config, {})).toEqual({});
+  });
   it('retains full-modal preferences without including provider secrets or runtime facts', () => {
     const result = buildPixflowWordPressAppConfigPrefs({
       mode: 'daemon', apiKey: 'test-only-secret', model: 'test', baseUrl: '',

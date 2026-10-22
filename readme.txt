@@ -34,9 +34,16 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.1.0 =
-* Improve durable chat recovery, provider selection and model-aware context compaction.
-* Add shared integration contracts for optional Pro design guidance and focused operations.
-* Pair with Pixflow Design Bridge 2.1.0 for updated CLI behavior.
+* Preserve conflicting saved chat versions, recover older browser snapshots safely and refresh newer messages across open floating panels and Workspace chats without silently overwriting history.
+* Keep provider selection and saved credentials consistent across open settings panels and when switching between API, Local CLI and Composio execution.
+* Use model-aware working-context budgets, avoid repeatedly compacting unchanged context and recover safely when summary generation is unavailable.
+* Return smaller tool schemas and targeted skill lookups while keeping complete tool results available through accurate saved-result paths.
+* Validate API tool arguments before dispatch, report malformed calls clearly, accept losslessly encoded numeric WordPress content IDs and check requested edits against native tool readback before claiming completion or saving. Target and permission checks remain enforced.
+* Reconnect the owned live editor after navigation to another permitted document, including when the previous document is no longer editable. Validate the current target permissions before accepting edits.
+* Add shared composer support for optional Pro design references, clarification questions and focused operations. Preserve explicit multiline queued design commands when automatic design guidance is disabled; the design foundation, design-source settings and audit engine require Pro.
+* Expose live change-review selections to optional Pro controls and update all 18 downloadable language packs for the new guidance and review actions. English remains bundled.
+* Improve Local CLI startup instructions, native session context, site-tool argument handling and saved-result retrieval through Pixflow Design Bridge.
+* Pair with Pixflow Design Pro 2.1.0. Local CLI requires Pixflow Design Bridge 2.1.0; update Bridge before updating the plugins. API execution does not require Bridge. Existing website updates, installed plugin identities, chats and settings are preserved.
 
 = 2.0.8 =
 * Recover restored and interrupted chats without repeatedly reporting that messages have a newer saved version.

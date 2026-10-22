@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use model-aware working-context budgets, avoid repeatedly compacting unchanged context and recover safely when summary generation is unavailable.
 - Return smaller tool schemas and targeted skill lookups while keeping complete tool results available through accurate saved-result paths.
 - Validate API tool arguments before dispatch, report malformed calls clearly, accept losslessly encoded numeric WordPress content IDs and check requested edits against native tool readback before claiming completion or saving. Target and permission checks remain enforced.
-- Recognize the actual Gutenberg editor without incorrectly treating an ordinary Gutenberg page as managed by another installed builder. Reconnect the owned live editor after navigation to another permitted document, including when the previous document is no longer editable.
+- Reconnect the owned live editor after navigation to another permitted document, including when the previous document is no longer editable. Validate the current target permissions before accepting edits.
 - Add shared composer support for optional Pro design references, clarification questions and focused operations. Preserve explicit multiline queued design commands when automatic design guidance is disabled; the design foundation, design-source settings and audit engine require Pro.
 - Expose live change-review selections to optional Pro controls and update all 18 downloadable language packs for the new guidance and review actions. English remains bundled.
 - Improve Local CLI startup instructions, native session context, site-tool argument handling and saved-result retrieval through Pixflow Design Bridge.

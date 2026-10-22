@@ -6591,4 +6591,25 @@ export interface Dict {
   "settings.languageLoadError": string;
   "settings.languageAdminRequired": string;
   "settings.languageChecking": string;
+  "reviewPill.title": string;
+  "reviewPill.tune": string;
+  "reviewPill.instruction": string;
+  "reviewPill.guidance": string;
+  "reviewPill.previous": string;
+  "reviewPill.next": string;
+  "reviewPill.queued": string;
+  "reviewPill.queueFailed": string;
+  "reviewPill.guidanceHint": string;
+  "reviewPill.guidancePlaceholder": string;
+  "reviewPill.reloadGuidance": string;
+  "reviewPill.guidanceInvalid": string;
+  "reviewPill.unavailable": string;
+  "reviewPill.polish": string;
+  "reviewPill.typeset": string;
+  "reviewPill.layout": string;
+  "reviewPill.colorize": string;
+  "reviewPill.clarify": string;
+  "reviewPill.adapt": string;
+  "reviewPill.harden": string;
+  "reviewPill.optimize": string;
 }

@@ -31,6 +31,27 @@ function fixture(getPostId = () => 1) {
 }
 const show = (id = 'a') => presence.show([{ id, label: id.toUpperCase() }]);
 
+it('offers the selected live review area to optional UI and retires it on page changes', () => {
+  let page = 1;
+  const { section, c } = fixture(() => page);
+  const selections: CustomEvent[] = [];
+  const capture = (event: Event) => selections.push(event as CustomEvent);
+  document.addEventListener('pixflow:review-target', capture);
+  presence.begin(); show('a'); show('c'); presence.finish();
+  document.querySelector<HTMLButtonElement>('[aria-label="Review changes"]')!.click();
+  const first = selections.at(-1)!.detail;
+  expect(first.element).toBe(section);
+  expect(first.count).toBe(2);
+  first.navigate(1);
+  expect(selections.at(-1)!.detail.element).toBe(c);
+  page = 2; presence.syncDocument();
+  expect(selections.at(-1)!.detail).toBeNull();
+  const count = selections.length;
+  first.navigate(1); // An old pill cannot navigate another page's review.
+  expect(selections.slice(count).every(event => event.detail === null)).toBe(true);
+  document.removeEventListener('pixflow:review-target', capture);
+});
+
 it('hides review immediately without stopping the follower and restores the recorded changes', async () => {
   const { root } = fixture(); presence.begin(); show();
   await vi.advanceTimersByTimeAsync(260);

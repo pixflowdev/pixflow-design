@@ -5,9 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0-rc.1] - Unreleased candidate
+## [2.1.0-rc.3] - Unreleased candidate
 
 ### Improved
+
+- Preserve explicit design operations in queued multiline instructions when automatic guidance is disabled.
 
 - Preserve conflicting saved chat versions and refresh newer messages across open surfaces.
 - Keep provider selection and credentials consistent across mounted settings surfaces.
@@ -16,8 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Integration
 
+- Expose native review selections to optional Pro controls, with translated review actions in all supported language packs.
+
 - Add shared composer references, clarification and optional Pro design-guidance contracts. The Impeccable foundation, design-source settings and audit engine remain Pro-only.
-- Pair with Pixflow Design Pro and Bridge 2.1.0-rc.1. This candidate does not change published update feeds or the WordPress submission.
+- Pair with Pixflow Design Pro and Bridge 2.1.0-rc.3. This candidate does not change published update feeds or the WordPress submission.
 
 ## [2.0.8] - Hotfix
 
@@ -71,7 +75,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 - Deliver Pro skill downloads and updates through the existing site connection, with verified packages. Preserve installed versions, disabled choices, saved skill references, personal skills and settings when updating or when downloads are unavailable. Pro users can manage optional skills without starting a trial.
 
-- Expand the optional Pro library to 30 skills with 20 attributed WordPress adaptations for design refinement, typography, colour, responsive layouts, accessibility, quality testing, multilingual/RTL content, performance, debugging, copywriting, content planning, comparison pages, structured data, data-driven pages, analytics, experiments, pricing and banners. Show warnings for enabled skills with overlapping workflows without changing the user’s choices. On reopening Skills, group overlapping enabled installations first, then other installed skills, followed by available downloads; keep controls in place during installation.
+- Expand the optional Pro library to 30 skills with 20 attributed WordPress adaptations for design refinement, typography, colour, responsive layouts, accessibility, quality testing, multilingual/RTL content, performance, debugging, copywriting, content planning, comparison pages, structured data, data-driven pages, analytics, experiments, pricing and banners. Show warnings for enabled skills with overlapping workflows without changing the userâ€™s choices. On reopening Skills, group overlapping enabled installations first, then other installed skills, followed by available downloads; keep controls in place during installation.
 
 - Keep Settings above floating chat, annotation and review panels. Opening Settings from a quick menu no longer opens the Workspace behind it; closing Settings preserves the previously open chat panel.
 
@@ -93,7 +97,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 - Compact the agent's working context in long API and Composio conversations while preserving complete saved chat history. Retain recent messages and important decisions, show compaction progress, and keep queued messages safe through preparation, cancellation and recovery. Use supported CLI providers' native context management and preserve accepted steering across reconnects.
 - Add automatic Workspace handoff to Gutenberg, Bricks, Etch and Elementor. Choose an editor and a new draft or compatible existing page; Pixflow transfers the chat brief and reference files, opens the floating panel and starts the agent. Show progress, keep retries tied to the original draft and editor tab, and preserve source chats and unrelated page content.
-- Refresh the Pro Workspace with the floating panel’s shared composer, a permanent page icon rail and a separate collapsible Chats/Projects sidebar. Group chats into projects, pin projects or individual chats, search and rename chats, and move chats without changing their files or history. Preserve saved organisation across visits, replace the old Home/chat tabs with a compact toolbar, and remove the old home chips and Recent projects cards.
+- Refresh the Pro Workspace with the floating panelâ€™s shared composer, a permanent page icon rail and a separate collapsible Chats/Projects sidebar. Group chats into projects, pin projects or individual chats, search and rename chats, and move chats without changing their files or history. Preserve saved organisation across visits, replace the old Home/chat tabs with a compact toolbar, and remove the old home chips and Recent projects cards.
 - Fork a conversation into its own sidebar chat with the complete saved history through the selected reply, including older messages. Keep the original unchanged, retain a link back to it, and support safe retries and independent continuation.
 - Add live Gutenberg page and post editing through the Bridge and API providers: discover available blocks, read the unsaved document, insert, update, move and remove blocks, select targets, save, and use native undo/redo. Preserve unrelated content and native block serialization.
 - Add Gutenberg editor toolbar and quick-menu buttons, full-screen workspace access, and left/right floating-panel docking that reserves canvas space and restores saved placement.
@@ -174,7 +178,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 ### Fixed
 
-- Fix the builder follower showing a blank caption during edits. Keep a readable Updating… label with subtle working feedback, show Updated when the edit completes and Saved only after a confirmed save, and respect reduced-motion preferences.
+- Fix the builder follower showing a blank caption during edits. Keep a readable Updatingâ€¦ label with subtle working feedback, show Updated when the edit completes and Saved only after a confirmed save, and respect reduced-motion preferences.
 - Fix right-to-left layout handling for Arabic and Persian across Pixflow panels, dialogs and menus, including overlays opened after changing language. Correct Settings header spacing and close-button placement so controls do not overlap, without changing the surrounding WordPress editor's direction.
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.

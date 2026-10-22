@@ -1,5 +1,6 @@
 import type { ChatMessage } from '../types';
-import { saveChatHistoryMessage } from '../pixflow/chat-history-client';
+import { historyMessageFingerprint, importChatHistory, saveChatHistoryMessage } from '../pixflow/chat-history-client';
+import { preserveHistoryCopies } from '../pixflow/history-recovery';
 import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
 
 type Pending = { projectId: string; conversationId: string; message: ChatMessage };
@@ -94,4 +95,26 @@ export async function retryWorkspaceHistoryWrites(projectId: string, conversatio
 export function workspaceHistoryPendingMessages(projectId: string, conversationId: string): ChatMessage[] {
   const group = owner(projectId,conversationId);
   return [...pending].filter(([key]) => key.startsWith(group)).map(([,entry]) => entry.message);
+}
+
+/** Explicit recovery saves divergent copies privately before acknowledging canonical history. */
+export async function recoverWorkspaceHistoryWrites(projectId: string, conversationId: string, title: string): Promise<ChatMessage[]> {
+  const group = owner(projectId, conversationId), account = scope();
+  if (running.has(group)) return [];
+  const captured = [...pending].filter(([key]) => key.startsWith(group));
+  const source = {projectId, conversationId};
+  await preserveHistoryCopies(source, captured.map(([,entry]) => entry.message), title);
+  if (scope() !== account) throw new Error('The signed-in account changed.');
+  const canonical = await importChatHistory(source, captured.map(([,entry]) => entry.message));
+  if (scope() !== account) throw new Error('The signed-in account changed.');
+  const restored: ChatMessage[] = [];
+  for (const [key, entry] of captured) {
+    const saved = canonical.messages.find(item => item.id === entry.message.id);
+    if (!saved || pending.get(key) !== entry) continue;
+    const local = localStorage.getItem(key);
+    if (local && historyMessageFingerprint(JSON.parse(local).message) !== historyMessageFingerprint(entry.message)) continue;
+    localStorage.removeItem(key); pending.delete(key); failures.delete(key);
+    restored.push(saved as ChatMessage);
+  }
+  notify(); return restored;
 }

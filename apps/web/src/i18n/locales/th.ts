@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "history.recoverCopies": "บันทึกสำเนาสำหรับกู้คืน",
+  "history.recoveryTitle": "ประวัติแชทที่กู้คืน",
+  "history.recoveryExplanation": "เก็บทั้งสองเวอร์ชันเป็นประวัติส่วนตัวแยกกัน แล้วใช้เวอร์ชันที่บันทึกไว้ที่นี่",
   "composio.proRequired": "Composio ต้องใช้ Pro การเชื่อมต่อที่บันทึกไว้ของคุณจะยังคงอยู่ เลือก API หรือ Local CLI เพื่อดำเนินการต่อ",
   'assistant.compactingContext': 'กำลังสรุปบริบท…',
   "builderDestination.handoffToBuilder": "ส่งต่อไปยังเครื่องมือสร้างหน้า",

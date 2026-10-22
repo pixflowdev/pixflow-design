@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const esES: Dict = {
+  "history.recoverCopies": "Guardar copias de recuperación",
+  "history.recoveryTitle": "Historial recuperado",
+  "history.recoveryExplanation": "Conserva ambas versiones como historiales privados separados y usa aquí la versión guardada.",
   "composio.proRequired": "Composio requiere Pro. Tus conexiones guardadas se conservan. Elige API o Local CLI para continuar.",
   'assistant.compactingContext': 'Compactando el contexto…',
   "builderDestination.handoffToBuilder": "Transferir al editor de páginas",

@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "history.recoverCopies": "Save recovery copies",
+  "history.recoveryTitle": "Recovered chat history",
+  "history.recoveryExplanation": "Keep both versions as separate private history entries, then use the saved version here.",
   "composio.proRequired": "Composio requires Pro. Your saved connections are preserved. Choose API or Local CLI to continue.",
   'assistant.compactingContext': 'Compacting context…',
   "builderDestination.handoffToBuilder": "Handoff to builder",

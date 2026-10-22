@@ -80,6 +80,7 @@ export interface PixflowChatHistoryStorageUsage {
 export interface PixflowWorkingContextRequest {
   transport: 'api' | 'composio';
   throughMessageId: string;
+  maxTokens?: number;
   apiProtocol?: string;
   baseUrl?: string;
   apiKey?: string;

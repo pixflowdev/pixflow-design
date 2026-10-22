@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "history.recoverCopies": "Сохранить копии для восстановления",
+  "history.recoveryTitle": "Восстановленная история чата",
+  "history.recoveryExplanation": "Сохранить обе версии в отдельных личных историях, а здесь использовать сохранённую версию.",
   "composio.proRequired": "Для Composio требуется Pro. Сохранённые подключения сохраняются. Чтобы продолжить, выберите API или Local CLI.",
   'assistant.compactingContext': 'Сжатие контекста…',
   "builderDestination.handoffToBuilder": "Передать в редактор страниц",

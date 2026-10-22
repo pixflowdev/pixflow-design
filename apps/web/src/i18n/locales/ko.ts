@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "history.recoverCopies": "복구 사본 저장",
+  "history.recoveryTitle": "복구된 채팅 기록",
+  "history.recoveryExplanation": "두 버전을 별도의 비공개 기록으로 보관한 후 여기서는 저장된 버전을 사용합니다.",
   "composio.proRequired": "Composio를 사용하려면 Pro가 필요합니다. 저장된 연결은 유지됩니다. 계속하려면 API 또는 Local CLI를 선택하세요.",
   'assistant.compactingContext': '컨텍스트 요약 중…',
   "builderDestination.handoffToBuilder": "페이지 빌더로 넘기기",

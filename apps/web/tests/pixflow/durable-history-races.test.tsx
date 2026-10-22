@@ -6,6 +6,8 @@ import { useDurableChatHistory } from '../../src/pixflow/use-durable-chat-histor
 import { importChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage } from '../../src/pixflow/chat-history-client';
 
 const account = vi.hoisted(() => ({ id: 1 }));
+const recovery = vi.hoisted(() => vi.fn());
+vi.mock('../../src/pixflow/history-recovery', async importOriginal => ({ ...(await importOriginal<typeof import('../../src/pixflow/history-recovery')>()), preserveHistoryCopies: recovery }));
 vi.mock('../../src/pixflow/wordpress-context', () => ({ hasPixflowWordPressContext: () => true, getPixflowWordPressConfig: () => ({ siteHash: 'qa-site', userId: account.id }) }));
 vi.mock('../../src/pixflow/chat-history-client', async importOriginal => ({
   ...await importOriginal<typeof import('../../src/pixflow/chat-history-client')>(),
@@ -26,7 +28,7 @@ function useHarness(initial: Message[], sessionKey = 'history-race-test') {
   return { ...useDurableChatHistory({ sessionKey, messages, onHydrate: setMessages }), setMessages };
 }
 beforeEach(() => {
-  vi.clearAllMocks(); localStorage.clear(); sessionStorage.clear(); account.id = 1;
+  vi.clearAllMocks(); recovery.mockResolvedValue(undefined); localStorage.clear(); sessionStorage.clear(); account.id = 1;
   vi.mocked(resolveChatHistory).mockImplementation(async input => ({ projectId: input.sessionKey, conversationId: 'conversation' }));
   vi.mocked(importChatHistory).mockImplementation(async (_binding, messages) => ({ messages: messages.map((item, index) => ({ ...item, historyRevision: item.historyRevision || 1, historySequence: index + 1 })), deletedMessageIds: [] }));
   vi.mocked(readChatHistory).mockResolvedValue({ messages: [], nextCursor: null, hasMore: false });
@@ -35,6 +37,82 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('does not archive every delta written by the same mounted owner', async () => {
+    const initial = saved(message(1));
+    const owner = renderHook(() => useHarness([initial]));
+    await waitFor(() => expect(owner.result.current.loading).toBe(false));
+    for (const content of ['a', 'ab', 'abc']) act(() => owner.result.current.setMessages([{ ...initial, content }]));
+    expect(localStorage.getItem(`${outboxKey}:alternates`)).toBeNull();
+  });
+  it('leaves the shared recovery copy untouched if its alternate archive is unreadable', async () => {
+    const initial = saved(message(1));
+    const owner = renderHook(() => useHarness([initial]));
+    await waitFor(() => expect(owner.result.current.loading).toBe(false));
+    const alternate = { ...initial, content: 'Other tab final reply' };
+    localStorage.setItem(outboxKey, JSON.stringify([alternate]));
+    localStorage.setItem(`${outboxKey}:alternates`, '{broken');
+    act(() => owner.result.current.setMessages([{ ...initial, content: 'Local reply' }]));
+    expect(JSON.parse(localStorage.getItem(outboxKey)!)).toEqual([alternate]);
+    expect(localStorage.getItem(`${outboxKey}:alternates`)).toBe('{broken');
+    expect(owner.result.current.error).toBe('save');
+  });
+  it('preserves a different same-ID recovery snapshot before a second tab replaces its outbox entry', async () => {
+    const initial = saved(message(1));
+    const first = renderHook(() => useHarness([initial]));
+    const second = renderHook(() => useHarness([initial]));
+    await waitFor(() => expect(first.result.current.loading || second.result.current.loading).toBe(false));
+    const firstReply = { ...initial, content: 'Complete first-tab reply', status: 'complete' };
+    act(() => first.result.current.setMessages([firstReply]));
+    first.unmount();
+    act(() => second.result.current.setMessages([{ ...initial, content: 'Different second-tab reply' }]));
+    const preserved = JSON.parse(localStorage.getItem(`${outboxKey}:alternates`) || '[]');
+    expect(preserved).toContainEqual(firstReply);
+  });
+  it('keeps another tab’s final outbox message when this tab acknowledges a different reply', async () => {
+    const first = renderHook(() => useHarness([saved(message(1))]));
+    const second = renderHook(() => useHarness([saved(message(2))]));
+    await waitFor(() => expect(first.result.current.loading || second.result.current.loading).toBe(false));
+    const final = { ...saved(message(1)), content: 'Final answer awaiting save', status: 'complete' };
+    act(() => first.result.current.setMessages([final]));
+    first.unmount();
+    act(() => second.result.current.setMessages([{ ...saved(message(2)), content: 'Other reply finished' }]));
+    await waitFor(() => expect(saveChatHistoryMessage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({content:'Other reply finished'})));
+    const stored = JSON.parse(localStorage.getItem(outboxKey) || '[]');
+    expect(Array.isArray(stored) ? stored : stored.messages).toContainEqual(final);
+  });
+  it('does not turn another tab’s insert-only migration into a stale edit', async () => {
+    const browser = { ...saved(message(1)), content: 'Older browser snapshot' };
+    const canonical = { ...browser, content: 'Complete server answer', historyRevision: 3 };
+    const delayed = deferred<{ projectId: string; conversationId: string }>();
+    vi.mocked(resolveChatHistory).mockReturnValueOnce(delayed.promise);
+    vi.mocked(importChatHistory).mockResolvedValue({ messages: [canonical], deletedMessageIds: [] });
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [canonical], nextCursor: null, hasMore: false });
+    const first = renderHook(() => useHarness([browser]));
+    const second = renderHook(() => useHarness([browser]));
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    await act(async () => delayed.resolve({ projectId: 'history-race-test', conversationId: 'conversation' }));
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+    expect(second.result.current.messages[0]?.content).toBe(canonical.content);
+  });
+  it('keeps a conflicting recovery copy without blocking unrelated new messages', async () => {
+    const stale = { ...saved(message(1)), content: 'Unsaved text from another tab' };
+    const canonical = { ...saved(message(1)), content: 'Newer saved text', historyRevision: 3 };
+    localStorage.setItem(outboxKey, JSON.stringify([stale]));
+    vi.mocked(importChatHistory).mockResolvedValue({ messages: [canonical], deletedMessageIds: [] });
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [canonical], nextCursor: null, hasMore: false });
+    vi.mocked(saveChatHistoryMessage).mockImplementation(async (_binding, item) => {
+      if (item.id === stale.id) throw new Error('This message has a newer saved version.');
+      return { ...item, historyRevision: 1, historySequence: 2 };
+    });
+    const { result } = renderHook(() => useHarness([canonical]));
+    await waitFor(() => expect(result.current.error).toBe('save'));
+    act(() => result.current.setMessages([canonical, message(2)]));
+    await waitFor(() => expect(saveChatHistoryMessage).toHaveBeenCalledWith(expect.anything(), message(2)));
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(outboxKey)!)).toEqual([stale]));
+    expect(result.current.error).toBe('save');
+    expect(result.current.messages.find(item => item.id === canonical.id)?.content).toBe(canonical.content);
+  });
   it.each(['{"unfinished":', '{"unexpected":"record"}', '[{"content":"missing identity"}]'])('preserves an unreadable outbox without replacing it: %s', async raw => {
     localStorage.setItem(outboxKey, raw);
     const { result } = renderHook(() => useHarness([message(1)]));
@@ -224,5 +302,76 @@ describe('Durable history independent migration and recovery checks', () => {
     await act(async () => pending.resolve({ projectId: 'history-race-test', conversationId: 'conversation' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.messages[0]!.content).toBe('Streamed before history resolved');
+  });
+});
+
+
+it('keeps conflicting local data if saving a recovery copy fails', async () => {
+  const original = saved(message(1));
+  const owner = renderHook(() => useHarness([original]));
+  await waitFor(() => expect(owner.result.current.loading).toBe(false));
+  vi.mocked(saveChatHistoryMessage).mockRejectedValue(new Error('Conflict'));
+  act(() => owner.result.current.setMessages([{...original,content:'Different preserved response',status:'complete'}]));
+  await waitFor(() => expect(owner.result.current.error).toBe('save'));
+  const before = localStorage.getItem(outboxKey);
+  recovery.mockRejectedValue(new Error('Recovery storage unavailable'));
+  await act(async () => owner.result.current.recover('Recovered history'));
+  expect(localStorage.getItem(outboxKey)).toBe(before);
+  expect(owner.result.current.error).toBe('save');
+});
+it('uses canonical history only after divergent copies are preserved', async () => {
+  const original = saved(message(1));
+  const owner = renderHook(() => useHarness([original]));
+  await waitFor(() => expect(owner.result.current.loading).toBe(false));
+  vi.mocked(saveChatHistoryMessage).mockRejectedValue(new Error('Conflict'));
+  const different={...original,content:'Different response',status:'complete'};
+  act(() => owner.result.current.setMessages([different]));
+  await waitFor(() => expect(owner.result.current.error).toBe('save'));
+  vi.mocked(importChatHistory).mockResolvedValue({messages:[original],deletedMessageIds:[]});
+  await act(async () => owner.result.current.recover('Recovered history'));
+  expect(recovery).toHaveBeenCalledWith({projectId:'history-race-test',conversationId:'conversation'},[different],'Recovered history');
+  expect(owner.result.current.messages[0]?.content).toBe(original.content);
+  expect(owner.result.current.error).toBeNull();
+  expect(localStorage.getItem(outboxKey)).toBeNull();
+});
+
+// A passive editor must observe durable completion without becoming a writer.
+describe('Cross-tab completed history', () => {
+  it('ignores an in-flight refresh after the signed-in account changes', async () => {
+    const before = saved(message(1));
+    const { result } = renderHook(() => useHarness([before]));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const pendingRead = deferred<{ messages: Message[]; nextCursor: null; hasMore: boolean }>();
+    vi.mocked(readChatHistory).mockReturnValueOnce(pendingRead.promise);
+    act(() => window.dispatchEvent(new Event('focus')));
+    account.id = 2;
+    await act(async () => pendingRead.resolve({ messages: [{ ...before, content: 'Other account response', historyRevision: 4 }], nextCursor: null, hasMore: false }));
+    expect(result.current.messages[0]?.content).toBe(before.content);
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
+  it('refreshes a saved streaming snapshot on focus without writing it back', async () => {
+    const before = { ...saved(message(1)), content: 'Starting', status: 'streaming' };
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [before], nextCursor: null, hasMore: false });
+    const { result } = renderHook(() => useHarness([before]));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const final = { ...before, content: 'Complete answer from the other tab', status: 'complete', historyRevision: 4 };
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [final], nextCursor: null, hasMore: false });
+    act(() => window.dispatchEvent(new Event('focus')));
+    await waitFor(() => expect(result.current.messages[0]).toEqual(final));
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not replace a local unsaved edit when another tab completes', async () => {
+    const before = saved(message(1));
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [before], nextCursor: null, hasMore: false });
+    const { result } = renderHook(() => useHarness([before]));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const local = { ...before, content: 'Local unsaved work' };
+    act(() => result.current.setMessages([local]));
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [{ ...before, content: 'Remote answer', historyRevision: 4 }], nextCursor: null, hasMore: false });
+    act(() => window.dispatchEvent(new Event('focus')));
+    await act(async () => {});
+    expect(result.current.messages[0]?.content).toBe(local.content);
+    expect(localStorage.getItem(outboxKey)).toContain(local.content);
   });
 });

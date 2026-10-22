@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const it: Dict = {
+  "history.recoverCopies": "Salva copie di recupero",
+  "history.recoveryTitle": "Cronologia recuperata",
+  "history.recoveryExplanation": "Conserva entrambe le versioni come cronologie private separate, poi usa qui la versione salvata.",
   "composio.proRequired": "Composio richiede Pro. Le connessioni salvate vengono conservate. Scegli API o Local CLI per continuare.",
   'assistant.compactingContext': 'Compattazione del contesto…',
   "builderDestination.handoffToBuilder": "Trasferisci all’editor di pagine",

@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const fr: Dict = {
+  "history.recoverCopies": "Enregistrer les copies de récupération",
+  "history.recoveryTitle": "Historique récupéré",
+  "history.recoveryExplanation": "Conserver les deux versions dans des historiques privés distincts, puis utiliser ici la version enregistrée.",
   "composio.proRequired": "Composio nécessite Pro. Vos connexions enregistrées sont conservées. Choisissez API ou Local CLI pour continuer.",
   'assistant.compactingContext': 'Synthèse du contexte…',
   "builderDestination.handoffToBuilder": "Transférer vers l’éditeur de pages",

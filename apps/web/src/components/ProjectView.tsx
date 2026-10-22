@@ -189,7 +189,8 @@ import { PluginDetailsModal } from './PluginDetailsModal';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
 import { listMessagePage, prependHistoryPage } from '../state/chat-history';
-import { retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
+import { useWorkspaceHistoryRefresh } from '../state/use-workspace-history-refresh';
+import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
@@ -1015,6 +1016,7 @@ export function ProjectView({
   const historyPageGeneration = useRef(0);
   const historyContextLoading = useRef(false);
   const [historyWriteError, setHistoryWriteError] = useState(false);
+  const [historyRecovering, setHistoryRecovering] = useState(false);
   useEffect(() => {
     const update = () => setHistoryWriteError(Boolean(activeConversationId && workspaceHistoryWriteFailed(project.id,activeConversationId)));
     update();
@@ -2520,6 +2522,14 @@ export function ProjectView({
     },
     [project.id],
   );
+
+  useWorkspaceHistoryRefresh(project.id, activeConversationId,
+    hasPixflowWordPressContext() && messagesInitialized && messagesConversationId === activeConversationId && !streaming,
+    incoming => setMessages(current => {
+      const revisions = new Map(current.map(message => [message.id, message.historyRevision || 0]));
+      const newer = incoming.filter(message => !revisions.has(message.id) || (message.historyRevision || 0) > revisions.get(message.id)!);
+      return newer.length ? mergeServerMessagesIntoConversation(current, newer) : current;
+    }));
 
   const scheduleConversationMessageRefresh = useCallback(
     (conversationId: string) => {
@@ -6159,7 +6169,16 @@ export function ProjectView({
               key={`${project.id}:${activeConversationId ?? 'conversation-unavailable'}:${chatSeed?.id ?? 'ready'}`}
               messages={messages}
               olderHistory={olderMessagesCursor ? { loading: loadingOlderMessages, error: olderMessagesError, load: loadOlderMessages } : undefined}
-              historyPersistence={historyWriteError ? { retry: retryHistoryWrites } : undefined}
+              historyPersistence={historyWriteError ? { retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
+                if (!activeConversationId || historyRecovering) return;
+                const recoveryGeneration = historyPageGeneration.current;
+                setHistoryRecovering(true);
+                try {
+                  const restored = await recoverWorkspaceHistoryWrites(project.id, activeConversationId, title);
+                  if (recoveryGeneration === historyPageGeneration.current) setMessages(current => current.map(message => restored.find(item => item.id === message.id) || message));
+                } catch { setHistoryWriteError(true); }
+                finally { setHistoryRecovering(false); }
+              } } : undefined}
               streaming={currentConversationStreaming}
               liveToolInput={liveToolInput}
               loading={currentConversationLoading}

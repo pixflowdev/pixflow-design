@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.0-rc.2
+Stable tag: 2.1.0-rc.3
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -33,10 +33,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
-= 2.1.0-rc.2 =
+= 2.1.0-rc.3 =
 * Improve durable chat recovery, provider selection and model-aware context compaction.
 * Add shared integration contracts for optional Pro design guidance and focused operations.
-* Pair with Pixflow Design Bridge 2.1.0-rc.2 for updated CLI behavior.
+* Pair with Pixflow Design Bridge 2.1.0-rc.3 for updated CLI behavior.
 
 = 2.0.8 =
 * Recover restored and interrupted chats without repeatedly reporting that messages have a newer saved version.

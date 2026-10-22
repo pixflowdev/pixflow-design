@@ -13,3 +13,7 @@ it('preserves off and explicit operation semantics', () => {
  expect(optionalRunGuidance(false, guidance, 'mentions /operation check')).toBe('');
  expect(optionalRunGuidance(false, guidance, '/operation checker')).toBe('');
 });
+
+it.each(['\n', '\r\n', '\t'])('recognizes a queued operation followed by whitespace %j while automatic guidance is off', separator => {
+ expect(optionalRunGuidance(false, guidance, '/operation check' + separator + 'Apply only to the selected area.')).toContain('Read the check reference');
+});

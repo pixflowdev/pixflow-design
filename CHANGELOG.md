@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0-rc.3] - Unreleased candidate
+## [2.1.0] - 2026-10-22
 
 ### Improved
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expose native review selections to optional Pro controls, with translated review actions in all supported language packs.
 
 - Add shared composer references, clarification and optional Pro design-guidance contracts. The Impeccable foundation, design-source settings and audit engine remain Pro-only.
-- Pair with Pixflow Design Pro and Bridge 2.1.0-rc.3. This candidate does not change published update feeds or the WordPress submission.
+- Pair with Pixflow Design Pro 2.1.0. Local CLI requires Pixflow Design Bridge 2.1.0; update Bridge before updating the plugins. API execution remains independent of Bridge. Existing website updater ownership and installed plugin identities are preserved.
 
 ## [2.0.8] - Hotfix
 

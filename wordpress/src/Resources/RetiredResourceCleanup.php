@@ -39,6 +39,9 @@ final class RetiredResourceCleanup
         $lock = false;
         $acquired = false;
         try {
+            // Migration preserves every saved resource. Native deletion cannot operate
+            // on the encrypted index, and must not discard its saved references.
+            if (get_option('pixflow_design_resource_storage_backend', '') === 'encrypted-v1') return $state;
             $base = realpath((new ResourcePackPathService())->base_dir());
             if ($base === false) throw new \RuntimeException('Private storage unavailable.');
             $base = wp_normalize_path($base);

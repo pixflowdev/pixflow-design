@@ -159,6 +159,12 @@ final class DirectSiteWorkspace
     /** Resolve both existing and new paths without allowing traversal or symlink escapes. */
     public function resolve_path(string $relative, ?string $root = null): string
     {
+        if ($root !== null && \PixflowDesign\WordPress\Storage\EncryptedResourceReader::is_resource($root)) {
+            \PixflowDesign\WordPress\Storage\EncryptedResourceTree::name($relative);
+            $candidate = $root . '/' . $relative;
+            if (\PixflowDesign\WordPress\Storage\EncryptedResourceReader::canonical($candidate) === false) throw new \RuntimeException('Resource reference not found.');
+            return $candidate;
+        }
         $root = realpath($root ?? ABSPATH);
         if ($root === false || str_contains($relative, "\0") || preg_match('~^(?:[/\\\\]|[a-zA-Z]:)|(?:^|[/\\\\])\.\.(?:[/\\\\]|$)~', $relative)) {
             throw new \RuntimeException('Path must stay inside the connected WordPress site.');

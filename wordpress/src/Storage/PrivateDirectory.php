@@ -58,7 +58,15 @@ final class PrivateDirectory
             $legacy = wp_normalize_path($uploads['basedir'] . '/' . 'pixflow-design/' . $this->collection);
             if (file_exists($legacy) || is_link($legacy)) {
                 $this->assert_no_links($legacy);
-                if (file_exists($root)) throw new \RuntimeException('Both legacy and private storage trees exist; migration needs host assistance.');
+                if (file_exists($root)) {
+                    // A previous attempt may have created an empty destination.
+                    // Only resource directories get this recovery; never merge
+                    // two populated trees or modify project storage here.
+                    if ($this->collection !== 'resource-packs'
+                        || !\PixflowDesign\WordPress\Resources\BundledResources::remove_empty_tree($root)) {
+                        throw new \RuntimeException('Both legacy and private storage trees exist; migration needs host assistance.');
+                    }
+                }
                 // Rename the whole tree atomically: no partially copied data,
                 // public backup, database rewrite or destructive merge. Hosts
                 // using different filesystems must perform an offline migration.

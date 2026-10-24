@@ -158,14 +158,17 @@ final class CentralEntitlements
     }
 
     /** Recover a same-site saved licence using the authority, never a cached grant.
-     * Explicit denial/reset remains final until the customer activates again.
+     * Licence denial/reset remains final until the customer activates again.
+     * Older clients also stored transient invalid_challenge as a denial; only
+     * that protocol failure may retry with the saved key and a fresh proof.
      * The lock and retry interval keep simultaneous settings/status requests
      * from repeatedly contacting the authority during an outage.
      */
     public function recover_saved_license(): void
     {
         $state = $this->state();
-        if (!empty($state['denial_code']) || $this->verified($state, 'wordpress', 'wordpress:mutate') !== null) return;
+        if ((!empty($state['denial_code']) && $state['denial_code'] !== 'invalid_challenge')
+            || $this->verified($state, 'wordpress', 'wordpress:mutate') !== null) return;
         $cache = new LicenseCache();
         $payload = $cache->private_payload();
         $identity = new SiteIdentity();
@@ -175,7 +178,8 @@ final class CentralEntitlements
             || !hash_equals($identity->fingerprint($identity->current_payload()), (string) ($payload['site_fingerprint'] ?? ''))) return;
         // Unknown denied states are not migration candidates. An interrupted
         // first enrollment has an installation but no tokens or license ID.
-        if (!empty($state['denied']) && (empty($state['installation']['id']) || !empty($state['tokens']) || !empty($state['license_id']))) return;
+        if (!empty($state['denied']) && ($state['denial_code'] ?? '') !== 'invalid_challenge'
+            && (empty($state['installation']['id']) || !empty($state['tokens']) || !empty($state['license_id']))) return;
         $lock_key = 'pixflow_design_saved_license_recovery_lock';
         $retry_key = 'pixflow_design_saved_license_recovery_' . hash('sha256', $target . '|' . $payload['site_fingerprint'] . '|' . $payload['license_key']);
         if (get_transient($retry_key) !== false) return;
@@ -340,13 +344,13 @@ final class CentralEntitlements
         $http = new LicenseHttpClient();
         $challenge = $http->post_json($base . '/challenge', ['purpose' => $purpose, 'installation_id' => $state['installation']['id']]);
         if (is_wp_error($challenge)) return $this->transport_failure($state);
-        if ((int) ($challenge['status'] ?? 0) !== 200) return $this->rejected_response($challenge, $state);
+        if ((int) ($challenge['status'] ?? 0) !== 200) return $this->rejected_response($challenge, $state, 'challenge');
         try {
             $envelope = (new InstallationProof())->envelope($state['installation'], $purpose, json_decode($challenge['body'], true, 32, JSON_THROW_ON_ERROR), $payload);
-        } catch (\Throwable) { $this->deny('invalid_challenge'); return ['ok' => false, 'code' => 'invalid_challenge']; }
+        } catch (\Throwable) { return $this->transport_failure($state); }
         $response = $http->post_json($base . '/' . $purpose, $envelope);
         if (is_wp_error($response)) return $this->transport_failure($state);
-        if ((int) ($response['status'] ?? 0) !== 200) return $this->rejected_response($response, $state);
+        if ((int) ($response['status'] ?? 0) !== 200) return $this->rejected_response($response, $state, $purpose);
         $body = json_decode((string) ($response['body'] ?? ''), true);
         $keys_response = wp_remote_get($base . '/keys', ['timeout' => 15, 'redirection' => 0]);
         if (is_wp_error($keys_response)) return $this->transport_failure($state);
@@ -384,13 +388,16 @@ final class CentralEntitlements
         return ['ok' => false, 'code' => 'network_unavailable'];
     }
 
-    private function rejected_response(array $response, array $state): array
+    private function rejected_response(array $response, array $state, string $stage = ''): array
     {
         $status = (int) ($response['status'] ?? 0);
         // Temporary service failures retain only the authority's already-signed offline window.
         if ($status === 408 || $status === 429 || ($status >= 500 && $status <= 599)) return $this->transport_failure($state);
         $body = json_decode((string) ($response['body'] ?? ''), true);
         $code = (string) ($body['code'] ?? $body['error']['code'] ?? 'central_entitlement_denied');
+        // Only challenge freshness failures are retryable here. Actual licence,
+        // site and permission refusals must remain fail-closed.
+        if (in_array($stage, ['enroll', 'refresh'], true) && $status === 401 && $code === 'invalid_challenge') return $this->transport_failure($state);
         $this->deny($code);
         return ['ok' => false, 'code' => $code];
     }

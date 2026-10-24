@@ -16,6 +16,7 @@ final class LicenseService
 
     private static ?array $status_cache = null;
     private bool $legacy_upgrade_checked = false;
+    private bool $renewal_checked = false;
 
     public function __construct(
         private readonly SiteIdentity $site_identity = new SiteIdentity(),
@@ -56,7 +57,7 @@ final class LicenseService
         return $response;
     }
 
-    public function validate(string $license_key): array
+    public function validate(string $license_key, bool $renewal = false): array
     {
         $this->clear_status_cache();
         $license_key = trim($license_key);
@@ -64,6 +65,9 @@ final class LicenseService
             return $this->denied('missing_license_key', 'Enter a license key before validating Pixflow access.');
         }
 
+        $expected_cache = $this->cache->snapshot();
+        $expected_entitlement = get_option('pixflow_design_central_entitlements_v2', []);
+        if (!is_array($expected_entitlement)) $expected_entitlement = [];
         $identity = $this->site_identity->current_payload();
         $payload = array_merge($identity, [
             'operation' => 'validate',
@@ -115,7 +119,20 @@ final class LicenseService
             && (string) ($body['status'] ?? '') === 'active';
 
         if (!$valid) {
-            $this->cache->clear();
+            // A failed transport or malformed response is not a licence refusal.
+            // Keep the encrypted credential so the next refresh can recover.
+            $explicit_refusal = $status >= 200 && $status < 500
+                && !in_array($status, [408, 429], true)
+                && ($body['valid'] ?? null) === false
+                && ($body['access_granted'] ?? null) === false;
+            if (!$explicit_refusal) return $this->denied('license_verification_unavailable',
+                'Pixflow could not verify the saved licence. Your saved key has been kept; retry verification shortly.',
+                ['http_status' => $status]);
+            // An expired saved subscription can renew later. Keep its credential
+            // but never return access from this refused validation.
+            if ($renewal) return $this->denied((string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),
+                (string) ($body['message'] ?? 'The saved licence has no current access.'));
+            if (!$this->cache->clear($expected_cache)) return $this->denied('license_state_changed', 'Licence settings changed during verification. Refresh the status before retrying.');
             return array_merge($this->denied(
                 (string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),
                 (string) ($body['message'] ?? 'Pixflow license validation failed.'),
@@ -124,10 +141,11 @@ final class LicenseService
         }
 
         $site_fingerprint = $this->site_identity->fingerprint($identity);
-        $this->cache->persist($site_fingerprint, $license_key, $body, $this->validation_url());
+        if (!$this->cache->persist($site_fingerprint, $license_key, $body, $this->validation_url(), $expected_cache))
+            return $this->denied('license_state_changed', 'Licence settings changed during verification. Refresh the status before retrying.');
 
         if (CentralEntitlements::enabled()) {
-            (new CentralEntitlements())->enroll($license_key);
+            (new CentralEntitlements())->enroll($license_key, $expected_entitlement);
         }
 
         $license = $this->site_scoped_license_summary();
@@ -228,6 +246,11 @@ final class LicenseService
             if ($key !== '') $this->validate($key);
         }
         $license = $this->cache->summary();
+        if (($license['status'] ?? '') === 'expired' && !$this->renewal_checked) {
+            $this->renewal_checked = true;
+            $this->revalidate_expired_license();
+            $license = $this->cache->summary();
+        }
         if (($license['validation_url'] ?? self::VALIDATION_URL) !== $this->validation_url()) {
             return ['valid' => false, 'present' => false, 'status' => 'authority_changed'];
         }
@@ -245,6 +268,31 @@ final class LicenseService
         $this->cache->clear();
 
         return $this->cache->summary();
+    }
+
+    /** Poll a same-site expired subscription at most once per five minutes.
+     * A cached expiry cannot authorize anything; only fresh validation and a
+     * verified central grant can restore access. Reset/revocation remain final.
+     */
+    private function revalidate_expired_license(): void
+    {
+        $credentials = $this->cache->renewal_credentials();
+        $denial = (new CentralEntitlements())->status()['code'] ?? '';
+        if ($credentials === [] || !in_array($denial, ['', 'expired', 'license_expired', 'trial_access_expired'], true)
+            || $credentials['validation_url'] !== $this->validation_url()
+            || !CentralEntitlements::validation_url_matches($credentials['validation_url'])
+            || !hash_equals($this->site_identity->fingerprint($this->site_identity->current_payload()), $credentials['site_fingerprint'])) return;
+        $retry = 'pixflow_design_expired_license_retry_' . hash('sha256', implode('|', $credentials));
+        $lock = 'pixflow_design_expired_license_lock';
+        if (get_transient($retry) !== false) return;
+        $held = (int) get_option($lock, 0);
+        if ($held > 0 && $held < time() - 180) delete_option($lock);
+        if (!add_option($lock, time(), '', false)) return;
+        try {
+            if (get_transient($retry) !== false || $this->cache->renewal_credentials() !== $credentials) return;
+            set_transient($retry, true, 300);
+            $this->validate($credentials['license_key'], true);
+        } finally { delete_option($lock); }
     }
 
     private static function legacy_upgrade_key(array $payload, string $fingerprint, string $target): string

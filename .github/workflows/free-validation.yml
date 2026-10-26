@@ -38,6 +38,8 @@ jobs:
         run: pnpm guard
       - name: Typecheck
         run: pnpm typecheck
+      - name: Composer attachment preservation
+        run: pnpm --filter @open-design/web exec vitest run tests/components/composer/context-attachment.test.ts
       - name: Translation consistency
         run: pnpm i18n:check
       - name: Directory packaging regression

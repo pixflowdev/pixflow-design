@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Display attached reference context as compact composer chips while preserving complete content in saved drafts and messages. Supported contributions can append references without replacing the current draft.
+- Use the shared thin scrollbar styling inside the composer.
+
 All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

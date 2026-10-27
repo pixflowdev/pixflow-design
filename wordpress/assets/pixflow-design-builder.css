@@ -231,7 +231,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: pixflow-presence-text-shimmer 2200ms linear infinite;
+  animation: pixflow-presence-text-shimmer 1200ms linear infinite;
 }
 @keyframes pixflow-presence-text-shimmer { from { background-position: 150% 0; } to { background-position: -100% 0; } }
 #pixflow-direct-presence[data-presentation="quiet"] .pixflow-direct-presence-detail {
@@ -316,8 +316,7 @@
   pointer-events: auto;
 }
 
-#pixflow-design-overlay[data-tool="google-fonts"] .modal-backdrop,
-#pixflow-design-overlay[data-tool="design-system"] .modal-backdrop {
+#pixflow-design-overlay[data-tool="google-fonts"] .modal-backdrop {
   visibility: hidden;
   pointer-events: none;
 }

@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Mentés a Bricksbe",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Mentés a Saját dizájnrendszerekbe",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Könyvtári másolat frissítése",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "A Bricksbe mentés frissíti a webhely változóit és stílusait. A Saját dizájnrendszerekbe mentés egy újra felhasználható könyvtári másolatot is ment.",
+  "history.continuingConversation": "Beszélgetés folytatása…",
   "guidance.requestFailed": "Az útmutató nem tölthető be vagy menthető. A piszkozat megmarad.",
   "guidance.recovered": "A nem mentett piszkozat helyreállítva.",
   "guidance.saved": "Útmutató mentve. A meglévő oldalak és tervezési rendszerek nem változtak.",

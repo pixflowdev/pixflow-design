@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Simpan ke Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Simpan ke Sistem Desain Saya",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Perbarui salinan pustaka",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Simpan ke Bricks memperbarui variabel dan gaya situs ini. Menyimpan ke Sistem Desain Saya juga menyimpan salinan yang dapat digunakan kembali di pustaka.",
+  "history.continuingConversation": "Melanjutkan percakapan Anda…",
   "guidance.requestFailed": "Panduan tidak dapat dimuat atau disimpan. Draf Anda tetap tersimpan.",
   "guidance.recovered": "Draf yang belum disimpan telah dipulihkan.",
   "guidance.saved": "Panduan disimpan. Halaman dan sistem desain yang ada tidak berubah.",

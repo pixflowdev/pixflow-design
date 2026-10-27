@@ -107,6 +107,9 @@ final class DirectSiteRestController
             if ($builder === 'elementor' && !\PixflowDesign\WordPress\Modules\BuilderIntegrations::active('elementor')) throw new \RuntimeException('Elementor is not active.');
             if (!str_starts_with($tool, $builder . '.')) return (new DirectSiteWorkspace($this->session['workspaceSource'] ?? null))->call($tool, $args, $this->session['writable']);
             $relay = new DirectCanvasRelay($builder);
+            if ($builder === 'gutenberg' && ($this->session['editorTarget']['builder'] ?? '') === 'bricks') {
+                $this->session['editorTarget'] = (new DirectCanvasRelay('bricks'))->navigation_target($this->session['editorTarget']);
+            }
             if ($tool === $builder . '.canvases') return $relay->listing($this->session['editorTarget'] ?? null);
             if ($tool === $builder . '.context') {
                 $relay->assert_target((string) ($args['canvasId'] ?? ''), $this->session['editorTarget'] ?? null);
@@ -126,7 +129,11 @@ final class DirectSiteRestController
         $builder = (string) ($body['builder'] ?? 'bricks');
         if (!in_array($builder, ['bricks', 'etch', 'elementor', 'gutenberg'], true)) return new \WP_Error('builder_unavailable', 'Unknown builder.', ['status' => 400]);
         $available = $builder === 'gutenberg' || ($builder === 'elementor' ? \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('elementor') : ($builder === 'etch' ? \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('etch') : \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')));
-        if (!$available) return new \WP_Error('builder_unavailable', 'This builder is not active.', ['status' => 409]);
+        if (!$available) {
+            if (\PixflowDesign\WordPress\Modules\BuilderIntegrations::present($builder))
+                return new \WP_Error('pixflow_pro_required', 'Pixflow Design Pro access could not be verified. Check the saved licence status; the editor will reconnect when access is restored.', ['status' => 403]);
+            return new \WP_Error('builder_unavailable', 'The builder integration is unavailable. Check that the builder and Pixflow Design Pro are active.', ['status' => 409]);
+        }
         $relay = new DirectCanvasRelay($builder);
         try {
             $id = (string) ($body['canvasId'] ?? '');
@@ -137,6 +144,7 @@ final class DirectSiteRestController
                 'poll' => $relay->poll($id, (int) ($body['postId'] ?? 0), is_array($body['context'] ?? null) ? $body['context'] : null, is_array($body['entity'] ?? null) ? $body['entity'] : null),
                 'complete' => $relay->complete($id, (string) ($body['commandId'] ?? ''), $builder !== 'bricks' ? $this->native_payload($request, 'result') : (array) ($body['result'] ?? [])),
                 'close' => $relay->close($id),
+                'depart' => $relay->depart($id, (int) ($body['postId'] ?? 0), is_array($body['destination'] ?? null) ? $body['destination'] : null),
                 default => throw new \RuntimeException('Unknown canvas connection action.'),
             };
         } catch (\Throwable $error) {

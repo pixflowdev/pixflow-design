@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const pl: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Zapisz w Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Zapisz w Moich systemach projektowych",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Aktualizuj kopię w bibliotece",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Zapis w Bricks aktualizuje zmienne i style tej witryny. Zapis w Moich systemach projektowych zapisuje też kopię w bibliotece do ponownego użycia.",
+  "history.continuingConversation": "Wznawianie rozmowy…",
   "guidance.requestFailed": "Nie udało się wczytać lub zapisać wytycznych. Szkic został zachowany.",
   "guidance.recovered": "Odzyskano niezapisany szkic.",
   "guidance.saved": "Wytyczne zapisane. Istniejące strony i systemy projektowe nie zostały zmienione.",

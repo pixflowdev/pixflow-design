@@ -142,6 +142,14 @@ export function bricksStylingInstructions(useSiteStyles = true): string {
 }
 
 /** Live tools target one authenticated browser tab, never saved post metadata. */
+export interface PixflowDirectCanvasDepartureRequest {
+  action: 'depart';
+  builder: 'bricks';
+  canvasId: string;
+  postId: number;
+  destination?: PixflowEditorTarget;
+}
+
 export interface PixflowDirectCanvasCommand {
   /** Opaque owner of transient canvas feedback; never an execution credential. */
   presentationScope?: string;

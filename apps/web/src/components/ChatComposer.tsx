@@ -2669,6 +2669,10 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               disabled={effectiveSendDisabled || bridgeUpdateRequired}
               streaming={streaming}
               onOpenSettings={() => onOpenSettings?.('dictation')}
+              onAddText={prompt => {
+                const existing = currentEditorDraft();
+                replaceEditorDraft(`${existing}${existing ? '\n\n' : ''}${prompt}`);
+              }}
               onAdd={async (prompt, screenshots) => {
                 const owner = annotationContext.current;
                 setUploading(true);

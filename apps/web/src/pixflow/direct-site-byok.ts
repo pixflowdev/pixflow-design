@@ -7,7 +7,7 @@ import { pixflowWordPressRestFetch } from './runtime-fetch';
 import { randomUUID } from '../utils/uuid';
 import { pixflowOptionalBridgeJson } from './optional-bridge';
 import { SiteResultStore } from './site-result-store';
-import { directTabStorageKey } from './direct-tab-storage';
+import { floatingRunStorageKey } from './floating-conversation';
 import { withoutTranscriptEvents } from './direct-history-storage';
 import { composioInferenceTurn } from '../providers/composio-inference';
 import { pixflowWorkspaceBuilderHandoffInstructions, pixflowWordPressAdminToolsInstruction } from '@open-design/contracts';
@@ -129,7 +129,7 @@ export async function runByokSite(input: ByokSiteInput): Promise<PixflowDirectSi
   let content = saved?.content || '';
   const resultStore = new SiteResultStore();
   if(saved)resultStore.restore(saved.values);
-  const storageKey=directTabStorageKey(!input.persistenceSurface || input.persistenceSurface==='bricks'?'pixflow:direct-bricks-run':`pixflow:direct-bricks-run:${input.persistenceSurface}`);
+  const storageKey=floatingRunStorageKey(input.persistenceSurface);
   const connection=input.resume?.connection || {id:randomUUID().replaceAll('-',''),token:(randomUUID()+randomUUID()).replaceAll('-','')};
   let checkpoint:ByokSiteCheckpoint|undefined=saved;
   let leaving=false;

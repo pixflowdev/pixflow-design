@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "ذخیره در Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "ذخیره در سیستم‌های طراحی من",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "به‌روزرسانی نسخهٔ کتابخانه",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "ذخیره در Bricks متغیرها و سبک‌های این سایت را به‌روزرسانی می‌کند. ذخیره در سیستم‌های طراحی من یک نسخهٔ قابل استفادهٔ مجدد را نیز در کتابخانه ذخیره می‌کند.",
+  "history.continuingConversation": "در حال ادامهٔ گفت‌وگوی شما…",
   "guidance.requestFailed": "بارگذاری یا ذخیره راهنما ممکن نشد. پیش‌نویس شما حفظ شده است.",
   "guidance.recovered": "پیش‌نویس ذخیره‌نشده شما بازیابی شد.",
   "guidance.saved": "راهنما ذخیره شد. صفحات و سیستم‌های طراحی موجود تغییر نکردند.",

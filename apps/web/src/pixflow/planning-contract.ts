@@ -59,7 +59,7 @@ export interface PlanningContribution {
   PixflowFrameworkDesignSystemBuilder: ComponentType<{ reusable?: { title: string; profile: PixflowDesignSystemProfile; onSave: (profile: PixflowDesignSystemProfile) => Promise<void>; onClose: () => void } }>;
   DesignSystemCreationFlow: ComponentType<DesignSystemCreationProps>;
   DesignSystemDetailView: ComponentType<DesignSystemDetailProps>;
-  DesignSystemsSection: ComponentType<{ cfg: AppConfig; setCfg: Dispatch<SetStateAction<AppConfig>>; onDesignSystemsChanged?: (affectedDesignSystemId?: string) => void; onDesignSystemImportRebuildJob?: (designSystemId: string, job: DesignSystemGenerationJob) => void }>;
+  DesignSystemsSection: ComponentType<{ openManualEditor?: boolean; cfg: AppConfig; setCfg: Dispatch<SetStateAction<AppConfig>>; onDesignSystemsChanged?: (affectedDesignSystemId?: string) => void; onDesignSystemImportRebuildJob?: (designSystemId: string, job: DesignSystemGenerationJob) => void }>;
   DesignSystemsTab: ComponentType<{ systems: DesignSystemSummary[]; selectedId: string | null; onSelect: (id: string) => void; onPreview: (id: string) => void; onCreate?: () => void; onOpenSystem?: (id: string) => void; onSystemsRefresh?: () => Promise<void> | void; templates?: ProjectTemplate[] }>;
   DesignSystemPicker: ComponentType<{ designSystems: DesignSystemSummary[]; selectedId: string | null; loading?: boolean; onChange: (id: string | null) => void; variant?: 'project' | 'footer'; label?: string }>;
   DesignSystemSwitchPicker: ComponentType<{ t: (key: keyof Dict, vars?: Record<string, string | number>) => string; currentDesignSystemId?: string | null; onSelect: (designSystemId: string | null, title: string | null) => Promise<boolean>; onBack: () => void }>;

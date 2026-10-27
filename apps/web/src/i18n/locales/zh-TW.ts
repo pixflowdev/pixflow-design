@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const zhTW: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "儲存至 Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "儲存至我的設計系統",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "更新資源庫副本",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "儲存至 Bricks 會更新此網站的變數與樣式。儲存至我的設計系統還會在資源庫中儲存可重複使用的副本。",
+  "history.continuingConversation": "正在繼續你的對話…",
   "guidance.requestFailed": "無法載入或儲存指引文件。你的草稿已保留。",
   "guidance.recovered": "已復原未儲存的草稿。",
   "guidance.saved": "指引文件已儲存。現有頁面與設計系統未被修改。",

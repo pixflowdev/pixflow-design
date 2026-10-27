@@ -14,6 +14,7 @@ final class CentralEntitlements
     private const OPTION = 'pixflow_design_central_entitlements_v2';
     private const LOCK = 'pixflow_design_central_entitlements_refresh_lock';
     public const REFRESH_HOOK = 'pixflow_design_central_entitlements_refresh';
+    private static bool $request_refresh_scheduled = false;
 
     public static function enabled(): bool
     {
@@ -233,7 +234,35 @@ final class CentralEntitlements
         $claims = $this->verified($state, 'wordpress', $scope);
         if ($claims !== null && time() >= $claims['refresh_after']) $this->schedule_refresh();
         if ($claims === null && empty($state['denied'])) $this->schedule_refresh();
+        if (($claims === null || time() >= $claims['refresh_after'])
+            && !empty($state['installation']['id']) && empty($state['denied'])
+            && function_exists('current_user_can') && current_user_can('edit_posts')) {
+            if ($claims === null) {
+                $this->refresh_for_active_editor($state);
+                $claims = $this->verified($this->state(), 'wordpress', $scope);
+            } elseif (!self::$request_refresh_scheduled && function_exists('add_action')) {
+                self::$request_refresh_scheduled = true;
+                // Keep healthy editor heartbeats fast. A shutdown callback does
+                // not depend on WP-Cron or a successful loopback request.
+                add_action('shutdown', function () use ($state): void {
+                    if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+                    $this->refresh_for_active_editor($state);
+                });
+            }
+        }
         return $claims !== null;
+    }
+
+    /** Cron-independent renewal, never permission derived from a cached flag.
+     * The refresh lock/expected state serialize grants; failed transports retain
+     * only the authority-signed offline window and use a bounded retry cadence.
+     */
+    private function refresh_for_active_editor(array $state): void
+    {
+        $key = 'pixflow_design_editor_refresh_' . substr(hash('sha256', (string) ($state['installation']['id'] ?? '') . ':' . ($state['epoch'] ?? 0)), 0, 24);
+        if (get_transient($key)) return;
+        set_transient($key, true, 60);
+        $this->refresh($state);
     }
 
     public function deny(string $code): void
@@ -428,6 +457,10 @@ final class CentralEntitlements
             // First installation: add_option is an atomic insert and cannot
             // replace an installation another request has just committed.
             if ($expected === [] && $changed !== false) return add_option(self::OPTION, $replacement, '', false);
+            // A persistent object cache may retain the losing snapshot across
+            // requests. Reject the write, but let the next read see the winner.
+            wp_cache_delete(self::OPTION, 'options');
+            wp_cache_delete('alloptions', 'options');
             return false;
         }
         // Standalone PHP fixtures do not bootstrap a WordPress database.

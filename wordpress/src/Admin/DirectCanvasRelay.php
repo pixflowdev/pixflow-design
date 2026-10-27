@@ -68,6 +68,7 @@ final class DirectCanvasRelay
             $canvas['postId'] = $postId;
             if ($entity) $canvas['entity'] = $entity;
             $canvas['seenAt'] = time();
+            delete_option($this->key($resumeId) . '_departed');
             update_option($this->key($resumeId), $canvas, false);
             delete_option($this->key($resumeId) . '_context');
             $command = get_option($this->key($resumeId) . '_command');
@@ -102,7 +103,7 @@ final class DirectCanvasRelay
             if ($target['builder'] !== $this->builder) return ['canvases' => []];
             $canvas = $this->canvas($target['canvasId']);
             return ['canvases' => [['canvasId' => $target['canvasId'], 'postId' => $canvas['postId'], 'entity' => $canvas['entity'] ?? null,
-                'connected' => $canvas['seenAt'] >= time() - 30]],
+                'connected' => !get_option($this->key($target['canvasId']) . '_departed') && $canvas['seenAt'] >= time() - 30]],
                 'originPinned' => true];
         }
         global $wpdb;
@@ -127,6 +128,7 @@ final class DirectCanvasRelay
         $target = $session['editorTarget'] ?? null;
         $this->assert_target($id, $target);
         $canvas = $this->canvas($id);
+        if (get_option($this->key($id) . '_departed')) return $this->navigationResult(false, false);
         if ($this->builder === 'gutenberg' && !empty($canvas['entity'])) {
             if ((array) ($args['expectedEntity'] ?? []) != $canvas['entity']) throw new \RuntimeException('The editor changed documents. Read its current entity before editing.');
         } elseif (!\PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'legacyOptionalPostId', false) && empty($args['expectedPostId'])) throw new \RuntimeException('Builder commands require expectedPostId from the intended editor tab.');
@@ -148,19 +150,21 @@ final class DirectCanvasRelay
         if (!empty($session['workspaceSource']) && !$readOnly) throw new \RuntimeException('This is a Workspace planning session. Use builder.destinations and builder.handoff for this page; the selected live editor will start its own agent. No edit was queued.');
         if (!$session['writable'] && !$readOnly) throw new \RuntimeException('This existing canvas connection is read-only.');
         if ($this->builder === 'gutenberg' && ($error = Gutenberg\GutenbergExecutableContent::live_error($tool, $args))) return Gutenberg\GutenbergExecutableContent::blocked_result($error);
-        $command = ['id' => bin2hex(random_bytes(16)), 'tool' => $tool, 'arguments' => $args, 'postId' => $canvas['postId'], 'entity' => $canvas['entity'] ?? null, 'writable' => $session['writable'], 'expiresAt' => min($session['expiresAt'], time() + 120), 'sessionKey' => $sessionKey];
+        $command = ['id' => bin2hex(random_bytes(16)), 'tool' => $tool, 'arguments' => $args, 'postId' => $canvas['postId'], 'entity' => $canvas['entity'] ?? null, 'readOnly' => $readOnly, 'writable' => $session['writable'], 'expiresAt' => min($session['expiresAt'], time() + 120), 'sessionKey' => $sessionKey];
         if (!$this->reserve($this->key($id) . '_command', $command)) {
             // Explicit non-acceptance lets the transport wait for the occupied
             // mailbox without retrying an acknowledged or uncertain mutation.
             return ['ok' => false, 'code' => 'canvas_busy', 'accepted' => false, 'retryAfterMs' => 250,
                 'error' => 'The builder is finishing another command. This command has not been accepted.'];
         }
+        if (get_option($this->key($id) . '_departed')) $this->depart($id, (int) $canvas['postId']);
         return ['pending' => true, 'canvasId' => $id, 'commandId' => $command['id']];
     }
 
     public function poll(string $id, int $postId = 0, ?array $context = null, ?array $entity = null): array
     {
         $canvas = $this->canvas($id);
+        if (get_option($this->key($id) . '_departed')) return ['command' => null];
         if ($this->builder !== 'gutenberg') $entity = null;
         if ($this->builder === 'gutenberg' && $entity) $entity = Gutenberg\GutenbergEntity::validate($entity);
         if (($postId > 0 && $postId !== $canvas['postId']) || ($entity && $entity != ($canvas['entity'] ?? null))) {
@@ -222,7 +226,7 @@ final class DirectCanvasRelay
     {
         $canvas = $this->canvas($id);
         $context = get_option($this->key($id) . '_context');
-        $connected = $canvas['seenAt'] >= time() - 30;
+        $connected = !get_option($this->key($id) . '_departed') && $canvas['seenAt'] >= time() - 30;
         if (!is_array($context)) return ['context' => null, 'connected' => $connected, 'postId' => $canvas['postId']];
         $revision = $context['documentId'] . ':' . $context['revision'];
         return ['context' => $revision === $knownRevision ? null : $context,
@@ -253,12 +257,68 @@ final class DirectCanvasRelay
     {
         if (!preg_match('/^[a-f0-9]{32}$/D', $commandId)) throw new \RuntimeException('Invalid command id.');
         $result = get_transient('pixflow_canvas_result_' . $commandId);
+        if (!is_array($result)) $result = get_transient('pixflow_canvas_navigation_' . $commandId);
         if (!is_array($result)) return ['pending' => true];
         $sameOwner = isset($result['userId'], $result['blogId'])
             && (int) $result['userId'] === get_current_user_id() && (int) $result['blogId'] === get_current_blog_id();
         $authorized = isset($result['userId'], $result['blogId']) ? $sameOwner : hash_equals($result['sessionKey'], $sessionKey);
         if (!$authorized) throw new \RuntimeException('This command belongs to another session.');
         return $result['value'];
+    }
+
+    private function navigationResult(bool $claimed, bool $readOnly): array
+    {
+        $uncertain = $claimed && !$readOnly;
+        return ['ok' => !$uncertain, 'code' => 'editor_navigation', 'requestedActionCompleted' => false,
+            'executed' => $claimed ? null : false, 'accepted' => $claimed,
+            'outcome' => $uncertain ? 'unknown' : ($claimed ? 'read_unavailable' : 'not_executed'),
+            'message' => 'The same browser tab moved to the WordPress editor. This is a context transition, not a completed builder action. Do not retry this canvas command or claim it succeeded. You may continue permitted WordPress/ACF work on the same page using WordPress tools. Native builder work requires returning to the original builder tab.',
+            ...($uncertain ? ['error' => 'The builder closed after this command was dispatched. Its effect is unknown. Query this command result and inspect current state before retrying any mutation.'] : [])];
+    }
+
+    /** Settle abandoned work without replaying it or granting a different editor authority. */
+    public function depart(string $id, int $postId, ?array $destination = null): array
+    {
+        $canvas = $this->canvas($id);
+        if ($postId !== (int) $canvas['postId']) throw new \RuntimeException('The destination must be the same page.');
+        if ($destination) {
+            if ($this->builder !== 'bricks' || ($destination['builder'] ?? '') !== 'gutenberg' || (int) ($destination['postId'] ?? 0) !== $postId) throw new \RuntimeException('Only the same page can continue in its WordPress editor.');
+            $destination = (new self('gutenberg'))->target((string) ($destination['canvasId'] ?? ''), $postId, $destination['entity'] ?? null);
+            $existing = get_transient($this->key($id) . '_navigation_target');
+            if (get_option($this->key($id) . '_departed') && is_array($existing) && $existing !== $destination) throw new \RuntimeException('This handoff already belongs to another destination tab. Continue in that tab or start a new request.');
+        }
+        update_option($this->key($id) . '_departed', true, false);
+        delete_option($this->key($id) . '_context');
+        $command = get_option($this->key($id) . '_command');
+        if (is_array($command)) {
+            // Compete for exactly the same claim as poll. A concurrent poll can
+            // either own execution or lose to departure; it cannot replay work.
+            $claimed = get_option($this->key($id) . '_command_claimed') === $command['id']
+                || !$this->reserve($this->claimedKey($id, $command['id']), 'navigation');
+            $readOnly = !empty($command['readOnly']);
+            $result = $this->navigationResult($claimed, $readOnly);
+            if (!$claimed || $readOnly) $this->complete($id, $command['id'], $result);
+            else set_transient('pixflow_canvas_navigation_' . $command['id'], ['sessionKey' => $command['sessionKey'],
+                'userId' => get_current_user_id(), 'blogId' => get_current_blog_id(), 'value' => $result], 3600);
+        }
+        if ($destination) set_transient($this->key($id) . '_navigation_target', $destination, 3600);
+        return ['departed' => true, 'postId' => $postId];
+    }
+
+    /** Owner-authenticated browser navigation may continue on the same native document.
+     * The tool credential cannot create this link; each use revalidates both owners
+     * and document identities. Reopening the source revokes the departed state.
+     */
+    public function navigation_target(array $source): array
+    {
+        $id = (string) ($source['canvasId'] ?? '');
+        if ($this->builder !== 'bricks' || ($source['builder'] ?? '') !== 'bricks' || !get_option($this->key($id) . '_departed')) return $source;
+        $destination = get_transient($this->key($id) . '_navigation_target');
+        if (!is_array($destination)) return $source;
+        $origin = $this->canvas($id);
+        if ((int) $origin['postId'] !== (int) $source['postId'] || (int) $destination['postId'] !== (int) $source['postId']) throw new \RuntimeException('The editor handoff no longer targets the same page.');
+        if (is_array(get_option($this->key($id) . '_command'))) throw new \RuntimeException('A previous builder command has no confirmed result. Resolve it before continuing in another editor.');
+        return (new self('gutenberg'))->target($destination['canvasId'], (int) $destination['postId'], $destination['entity'] ?? null);
     }
 
     public function close(string $id): array
@@ -268,6 +328,7 @@ final class DirectCanvasRelay
         if (is_array($command)) $this->complete($id, $command['id'], ['ok' => false, 'error' => 'The builder disconnected. Inspect the canvas before retrying.']);
         delete_option($this->key($id));
         delete_option($this->key($id) . '_context');
+        delete_option($this->key($id) . '_departed');
         global $wpdb;
         $prefix = $this->key($id) . '_command_claimed_';
         foreach ($wpdb->get_col($wpdb->prepare("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like($prefix) . '%')) as $name) {

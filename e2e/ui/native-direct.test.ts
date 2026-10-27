@@ -16,13 +16,18 @@ test('Bridge remains reachable across navigation with no extension installed', a
       await page.goto(config.sites[0] + path, { waitUntil: 'domcontentloaded' });
       expect(context.serviceWorkers().filter(worker => worker.url().startsWith('chrome-extension:'))).toHaveLength(0);
       const result = await page.evaluate(async (bridge: string) => {
-        const response = await fetch(bridge + '/api/health');
+        // WordPress adapts window.fetch for its own API. Use the application's
+        // saved network fetch so this proves the real local Bridge answered.
+        const networkFetch = (window as any).__PIXFLOW_DESIGN_NATIVE_FETCH__ || fetch;
+        const response = await networkFetch(bridge + '/api/health');
+        const health = await response.json();
         return {
           status: response.status,
+          product: health.product,
           nativeAdapter: Boolean((window as any).__PIXFLOW_NATIVE_PROTOTYPE__),
         };
       }, config.bridge);
-      expect(result).toEqual({ status: 200, nativeAdapter: false });
+      expect(result).toEqual({ status: 200, product: 'pixflow-design-bridge', nativeAdapter: false });
     }
   } finally { await context.close(); }
 });

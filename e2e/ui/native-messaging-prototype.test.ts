@@ -2,6 +2,33 @@ import {test,expect,chromium} from '@playwright/test';
 import {mkdtemp,readFile,copyFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
+test('installed popup confirms real Bridge reachability and returns to direct mode',async()=>{
+ const extension=process.env.PIXFLOW_NATIVE_EXTENSION;
+ test.skip(!extension,'Explicit isolated prototype required');
+ const config=JSON.parse(await readFile(join(extension!,'config.json'),'utf8'));
+ const fixture=await mkdtemp(join(extension!,'popup-extension-'));
+ for(const name of ['manifest.json','config.json','background.js','page.js','content.js','popup.js','popup.html','popup.css','brand.svg','icon.png'])await copyFile(join(extension!,name),join(fixture,name));
+ const manifest=JSON.parse(await readFile(join(fixture,'manifest.json'),'utf8'));
+ const site=new URL(config.sites[0]);manifest.host_permissions=[site.protocol+'//'+site.hostname+'/*'];
+ await writeFile(join(fixture,'manifest.json'),JSON.stringify(manifest));
+ const profile=await mkdtemp(join(extension!,'popup-profile-'));
+ const context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`]});
+ try{
+  const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
+  const popup=await context.newPage();await popup.goto(`chrome-extension://${new URL(worker.url()).host}/popup.html`);
+  await expect(popup.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeEnabled();
+  await popup.getByRole('button',{name:'Connect to Pixflow Bridge'}).click();
+  await expect(popup.getByRole('heading',{name:'Bridge connected'})).toBeVisible({timeout:15000});
+  await expect(popup.getByRole('button',{name:'Check connection'})).toBeEnabled();
+  await popup.emulateMedia({colorScheme:'dark'});await popup.locator('body').screenshot({path:test.info().outputPath('installed-connected.png'),animations:'disabled'});
+  await popup.reload();await expect(popup.getByRole('heading',{name:'Bridge connected'})).toBeVisible();
+  await popup.getByRole('button',{name:'Disconnect this site'}).click();
+  await expect(popup.getByRole('heading',{name:'Connect this site'})).toBeVisible();
+  const stored=await worker.evaluate(async()=>await (globalThis as any).chrome.storage.local.get('sites'));
+  expect(stored.sites).toEqual([]);
+ }finally{await context.close();}
+});
+
 test('optional native adapter reaches existing Bridge and preserves site rejection',async()=>{
  const extension=process.env.PIXFLOW_NATIVE_EXTENSION;
  test.skip(!extension,'Explicit isolated prototype build and native registration required');
@@ -37,7 +64,7 @@ test('real CLI streams, steers and reconnects after approved-site navigation',as
  test.skip(!extension||process.env.PIXFLOW_NATIVE_REAL_CLI!=='1','Explicit real CLI acceptance opt-in required');
  const config=JSON.parse(await readFile(join(extension!,'config.json'),'utf8'));
  const fixture=await mkdtemp(join(extension!,'acceptance-'));
- for(const name of ['manifest.json','config.json','background.js','page.js','content.js','popup.js','popup.html'])await copyFile(join(extension!,name),join(fixture,name));
+ for(const name of ['manifest.json','config.json','background.js','page.js','content.js','popup.js','popup.html','popup.css','brand.svg','icon.png'])await copyFile(join(extension!,name),join(fixture,name));
  const manifest=JSON.parse(await readFile(join(fixture,'manifest.json'),'utf8'));
  // Pre-approved only in this disposable test profile. Production uses the popup permission request.
  const site=new URL(config.sites[0]);manifest.host_permissions=[site.protocol+'//'+site.hostname+'/*'];
@@ -52,8 +79,8 @@ test('real CLI streams, steers and reconnects after approved-site navigation',as
   // Browser localhost HTTP is deliberately unavailable: passing requires native messaging.
   await context.route(config.bridge+'/**',route=>route.abort('blockedbyclient'));
   const popup=await context.newPage();popup.setDefaultTimeout(20000);await popup.goto(`chrome-extension://${id}/popup.html`);
-  console.log('Enabling extension transport');await popup.getByRole('button',{name:'Enable native connection'}).click();
-  await expect(popup.getByRole('button',{name:'Use direct connection'})).toBeVisible();
+  console.log('Enabling extension transport');await popup.getByRole('button',{name:'Connect to Pixflow Bridge'}).click();
+  await expect(popup.getByRole('button',{name:'Disconnect this site'})).toBeVisible();
   await page.waitForFunction(()=>Boolean((window as any).__PIXFLOW_NATIVE_PROTOTYPE__));
   const binding=JSON.parse(await readFile(join(extension!,'session.private.json'),'utf8'));
   const call=async(path:string,body?:unknown)=>page.evaluate(async({url,body,session})=>{
@@ -84,8 +111,8 @@ test('real CLI streams, steers and reconnects after approved-site navigation',as
   expect(deltas).toContain('NATIVE STEER CONFIRMED');
   const status=await call('/api/runs/'+runId);expect(status.body.status).toBe('succeeded');
   const runs=await call('/api/runs?projectId='+encodeURIComponent(projectId));expect(runs.body.runs).toHaveLength(1);
-  await popup.getByRole('button',{name:'Use direct connection'}).click();
-  await expect(popup.getByRole('button',{name:'Enable native connection'})).toBeVisible();
+  await popup.getByRole('button',{name:'Disconnect this site'}).click();
+  await expect(popup.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeVisible();
   await context.unroute(config.bridge+'/**');console.log('Checking page-to-native health');expect((await call('/api/health')).status).toBe(200);console.log('Native health passed');
   await test.info().attach('real-cli-result',{body:JSON.stringify({runId,projectId,steer:steer.body.state,chunks:before.chunks,completed:true,navigation:true,directRestored:true}),contentType:'application/json'});
  }finally{

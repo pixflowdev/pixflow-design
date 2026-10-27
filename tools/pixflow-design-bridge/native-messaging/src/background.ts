@@ -1,4 +1,4 @@
-export {};
+import {probeBridge} from './connection-status';
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
 const pattern=(origin:string)=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';};
@@ -41,6 +41,14 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
   const config=await configPromise;
   if(message.type==='configuration'){reply({sites:config.sites,enabled:(await chrome.storage.local.get('sites')).sites||[]});return;}
   if(!config.sites.includes(message.origin))throw new Error('Site not configured');
+  if(message.type==='status'){
+   const stored=(await chrome.storage.local.get('sites')).sites||[];
+   if(!stored.includes(message.origin)||disabledOrigins.has(message.origin)){reply({state:'direct'});return;}
+   if(!await enabled(message.origin)){reply({state:'permission'});return;}
+   const generation=permissionGeneration;
+   const state=await probeBridge(chrome.runtime,message.origin,config.bridge);
+   reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
+  }
   const generation=permissionGeneration;
   if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);}
   else if(message.type!=='enable')throw new Error('Unknown operation');

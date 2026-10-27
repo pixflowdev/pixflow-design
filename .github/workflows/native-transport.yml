@@ -8,6 +8,8 @@ on:
       - 'tools/pixflow-design-bridge/tests/native-*.test.ts'
       - 'apps/web/src/providers/daemon.ts'
       - 'apps/web/tests/providers/daemon-workspace-handoff.test.ts'
+      - 'e2e/ui/native-popup.test.ts'
+      - 'e2e/lib/playwright/native.config.ts'
       - '.github/workflows/native-transport.yml'
   workflow_dispatch:
 
@@ -30,10 +32,14 @@ jobs:
           node-version: 24
       - run: pnpm install --frozen-lockfile
       - name: Native transport permission and disconnect regressions
-        run: node --import tsx --test tools/pixflow-design-bridge/tests/native-messaging.test.ts tools/pixflow-design-bridge/tests/native-permissions.test.ts tools/pixflow-design-bridge/tests/native-content.test.ts
+        run: node --import tsx --test tools/pixflow-design-bridge/tests/native-messaging.test.ts tools/pixflow-design-bridge/tests/native-permissions.test.ts tools/pixflow-design-bridge/tests/native-content.test.ts tools/pixflow-design-bridge/tests/native-status.test.ts
       - name: Native prototype typecheck and build
         run: |
           pnpm exec tsc -p tools/pixflow-design-bridge/native-messaging/tsconfig.json --noEmit
           pnpm exec tsx tools/pixflow-design-bridge/native-messaging/build.ts
       - name: Workspace session header regression
         run: pnpm --filter @open-design/web test tests/providers/daemon-workspace-handoff.test.ts
+      - name: Popup interaction and theme checks
+        run: |
+          pnpm --dir e2e exec playwright install --with-deps chromium
+          pnpm --dir e2e exec playwright test --config=lib/playwright/native.config.ts native-popup.test.ts

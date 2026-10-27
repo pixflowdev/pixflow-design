@@ -1,9 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {runInNewContext} from 'node:vm';
-import {transformSync} from 'esbuild';
-const source=transformSync(readFileSync(new URL('../native-messaging/src/background.ts',import.meta.url),'utf8'),{loader:'ts',format:'cjs'}).code;
+import {buildSync} from 'esbuild';
+const source=buildSync({entryPoints:[fileURLToPath(new URL('../native-messaging/src/background.ts',import.meta.url))],bundle:true,write:false,format:'cjs',platform:'browser'}).outputFiles[0].text;
 const flush=async()=>{for(let i=0;i<8;i++)await new Promise<void>(r=>setImmediate(r));};
 function event(){const listeners:Function[]=[];return {addListener(fn:Function){listeners.push(fn);},emit(...args:any[]){for(const fn of listeners)fn(...args);}};}
 function port(sender?:unknown){const p={name:'pixflow-native-prototype',sender,onMessage:event(),onDisconnect:event(),sent:[] as any[],closed:false,postMessage(value:any){if(p.closed)throw Error('closed');p.sent.push(value);},disconnect(){if(p.closed)return;p.closed=true;p.onDisconnect.emit();}};return p;}
@@ -13,7 +13,7 @@ function fixture(stored={sites:['https://example.test']},origins=['https://examp
   permissions:{contains:async()=>allowed,onRemoved:event()},storage:{local:{get:async()=>({sites:[...stored.sites]}),set:async(value?:{sites:string[]})=>{stored.sites=[...value!.sites];}}},
   scripting:{unregisterContentScripts:async()=>{},registerContentScripts:async()=>{}},tabs:{query:async()=>[]}
  };
- runInNewContext(source,{exports:{},module:{exports:{}},chrome,URL,fetch:async()=>({json:async()=>({sites:origins,bridge:'http://127.0.0.1:17467'})})});
+ runInNewContext(source,{exports:{},module:{exports:{}},chrome,URL,setTimeout,clearTimeout,fetch:async()=>({json:async()=>({sites:origins,bridge:'http://127.0.0.1:17467'})})});
  return {client,native,chrome,revoke(){allowed=false;chrome.permissions.onRemoved.emit({origins:['https://example.test/*']});}};
 }
 test('revocation closes both active channels without requiring another page message',async()=>{
@@ -83,4 +83,20 @@ test('revocation during an enable commit removes persisted consent before restar
  f.chrome.runtime.onMessage.emit({type:'enable',origin:'https://example.test'},{id:'fixture',url:'chrome-extension://fixture/popup.html'},(r:any)=>replies.push(r));await flush();
  f.revoke();resume();await flush();assert.deepEqual(stored.sites,[]);assert.ok(replies[0].error);
  const restarted=fixture(stored);restarted.chrome.runtime.onConnect.emit(restarted.client);await flush();assert.equal(restarted.client.closed,true);
+});
+
+test('status probes require extension UI and saved consent, and never modify consent',async()=>{
+ const stored={sites:[] as string[]},f=fixture(stored),responses:any[]=[];
+ const message={type:'status',origin:'https://example.test'};
+ f.chrome.runtime.onMessage.emit(message,{id:'fixture',url:'https://example.test'},(r:any)=>responses.push(r));await flush();assert.equal(responses.length,0);
+ f.chrome.runtime.onMessage.emit(message,{id:'fixture',url:'chrome-extension://fixture/popup.html'},(r:any)=>responses.push(r));await flush();
+ assert.equal(responses[0].state,'direct');assert.equal(f.native.sent.length,0);assert.deepEqual(stored.sites,[]);
+});
+
+test('revocation during status check cannot report connected or restore permission',async()=>{
+ const f=fixture(),responses:any[]=[];
+ f.chrome.runtime.onMessage.emit({type:'status',origin:'https://example.test'},{id:'fixture',url:'chrome-extension://fixture/popup.html'},(r:any)=>responses.push(r));await flush();
+ assert.equal(f.native.sent[0].method,'GET');assert.equal(f.native.sent[0].url,'http://127.0.0.1:17467/api/health');
+ f.revoke();f.native.onMessage.emit({id:'popup-health',type:'headers',status:200});f.native.onMessage.emit({id:'popup-health',type:'end'});await flush();
+ assert.equal(responses[0].state,'permission');assert.equal(f.native.closed,true);
 });

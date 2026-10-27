@@ -1,11 +1,13 @@
 import {build} from 'esbuild';
-import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile,copyFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 const root=resolve(import.meta.dirname),out=resolve(root,'../../../.tmp/native-messaging-prototype');
 await mkdir(out,{recursive:true});
 for(const name of ['background','content','page','popup'])await build({entryPoints:[resolve(root,'src',name+'.ts')],outfile:resolve(out,name+'.js'),bundle:true,platform:'browser',format:'iife',target:'chrome120'});
 await build({entryPoints:[resolve(root,'src/host.ts')],outfile:resolve(out,'host.mjs'),bundle:true,platform:'node',format:'esm',target:'node24'});
 const previous=JSON.parse(await readFile(resolve(out,'manifest.json'),'utf8').catch(()=>'{}'));
-await writeFile(resolve(out,'manifest.json'),JSON.stringify({manifest_version:3,name:'Pixflow Native Bridge Prototype',version:'0.0.2',...(previous.key?{key:previous.key}:{}),permissions:['nativeMessaging','storage','scripting'],optional_host_permissions:['https://*/*','http://127.0.0.1/*'],action:{default_title:'Pixflow Bridge connection',default_popup:'popup.html'},background:{service_worker:'background.js'}},null,2));
-await writeFile(resolve(out,'popup.html'),'<!doctype html><meta charset="utf-8"><title>Pixflow Bridge</title><h1>Bridge connection</h1><p>Optional native connection for approved sites. Existing WordPress permissions still apply.</p><div id="sites"></div><p id="status" role="status"></p><script src="popup.js"></script>');
+await writeFile(resolve(out,'manifest.json'),JSON.stringify({manifest_version:3,name:'Pixflow Native Bridge Prototype',version:'0.0.3',...(previous.key?{key:previous.key}:{}),icons:{128:'icon.png'},permissions:['nativeMessaging','storage','scripting','activeTab'],optional_host_permissions:['https://*/*','http://127.0.0.1/*'],action:{default_title:'Pixflow Bridge connection',default_popup:'popup.html',default_icon:{128:'icon.png'}},background:{service_worker:'background.js'}},null,2));
+for(const file of ['popup.html','popup.css'])await copyFile(resolve(root,file),resolve(out,file));
+await copyFile(resolve(root,'../../../wordpress/assets/brand/pixflow-plugin-icon.svg'),resolve(out,'brand.svg'));
+await copyFile(resolve(root,'../../pack/resources/linux/icon.png'),resolve(out,'icon.png'));
 console.log(out);

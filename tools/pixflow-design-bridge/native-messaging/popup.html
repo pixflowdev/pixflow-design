@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pixflow Bridge</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+ <header><img src="brand.svg" width="24" height="24" alt=""><span>Pixflow Bridge</span><span class="tag">Preview</span></header>
+ <main>
+  <div class="site-picker"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg><select id="site" aria-label="Website"><option value="" disabled selected>Select a website</option></select></div>
+  <section id="connection" data-state="checking" aria-live="polite" aria-atomic="true">
+   <span class="indicator" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path class="check" d="M8 12l3 3 5-6"/><path class="info" d="M12 7v6m0 3v1"/><circle cx="12" cy="12" r="9"/></svg></span>
+   <h1 id="state-title">Checking connection…</h1>
+   <p id="state-description">Checking this site’s connection to your local Bridge.</p>
+  </section>
+  <button id="action" class="primary" disabled>Checking connection…</button>
+  <p id="notice" role="status"></p>
+  <div class="utilities"><details><summary>Connection help<svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 4 4 4-4 4"/></svg></summary><div class="help"><p>Keep Pixflow Bridge running on your computer. In WordPress, open Pixflow → Execution → Local CLI and rescan if your agents are not listed.</p><p>The extension is optional. Disconnecting it keeps your chats and settings, and leaves the direct connection available.</p><p>Only sites approved in this prototype’s setup can connect. WordPress permissions still apply.</p></div></details><button id="disconnect" class="secondary" hidden>Disconnect this site</button></div>
+ </main>
+ <script src="popup.js"></script>
+</body></html>

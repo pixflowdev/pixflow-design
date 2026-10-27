@@ -6,6 +6,10 @@ The extension forwards fetch requests to the existing Bridge through Chrome nati
 
 ## Connection and coverage
 
+The popup follows Pixflow's neutral light/dark surfaces, compact controls and superellipse corners. It selects the current configured site when Chrome exposes its URL after the extension is clicked (`activeTab`); this does not grant persistent site access. The Connect action requests host permission explicitly. Existing configured origins remain the allowlist; the popup cannot enroll arbitrary sites.
+
+Saved permission is distinct from connection status: a bounded, read-only `/api/health` request travels through the native host before the popup reports Bridge connected. This verifies transport reachability, not WordPress login, installed CLI agents or authorization to edit a page. Setup, permission, refusal, timeout and unavailable-Bridge states have separate recovery copy. Disconnect disables extension transport without removing unrelated Chrome permissions, deleting chat/settings data or replaying a run.
+
 - Direct connection remains the default. The extension popup requests optional permission for a configured site when the user enables native connection. Approved sites reconnect across navigation. Use direct connection disables injection and restores direct fetch without replaying pending mutations.
 - Chrome host permission patterns cannot restrict ports. The background worker and native host independently enforce the exact configured origin, including port. Only top-level tabs can connect.
 - Browser-facing Bridge route families cover agents, runs/steering/cancellation/events, projects, connectors, integrations, artifacts, import, dialogs, editors, AMR, applied plugins, sync, and Pixflow direct-site/builder/audio routes. Existing Bridge authorization remains authoritative. Lifecycle endpoints are excluded.

@@ -12,7 +12,7 @@ const manifest=JSON.parse(await readFile(resolve(out,'manifest.json'),'utf8'));
 manifest.key??=generateKeyPairSync('rsa',{modulusLength:2048}).publicKey.export({type:'spki',format:'der'}).toString('base64');
 const id=[...createHash('sha256').update(Buffer.from(manifest.key,'base64')).digest().subarray(0,16)].flatMap(x=>[x>>4,x&15]).map(x=>String.fromCharCode(97+x)).join('');
 await writeFile(resolve(out,'manifest.json'),JSON.stringify(manifest,null,2));
-await writeFile(resolve(out,'config.json'),JSON.stringify({extensionOrigin:`chrome-extension://${id}/`,bridge:bridge.origin,sites:[site.origin]},null,2));
+await writeFile(resolve(out,'config.json'),JSON.stringify({hostName:'dev.pixflow.bridge_prototype',extensionOrigin:`chrome-extension://${id}/`,bridge:bridge.origin,sites:[site.origin]},null,2));
 const launcher=resolve(out,'native-host.cmd');
 await writeFile(launcher,`@echo off\r\n"${process.execPath}" "${resolve(out,'host.mjs')}" %*\r\n`);
 const file=resolve(out,'native-host.json');

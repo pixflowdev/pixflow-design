@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    if(!stored.includes(message.origin)||disabledOrigins.has(message.origin)){reply({state:'direct'});return;}
    if(!await enabled(message.origin)){reply({state:'permission'});return;}
    const generation=permissionGeneration;
-   const state=await probeBridge(chrome.runtime,message.origin,config.bridge);
+   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName);
    reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
   }
   const generation=permissionGeneration;
@@ -94,7 +94,7 @@ chrome.runtime.onConnect.addListener((port:any)=>{
  void (async()=>{
   const config=await configPromise;
   if(port.name!=='pixflow-native-prototype'||port.sender?.frameId!==0||!config.sites.includes(origin)||!await enabled(origin)||generation!==permissionGeneration||closed){connection.close(true);return;}
-  native=chrome.runtime.connectNative('dev.pixflow.bridge_prototype');connections.add(connection);
+  native=chrome.runtime.connectNative(config.hostName||'dev.pixflow.bridge_prototype');connections.add(connection);
   let responses=Promise.resolve(),delivery=Promise.resolve();
   native.onMessage.addListener((message:any)=>{
    responses=responses.then(async()=>{

@@ -1,6 +1,6 @@
 # Optional native messaging prototype
 
-Development-only Chrome transport. Free/Pro ZIPs, installed Bridge files and published packages are unchanged. This is not a production extension or an installer integration. Exclude prototype sources from the Bridge resource-tree copy before any unrelated release from this branch.
+Development-only Chrome transport. Free/Pro ZIPs, installed Bridge files and published packages are unchanged. This is not a released extension. Prototype sources and tests are excluded from the normal Bridge resource copy.
 
 The extension forwards fetch requests to the existing Bridge through Chrome native messaging. It preserves the verified tab origin and supplied site/session credentials. The Bridge continues to authorize runs, tools and sites; the adapter does not execute page-supplied shell commands.
 
@@ -40,4 +40,16 @@ The opt-in real CLI test additionally requires `PIXFLOW_NATIVE_REAL_CLI=1` and a
 
 Isolated Windows acceptance covered the real optional-permission prompt, permission removal and recovery, both composers, CLI streaming/steering and navigation. Revocation closes active ports and rejects in-flight admissions; disconnect notification survives extension-context invalidation. Automated tests cover these races without credentials.
 
-Before release: finish installer registration/update/uninstall across supported platforms, production authorization and disconnect-under-load checks, packaging exclusion/integration, and Chrome Web Store submission. Prototype transport acceptance alone does not establish builder-save acceptance or Chrome Web Store approval. The direct connection remains available.
+## Opt-in candidate installer integration
+
+Set `PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR` explicitly to a staged payload directory containing `host.mjs`, `install.mjs` and `config.json`. No directory is discovered automatically. Configuration must include an explicit `hostName`, exact `extensionOrigin`, loopback `bridge` origin and approved `sites`. Browser profiles, session credentials and popup assets are not copied into Bridge installers. Do not use customer-specific development configuration in a public release.
+
+Windows Bridge installers call the staged `install.mjs install` using their bundled Node after extraction, and `install.mjs uninstall` before removing app files. Missing payload leaves the direct connection unchanged. Registration refuses another installation's key or manifest. Uninstall removes only a matching manifest/registration, never Chrome consent, chats or Bridge data. Registration failure does not disable direct transport.
+
+On Windows, `PIXFLOW_NATIVE_NSIS_TEST=1 pnpm --dir e2e test tests/pixflow/native-installer.test.ts` compiles and executes a small isolated NSIS installer using these exact hooks. It checks install, repair and uninstall against a uniquely named real registry key and a saved-data sentinel. It does not install or replace the full customer Bridge. Set `PIXFLOW_NSIS_COMPILER` if NSIS is not in its standard installation directory.
+
+The same lifecycle helper supports Chrome's per-user manifest locations on macOS and Linux; executable launchers use the installed Node and host paths. Native macOS/Linux app lifecycle wiring and real machine acceptance are still outstanding. Filesystem contract tests on Windows are not equivalent to installer tests on those platforms.
+
+Additional checks exercise the actual native host process with eight concurrent streams, backpressure, cancellation, overload rejection and recovery without mutation replay. A separate HTTP boundary test relays HTTPS site-origin requests through the production signed-entitlement gate with synthetic signed grants, verifying missing/expired/revoked and wrong-installation rejection. This does not substitute for complete installed production route/session acceptance.
+
+Before release: permanent Chrome Web Store identity, customer-site enrollment/discovery, complete Windows installer acceptance, macOS/Linux lifecycle integration and acceptance, full production route/session checks, and Chrome Web Store submission. No production extension identity has been invented or permissions pre-granted. The direct connection remains available.

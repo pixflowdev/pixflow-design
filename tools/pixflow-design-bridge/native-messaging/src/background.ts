@@ -2,7 +2,20 @@ export {};
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
 const pattern=(origin:string)=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';};
-async function enabled(origin:string){const s=await chrome.storage.local.get('sites');return (s.sites||[]).includes(origin)&&await chrome.permissions.contains({origins:[pattern(origin)]});}
+const disabledOrigins=new Set<string>();
+async function enabled(origin:string){
+ if(disabledOrigins.has(origin))return false;
+ const s=await chrome.storage.local.get('sites');
+ const allowed=(s.sites||[]).includes(origin)&&await chrome.permissions.contains({origins:[pattern(origin)]});
+ return allowed&&!disabledOrigins.has(origin);
+}
+// Invalidate admissions as well as established ports before asynchronous cleanup.
+let permissionGeneration=0;
+const connections=new Set<{origin:string;close:(disabled?:boolean)=>void}>();
+function invalidateConnections(origin?:string){
+ permissionGeneration++;
+ for(const connection of connections)if(!origin||connection.origin===origin)connection.close(true);
+}
 async function registrations(){
  const config=await configPromise,s=await chrome.storage.local.get('sites');
  await chrome.scripting.unregisterContentScripts();
@@ -16,18 +29,25 @@ async function registrations(){
 }
 chrome.runtime.onInstalled.addListener(()=>void registrations());
 chrome.runtime.onStartup.addListener(()=>void registrations());
-chrome.permissions.onRemoved.addListener(()=>void registrations());
+chrome.permissions.onRemoved.addListener(()=>{invalidateConnections();void registrations();});
 chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
  if(sender.id!==chrome.runtime.id||!sender.url?.startsWith(chrome.runtime.getURL('')))return;
  void (async()=>{
   const config=await configPromise;
   if(message.type==='configuration'){reply({sites:config.sites,enabled:(await chrome.storage.local.get('sites')).sites||[]});return;}
   if(!config.sites.includes(message.origin))throw new Error('Site not configured');
+  const generation=permissionGeneration;
   const sites=new Set<string>((await chrome.storage.local.get('sites')).sites||[]);
   if(message.type==='enable'){
    if(!await chrome.permissions.contains({origins:[pattern(message.origin)]}))throw new Error('Site permission required');sites.add(message.origin);
-  }else if(message.type==='disable')sites.delete(message.origin);else throw new Error('Unknown operation');
-  await chrome.storage.local.set({sites:[...sites]});await registrations();
+  }else if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);sites.delete(message.origin);}else throw new Error('Unknown operation');
+  await chrome.storage.local.set({sites:[...sites]});
+  if(message.type==='enable'){
+   const permissionGranted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
+   if(generation!==permissionGeneration||!permissionGranted)throw new Error('Site access changed; enable the connection again');
+   disabledOrigins.delete(message.origin);
+  }
+  await registrations();
   for(const tab of await chrome.tabs.query({url:pattern(message.origin)})){
    if(new URL(tab.url).origin!==message.origin)continue;
    if(message.type==='enable'){
@@ -39,16 +59,36 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
  })().catch(e=>reply({error:e.message}));return true;
 });
 chrome.runtime.onConnect.addListener((port:any)=>{
+ const generation=permissionGeneration;
+ let closed=false,native:any;
+ const origin=port.sender?.origin;
+ const connection={origin,close(disabled=false){
+  if(closed)return;closed=true;connections.delete(connection);
+  if(disabled){try{port.postMessage({type:'disabled'});}catch{}}
+  try{native?.disconnect();}catch{}
+  try{port.disconnect();}catch{}
+ }};
+ port.onDisconnect.addListener(()=>connection.close());
  void (async()=>{
-  const sender=port.sender,origin=sender?.origin;
   const config=await configPromise;
-  if(port.name!=='pixflow-native-prototype'||sender?.frameId!==0||!config.sites.includes(origin)||!await enabled(origin)){port.postMessage({type:'disabled'});port.disconnect();return;}
-  const native=chrome.runtime.connectNative('dev.pixflow.bridge_prototype');
-  native.onMessage.addListener((message:any)=>port.postMessage(message));
-  native.onDisconnect.addListener(()=>{void chrome.runtime.lastError;port.disconnect();});
-  port.onDisconnect.addListener(()=>native.disconnect());
-  let delivery=Promise.resolve();
-  port.onMessage.addListener((message:any)=>{delivery=delivery.then(async()=>{if(await enabled(origin))native.postMessage({...message,origin});else port.disconnect();}).catch(()=>port.disconnect());});
-  port.postMessage({type:'ready',bridge:config.bridge});
- })().catch(()=>port.disconnect());
+  if(port.name!=='pixflow-native-prototype'||port.sender?.frameId!==0||!config.sites.includes(origin)||!await enabled(origin)||generation!==permissionGeneration||closed){connection.close(true);return;}
+  native=chrome.runtime.connectNative('dev.pixflow.bridge_prototype');connections.add(connection);
+  let responses=Promise.resolve(),delivery=Promise.resolve();
+  native.onMessage.addListener((message:any)=>{
+   responses=responses.then(async()=>{
+    if(closed)return;
+    if(!await enabled(origin)){connection.close(true);return;}
+    if(!closed)port.postMessage(message);
+   }).catch(()=>connection.close());
+  });
+  native.onDisconnect.addListener(()=>{void chrome.runtime.lastError;connection.close();});
+  port.onMessage.addListener((message:any)=>{
+   delivery=delivery.then(async()=>{
+    if(closed)return;
+    if(!await enabled(origin)){connection.close(true);return;}
+    if(!closed)native.postMessage({...message,origin});
+   }).catch(()=>connection.close());
+  });
+  if(!closed)port.postMessage({type:'ready',bridge:config.bridge});
+ })().catch(()=>connection.close());
 });

@@ -12,7 +12,13 @@ if(!scope.pixflowNativePrototype){
  };
  window.addEventListener('message',onWindowMessage);
  port.onMessage.addListener((payload:any)=>{if(payload.type==='ready'||payload.type==='disabled')ready=payload;emit(payload);});
- port.onDisconnect.addListener(()=>{scope.pixflowNativePrototype=false;window.removeEventListener('message',onWindowMessage);chrome.runtime.onMessage.removeListener(onControl);emit({type:'disconnected'});});
+ port.onDisconnect.addListener(()=>{
+  scope.pixflowNativePrototype=false;
+  // Chrome can invalidate extension APIs during revocation. Notify the page first.
+  emit({type:'disconnected'});
+  window.removeEventListener('message',onWindowMessage);
+  try{chrome.runtime.onMessage.removeListener(onControl);}catch{}
+ });
  const onControl=(message:any)=>{if(message.type==='disable'){emit({type:'disabled'});port.disconnect();}};
  chrome.runtime.onMessage.addListener(onControl);
 }

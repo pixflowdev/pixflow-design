@@ -378,6 +378,12 @@ function daemonApiUrl(path: string): string {
   return toPixflowRuntimeUrl(path);
 }
 
+/** HTTP headers are byte strings; JSON escapes preserve Unicode session metadata losslessly. */
+function sessionHeader(value: PixflowDirectSiteSession): string {
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, character =>
+    '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
+}
+
 function daemonFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const url = daemonApiUrl(path);
   const headers = new Headers(init.headers || {});
@@ -1104,7 +1110,7 @@ export async function streamViaDaemon({
         // The daemon falls back to a User-Agent sniff when this header is
         // absent (e.g. third-party clients), so omitting it in tests is OK.
         'X-OD-Client': detectClientType(),
-        ...(workspaceSession ? { 'X-Pixflow-Workspace-Session': JSON.stringify(workspaceSession) } : {}),
+        ...(workspaceSession ? { 'X-Pixflow-Workspace-Session': sessionHeader(workspaceSession) } : {}),
       },
       body,
     });

@@ -17,7 +17,7 @@ export function validateRequest(value: any, config: Configuration) {
   if (value.body != null && (typeof value.body !== 'string' || Buffer.byteLength(value.body) > 24 * 1024 * 1024)) throw new Error('Body too large');
   const headers = new Headers();
   for (const [key, val] of Object.entries(value.headers || {})) {
-    if (!['accept','content-type','authorization','x-pixflow-site-key','x-pixflow-workspace-session','x-pixflow-mcp-session','x-pixflow-audio-session','last-event-id','range'].includes(key.toLowerCase()) || typeof val !== 'string' || val.length > 8192) throw new Error('Header rejected');
+    if (!['accept','content-type','x-od-client','authorization','x-pixflow-site-key','x-pixflow-workspace-session','x-pixflow-mcp-session','x-pixflow-audio-session','last-event-id','range'].includes(key.toLowerCase()) || typeof val !== 'string' || val.length > 8192) throw new Error('Header rejected');
     headers.set(key,val);
   }
   headers.set('Origin',value.origin);

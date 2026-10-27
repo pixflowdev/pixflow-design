@@ -7,13 +7,13 @@ const source=transformSync(readFileSync(new URL('../native-messaging/src/backgro
 const flush=async()=>{for(let i=0;i<8;i++)await new Promise<void>(r=>setImmediate(r));};
 function event(){const listeners:Function[]=[];return {addListener(fn:Function){listeners.push(fn);},emit(...args:any[]){for(const fn of listeners)fn(...args);}};}
 function port(sender?:unknown){const p={name:'pixflow-native-prototype',sender,onMessage:event(),onDisconnect:event(),sent:[] as any[],closed:false,postMessage(value:any){if(p.closed)throw Error('closed');p.sent.push(value);},disconnect(){if(p.closed)return;p.closed=true;p.onDisconnect.emit();}};return p;}
-function fixture(){
+function fixture(stored={sites:['https://example.test']},origins=['https://example.test']){
  let allowed=true;const native=port(),client=port({origin:'https://example.test',frameId:0});const chrome={
   runtime:{id:'fixture',getURL:(p:string)=>'chrome-extension://fixture/'+p,onInstalled:event(),onStartup:event(),onMessage:event(),onConnect:event(),connectNative:()=>native,lastError:undefined},
-  permissions:{contains:async()=>allowed,onRemoved:event()},storage:{local:{get:async()=>({sites:['https://example.test']}),set:async()=>{}}},
+  permissions:{contains:async()=>allowed,onRemoved:event()},storage:{local:{get:async()=>({sites:[...stored.sites]}),set:async(value?:{sites:string[]})=>{stored.sites=[...value!.sites];}}},
   scripting:{unregisterContentScripts:async()=>{},registerContentScripts:async()=>{}},tabs:{query:async()=>[]}
  };
- runInNewContext(source,{exports:{},module:{exports:{}},chrome,URL,fetch:async()=>({json:async()=>({sites:['https://example.test'],bridge:'http://127.0.0.1:17467'})})});
+ runInNewContext(source,{exports:{},module:{exports:{}},chrome,URL,fetch:async()=>({json:async()=>({sites:origins,bridge:'http://127.0.0.1:17467'})})});
  return {client,native,chrome,revoke(){allowed=false;chrome.permissions.onRemoved.emit({origins:['https://example.test/*']});}};
 }
 test('revocation closes both active channels without requiring another page message',async()=>{
@@ -54,4 +54,33 @@ test('an older enable cannot undo disable while its final permission check is pe
  resume(true);await flush();
  const fresh=port({origin:'https://example.test',frameId:0});f.chrome.runtime.onConnect.emit(fresh);await flush();
  assert.equal(fresh.closed,true);assert.equal(fresh.sent.some(m=>m.type==='ready'),false);commit();await flush();
+});
+
+test('disable remains persisted when an older enable resumes a stale storage read',async()=>{
+ const f=fixture();let sites:string[]=[],reads=0,resume!:(value:{sites:string[]})=>void;
+ f.chrome.storage.local.get=()=>++reads===1?new Promise(r=>{resume=r;}):Promise.resolve({sites:[...sites]});
+ f.chrome.storage.local.set=async(value?:{sites:string[]})=>{sites=[...value!.sites];};
+ const sender={id:'fixture',url:'chrome-extension://fixture/popup.html'},responses:any[]=[];
+ f.chrome.runtime.onMessage.emit({type:'enable',origin:'https://example.test'},sender,(r:any)=>responses.push(r));await flush();
+ f.chrome.runtime.onMessage.emit({type:'disable',origin:'https://example.test'},sender,(r:any)=>responses.push(r));await flush();
+ resume({sites:[]});await flush();
+ assert.deepEqual(sites,[],'worker restart must not restore disabled site consent');
+ assert.equal(responses.length,2);assert.ok(responses.some(r=>r.error));assert.ok(responses.some(r=>r.ok));
+ const restarted=fixture({sites});restarted.chrome.runtime.onConnect.emit(restarted.client);await flush();assert.equal(restarted.client.closed,true);
+});
+
+test('concurrent site enables preserve both consent records',async()=>{
+ const stored={sites:[] as string[]},origins=['https://example.test','https://second.test'],f=fixture(stored,origins);
+ const sender={id:'fixture',url:'chrome-extension://fixture/popup.html'};
+ for(const origin of origins)f.chrome.runtime.onMessage.emit({type:'enable',origin},sender,()=>{});
+ await flush();assert.deepEqual([...stored.sites].sort(),origins);
+});
+
+test('revocation during an enable commit removes persisted consent before restart',async()=>{
+ const stored={sites:[] as string[]},f=fixture(stored);let resume!:()=>void,writes=0;
+ f.chrome.storage.local.set=async(value?:{sites:string[]})=>{if(++writes===1)await new Promise<void>(r=>{resume=r;});stored.sites=[...value!.sites];};
+ const replies:any[]=[];
+ f.chrome.runtime.onMessage.emit({type:'enable',origin:'https://example.test'},{id:'fixture',url:'chrome-extension://fixture/popup.html'},(r:any)=>replies.push(r));await flush();
+ f.revoke();resume();await flush();assert.deepEqual(stored.sites,[]);assert.ok(replies[0].error);
+ const restarted=fixture(stored);restarted.chrome.runtime.onConnect.emit(restarted.client);await flush();assert.equal(restarted.client.closed,true);
 });

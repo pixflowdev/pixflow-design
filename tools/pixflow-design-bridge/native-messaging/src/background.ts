@@ -11,6 +11,11 @@ async function enabled(origin:string){
 }
 // Invalidate admissions as well as established ports before asynchronous cleanup.
 let permissionGeneration=0;
+// Consent writes must retain operation order across asynchronous storage reads.
+let consentWrites=Promise.resolve();
+function persistConsent(operation:()=>Promise<void>){
+ const result=consentWrites.then(operation);consentWrites=result.catch(()=>{});return result;
+}
 const connections=new Set<{origin:string;close:(disabled?:boolean)=>void}>();
 function invalidateConnections(origin?:string){
  permissionGeneration++;
@@ -37,16 +42,25 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
   if(message.type==='configuration'){reply({sites:config.sites,enabled:(await chrome.storage.local.get('sites')).sites||[]});return;}
   if(!config.sites.includes(message.origin))throw new Error('Site not configured');
   const generation=permissionGeneration;
-  const sites=new Set<string>((await chrome.storage.local.get('sites')).sites||[]);
-  if(message.type==='enable'){
-   if(!await chrome.permissions.contains({origins:[pattern(message.origin)]}))throw new Error('Site permission required');sites.add(message.origin);
-  }else if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);sites.delete(message.origin);}else throw new Error('Unknown operation');
-  await chrome.storage.local.set({sites:[...sites]});
-  if(message.type==='enable'){
-   const permissionGranted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
-   if(generation!==permissionGeneration||!permissionGranted)throw new Error('Site access changed; enable the connection again');
-   disabledOrigins.delete(message.origin);
-  }
+  if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);}
+  else if(message.type!=='enable')throw new Error('Unknown operation');
+  await persistConsent(async()=>{
+   const sites=new Set<string>((await chrome.storage.local.get('sites')).sites||[]);
+   if(message.type==='enable'){
+    const granted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
+    if(generation!==permissionGeneration||!granted)throw new Error('Site access changed; enable the connection again');
+    sites.add(message.origin);
+   }else sites.delete(message.origin);
+   await chrome.storage.local.set({sites:[...sites]});
+   if(message.type==='enable'){
+    const granted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
+    if(generation!==permissionGeneration||!granted){
+     sites.delete(message.origin);await chrome.storage.local.set({sites:[...sites]});
+     throw new Error('Site access changed; enable the connection again');
+    }
+    disabledOrigins.delete(message.origin);
+   }
+  });
   await registrations();
   for(const tab of await chrome.tabs.query({url:pattern(message.origin)})){
    if(new URL(tab.url).origin!==message.origin)continue;

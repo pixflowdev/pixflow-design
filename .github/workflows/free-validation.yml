@@ -42,6 +42,8 @@ jobs:
         run: pnpm --filter @open-design/web test tests/providers/registry.test.ts tests/providers/registry-site-connect.test.ts tests/pixflow/bridge-request-connectivity.test.ts tests/pixflow/bricksAgentFailureBanner.test.tsx tests/pixflow/provider-discovery-state.test.ts tests/components/AvatarMenu.test.tsx tests/pixflow/bridge-site-startup.test.ts tests/pixflow/automatic-bridge-pairing.test.ts tests/pixflow/bridge-update-gate.test.ts tests/pixflow/bridge-url.test.ts
       - name: Translation consistency
         run: pnpm i18n:check
+      - name: Reload recovery regression
+        run: pnpm --filter @open-design/web test tests/pixflow/direct-run-history.test.ts tests/pixflow/durable-history-races.test.tsx tests/pixflow/wp-admin-direct-storage.test.ts tests/pixflow/direct-site.test.tsx
       - name: Directory packaging regression
         run: node --import tsx --test scripts/wordpress-directory-package.test.ts
       - name: Directory attribution

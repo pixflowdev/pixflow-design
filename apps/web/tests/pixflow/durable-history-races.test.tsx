@@ -37,6 +37,28 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('does not release run recovery when the durable history read fails', async () => {
+    vi.mocked(readChatHistory).mockRejectedValueOnce(new Error('Offline'));
+    const owner = renderHook(() => useHarness([saved(message(1))]));
+    await waitFor(() => expect(owner.result.current.error).toBe('load'));
+    expect(owner.result.current.ready).toBe(false);
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+    act(() => owner.result.current.retry());
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages[0]?.content).toBe('Message 1');
+  });
+  it('allows run recovery only after canonical history and revisions are hydrated', async () => {
+    const read = deferred<{ messages: Message[]; nextCursor: null; hasMore: boolean }>();
+    vi.mocked(readChatHistory).mockReturnValueOnce(read.promise);
+    const owner = renderHook(() => useHarness([saved(message(1))]));
+    expect(owner.result.current.ready).toBe(false);
+    await act(async () => read.resolve({ messages: [{ ...saved(message(1)), historyRevision: 8 }], nextCursor: null, hasMore: false }));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages[0]?.historyRevision).toBe(8);
+    act(() => owner.result.current.setMessages([{ ...owner.result.current.messages[0]!, content: 'Recovered final reply', status: 'complete' }]));
+    await waitFor(() => expect(saveChatHistoryMessage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ historyRevision: 8, content: 'Recovered final reply' })));
+    expect(owner.result.current.error).toBeNull();
+  });
   it('does not archive every delta written by the same mounted owner', async () => {
     const initial = saved(message(1));
     const owner = renderHook(() => useHarness([initial]));

@@ -45,7 +45,7 @@ jobs:
         run: node --import tsx --test tools/pixflow-design-bridge/tests/native-messaging.test.ts tools/pixflow-design-bridge/tests/native-permissions.test.ts tools/pixflow-design-bridge/tests/native-content.test.ts tools/pixflow-design-bridge/tests/native-status.test.ts tools/pixflow-design-bridge/tests/native-installation.test.ts tools/pixflow-design-bridge/tests/native-load.test.ts tools/pixflow-design-bridge/tests/native-enrollment.test.ts
       - name: Installer payload and production authorization boundary
         run: |
-          pnpm --filter @open-design/tools-pack test -- tests/native-transport.test.ts tests/resources.test.ts -t 'native|Windows|copyBundled'
+          pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts tests/resources.test.ts -t 'native|Windows|copyBundled'
           pnpm --dir e2e test tests/pixflow/native-authorization.test.ts
       - name: Native prototype typecheck and build
         run: |

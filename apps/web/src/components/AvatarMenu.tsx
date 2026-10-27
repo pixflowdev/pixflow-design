@@ -323,6 +323,10 @@ export function AvatarMenu({
             </span>
           </div>
           <div className={styles.scrollArea}>
+            {config.mode === 'daemon' && discovery.phase === 'error' && discovery.error && (
+              <p className={styles.connectionError} role="alert">{discovery.error}</p>
+            )}
+
           {showAmrAccountShortcut ? (
             <a
               className="avatar-amr-account-link"

@@ -2,7 +2,7 @@ import { once } from 'node:events';
 import type { Writable } from 'node:stream';
 
 export const MAX_FRAME = 512 * 1024;
-export type Configuration = { extensionOrigin: string; bridge: string; sites: string[] };
+export type Configuration = { extensionOrigin: string; bridge: string; sites: string[]; discoverPairedSite?: boolean };
 export function validateRequest(value: any, config: Configuration) {
   if (!value || typeof value.id !== 'string' || !/^[\w-]{1,80}$/.test(value.id)) throw new Error('Invalid request identity');
   if (!config.sites.includes(value.origin)) throw new Error('Site not approved in native adapter');

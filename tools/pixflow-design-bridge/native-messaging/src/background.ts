@@ -1,6 +1,13 @@
 import {probeBridge} from './connection-status';
+import {discoverNativeSites} from './enrollment';
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
+async function configuration(){
+ const config=await configPromise;
+ if(!config.discoverPairedSite)return config;
+ const sites=await discoverNativeSites(chrome.runtime,config.hostName||'dev.pixflow.bridge_prototype');
+ return {...config,sites};
+}
 const pattern=(origin:string)=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';};
 const disabledOrigins=new Set<string>();
 async function enabled(origin:string){
@@ -22,7 +29,7 @@ function invalidateConnections(origin?:string){
  for(const connection of connections)if(!origin||connection.origin===origin)connection.close(true);
 }
 async function registrations(){
- const config=await configPromise,s=await chrome.storage.local.get('sites');
+ const config=await configuration(),s=await chrome.storage.local.get('sites');
  await chrome.scripting.unregisterContentScripts();
  for(const [index,origin] of (s.sites||[]).entries()){
   if(!config.sites.includes(origin)||!await enabled(origin))continue;
@@ -32,13 +39,13 @@ async function registrations(){
   ]);
  }
 }
-chrome.runtime.onInstalled.addListener(()=>void registrations());
-chrome.runtime.onStartup.addListener(()=>void registrations());
-chrome.permissions.onRemoved.addListener(()=>{invalidateConnections();void registrations();});
+chrome.runtime.onInstalled.addListener(()=>void registrations().catch(()=>{}));
+chrome.runtime.onStartup.addListener(()=>void registrations().catch(()=>{}));
+chrome.permissions.onRemoved.addListener(()=>{invalidateConnections();void registrations().catch(()=>{});});
 chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
  if(sender.id!==chrome.runtime.id||!sender.url?.startsWith(chrome.runtime.getURL('')))return;
  void (async()=>{
-  const config=await configPromise;
+  const config=await configuration();
   if(message.type==='configuration'){reply({sites:config.sites,enabled:(await chrome.storage.local.get('sites')).sites||[]});return;}
   if(!config.sites.includes(message.origin))throw new Error('Site not configured');
   if(message.type==='status'){
@@ -46,7 +53,7 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    if(!stored.includes(message.origin)||disabledOrigins.has(message.origin)){reply({state:'direct'});return;}
    if(!await enabled(message.origin)){reply({state:'permission'});return;}
    const generation=permissionGeneration;
-   const state=await probeBridge(chrome.runtime,message.origin,config.bridge);
+   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName);
    reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
   }
   const generation=permissionGeneration;
@@ -92,9 +99,9 @@ chrome.runtime.onConnect.addListener((port:any)=>{
  }};
  port.onDisconnect.addListener(()=>connection.close());
  void (async()=>{
-  const config=await configPromise;
+  const config=await configuration();
   if(port.name!=='pixflow-native-prototype'||port.sender?.frameId!==0||!config.sites.includes(origin)||!await enabled(origin)||generation!==permissionGeneration||closed){connection.close(true);return;}
-  native=chrome.runtime.connectNative('dev.pixflow.bridge_prototype');connections.add(connection);
+  native=chrome.runtime.connectNative(config.hostName||'dev.pixflow.bridge_prototype');connections.add(connection);
   let responses=Promise.resolve(),delivery=Promise.resolve();
   native.onMessage.addListener((message:any)=>{
    responses=responses.then(async()=>{
@@ -105,6 +112,7 @@ chrome.runtime.onConnect.addListener((port:any)=>{
   });
   native.onDisconnect.addListener(()=>{void chrome.runtime.lastError;connection.close();});
   port.onMessage.addListener((message:any)=>{
+   if(message.type==='discover'){connection.close(true);return;}
    delivery=delivery.then(async()=>{
     if(closed)return;
     if(!await enabled(origin)){connection.close(true);return;}

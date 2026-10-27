@@ -8,20 +8,20 @@ export function validateRequest(value: any, config: Configuration) {
   if (!config.sites.includes(value.origin)) throw new Error('Site not approved in native adapter');
   const base = new URL(config.bridge), url = new URL(value.url);
   if (base.protocol !== 'http:' || !['127.0.0.1','[::1]'].includes(base.hostname) || base.username || base.password) throw new Error('Invalid loopback configuration');
-  if (url.origin !== base.origin || url.username || url.password || url.hash || /%|\\/.test(url.pathname)) throw new Error('Destination rejected');
-  // Prototype intentionally excludes filesystem, arbitrary proxy and lifecycle endpoints.
-  if (!/^\/api\/(health|agents(?:\/stream)?|pixflow\/site-context|chat|runs(?:\/[\w-]+(?:\/(?:events|steer|stop))?)?)$/.test(url.pathname)) throw new Error('Endpoint not enabled in prototype');
+  if (url.origin !== base.origin || url.username || url.password || url.hash || /\\|%2f|%5c|%00/i.test(url.pathname)) throw new Error('Destination rejected');
+  // Existing browser-facing API families; the Bridge retains authorization.
+  if (!/^\/api\/(?:health|version|agents|app-config|active|chat|runs|projects|conversations|messages|pixflow|connectors|mcp|media|audio|uploads|files|skills|design-systems|models|providers|research|auth|amr|artifacts|dialog|editors|import|integrations|applied-plugins|pixflow-sync|plugins)(?:\/|$)/.test(url.pathname)) throw new Error('Endpoint not enabled in prototype');
+  if (/^\/api\/pixflow\/(?:daemon|shutdown|update)(?:\/|$)/.test(url.pathname)) throw new Error('Lifecycle endpoint rejected');
   const method = String(value.method || 'GET').toUpperCase();
-  if (!['GET','POST'].includes(method) || (method === 'POST' && !/^\/api\/(chat|runs\/[\w-]+\/(steer|stop))$/.test(url.pathname))) throw new Error('Method rejected');
-  if (value.body != null && (typeof value.body !== 'string' || Buffer.byteLength(value.body) > 256 * 1024)) throw new Error('Body too large');
+  if (!['GET','HEAD','POST','PUT','PATCH','DELETE'].includes(method)) throw new Error('Method rejected');
+  if (value.body != null && (typeof value.body !== 'string' || Buffer.byteLength(value.body) > 24 * 1024 * 1024)) throw new Error('Body too large');
   const headers = new Headers();
   for (const [key, val] of Object.entries(value.headers || {})) {
-    if (!['accept','content-type','authorization','x-pixflow-site-key','x-pixflow-workspace-session'].includes(key.toLowerCase()) || typeof val !== 'string' || val.length > 8192) throw new Error('Header rejected');
+    if (!['accept','content-type','authorization','x-pixflow-site-key','x-pixflow-workspace-session','x-pixflow-mcp-session','x-pixflow-audio-session','last-event-id','range'].includes(key.toLowerCase()) || typeof val !== 'string' || val.length > 8192) throw new Error('Header rejected');
     headers.set(key,val);
   }
   headers.set('Origin',value.origin);
-  if (method === 'POST' && !headers.get('x-pixflow-site-key')) throw new Error('Site identity required for mutations');
-  return { url, init: {method,headers,body:value.body,redirect:'error' as const} };
+  return { url, init: {method,headers,body:value.bodyEncoding==='base64' ? Buffer.from(value.body||'','base64') : value.body,redirect:'error' as const} };
 }
 export function encode(value: unknown): Buffer {
   const data=Buffer.from(JSON.stringify(value));
@@ -40,7 +40,9 @@ export function decoder(onMessage:(message:any)=>void) {
 export async function relay(request:any,config:Configuration,signal:AbortSignal,send:(message:any)=>Promise<void>) {
   const {url,init}=validateRequest(request,config);
   const response=await fetch(url,{...init,signal});
-  await send({id:request.id,type:'headers',status:response.status,headers:{'content-type':response.headers.get('content-type')||'application/octet-stream'}});
+  const headers:Record<string,string>={};
+  for(const name of ['content-type','content-range','accept-ranges','etag','last-modified','retry-after','content-disposition']){const value=response.headers.get(name);if(value!==null)headers[name]=value;}
+  await send({id:request.id,type:'headers',status:response.status,headers});
   if(response.body){const reader=response.body.getReader();try{for(;;){
     const {done,value:data}=await reader.read();if(done)break;
     for(let i=0;i<data.length;i+=48*1024)await send({id:request.id,type:'chunk',data:Buffer.from(data.subarray(i,i+48*1024)).toString('base64')});

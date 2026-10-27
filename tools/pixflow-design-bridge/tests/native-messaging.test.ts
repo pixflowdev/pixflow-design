@@ -10,7 +10,7 @@ test('frames survive fragmented Unicode and coalesced messages',()=>{
  assert.throws(()=>decoder(()=>{})(Buffer.from([255,255,255,127])));
 });
 test('adapter rejects foreign sites, destinations, methods and privilege headers',()=>{
- for(const change of [{origin:'https://evil.test'},{url:'http://localhost:17467/api/health'},{url:'http://127.0.0.1:7456/api/health'},{url:config.bridge+'/api/daemon/shutdown',method:'POST'},{url:config.bridge+'/api/%68ealth'},{headers:{Origin:'https://evil.test'}},{headers:{'X-OD-Tool-Token':'forged'}},{url:config.bridge+'/api/chat',method:'POST'}])assert.throws(()=>validateRequest({...request,...change},config));
+ for(const change of [{origin:'https://evil.test'},{url:'http://localhost:17467/api/health'},{url:'http://127.0.0.1:7456/api/health'},{url:config.bridge+'/api/daemon/shutdown',method:'POST'},{url:config.bridge+'/api/%68ealth'},{headers:{Origin:'https://evil.test'}},{headers:{'X-OD-Tool-Token':'forged'}},{url:config.bridge+'/api/chat',method:'TRACE'}])assert.throws(()=>validateRequest({...request,...change},config));
  assert.equal(validateRequest(request,config).init.headers.get('origin'),config.sites[0]);
 });
 test('relay preserves server denials and streams chunks without replaying mutations',async()=>{
@@ -35,4 +35,14 @@ test('cancellation ends a stalled request without replay and a later request rec
   const timer=setTimeout(()=>controller.abort(),30);await assert.rejects(pending);clearTimeout(timer);assert.equal(calls,1);
   const messages:any[]=[];await relay({...request,url:base+'/api/health'},{...config,bridge:base},new AbortController().signal,async m=>{messages.push(m);});assert.equal(calls,2);assert.equal(messages.at(-1).type,'end');
  }finally{server.closeAllConnections();server.close();}
+});
+
+test('browser endpoint families preserve methods, binary bodies and session headers',async()=>{
+ for(const family of ['runs','projects','connectors','amr','artifacts','dialog','editors','import','integrations','applied-plugins','pixflow-sync','plugins','pixflow']){
+  for(const method of ['GET','HEAD','POST','PUT','PATCH','DELETE'])assert.equal(validateRequest({...request,url:config.bridge+'/api/'+family+'/fixture',method},config).init.method,method);
+ }
+ const bytes=Buffer.from([0,255,128,1,13,10]);let calls=0;
+ const server=http.createServer(async(req,res)=>{calls++;const chunks:Buffer[]=[];for await(const chunk of req)chunks.push(chunk);assert.deepEqual(Buffer.concat(chunks),bytes);assert.equal(req.method,'PUT');assert.equal(req.headers['x-pixflow-workspace-session'],'synthetic-session');res.writeHead(206,{'content-type':'application/octet-stream','content-range':'bytes 0-5/6','etag':'"fixture"'});res.end(bytes);});
+ await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+(server.address() as any).port;
+ try{const messages:any[]=[];await relay({...request,url:base+'/api/projects/fixture/upload',method:'PUT',headers:{'Content-Type':'application/octet-stream','X-Pixflow-Workspace-Session':'synthetic-session'},body:bytes.toString('base64'),bodyEncoding:'base64'},{...config,bridge:base},new AbortController().signal,async m=>{messages.push(m);});assert.equal(calls,1);assert.equal(messages[0].headers['content-range'],'bytes 0-5/6');assert.deepEqual(Buffer.concat(messages.filter(m=>m.type==='chunk').map(m=>Buffer.from(m.data,'base64'))),bytes);}finally{server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()));}
 });

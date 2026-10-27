@@ -345,6 +345,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     finally { if (owner === generation.current) setRecovering(false); }
   }, [outboxKey, persistOutbox, recovering]);
   return {
+    ready: active && readyKey === sessionKey,
     messages: readyKey === sessionKey ? mergeChatHistory(history, messages) : messages,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,
     hasMore, loading, error, loadEarlier, recover, recovering,

@@ -2,6 +2,7 @@ import { usePixflowFeatureRuntime } from './feature-runtime';
 import { usePixflowLicenseRefresh } from './use-license-refresh';
 import { useBuilderHandoffReceiver, builderHandoffPersistenceSurface, builderHandoffConversationKey, builderHandoffAttachments, assertBuilderHandoffTarget, finishBuilderHandoffReceipt, type BuilderHandoffExecution } from './builder-handoff-receiver';
 import { useDurableChatHistory } from './use-durable-chat-history';
+import { recoverDirectRunMessages } from './direct-run-history';
 import { ChatHistoryControls } from './ChatHistoryControls';
 import { mergeChatHistory } from './chat-history-client';
 import { resolveEditorRunTarget } from './editor-run-target';
@@ -3388,7 +3389,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   }, [refreshContext]);
 
   useEffect(() => {
-    if(!siteAccess.ready || !!siteAccess.error || siteAccess.guarded || abortRef.current || hydratedSessionKey!==sessionKey)return;
+    if(!siteAccess.ready || !!siteAccess.error || siteAccess.guarded || abortRef.current || hydratedSessionKey!==sessionKey || !durableHistory.ready)return;
     const pending=pendingDirectSiteRun(persistenceSurface);
     const metadata=pending?.metadata as {messages?:WpAdminMessage[];messageId?:string;sessionKey?:string;mode?:string;handoff?:BuilderHandoffExecution['receipt']}|undefined;
     if(!pending || !metadata?.messages || !metadata.messageId || metadata.sessionKey!==sessionKey || reattachedDirectRunRef.current===pending.connection.id)return;
@@ -3397,7 +3398,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     const owner=sessionKey;
     let content='';let events:AgentEvent[]=[];
     let terminalAt: number | undefined;
-    setMessages(metadata.messages);setStreaming(true);
+    setMessages(current=>recoverDirectRunMessages(current,metadata.messages!,metadata.messageId!));setStreaming(true);
     void runDirectSite({config,agentId:'',prompt:'',history:[],mode:metadata.mode||'design',resume:pending,persistenceSurface,signal:controller.signal,
       onOutcome: (_outcome, endedAt) => { terminalAt=endedAt; },
       onUpdate:(next,nextEvents)=>{
@@ -3417,7 +3418,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       if(abortRef.current===controller){abortRef.current=null;stopRunRef.current=null;setStreaming(false);}
       void refreshContext();
     });
-  },[siteAccess.ready,siteAccess.guarded,hydratedSessionKey,sessionKey,refreshContext]);
+  },[siteAccess.ready,siteAccess.error,siteAccess.guarded,hydratedSessionKey,sessionKey,durableHistory.ready,refreshContext]);
 
   const readExplicitTargetContext = useCallback(async (postId: number, postType: string) => {
     if (!contextUrl || postId <= 0) return null;

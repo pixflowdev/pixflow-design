@@ -19,3 +19,12 @@ it('does not request agents when site pairing fails', async () => {
   expect(bridge.stream).not.toHaveBeenCalled();
   expect(bridge.fallback).not.toHaveBeenCalled();
 });
+it('publishes a pairing connection diagnosis without retrying provider discovery', async () => {
+  const {PixflowOptionalBridgeUnavailableError}=await import('../../src/pixflow/optional-bridge');
+  const {getProviderDiscoveryState}=await import('../../src/pixflow/provider-discovery-state');
+  bridge.stream.mockClear();bridge.fallback.mockClear();
+  bridge.ensure.mockRejectedValueOnce(new PixflowOptionalBridgeUnavailableError('The connection was refused. Open Bridge.'));
+  await expect(fetchAgentsStream({onAgent:vi.fn(),useOptionalBridge:true})).rejects.toThrow('refused');
+  expect(getProviderDiscoveryState().error).toContain('refused');
+  expect(bridge.stream).not.toHaveBeenCalled();expect(bridge.fallback).not.toHaveBeenCalled();
+});

@@ -49,7 +49,7 @@ type PublishedBridgeStatus = {
 export const PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE =
   'Pixflow Design Bridge disconnected. Restart Bridge, then rescan Local CLI settings. API and BYOK features can continue without Bridge.';
 export const PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE =
-  'Chrome blocked or could not reach Pixflow Design Bridge access for this site. Allow Apps on device or local network access for this site, confirm Bridge is running, then rescan Local CLI.';
+  'The browser reported that local access to Pixflow Design Bridge is blocked. Allow Apps on device or local network access in this site\'s browser permissions, then rescan Local CLI.';
 
 export class PixflowOptionalBridgeUnavailableError extends Error {
   cause?: unknown;
@@ -252,39 +252,34 @@ export function isPixflowIntentionalAbort(error: unknown, signal?: AbortSignal |
   return signal?.aborted === true || (error instanceof Error && error.name === 'AbortError');
 }
 
+/** Only explicit local-access policy evidence justifies a blocked-permission diagnosis.
+ * Fetch deliberately hides network/CORS failure details; a localhost URL alone is not evidence.
+ */
 export function isPixflowOptionalBridgeLoopbackAccessError(error: unknown): boolean {
   if (error instanceof PixflowOptionalBridgeLoopbackAccessError) return true;
   if (!(error instanceof Error)) return false;
-  const message = String(error.message || '').toLowerCase();
+  const message = error.message.toLowerCase();
   return error.name === 'PixflowOptionalBridgeLoopbackAccessError'
-    || message.includes('loopback')
-    || message.includes('local network')
-    || message.includes('private network')
-    || message.includes('address space')
-    || message.includes('targetaddressspace')
-    || message.includes('apps on device')
-    || message.includes('permission was denied');
-}
-
-function isPixflowOptionalBridgeLoopbackFetchFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = String(error.message || '').toLowerCase();
-  if (!message.includes('failed to fetch') && !message.includes('load failed')) return false;
-  try {
-    const base = new URL(getPixflowOptionalBridgeBaseUrl());
-    return base.hostname === '127.0.0.1'
-      || base.hostname === 'localhost'
-      || base.hostname === '[::1]'
-      || base.hostname === '::1';
-  } catch {
-    return false;
-  }
+    || (/(local network|private network|loopback|address space|apps on device)/.test(message)
+      && /(blocked|denied|not allowed)/.test(message));
 }
 
 export function normalizePixflowOptionalBridgeError(error: unknown): Error {
   if (error instanceof PixflowOptionalBridgeUnavailableError) return error;
-  if (isPixflowOptionalBridgeLoopbackAccessError(error) || isPixflowOptionalBridgeLoopbackFetchFailure(error)) {
+  if (isPixflowOptionalBridgeLoopbackAccessError(error)) {
     return new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE, error);
+  }
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      return new PixflowOptionalBridgeUnavailableError('The Pixflow Design Bridge request timed out. Check Bridge status and rescan Local CLI. A timeout does not confirm whether an action completed; check the current chat or page before retrying an edit.', error);
+    }
+    if (/connection[ _]refused/.test(message)) {
+      return new PixflowOptionalBridgeUnavailableError('The connection to Pixflow Design Bridge was refused. Open Bridge and check that its address and port match Local CLI settings, then rescan.', error);
+    }
+    if (/failed to fetch|load failed|networkerror/.test(message)) {
+      return new PixflowOptionalBridgeUnavailableError('Pixflow could not reach Design Bridge. The browser cannot determine the cause. Check that Bridge is running and its address and port match Local CLI settings, then rescan. If it remains unreachable, check the local-network permission and browser or security-software restrictions.', error);
+    }
   }
   if (isPixflowOptionalBridgeUnavailableError(error)) {
     return new PixflowOptionalBridgeUnavailableError(PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE, error);
@@ -573,6 +568,7 @@ export async function fetchPixflowOptionalBridgeAgents(options?: {
       else { finishDiscovery('sleeping'); return cachedAgents?.value ?? []; }
     }
     if (!health.available) {
+      if (force) throw new PixflowOptionalBridgeUnavailableError(health.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
       if (health.error && isPixflowOptionalBridgeLoopbackAccessError(new Error(health.error))) {
         throw new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE);
       }
@@ -591,7 +587,7 @@ export async function fetchPixflowOptionalBridgeAgents(options?: {
     persistAgentsCache(value, cachedAgents.checkedAt);
     finishDiscovery(true);
     return value;
-    } catch (error) { finishDiscovery(false); throw error; }
+    } catch (error) { finishDiscovery(false, error instanceof PixflowOptionalBridgeUnavailableError ? error.message : undefined); throw error; }
   };
 
   const startBackgroundRefresh = (): Promise<AgentInfo[]> => {
@@ -675,6 +671,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
   }
   if (!health.available) {
+      if (force) throw new PixflowOptionalBridgeUnavailableError(health.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
     if (health.error && isPixflowOptionalBridgeLoopbackAccessError(new Error(health.error))) {
       throw new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE);
     }
@@ -754,7 +751,5 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
   persistAgentsCache(collected, cachedAgents.checkedAt);
   finishDiscovery(true);
   return collected;
-  } catch (error) { finishDiscovery(false); throw error; }
+  } catch (error) { finishDiscovery(false, error instanceof PixflowOptionalBridgeUnavailableError ? error.message : undefined); throw error; }
 }
-
-

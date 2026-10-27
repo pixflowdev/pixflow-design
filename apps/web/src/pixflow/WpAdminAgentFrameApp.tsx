@@ -1,9 +1,10 @@
-import { useFloatingConversation, normalizeFloatingRunMetadata, mergeFloatingRecoveryMessages, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
+import { useFloatingConversation, normalizeFloatingRunMetadata, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
 import { notifyFloatingCanvasDeparture } from './floating-canvas-departure';
 import { usePixflowFeatureRuntime } from './feature-runtime';
 import { usePixflowLicenseRefresh } from './use-license-refresh';
 import { useBuilderHandoffReceiver, builderHandoffPersistenceSurface, builderHandoffConversationKey, builderHandoffAttachments, assertBuilderHandoffTarget, finishBuilderHandoffReceipt, type BuilderHandoffExecution } from './builder-handoff-receiver';
 import { useDurableChatHistory } from './use-durable-chat-history';
+import { recoverDirectRunMessages } from './direct-run-history';
 import { ChatHistoryControls, ConversationTransitionStatus } from './ChatHistoryControls';
 import { mergeChatHistory } from './chat-history-client';
 import { resolveEditorRunTarget } from './editor-run-target';
@@ -3400,7 +3401,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   }, [refreshContext]);
 
   useEffect(() => {
-    if(!siteAccess.ready || !!siteAccess.error || siteAccess.guarded || durableHistory.loading || contextStatus === 'loading' || abortRef.current || hydratedSessionKey!==sessionKey)return;
+    if(!siteAccess.ready || !!siteAccess.error || siteAccess.guarded || !durableHistory.ready || contextStatus === 'loading' || abortRef.current || hydratedSessionKey!==sessionKey)return;
     const pending=pendingDirectSiteRun(persistenceSurface);
     const metadata=normalizeFloatingRunMetadata(pending?.metadata) as {messages?:WpAdminMessage[];messageId?:string;sessionKey?:string;mode?:string;handoff?:BuilderHandoffExecution['receipt']}|undefined;
     if(!pending || !metadata?.messages || !metadata.messageId || metadata.sessionKey!==sessionKey || reattachedDirectRunRef.current===pending.connection.id)return;
@@ -3409,7 +3410,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     const owner=sessionKey;
     let content='';let events:AgentEvent[]=[];
     let terminalAt: number | undefined;
-    setMessages(current => mergeFloatingRecoveryMessages(current, metadata.messages!));setStreaming(true);
+    setMessages(current => recoverDirectRunMessages(current, metadata.messages!, metadata.messageId!));setStreaming(true);
     void notifyFloatingCanvasDeparture(pending.metadata, contextIdentity?.objectKind === 'post' ? Number(contextIdentity.objectId) : 0, () => resolveEditorRunTarget({context: withGutenbergTarget(applyBuilderContext(context || {}))}, controller.signal)).then(() => runDirectSite({config,agentId:'',prompt:'',history:[],mode:metadata.mode||'design',resume:pending,persistenceSurface,signal:controller.signal,
       onOutcome: (_outcome, endedAt) => { terminalAt=endedAt; },
       onUpdate:(next,nextEvents)=>{
@@ -3431,7 +3432,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       if(abortRef.current===controller){abortRef.current=null;stopRunRef.current=null;setStreaming(false);}
       void refreshContext();
     });
-  },[siteAccess.ready,siteAccess.error,siteAccess.guarded,durableHistory.loading,contextStatus,contextIdentity,hydratedSessionKey,sessionKey,refreshContext]);
+  },[siteAccess.ready,siteAccess.error,siteAccess.guarded,durableHistory.ready,contextStatus,contextIdentity,hydratedSessionKey,sessionKey,refreshContext]);
 
   const readExplicitTargetContext = useCallback(async (postId: number, postType: string) => {
     if (!contextUrl || postId <= 0) return null;
@@ -4761,3 +4762,4 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     </PixflowAgentSurfaceShell>
   );
 }
+

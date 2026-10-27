@@ -69,11 +69,13 @@ import {
   isOpenDesignHostAvailable,
   openHostExternalUrl,
 } from '@open-design/host';
+import { beginProviderDiscovery } from '../pixflow/provider-discovery-state';
 import { toPixflowRuntimeIframeUrl, toPixflowRuntimeUrl } from '../pixflow/bridge-url';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { pixflowRuntimeFetch, pixflowWordPressRestFetch, withWordPressNonce } from '../pixflow/runtime-fetch';
 import {
   ensurePixflowOptionalBridgeSiteContext,
+  PixflowOptionalBridgeUnavailableError,
   fetchPixflowOptionalBridgeAgents,
   fetchPixflowOptionalBridgeAgentsStream,
   probePixflowOptionalBridge,
@@ -471,12 +473,18 @@ export async function fetchAgentsStream(args: {
   if (hasPixflowWordPressContext()) {
     if (!args.useOptionalBridge) return [];
     // Explicit Local CLI discovery must establish the WordPress site first.
-    await ensurePixflowOptionalBridgeSiteContext();
     try {
-      const agents = await fetchPixflowOptionalBridgeAgentsStream({ onAgent, signal });
+      await ensurePixflowOptionalBridgeSiteContext();
+    } catch (error) {
+      beginProviderDiscovery(false)(false, error instanceof PixflowOptionalBridgeUnavailableError ? error.message : undefined);
+      throw error;
+    }
+    try {
+      const agents = await fetchPixflowOptionalBridgeAgentsStream({ onAgent, signal, force: true });
       return agents;
-    } catch {
-      const agents = await fetchPixflowOptionalBridgeAgents();
+    } catch (error) {
+      if (error instanceof PixflowOptionalBridgeUnavailableError) throw error;
+      const agents = await fetchPixflowOptionalBridgeAgents({ force: true });
       for (const agent of agents) {
         if (signal?.aborted) break;
         onAgent(agent);

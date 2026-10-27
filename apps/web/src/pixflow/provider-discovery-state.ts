@@ -1,5 +1,5 @@
 /** Shared discovery state: cached providers remain visible while their refresh runs. */
-export type ProviderDiscoveryState = { phase: 'idle' | 'refreshing' | 'ready' | 'error' | 'sleeping'; hasCached: boolean };
+export type ProviderDiscoveryState = { phase: 'idle' | 'refreshing' | 'ready' | 'error' | 'sleeping'; hasCached: boolean; error?: string };
 let snapshot: ProviderDiscoveryState = { phase: 'idle', hasCached: false };
 let generation = 0;
 const listeners = new Set<() => void>();
@@ -9,5 +9,5 @@ function publish(next: ProviderDiscoveryState) { snapshot = next; listeners.forE
 export function beginProviderDiscovery(hasCached: boolean) {
   const id = ++generation;
   publish({ phase: 'refreshing', hasCached });
-  return (success: boolean | 'sleeping') => { if (id === generation) publish({ phase: success === 'sleeping' ? 'sleeping' : success ? 'ready' : 'error', hasCached }); };
+  return (success: boolean | 'sleeping', error?: string) => { if (id === generation) publish({ phase: success === 'sleeping' ? 'sleeping' : success ? 'ready' : 'error', hasCached, ...(!success && error ? { error } : {}) }); };
 }

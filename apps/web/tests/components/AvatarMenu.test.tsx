@@ -401,3 +401,12 @@ it('carries theme tokens into the nested model picker and keeps its parent open'
   expect(screen.queryByTestId('avatar-model-popover')).toBeNull();
   expect(screen.queryByRole('dialog', { name:'avatar.title' })).not.toBeNull();
 });
+
+it('shows connection recovery guidance and clears it after successful discovery', async () => {
+  const {beginProviderDiscovery}=await import('../../src/pixflow/provider-discovery-state');
+  renderMenu();openMenu();
+  act(()=>{beginProviderDiscovery(true)(false,'Check Bridge status and rescan Local CLI.');});
+  expect(screen.getByRole('alert').textContent).toContain('Check Bridge status');
+  act(()=>{beginProviderDiscovery(true)(true);});
+  expect(screen.queryByRole('alert')).toBeNull();
+});

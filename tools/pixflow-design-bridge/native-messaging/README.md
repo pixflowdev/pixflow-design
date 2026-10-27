@@ -52,4 +52,12 @@ The same lifecycle helper supports Chrome's per-user manifest locations on macOS
 
 Additional checks exercise the actual native host process with eight concurrent streams, backpressure, cancellation, overload rejection and recovery without mutation replay. A separate HTTP boundary test relays HTTPS site-origin requests through the production signed-entitlement gate with synthetic signed grants, verifying missing/expired/revoked and wrong-installation rejection. This does not substitute for complete installed production route/session acceptance.
 
-Before release: permanent Chrome Web Store identity, customer-site enrollment/discovery, complete Windows installer acceptance, macOS/Linux lifecycle integration and acceptance, full production route/session checks, and Chrome Web Store submission. No production extension identity has been invented or permissions pre-granted. The direct connection remains available.
+## Customer-site enrollment
+
+Prototype setup also supports `--discover-paired-site --bridge http://127.0.0.1:17467` instead of `--site`. In that mode, both the native host and popup discover the exact active origin from the existing local Bridge pairing. No customer domain is embedded in the installer. Pair the site using Pixflow's existing Bridge flow, open the extension popup, and explicitly allow Chrome access. Discovery does not pair a site, grant WordPress access, or grant Chrome permission. Failed discovery admits no origins. Site/session authorization continues to run in Bridge.
+
+## Independent release gates
+
+The upcoming plugin/Bridge fixes do not depend on Google approving this extension. Build the normal release without `PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR`; prototype sources remain excluded. Reused output containing a stale native payload is rejected rather than silently shipping it. Validate the normal installer and both composers with no extension installed before promoting that separate release.
+
+Before the **extension** release: permanent Chrome Web Store identity, complete installed customer-enrollment and Windows installer acceptance, macOS/Linux lifecycle integration and acceptance, full production route/session checks, and Chrome Web Store submission. No production extension identity has been invented or permissions pre-granted. The direct connection remains available.

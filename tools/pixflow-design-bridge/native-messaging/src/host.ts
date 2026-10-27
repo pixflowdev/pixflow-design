@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { decoder, relay, writer, validateRequest, type Configuration } from './relay';
+import { discoverPairedSite } from './enrollment';
 const config:Configuration=JSON.parse(readFileSync(new URL('./config.json',import.meta.url),'utf8'));
 if(process.argv[2]!==config.extensionOrigin)process.exit(1);
+if(config.discoverPairedSite)config.sites=await discoverPairedSite(config.bridge).catch(()=>[]);
 const active=new Map<string,AbortController>(), uploads=new Map<string,{request:any;body:string;timer:ReturnType<typeof setTimeout>}>(),acks=new Map<string,()=>void>(),send=writer(process.stdout);
 function clearUpload(id:string){const u=uploads.get(id);if(u)clearTimeout(u.timer);uploads.delete(id);}
 function start(message:any){
@@ -20,6 +22,7 @@ function start(message:any){
   void relay(message,config,controller.signal,stream).catch(()=>send({id:message.id,type:'error',error:'Native Bridge request failed. No request was replayed; inspect its result before retrying an edit.'})).finally(()=>{clearTimeout(timer);active.delete(message.id);acks.delete(message.id);});
 }
 const consume=decoder(message=>{
+  if(message.id==='discover'&&message.type==='discover'){void send({id:'discover',type:'sites',sites:config.sites});return;}
   if(message.type==='ack'){acks.get(message.id)?.();return;}
   if(message.type==='cancel'){active.get(message.id)?.abort();clearUpload(message.id);return;}
   if(message.type==='upload'){

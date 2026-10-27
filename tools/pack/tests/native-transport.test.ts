@@ -17,6 +17,12 @@ it('stages only explicit native runtime, excludes browser consent, and leaves de
     expect(await stageNativeTransport(output, source)).toBe(true);
     expect((await readdir(join(output, 'native-transport'))).sort()).toEqual(['config.json', 'host.mjs', 'install.mjs']);
     expect(JSON.parse(await readFile(join(output, 'native-transport/config.json'), 'utf8'))).toEqual(config);
+    const discovered = { ...config, sites: [], discoverPairedSite: true };
+    await writeFile(join(source, 'config.json'), JSON.stringify(discovered));
+    expect(await stageNativeTransport(output, source)).toBe(true);
+    expect(JSON.parse(await readFile(join(output, 'native-transport/config.json'), 'utf8'))).toEqual(discovered);
+    await writeFile(join(source, 'config.json'), JSON.stringify(config));
+    await stageNativeTransport(output, source);
     await writeFile(join(source, 'config.json'), JSON.stringify({ ...config, bridge: 'https://remote.example' }));
     await expect(stageNativeTransport(output, source)).rejects.toThrow(/loopback/);
     expect(JSON.parse(await readFile(join(output, 'native-transport/config.json'), 'utf8'))).toEqual(config);
@@ -28,4 +34,14 @@ it('Windows hooks use bundled Node and never delete runtime data or Chrome permi
   expect(hooks.install).toContain('IfFileExists');
   expect(hooks.uninstall).toContain('install.mjs" uninstall');
   expect(JSON.stringify(hooks)).not.toMatch(/DeleteRegKey|RMDir|User Data|storage/);
+});
+
+it('refuses an extension-free build containing a stale native payload', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'pixflow-native-stale-'));
+  try {
+    await mkdir(join(root, 'native-transport'));
+    await writeFile(join(root, 'native-transport', 'config.json'), 'previous candidate');
+    await expect(stageNativeTransport(root, '')).rejects.toThrow(/stale native payload/i);
+    expect(await readFile(join(root, 'native-transport', 'config.json'), 'utf8')).toBe('previous candidate');
+  } finally { await rm(root, { recursive: true, force: true }); }
 });

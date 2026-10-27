@@ -47,7 +47,7 @@ test('empty and long site choices stay usable with keyboard and narrow layout',a
  await page.addInitScript(()=>{(window as any).chrome={tabs:{query:async()=>[{url:'chrome://extensions'}]},runtime:{sendMessage:async(message:any)=>message.type==='configuration'?{sites:['https://a-very-long-customer-site-name.example.test:443','https://second.test'],enabled:[]}:{state:'direct'}}};});
  await page.route('https://popup.test/**',async route=>{const file=new URL(route.request().url()).pathname.slice(1)||'popup.html';await route.fulfill({body:await readFile(resolve(output,file)),contentType:file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.svg')?'image/svg+xml':'text/html'});});
  await page.setViewportSize({width:320,height:600});await page.goto('https://popup.test/popup.html');
- await expect(page.getByRole('heading',{name:'Open your WordPress site'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Connect your site in Pixflow'})).toBeVisible();
  await expect(page.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeDisabled();
  await page.keyboard.press('Tab');await expect(page.getByRole('combobox')).toBeFocused();
  await page.getByRole('combobox').selectOption({index:1});await expect(page.getByRole('heading',{name:'Connect this site'})).toBeVisible();

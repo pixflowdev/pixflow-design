@@ -3,7 +3,7 @@
 Prepared 28 October 2026. Unpublished; not submitted for review.
 
 - Name: Pixflow Design Bridge
-- Prepared candidate version: 1.0.2; the Store draft must be checked and updated before submission.
+- Store draft version: 1.0.2; package and permission explanations are saved. Reviewer instructions were updated for the matching reviewer-only installer on 28 October 2026.
 - Permanent extension ID: `hbnbiboohlelmngadeolikeejamjlbkh`
 - Native host: `dev.pixflow.bridge`
 - Approved native origin: `chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/`

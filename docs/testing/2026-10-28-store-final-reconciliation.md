@@ -64,3 +64,13 @@ The installed Windows native helper connected successfully. The extension popup 
 Local evidence: `permanent-id-connected.png` and `permanent-id-direct-fallback.png` in the reconciliation directory. This closes the current Windows permanent-ID connection/reload/direct-fallback gate; it does not establish the cause of the older Chrome for Testing prototype failure or claim new CLI streaming acceptance.
 
 Website preparation is committed at `pixflowdev/pixflow-website` revision `d31f13fc92142c7aa0158ec15cbff617862b7457`. The new reviewer-only download, reviewer guide and precise extension privacy section are not yet published. The currently public guide/download still describe the old 1.0.1 setup and must be replaced before submission. Final reviewer login, Store test instructions/screenshots and owner certifications remain outstanding. Intel/Linux must not be advertised as accepted.
+
+## Store reviewer instructions — final preparation
+
+The confidential Test instructions form was updated and saved for 1.0.2 without changing its existing username/password. Its 496-character setup text points to the separate Windows reviewer guide/installer, explains pairing and site approval, requests reload/direct-fallback/reconnect checks, states that no Pro licence is needed and that real AI runs need the reviewer's signed-in CLI, and excludes unverified Intel Mac/Linux claims.
+
+The Store listing retains its icon, two screenshots, English (United Kingdom) language, Developer Tools category, homepage and support URL. Google's "Why can't I submit?" validation reports only the data-usage Developer Program Policy certification as its remaining form blocker. Certifications remain unaccepted and nothing was submitted. This form validation is not a substitute for final public reviewer download/login checks.
+
+Local evidence: `store-reviewer-instructions-1.0.2.png` and `store-final-certification-gate.png` in `D:/pixflow-211-final/store-reconciliation/`.
+
+The website chat freshly authenticated the existing reviewer account on 28 October 2026 at 22:58:27 UTC, reached authenticated WordPress admin/profile, then logged out the synthetic test session. Credentials were not rotated or copied into this report. Public installer/guide/privacy deployment verification is tracked separately below.

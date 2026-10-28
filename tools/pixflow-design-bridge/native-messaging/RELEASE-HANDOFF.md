@@ -12,7 +12,7 @@ Use a separate clone/worktree; do not overwrite another task's checkout:
 ```sh
 git clone --branch codex/release211-mac-acceptance https://github.com/pixflowdev/pixflow-design.git pixflow-extension-checks
 cd pixflow-extension-checks
-git checkout --detach 4935eb5e2044da92b19277cd126e63969afd03f4
+git checkout --detach dbe241f6bfbdd544978cb9eef6c41a73dd34ec36
 git rev-parse HEAD
 corepack pnpm install --frozen-lockfile
 ```
@@ -21,8 +21,8 @@ Record that exact commit in every test/build receipt. Source, build scripts, tes
 
 The approved **isolated testing pair**, not a release approval, is:
 
-- Core: `4935eb5e2044da92b19277cd126e63969afd03f4`
-- Pro: `99efa4ecb8a9d9b347e621fc9046abc772302ec8`
+- Core: `dbe241f6bfbdd544978cb9eef6c41a73dd34ec36`
+- Pro: `398cf34e30ecbbdbf1b98293461657f09b0d9c51`
 - Both branches: `codex/release211-mac-acceptance`.
 
 This supersedes af03030dd for full paired tests: it includes the committed direct-connection, navigation, history and Unicode session-header fixes. Pro pins that exact clean Core revision, module API 14. No Team source was added by this pairing. Pro remains private at https://github.com/pixflowdev/pixflow-design-pro. Do not copy its source into Core.
@@ -31,7 +31,7 @@ This supersedes af03030dd for full paired tests: it includes the committed direc
 # From a parent directory alongside the Core clone:
 git clone --branch codex/release211-mac-acceptance https://github.com/pixflowdev/pixflow-design-pro.git pixflow-pro-checks
 cd pixflow-pro-checks
-git checkout --detach 99efa4ecb8a9d9b347e621fc9046abc772302ec8
+git checkout --detach 398cf34e30ecbbdbf1b98293461657f09b0d9c51
 export PIXFLOW_DESIGN_CORE_ROOT="$(cd ../pixflow-extension-checks && pwd)"
 pnpm install --frozen-lockfile
 pnpm setup:core
@@ -45,7 +45,7 @@ cd ../pixflow-extension-checks
 export PIXFLOW_DESIGN_PRO_ROOT="$(cd ../pixflow-pro-checks && pwd)"
 ```
 
-Do not set PIXFLOW_DESIGN_ALLOW_CORE_WORKTREE or change the pin to get a build through. Read this handoff on the branch tip, but build the immutable revisions above. Current broad-test failures are recorded in [the pairing receipt](../../../docs/testing/2026-10-28-mac-pairing.md); reproduce/triage them, do not silently skip them or claim release readiness. Platform testing may proceed independently on a disposable fixture.
+Do not set PIXFLOW_DESIGN_ALLOW_CORE_WORKTREE or change the pin to get a build through. Read this handoff on the branch tip, but build the immutable revisions above. The fixes and current validation are recorded in [the retest receipt](../../../docs/testing/2026-10-28-mac-retest.md). Windows broad suites now pass; rerun on macOS, including its previously reported platform-specific failures. This remains a test candidate, not release approval.
 
 ## Live-site acceptance setup
 
@@ -57,7 +57,7 @@ In both floating panel and Pro Workspace, use the full installed Bridge and real
 
 ## Two independent candidates
 
-1. **Ordinary v2.1.1:** clean build output, unset PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR. Direct Bridge must work without the extension installed. Do not wait for Google. Existing maintenance PRs and candidate pairing still need their final review/freeze.
+1. **Ordinary v2.1.1:** clean build output, unset PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR. Direct Bridge must work without the extension installed. Do not wait for Google. The exact source pair above is frozen for testing; final PR review, CI and platform acceptance still gate release.
 2. **Extension review candidate:** same approved base plus the optional native payload. This branch contains the new permanent Store identity, automatic connection and native registration work. Build and test separately; do not replace ordinary/public release assets with this candidate.
 
 Build the optional payload from Git:
@@ -91,7 +91,7 @@ Known outstanding or requiring evidence against the final freeze:
 
 - **Pro Workspace direct CLI:** restore legitimate Pro access on the isolated fixture, then send/stream/steer/queue, navigate/reload during preparation and streaming, verify one complete saved reply and no persistent Working/save warning. The last ordinary-release receipt explicitly left this unverified. Do not bypass licensing.
 - **macOS/Linux actual installers:** install, upgrade from the published release, restart/tray action where applicable, repair/reinstall, uninstall/reinstall, permissions and data preservation; run the direct CLI flow with the extension absent. Repeat Windows impacted checks if the final installer/source/payload changes.
-- **Final Core/Pro pairing and upgrades:** review/merge the intended fixes, pin Pro to the exact reviewed Core, exclude Team work, build fresh Free/Pro ZIPs. Verify Free-only operation, existing Pro entitlement and all original content/chats/preferences after upgrade. Capture before/after hashes and explicit allowlisted synthetic changes.
+- **Final Core/Pro pairing and upgrades:** test the frozen pair above, then review/merge the intended fixes and confirm final CI; exclude Team work and build fresh Free/Pro ZIPs. Verify Free-only operation, existing Pro entitlement and all original content/chats/preferences after upgrade. Capture before/after hashes and explicit allowlisted synthetic changes.
 - **User-facing regression spot checks on those exact installed ZIPs:** Bricks manual Design Your System and variable/profile actions without AI/Bridge; repeated native saves; Bricks-to-WP/ACF handoff including immediate navigation after Send; stable review target/pill position; bounded canvas requests and recovery; history conflict/early-reload recovery without replayed mutations. Feedback/client-review flows need their existing focused permission/navigation tests and confirmation they are included only if their reviewed PRs are in the release.
 - **Final build/release gates:** CI for every final commit; correct versions/required Bridge version; Free/Pro readme changelogs agree with the website; exact language-pack hashes hosted before updated pins ship; download checksums, platform labels and macOS unsigned disclosure; staged upgrade/download/updater responses and old-version compatibility. Do not change live feeds or checkout logic while testing.
 - **Website readiness:** coordinate final staged download/updater/changelog/language checks with the website chat and record its receipt. Earlier v2.1.0/live or review-only checks are not v2.1.1 promotion evidence.
@@ -127,3 +127,8 @@ pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts
 ```
 
 The native UI suites are e2e/ui/native-messaging-prototype.test.ts and e2e/ui/native-popup.test.ts, configured by e2e/lib/playwright/native.config.ts. Read their explicit environment opt-ins first; their local fixture/session inputs are not bundled credentials and must be created on the isolated test machine. Never point them at a customer site. Use the manual acceptance matrix for the public reviewer installation until its own isolated inputs are prepared.
+
+
+## Immediate Mac retest — supersedes the earlier pair
+
+Read [the retest receipt](../../../docs/testing/2026-10-28-mac-retest.md). Exact Store identity material and setup are committed in the private Pro repository at `docs/testing/chrome-exact-id-retest.md` and `docs/testing/chrome-store-public-identity.json` (Pro commit `398cf34e30ecbbdbf1b98293461657f09b0d9c51`). Use only the public key in a separate unpacked test copy; keep Store output keyless.

@@ -4,7 +4,8 @@ import {storeConfiguration, storeManifest, storeFiles, nativeStoreConfiguration}
 test('Store browser package has no development identity or customer configuration', () => {
   const manifest = storeManifest();
   assert.equal(manifest.name, 'Pixflow Design Bridge');
-  assert.equal(manifest.permissions.includes('activeTab'), false, 'tabs provides URL inspection; injection requires explicit optional host consent');
+  assert.equal(manifest.permissions.includes('activeTab'), true, 'popup gesture permits supported-site metadata discovery before persistent host consent');
+  assert.equal(manifest.permissions.includes('alarms'), true, 'remembered sites retry after Bridge returns without replaying requests');
   assert.equal('key' in manifest, false);
   assert.equal('extensionOrigin' in storeConfiguration, false);
   assert.deepEqual(storeConfiguration.sites, []);

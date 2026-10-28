@@ -12,7 +12,7 @@ const copy:Record<string,[string,string,string]>={
  unavailable:['Bridge not reachable','Open Pixflow Bridge on your computer, then check again. If it is already running, restart it from its tray menu.','Try again'],
  timeout:['Connection timed out','Bridge did not respond in time. Check that it is running, then try again. Your chats are unchanged.','Try again'],
  denied:['Site access needs checking','Bridge refused this site. Check the approved site in Bridge and sign in to WordPress, then try again.','Check again'],
- unsupported:['Connect your site in Pixflow','Pair this WordPress site with Bridge in Pixflow settings, then reopen this popup to allow Chrome access.','Connect to Pixflow Bridge'],
+ unsupported:['Open a Pixflow site','Open a WordPress admin or builder tab with Pixflow enabled, then reopen this popup.','Connect to Pixflow Bridge'],
 };
 function render(next:typeof state){
  state=next;const text=copy[next];title.textContent=text[0];description.textContent=text[1];action.textContent=text[2];

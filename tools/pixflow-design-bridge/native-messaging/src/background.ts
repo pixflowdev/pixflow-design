@@ -1,13 +1,17 @@
 import {probeBridge} from './connection-status';
-import {discoverNativeSites} from './enrollment';
+import {discoverBrowserSites, validateBrowserSite, type BrowserSite} from './browser-sites';
+import {enrollNativeSite} from './native-enroll';
 import {automaticConnection} from './automatic-connection';
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
 async function configuration(){
  const config=await configPromise;
  if(!config.discoverPairedSite)return config;
- const sites=await discoverNativeSites(chrome.runtime,config.hostName||'dev.pixflow.bridge_prototype');
- return {...config,sites};
+ const stored=await chrome.storage.local.get(['rememberedSites','sites','directSites']);
+ const candidates=await discoverBrowserSites(chrome);
+ const remembered=(stored.rememberedSites||[]).map((site:any)=>validateBrowserSite(site,site?.siteOrigin)).filter(Boolean) as BrowserSite[];
+ const sites=[...new Set([...candidates.map(site=>site.siteOrigin),...remembered.map(site=>site.siteOrigin),...(stored.sites||[]),...(stored.directSites||[])])];
+ return {...config,sites,candidates:[...candidates,...remembered]};
 }
 const pattern=(origin:string)=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';};
 const disabledOrigins=new Set<string>();
@@ -29,6 +33,11 @@ function invalidateConnections(origin?:string){
  permissionGeneration++;
  for(const connection of connections)if(!origin||connection.origin===origin)connection.close(true);
 }
+async function connectRemembered(origin:string){
+ const config=await configuration();
+ const site=config.candidates?.find((site:BrowserSite)=>site.siteOrigin===origin);
+ if(site&&await enabled(origin))await enrollNativeSite(chrome.runtime,config.hostName,site);
+}
 async function registrations(){
  const config=await configuration(),s=await chrome.storage.local.get('sites');
  await chrome.scripting.unregisterContentScripts();
@@ -48,12 +57,16 @@ const reconcile = automaticConnection(chrome, configuration, async origin => {
   if(!await chrome.permissions.contains({origins:[pattern(origin)]})||generation!==permissionGeneration)return;
   const sites=new Set<string>(stored.sites||[]);sites.add(origin);
   await chrome.storage.local.set({sites:[...sites]});
+  const config=await configuration();
+  const candidate=config.candidates?.find((site:BrowserSite)=>site.siteOrigin===origin);
+  if(candidate){const previous=await chrome.storage.local.get('rememberedSites');await chrome.storage.local.set({rememberedSites:[...(previous.rememberedSites||[]).filter((site:BrowserSite)=>site.siteOrigin!==origin),candidate]});}
   if(generation!==permissionGeneration||!await chrome.permissions.contains({origins:[pattern(origin)]})){
    sites.delete(origin);await chrome.storage.local.set({sites:[...sites]});return;
   }
  });
  if(generation!==permissionGeneration||!await enabled(origin))return;
  await registrations();
+ await connectRemembered(origin);
  for(const tab of await chrome.tabs.query({url:pattern(origin)})){
   if(!tab.url||new URL(tab.url).origin!==origin||generation!==permissionGeneration||!await enabled(origin))continue;
   await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content.js']});
@@ -64,6 +77,8 @@ const reconcile = automaticConnection(chrome, configuration, async origin => {
 const refresh=()=>void reconcile().catch(()=>{});
 chrome.runtime.onInstalled.addListener(refresh);
 chrome.runtime.onStartup.addListener(refresh);
+chrome.alarms?.create('pixflow-reconnect',{periodInMinutes:0.5});
+chrome.alarms?.onAlarm.addListener((alarm:any)=>{if(alarm.name==='pixflow-reconnect')refresh();});
 chrome.permissions.onAdded?.addListener(refresh);
 chrome.tabs.onActivated?.addListener(refresh);
 chrome.tabs.onUpdated?.addListener((_id:number,change:any)=>{if(change.status==='complete')refresh();});
@@ -79,6 +94,8 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    if(!stored.includes(message.origin)||disabledOrigins.has(message.origin)){reply({state:'direct'});return;}
    if(!await enabled(message.origin)){reply({state:'permission'});return;}
    const generation=permissionGeneration;
+   await connectRemembered(message.origin);
+   if(generation!==permissionGeneration||!await enabled(message.origin)){reply({state:'permission'});return;}
    const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName);
    reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
   }
@@ -86,12 +103,14 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
   if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);}
   else if(message.type!=='enable')throw new Error('Unknown operation');
   await persistConsent(async()=>{
-   const stored=await chrome.storage.local.get(['sites','directSites']);
+   const stored=await chrome.storage.local.get(['sites','directSites','rememberedSites']);
    const sites=new Set<string>(stored.sites||[]),directSites=new Set<string>(stored.directSites||[]);
    if(message.type==='enable'){
     const granted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
     if(generation!==permissionGeneration||!granted)throw new Error('Site access changed; enable the connection again');
     sites.add(message.origin);
+    const candidate=config.candidates?.find((site:BrowserSite)=>site.siteOrigin===message.origin);
+    if(candidate)await chrome.storage.local.set({rememberedSites:[...(stored.rememberedSites||[]).filter((site:BrowserSite)=>site.siteOrigin!==message.origin),candidate]});
     directSites.delete(message.origin);
    }else {sites.delete(message.origin);directSites.add(message.origin);}
    await chrome.storage.local.set({sites:[...sites],directSites:[...directSites]});
@@ -105,6 +124,7 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    }
   });
   await registrations();
+  if(message.type==='enable')await connectRemembered(message.origin);
   for(const tab of await chrome.tabs.query({url:pattern(message.origin)})){
    if(new URL(tab.url).origin!==message.origin)continue;
    if(message.type==='enable'){
@@ -130,6 +150,8 @@ chrome.runtime.onConnect.addListener((port:any)=>{
   const config=await configuration();
   if(port.name!=='pixflow-native-prototype'||port.sender?.frameId!==0||!config.sites.includes(origin)||!await enabled(origin)||generation!==permissionGeneration||closed){connection.close(true);return;}
   native=chrome.runtime.connectNative(config.hostName||'dev.pixflow.bridge_prototype');connections.add(connection);
+  const site=config.candidates?.find((site:BrowserSite)=>site.siteOrigin===origin);
+  if(site){await enrollNativeSite(chrome.runtime,config.hostName,site,native);if(closed||generation!==permissionGeneration||!await enabled(origin)){connection.close(true);return;}}
   let responses=Promise.resolve(),delivery=Promise.resolve();
   native.onMessage.addListener((message:any)=>{
    responses=responses.then(async()=>{
@@ -140,7 +162,7 @@ chrome.runtime.onConnect.addListener((port:any)=>{
   });
   native.onDisconnect.addListener(()=>{void chrome.runtime.lastError;connection.close();});
   port.onMessage.addListener((message:any)=>{
-   if(message.type==='discover'){connection.close(true);return;}
+   if(message.type==='discover'||message.type==='enroll'){connection.close(true);return;}
    delivery=delivery.then(async()=>{
     if(closed)return;
     if(!await enabled(origin)){connection.close(true);return;}

@@ -34,6 +34,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.1.1 (unreleased) =
+
+* Show a distinct, translated description for each Pro design slash command in the shared composer.
+* Copy only the displayed agent reply instead of a larger saved text snapshot, preserving message boundaries in the floating panel and Workspace.
+* Improve copy-button and timestamp contrast in light and dark themes, and reveal older reply actions when reached with the keyboard.
 * Make live review feedback more responsive by avoiding repeated updates to unchanged controls. Review the changed content instead of an untouched containing section, and prefer captions below the review frame.
 * Keep Design Your System toolbar requests available while Pro loads, and keep the settings overlay visible and dismissible if loading fails.
 * Refresh saved Pro access during active editor use when scheduled licence renewal has not run, and recover stale entitlement caches without asking users to re-enter their saved key. Existing licence and permission checks remain enforced.

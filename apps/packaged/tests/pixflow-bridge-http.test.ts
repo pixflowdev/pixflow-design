@@ -402,3 +402,6 @@ describe('Pixflow bridge HTTP gateway', () => {
     expect(json.site?.key).toBe('daemon-site-123');
   });
 });
+
+it('allows authenticated steering to wait for a reply boundary', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/direct-site/steer'))).toBe(240_000); });
+it('uses the same steering budget in Workspace without widening unrelated routes', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/steer'))).toBe(240_000); expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/cancel'))).toBe(25_000); });

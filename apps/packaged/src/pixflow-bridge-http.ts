@@ -290,6 +290,8 @@ async function readDaemonStatus(options: PixflowBridgeGatewayOptions): Promise<{
 
 export function proxyTimeoutForPath(requestUrl: URL): number {
   const pathname = requestUrl.pathname;
+  // Native guidance waits for a text boundary; match the browser continuation budget.
+  if (pathname === "/api/pixflow/direct-site/steer" || /^\/api\/runs\/[^/]+\/steer$/.test(pathname)) return 240_000;
   if (pathname === "/api/agents" && requestUrl.searchParams.get("stream") === "1") {
     return STREAM_PROXY_TIMEOUT_MS;
   }

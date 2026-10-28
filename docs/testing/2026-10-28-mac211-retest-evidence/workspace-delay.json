@@ -1,0 +1,107 @@
+{
+  "timeline": [
+    {
+      "elapsed_ms": 0,
+      "event": "pipeline_stage_started",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 0,
+      "event": "genui_surface_request",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 1,
+      "event": "pipeline_stage_completed",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 1,
+      "event": "pipeline_stage_started",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 1,
+      "event": "pipeline_stage_completed",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 15,
+      "event": "start",
+      "type": null,
+      "status": null
+    },
+    {
+      "elapsed_ms": 76,
+      "event": "agent",
+      "type": "session",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437275,
+      "event": "agent",
+      "type": "assistant_message_boundary",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437280,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437280,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437280,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437280,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437281,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437281,
+      "event": "agent",
+      "type": "text_delta",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437345,
+      "event": "agent",
+      "type": "assistant_message_boundary",
+      "status": null
+    },
+    {
+      "elapsed_ms": 437423,
+      "event": "diagnostic",
+      "type": "runtime_close",
+      "status": "succeeded"
+    },
+    {
+      "elapsed_ms": 437424,
+      "event": "end",
+      "type": null,
+      "status": "succeeded"
+    }
+  ],
+  "conclusion": "Run began immediately; Codex session reported within 76ms. First response text after 437280ms. Delay occurs after dispatch; provider/adapter cause not established."
+}

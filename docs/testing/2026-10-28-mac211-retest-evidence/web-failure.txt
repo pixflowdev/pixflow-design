@@ -1,0 +1,43 @@
+ FAIL  tests/bricks/bricksMcpSkills.test.ts > Bricks MCP skill resources > installs agent-chosen declared Google fonts even though Stage A does not import them
+AssertionError: expected [ { …(2) }, { …(2) }, { …(2) } ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   ObjectContaining {
++ [
++   {
+      "fallback": "\"IBM Plex Sans\", sans-serif",
+      "font-family": "Space Grotesk",
+    },
+-   ObjectContaining {
+-     "fallback": "\"SF Mono\", monospace",
++   {
++     "fallback": "SF Mono, monospace",
++     "font-family": "IBM Plex Mono",
++   },
++   {
++     "fallback": "SF Mono, monospace",
+      "font-family": "IBM Plex Mono",
+    },
+  ]
+
+ ❯ tests/bricks/bricksMcpSkills.test.ts:1278:26
+    1276|         .filter((token: { name: string }) => token.name === 'font-body…
+    1277|         .every((token: { primaryFamily: string }) => token.primaryFami…
+    1278|       expect(typography).toEqual(expect.arrayContaining([
+       |                          ^
+    1279|         expect.objectContaining({ 'font-family': 'Space Grotesk', fall…
+    1280|         expect.objectContaining({ 'font-family': 'IBM Plex Mono', fall…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 202 passed | 2 skipped (205)
+      Tests  1 failed | 2215 passed | 28 skipped (2244)
+   Start at  14:10:01
+   Duration  60.91s (transform 6.44s, setup 454ms, import 17.78s, tests 67.09s, environment 24.25s)
+
+Paired web lane: FAILED; source workspace <PRO>/.tmp/paired-tests/run-SkE6Sy
+ ELIFECYCLE  Command failed with exit code 1.

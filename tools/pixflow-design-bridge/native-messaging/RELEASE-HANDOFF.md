@@ -136,3 +136,8 @@ The user requested on 28 October 2026 that the coordinating agent add the Store 
 Please commit the public key/review-link reference and concise setup instructions in a private Pro testing document. Include a deterministic check that the unpacked development extension resolves to that exact ID, the corresponding Core/Pro revisions, and the returned private document path/commit in the next handoff. A temporary manifest with the public key belongs only in an isolated test-profile build; retain the Store upload bundle's intended keyless format. Do not commit a private signing key, credentials, cookies, access tokens or browser profiles.
 
 Until that material is supplied, real Chrome first-approval, revocation and automatic-connection acceptance is NOT RUN. Native filesystem/contract tests and a randomly assigned development extension ID do not substitute. Ordinary Bridge acceptance continues independently.
+
+
+## Updated Mac retest receipt — 28 October 2026
+
+The new exact pairing (Core dbe241f6, Pro 398cf34e) has a separate receipt at `docs/testing/2026-10-28-mac211-retest.md`. Private Pro identity setup is now available and the real Chrome prompt/request/fallback tests ran. Manual offline profile save/reload/apply, uninstall/reinstall preservation, native registration repair and user-assisted tray Restart passed. Two Mac suite failures and active Workspace native-disconnect feedback remain findings; the queued-turn delay was traced to the period after provider-session startup. Reboot remains pending. Consult the receipt for precise partial/NOT RUN coverage; no release promotion is authorized.

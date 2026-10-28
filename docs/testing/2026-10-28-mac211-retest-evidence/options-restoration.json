@@ -1,0 +1,42 @@
+{
+  "bricks_global_settings": {
+    "test_value_present": true,
+    "contains_test_colour": false,
+    "restored": true
+  },
+  "bricks_global_variables": {
+    "test_value_present": true,
+    "contains_test_colour": true,
+    "restored": true
+  },
+  "bricks_mcp_design_system_version": {
+    "test_value_present": true,
+    "contains_test_colour": false,
+    "restored": true
+  },
+  "bricks_global_variables_categories": {
+    "test_value_present": true,
+    "contains_test_colour": false,
+    "restored": true
+  },
+  "bricks_global_classes": {
+    "test_value_present": true,
+    "contains_test_colour": false,
+    "restored": true
+  },
+  "bricks_global_classes_categories": {
+    "test_value_present": true,
+    "contains_test_colour": false,
+    "restored": true
+  },
+  "bricks_color_palette": {
+    "test_value_present": true,
+    "contains_test_colour": true,
+    "restored": true
+  },
+  "bricks_style_manager": {
+    "test_value_present": true,
+    "contains_test_colour": true,
+    "restored": true
+  }
+}

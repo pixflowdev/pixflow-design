@@ -1,0 +1,7 @@
+{
+  "native_launcher_relocated": true,
+  "native_executable_exists": true,
+  "health_ok": true,
+  "version": "2.1.1",
+  "scope": "tools-pack root relocation, not Finder drag-install"
+}

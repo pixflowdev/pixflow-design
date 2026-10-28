@@ -1,0 +1,9 @@
+Fatal error: Uncaught RuntimeException: Linked private storage is not allowed. in <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Storage/PrivateDirectory.php:92
+Stack trace:
+#0 <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Storage/PrivateDirectory.php(43): PixflowDesign\WordPress\Storage\PrivateDirectory->assert_no_links('/var')
+#1 <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Projects/ProjectStorage.php(143): PixflowDesign\WordPress\Storage\PrivateDirectory->directory()
+#2 <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Projects/ProjectStorage.php(49): PixflowDesign\WordPress\Projects\ProjectStorage->base_dir()
+#3 <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Projects/ProjectStorage.php(64): PixflowDesign\WordPress\Projects\ProjectStorage->project_dir('aaaaaaaa-aaaa-a...')
+#4 <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/tests/direct-site-workspace.test.php(67): PixflowDesign\WordPress\Projects\ProjectStorage->files_dir('aaaaaaaa-aaaa-a...')
+#5 {main}
+  thrown in <PRO>/.tmp/paired-tests/run-Gkad94/wordpress/src/Storage/PrivateDirectory.php on line 92

@@ -35,6 +35,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = 2.1.1 (unreleased) =
 
+* Show a Settings notification dot when the active language pack needs updating, with safe download failure and retry handling.
+
 * Translate editor-handoff recovery guidance and refresh downloadable language packs for the new chat, design-command and Bridge connection wording.
 
 * Show whether Bridge is connected directly or through the optional Chrome extension in the Bridge popover and Account & settings menu. Chrome extension support is pending Chrome Web Store approval.

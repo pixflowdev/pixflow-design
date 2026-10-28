@@ -1,3 +1,4 @@
+import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { useBridgeConnectionRoute } from '../pixflow/bridge-connection-route';
 import { composioAvailable } from '../pixflow/composio-contribution';
 import { usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
@@ -597,7 +598,7 @@ export function AvatarMenu({
             <span className="avatar-item-icon" aria-hidden>
               <RemixIcon name="settings-3-line" size={15} />
             </span>
-            <span>{t('inlineSwitcher.openFullSettings')}</span>
+            <span>{t('inlineSwitcher.openFullSettings')}<LanguageUpdateDot /></span>
           </button>
 
           {onBack ? (

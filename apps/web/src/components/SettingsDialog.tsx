@@ -1,3 +1,4 @@
+import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { BridgeConnectorSection } from './BridgeConnectorSection';
 export { deriveComposioCredentialState } from './composio-credential-state';
 import { composioAvailable } from '../pixflow/composio-contribution';
@@ -3545,7 +3546,7 @@ export function SettingsDialog({
                 <item.icon size={18} stroke={1.65} aria-hidden="true" />
                 <span>
                   <span className="settings-nav-item__title-row">
-                    <strong>{item.title}</strong>
+                    <strong>{item.title}</strong>{(item.section === 'appearance' || item.section === 'language') && <LanguageUpdateDot />}
                     {item.section === 'skills' && skillUpdateCount > 0 && <span className={settingsStyles.skillUpdateCount} aria-label={`${translateUi('skillLibrary.updateAvailable')}: ${skillUpdateCount}`} title={`${translateUi('skillLibrary.updateAvailable')}: ${skillUpdateCount}`}>{skillUpdateCount > 99 ? '99+' : skillUpdateCount}</span>}
                     {item.section === 'resourcePacks' && downloadAttentionCount > 0 ? (
                       <span

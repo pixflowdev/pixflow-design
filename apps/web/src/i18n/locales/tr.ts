@@ -1,6 +1,7 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "history.editorTransitionFailed": "Düzenleyici geçişi doğrulanamadı. Yeniden bağlanmak için bu paneli tekrar açın. Bekleyen hiçbir düzenleme tekrarlanmadı.",
   "bridge.connectedDirect": "Doğrudan bağlı",
   "bridge.connectedExtension": "Chrome uzantısı üzerinden bağlı",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks’e kaydet",

@@ -3416,7 +3416,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     let content='';let events:AgentEvent[]=[];
     let terminalAt: number | undefined;
     setMessages(current => recoverDirectRunMessages(current, metadata.messages!, metadata.messageId!));setStreaming(true);
-    void notifyFloatingCanvasDeparture(pending.metadata, contextIdentity?.objectKind === 'post' ? Number(contextIdentity.objectId) : 0, () => resolveEditorRunTarget({context: withGutenbergTarget(applyBuilderContext(context || {}))}, controller.signal)).then(() => runDirectSite({config,agentId:'',prompt:'',history:[],mode:metadata.mode||'design',resume:pending,persistenceSurface,signal:controller.signal,
+    void notifyFloatingCanvasDeparture(pending.metadata, contextIdentity?.objectKind === 'post' ? Number(contextIdentity.objectId) : 0, () => resolveEditorRunTarget({context: withGutenbergTarget(applyBuilderContext(context || {}))}, controller.signal), translateUi("history.editorTransitionFailed")).then(() => runDirectSite({config,agentId:'',prompt:'',history:[],mode:metadata.mode||'design',resume:pending,persistenceSurface,signal:controller.signal,
       onOutcome: (_outcome, endedAt) => { terminalAt=endedAt; },
       onUpdate:(next,nextEvents)=>{
         setNavigationReconnecting(false);

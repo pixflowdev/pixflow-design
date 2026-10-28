@@ -1,6 +1,7 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "history.editorTransitionFailed": "Perpindahan editor tidak dapat dikonfirmasi. Buka kembali panel ini untuk menyambungkan ulang. Tidak ada perubahan tertunda yang diulangi.",
   "bridge.connectedDirect": "Terhubung langsung",
   "bridge.connectedExtension": "Terhubung melalui ekstensi Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Simpan ke Bricks",

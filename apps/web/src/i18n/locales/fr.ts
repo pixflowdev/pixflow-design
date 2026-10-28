@@ -1,6 +1,7 @@
 import type { Dict } from '../types';
 
 export const fr: Dict = {
+  "history.editorTransitionFailed": "Impossible de confirmer le changement d’éditeur. Rouvrez ce panneau pour rétablir la connexion. Aucune modification en attente n’a été répétée.",
   "bridge.connectedDirect": "Connexion directe",
   "bridge.connectedExtension": "Connecté via l’extension Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Enregistrer dans Bricks",

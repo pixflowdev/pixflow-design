@@ -1,6 +1,7 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "history.editorTransitionFailed": "エディターの切り替えを確認できませんでした。このパネルを開き直して再接続してください。保留中の編集は再実行されていません。",
   "bridge.connectedDirect": "直接接続中",
   "bridge.connectedExtension": "Chrome 拡張機能経由で接続中",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks に保存",

@@ -2,7 +2,7 @@ import type { PixflowDirectCanvasDepartureRequest, PixflowEditorTarget } from '@
 import { pixflowWordPressRestFetch } from './runtime-fetch';
 
 /** Hand off only this tab's same-page editor connection; pending edits are never replayed. */
-export async function notifyFloatingCanvasDeparture(metadata: unknown, postId: number, resolveDestination?: () => Promise<PixflowEditorTarget | undefined>): Promise<void> {
+export async function notifyFloatingCanvasDeparture(metadata: unknown, postId: number, resolveDestination?: () => Promise<PixflowEditorTarget | undefined>, failureMessage = 'Could not confirm the editor transition. Reopen this panel to reconnect; no pending edit has been repeated.'): Promise<void> {
   const target = (metadata as {editorTarget?: {builder?: string;canvasId?: string;postId?:number}} | undefined)?.editorTarget;
   if (target?.builder !== 'bricks' || target.postId !== postId || !(postId > 0)
     || !/^[a-f0-9]{32}$/.test(target.canvasId || '') || !navigator.locks) return;
@@ -16,6 +16,6 @@ export async function notifyFloatingCanvasDeparture(metadata: unknown, postId: n
     const response=await pixflowWordPressRestFetch('/wp-admin/direct/canvas', {
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(10000),
     });
-    if (!response.ok) throw new Error('Could not confirm the editor transition. Reopen this panel to reconnect; no pending edit has been repeated.');
+    if (!response.ok) throw new Error(failureMessage);
   });
 }

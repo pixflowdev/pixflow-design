@@ -35,6 +35,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = 2.1.1 (unreleased) =
 
+* Translate editor-handoff recovery guidance and refresh downloadable language packs for the new chat, design-command and Bridge connection wording.
+
 * Show whether Bridge is connected directly or through the optional Chrome extension in the Bridge popover and Account & settings menu. Chrome extension support is pending Chrome Web Store approval.
 
 * Restore the floating-panel Bridge control immediately when switching from API to Local CLI, including panels first opened in API mode.

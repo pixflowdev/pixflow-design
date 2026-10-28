@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] - Unreleased
 
+- Translate editor-handoff recovery guidance and refresh downloadable language packs for the new chat, design-command and Bridge connection wording.
+
 - Show whether Bridge is connected directly or through the optional Chrome extension in the Bridge popover and Account & settings menu. Chrome extension support is pending Chrome Web Store approval.
 
 - Restore the floating-panel Bridge control immediately when switching from API to Local CLI, including panels first opened in API mode.

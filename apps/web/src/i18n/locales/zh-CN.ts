@@ -1,6 +1,7 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "history.editorTransitionFailed": "无法确认编辑器切换。请重新打开此面板以重新连接；未重复执行任何待处理的编辑。",
   "bridge.connectedDirect": "已直接连接",
   "bridge.connectedExtension": "已通过 Chrome 扩展连接",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "保存到 Bricks",

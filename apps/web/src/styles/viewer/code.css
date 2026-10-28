@@ -541,6 +541,13 @@
   margin: 12px 0;
   padding-left: 24px;
 }
+/* Host editors (including Etch) reset classed lists. Chat Markdown owns its markers. */
+.prose-block ol.md-ol {
+  list-style-type: decimal !important;
+}
+.prose-block ul.md-ul {
+  list-style-type: disc !important;
+}
 .prose-block .md-ul li, .prose-block .md-ol li {
   margin: 6px 0;
   line-height: 1.65;

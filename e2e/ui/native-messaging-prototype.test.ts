@@ -2,7 +2,7 @@ import {test,expect,chromium} from '@playwright/test';
 import {mkdtemp,readFile,copyFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
-test('installed popup confirms real Bridge reachability and returns to direct mode',async()=>{
+test('approved installed extension connects automatically and preserves direct mode after restart',async()=>{
  const extension=process.env.PIXFLOW_NATIVE_EXTENSION;
  test.skip(!extension,'Explicit isolated prototype required');
  const config=JSON.parse(await readFile(join(extension!,'config.json'),'utf8'));
@@ -12,12 +12,12 @@ test('installed popup confirms real Bridge reachability and returns to direct mo
  const site=new URL(config.sites[0]);manifest.host_permissions=[site.protocol+'//'+site.hostname+'/*'];
  await writeFile(join(fixture,'manifest.json'),JSON.stringify(manifest));
  const profile=await mkdtemp(join(extension!,'popup-profile-'));
- const context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`]});
+ let context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`]});
  try{
   const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
   const popup=await context.newPage();await popup.goto(`chrome-extension://${new URL(worker.url()).host}/popup.html`);
-  await expect(popup.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeEnabled();
-  await popup.getByRole('button',{name:'Connect to Pixflow Bridge'}).click();
+  // Existing Chrome approval must be enough; no second Connect action.
+
   await expect(popup.getByRole('heading',{name:'Bridge connected'})).toBeVisible({timeout:15000});
   await expect(popup.getByRole('button',{name:'Check connection'})).toBeEnabled();
   await popup.emulateMedia({colorScheme:'dark'});await popup.locator('body').screenshot({path:test.info().outputPath('installed-connected.png'),animations:'disabled'});
@@ -26,6 +26,12 @@ test('installed popup confirms real Bridge reachability and returns to direct mo
   await expect(popup.getByRole('heading',{name:'Connect this site'})).toBeVisible();
   const stored=await worker.evaluate(async()=>await (globalThis as any).chrome.storage.local.get('sites'));
   expect(stored.sites).toEqual([]);
+  await popup.reload();
+  await expect(popup.getByRole('heading',{name:'Connect this site'})).toBeVisible();
+  await context.close();
+  context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`]});
+  const reopened=await context.newPage();await reopened.goto(`chrome-extension://${new URL(worker.url()).host}/popup.html`);
+  await expect(reopened.getByRole('heading',{name:'Connect this site'})).toBeVisible();
  }finally{await context.close();}
 });
 
@@ -119,4 +125,35 @@ test('real CLI streams, steers and reconnects after approved-site navigation',as
   if(runId){const status=await fetch(config.bridge+'/api/runs/'+runId).then(r=>r.json());if(!['succeeded','completed','failed','canceled','cancelled'].includes(status.status))await fetch(config.bridge+'/api/runs/'+runId+'/cancel',{method:'POST'});}
   await context.close();
  }
+});
+
+
+test('interactive Chrome site approval connects without opening the extension popup',async()=>{
+ test.skip(process.env.PIXFLOW_NATIVE_MANUAL_APPROVAL!=='1','Requires the user to accept the real Chrome site-access request');
+ test.setTimeout(240000);
+ const extension=process.env.PIXFLOW_NATIVE_EXTENSION!;
+ const config=JSON.parse(await readFile(join(extension,'config.json'),'utf8'));
+ const fixture=await mkdtemp(join(extension,'automatic-extension-'));
+ for(const name of ['manifest.json','config.json','background.js','page.js','content.js','popup.js','popup.html','popup.css','brand.svg','icon.png'])await copyFile(join(extension,name),join(fixture,name));
+ const profile=await mkdtemp(join(extension,'automatic-profile-'));
+ const context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:false,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`]});
+ try{
+  const initialWorker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
+  const initialPermissions=await initialWorker.evaluate(async()=>await (globalThis as any).chrome.permissions.getAll());
+  expect(initialPermissions.origins||[]).toEqual([]);
+  // Synthetic page at the isolated approved origin: this checks Chrome permission, not WordPress authoring.
+  await context.route(config.sites[0]+'/**',route=>route.fulfill({contentType:'text/html',body:'<meta charset="utf-8"><title>Pixflow connection approval test</title><h1>Pixflow connection approval test</h1><p>Allow the extension for this isolated site using Chrome�s site-access control. No existing WordPress content is loaded or changed.</p>'}));
+  const page=await context.newPage();await page.goto(config.sites[0],{waitUntil:'domcontentloaded'});
+  await context.route(config.bridge+'/**',route=>route.abort('blockedbyclient'));
+  console.log('Awaiting the user to approve Chrome site access in the isolated browser.');
+  const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
+  const site=new URL(config.sites[0]);
+  await expect.poll(async()=>worker.evaluate(async(pattern)=>{const permissions=await (globalThis as any).chrome.permissions.getAll();return (permissions.origins||[]).includes(pattern);},site.protocol+'//'+site.hostname+'/*'),{timeout:200000}).toBe(true);
+  await page.waitForFunction(()=>Boolean((window as any).__PIXFLOW_NATIVE_PROTOTYPE__),undefined,{timeout:200000});
+  const health=await page.evaluate(async(url)=>{const r=await fetch(url+'/api/health');return r.status;},config.bridge);
+  expect(health).toBe(200);
+  await page.reload();
+  await page.waitForFunction(()=>Boolean((window as any).__PIXFLOW_NATIVE_PROTOTYPE__));
+  expect(await page.evaluate(async(url)=>(await fetch(url+'/api/health')).status,config.bridge)).toBe(200);
+ }finally{await context.close();}
 });

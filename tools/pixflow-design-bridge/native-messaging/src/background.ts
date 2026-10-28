@@ -1,5 +1,6 @@
 import {probeBridge} from './connection-status';
 import {discoverNativeSites} from './enrollment';
+import {automaticConnection} from './automatic-connection';
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
 async function configuration(){
@@ -39,8 +40,33 @@ async function registrations(){
   ]);
  }
 }
-chrome.runtime.onInstalled.addListener(()=>void registrations().catch(()=>{}));
-chrome.runtime.onStartup.addListener(()=>void registrations().catch(()=>{}));
+const reconcile = automaticConnection(chrome, configuration, async origin => {
+ const generation=permissionGeneration;
+ await persistConsent(async()=>{
+  const stored=await chrome.storage.local.get(['sites','directSites']);
+  if(disabledOrigins.has(origin)||(stored.directSites||[]).includes(origin)||generation!==permissionGeneration)return;
+  if(!await chrome.permissions.contains({origins:[pattern(origin)]})||generation!==permissionGeneration)return;
+  const sites=new Set<string>(stored.sites||[]);sites.add(origin);
+  await chrome.storage.local.set({sites:[...sites]});
+  if(generation!==permissionGeneration||!await chrome.permissions.contains({origins:[pattern(origin)]})){
+   sites.delete(origin);await chrome.storage.local.set({sites:[...sites]});return;
+  }
+ });
+ if(generation!==permissionGeneration||!await enabled(origin))return;
+ await registrations();
+ for(const tab of await chrome.tabs.query({url:pattern(origin)})){
+  if(!tab.url||new URL(tab.url).origin!==origin||generation!==permissionGeneration||!await enabled(origin))continue;
+  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content.js']});
+  if(generation!==permissionGeneration||!await enabled(origin))continue;
+  await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',files:['page.js']});
+ }
+});
+const refresh=()=>void reconcile().catch(()=>{});
+chrome.runtime.onInstalled.addListener(refresh);
+chrome.runtime.onStartup.addListener(refresh);
+chrome.permissions.onAdded?.addListener(refresh);
+chrome.tabs.onActivated?.addListener(refresh);
+chrome.tabs.onUpdated?.addListener((_id:number,change:any)=>{if(change.status==='complete')refresh();});
 chrome.permissions.onRemoved.addListener(()=>{invalidateConnections();void registrations().catch(()=>{});});
 chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
  if(sender.id!==chrome.runtime.id||!sender.url?.startsWith(chrome.runtime.getURL('')))return;
@@ -60,13 +86,15 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
   if(message.type==='disable'){disabledOrigins.add(message.origin);invalidateConnections(message.origin);}
   else if(message.type!=='enable')throw new Error('Unknown operation');
   await persistConsent(async()=>{
-   const sites=new Set<string>((await chrome.storage.local.get('sites')).sites||[]);
+   const stored=await chrome.storage.local.get(['sites','directSites']);
+   const sites=new Set<string>(stored.sites||[]),directSites=new Set<string>(stored.directSites||[]);
    if(message.type==='enable'){
     const granted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
     if(generation!==permissionGeneration||!granted)throw new Error('Site access changed; enable the connection again');
     sites.add(message.origin);
-   }else sites.delete(message.origin);
-   await chrome.storage.local.set({sites:[...sites]});
+    directSites.delete(message.origin);
+   }else {sites.delete(message.origin);directSites.add(message.origin);}
+   await chrome.storage.local.set({sites:[...sites],directSites:[...directSites]});
    if(message.type==='enable'){
     const granted=await chrome.permissions.contains({origins:[pattern(message.origin)]});
     if(generation!==permissionGeneration||!granted){

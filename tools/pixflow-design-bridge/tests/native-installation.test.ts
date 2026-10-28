@@ -19,6 +19,12 @@ for (const platform of ['win32', 'darwin', 'linux'] as const) test(`${platform}:
     assert.deepEqual(JSON.parse(first).allowed_origins, [`chrome-extension://${config.extensionId}/`]);
     await installNativeHost(config, registry);
     assert.equal(await readFile(paths.manifest, 'utf8'), first);
+    await installNativeHost({ ...config, electron: true }, registry);
+    const electronLauncher = await readFile(paths.launcher, 'utf8');
+    assert.match(electronLauncher, /ELECTRON_RUN_AS_NODE=1/);
+    assert.ok(electronLauncher.includes(config.node));
+    await installNativeHost(config, registry);
+    assert.doesNotMatch(await readFile(paths.launcher, 'utf8'), /ELECTRON_RUN_AS_NODE/);
     assert.equal(await uninstallNativeHost(config, registry), true);
     assert.equal(await uninstallNativeHost(config, registry), false);
     assert.equal(await readFile(join(root, 'customer-data'), 'utf8'), 'preserve');

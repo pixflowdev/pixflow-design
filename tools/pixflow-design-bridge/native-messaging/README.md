@@ -6,7 +6,7 @@ The extension forwards fetch requests to the existing Bridge through Chrome nati
 
 ## Connection and coverage
 
-The popup follows Pixflow's neutral light/dark surfaces, compact controls and superellipse corners. It selects the current configured site when Chrome exposes its URL after the extension is clicked (`activeTab`); this does not grant persistent site access. The Connect action requests host permission explicitly. Existing configured origins remain the allowlist; the popup cannot enroll arbitrary sites.
+The popup follows Pixflow's neutral light/dark surfaces, compact controls and superellipse corners. It uses `tabs` to identify the focused paired site before optional host approval; this does not grant persistent site access. The Store package does not request `activeTab`. The Connect action requests host permission explicitly. Existing configured origins remain the allowlist; the popup cannot enroll arbitrary sites.
 
 Saved permission is distinct from connection status: a bounded, read-only `/api/health` request travels through the native host before the popup reports Bridge connected. This verifies transport reachability, not WordPress login, installed CLI agents or authorization to edit a page. Setup, permission, refusal, timeout and unavailable-Bridge states have separate recovery copy. Disconnect disables extension transport without removing unrelated Chrome permissions, deleting chat/settings data or replaying a run.
 
@@ -44,7 +44,7 @@ Isolated Windows acceptance covered the real optional-permission prompt, permiss
 
 Set `PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR` explicitly to a staged payload directory containing `host.mjs`, `install.mjs` and `config.json`. No directory is discovered automatically. Configuration must include an explicit `hostName`, exact `extensionOrigin`, loopback `bridge` origin and approved `sites`. Browser profiles, session credentials and popup assets are not copied into Bridge installers. Do not use customer-specific development configuration in a public release.
 
-Windows Bridge installers call the staged `install.mjs install` using their bundled Node after extraction, and `install.mjs uninstall` before removing app files. Missing payload leaves the direct connection unchanged. Registration refuses another installation's key or manifest. Uninstall removes only a matching manifest/registration, never Chrome consent, chats or Bridge data. Registration failure does not disable direct transport.
+Windows Bridge installers call the staged `install.mjs install` using their bundled Node, or packaged Electron in Node mode when no standalone Node is present, after extraction, and `install.mjs uninstall` before removing app files. Missing payload leaves the direct connection unchanged. Registration refuses another installation's key or manifest. Uninstall removes only a matching manifest/registration, never Chrome consent, chats or Bridge data. Registration failure does not disable direct transport.
 
 On Windows, `PIXFLOW_NATIVE_NSIS_TEST=1 pnpm --dir e2e test tests/pixflow/native-installer.test.ts` compiles and executes a small isolated NSIS installer using these exact hooks. It checks install, repair and uninstall against a uniquely named real registry key and a saved-data sentinel. It does not install or replace the full customer Bridge. Set `PIXFLOW_NSIS_COMPILER` if NSIS is not in its standard installation directory.
 
@@ -54,10 +54,32 @@ Additional checks exercise the actual native host process with eight concurrent 
 
 ## Customer-site enrollment
 
+Approved paired sites now connect on extension installation, browser startup, tab activation and completed navigation without a second popup action. Chrome 133+ receives a pattern-scoped host-access request for the active tab when permission is missing. Chrome itself decides whether to display that request; older versions retain the popup approval fallback. Permission approval triggers automatic enrollment. The extension does not grant browser permission or pair an arbitrary WordPress installation itself.
+
+Choosing the direct connection is stored separately and survives browser restarts; background discovery must not override it. Permission removal still immediately invalidates active connections and pending admissions. Automatic activation retains the exact paired origin, existing Bridge authorization and no-replay behavior.
+
+Validation for automatic onboarding covers real installed Chromium transport with prior permission, restart preservation, popup recovery, permission-race regression tests and production signed-grant rejection. Chrome's interactive first-time host-access request remains a manual acceptance gate; preapproved test profiles do not validate that prompt.
+
 Prototype setup also supports `--discover-paired-site --bridge http://127.0.0.1:17467` instead of `--site`. In that mode, both the native host and popup discover the exact active origin from the existing local Bridge pairing. No customer domain is embedded in the installer. Pair the site using Pixflow's existing Bridge flow, open the extension popup, and explicitly allow Chrome access. Discovery does not pair a site, grant WordPress access, or grant Chrome permission. Failed discovery admits no origins. Site/session authorization continues to run in Bridge.
 
 ## Independent release gates
 
 The upcoming plugin/Bridge fixes do not depend on Google approving this extension. Build the normal release without `PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR`; prototype sources remain excluded. Reused output containing a stale native payload is rejected rather than silently shipping it. Validate the normal installer and both composers with no extension installed before promoting that separate release.
 
-Before the **extension** release: permanent Chrome Web Store identity, complete installed customer-enrollment and Windows installer acceptance, macOS/Linux lifecycle integration and acceptance, full production route/session checks, and Chrome Web Store submission. No production extension identity has been invented or permissions pre-granted. The direct connection remains available.
+Before the **extension** release: permanent Chrome Web Store identity, complete installed customer-enrollment and Windows installer acceptance, macOS/Linux lifecycle integration and acceptance, full production route/session checks, and Chrome Web Store submission. The Store-assigned permanent identity and current verification limits are recorded in `STORE.md`; no customer permissions are pre-granted. The direct connection remains available.
+
+
+### Chrome documentation check (2026-10-28)
+
+Chrome action popups auto-size to their contents within 25x25-800x600. The popup now declares a 352px document width without viewport-relative caps, avoiding the circular initial sizing seen in the toolbar. Browser tests exercise an initial 180px measurement viewport. The user subsequently confirmed that the real automatically opened toolbar popup had the correct width and readable layout.
+
+The host-access request API exists from Chrome 133, but Chrome documents that its display depends on the new extensions menu and can be disabled or throttled. Feature detection alone does not prove a visible prompt. Keep the explicit popup permission fallback. Repeated requests for the same tab/pattern are limited to once per five minutes in a worker lifetime; successful permission grant clears that request. The earlier manual acceptance used the popup, so it proves approval, native connection and reload, not popup-free approval.
+
+References: https://developer.chrome.com/docs/extensions/reference/api/action and https://developer.chrome.com/blog/new-extensions-menu-testing
+
+
+### One-time automatic setup panel
+
+Chrome 127+ can open the action popup programmatically. The extension now requests `tabs` solely to compare the focused tab origin with the native host's verified pairing before site permission exists. It does not record browsing history or send tab URLs to a service. Matching is exact, including the port. Unrelated sites and unfocused windows never trigger the panel.
+
+A local `onboardingShown` list records the once-per-origin attempt before opening, so dismissal and worker restart cannot repeatedly reopen it. Explicit direct-mode preferences are retained. Older Chrome retains the popup fallback. `openPopup` is not permission approval; the browser acceptance test checks `permissions.getAll().origins` before accepting persistence as proven.

@@ -10,8 +10,8 @@ function port(sender?:unknown){const p={name:'pixflow-native-prototype',sender,o
 function fixture(stored={sites:['https://example.test']},origins=['https://example.test']){
  let allowed=true;const native=port(),client=port({origin:'https://example.test',frameId:0});const chrome={
   runtime:{id:'fixture',getURL:(p:string)=>'chrome-extension://fixture/'+p,onInstalled:event(),onStartup:event(),onMessage:event(),onConnect:event(),connectNative:()=>native,lastError:undefined},
-  permissions:{contains:async()=>allowed,onRemoved:event()},storage:{local:{get:async()=>({sites:[...stored.sites]}),set:async(value?:{sites:string[]})=>{stored.sites=[...value!.sites];}}},
-  scripting:{unregisterContentScripts:async()=>{},registerContentScripts:async()=>{}},tabs:{query:async()=>[]}
+  permissions:{contains:async()=>allowed,onRemoved:event(),onAdded:event(),addHostAccessRequest:async()=>{}},storage:{local:{get:async()=>({sites:[...stored.sites]}),set:async(value?:{sites:string[]})=>{stored.sites=[...value!.sites];}}},
+  scripting:{unregisterContentScripts:async()=>{},registerContentScripts:async()=>{}},tabs:{query:async()=>[],onActivated:event(),onUpdated:event()}
  };
  runInNewContext(source,{exports:{},module:{exports:{}},chrome,URL,setTimeout,clearTimeout,fetch:async()=>({json:async()=>({sites:origins,bridge:'http://127.0.0.1:17467'})})});
  return {client,native,chrome,revoke(){allowed=false;chrome.permissions.onRemoved.emit({origins:['https://example.test/*']});}};
@@ -99,4 +99,20 @@ test('revocation during status check cannot report connected or restore permissi
  assert.equal(f.native.sent[0].method,'GET');assert.equal(f.native.sent[0].url,'http://127.0.0.1:17467/api/health');
  f.revoke();f.native.onMessage.emit({id:'popup-health',type:'headers',status:200});f.native.onMessage.emit({id:'popup-health',type:'end'});await flush();
  assert.equal(responses[0].state,'permission');assert.equal(f.native.closed,true);
+});
+
+
+test('Chrome permission grant enrolls the paired site without a popup enable message',async()=>{
+ const stored={sites:[] as string[]},f=fixture(stored);
+ f.chrome.permissions.onAdded.emit({origins:['https://example.test/*']});await flush();
+ assert.deepEqual(stored.sites,['https://example.test']);
+ f.chrome.runtime.onConnect.emit(f.client);await flush();assert.equal(f.client.sent[0].type,'ready');
+});
+
+test('automatic enrollment cannot survive revocation during its storage commit',async()=>{
+ const stored={sites:[] as string[]},f=fixture(stored);let resume!:()=>void,writes=0;
+ f.chrome.storage.local.set=async(value?:{sites:string[]})=>{if(++writes===1)await new Promise<void>(r=>{resume=r;});stored.sites=[...value!.sites];};
+ f.chrome.permissions.onAdded.emit({origins:['https://example.test/*']});await flush();
+ f.revoke();resume();await flush();assert.deepEqual(stored.sites,[]);
+ f.chrome.runtime.onConnect.emit(f.client);await flush();assert.equal(f.client.closed,true);
 });

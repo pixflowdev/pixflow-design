@@ -1,3 +1,4 @@
+import { registerPackagedNativeHost } from "./native-registration.js";
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
@@ -97,6 +98,7 @@ function colorize(text: string): string {
 
 async function main(): Promise<void> {
   const config = resolveHeadlessConfig();
+  void registerPackagedNativeHost({ resourceRoot: config.resourceRoot, electron: false }).then(status => { if (status === "unavailable") console.warn("Optional browser registration unavailable; direct Bridge remains available."); });
   const initialPaths = resolvePackagedNamespacePaths(config);
   const launcherRuntime = await resolvePackagedLauncherRuntime(config, initialPaths);
   const activeConfig = launcherRuntime.config;

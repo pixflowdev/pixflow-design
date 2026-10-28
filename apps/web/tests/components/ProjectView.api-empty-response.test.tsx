@@ -447,6 +447,23 @@ describe('ProjectView API empty response handling', () => {
     expect(hasSavedAssistantMessage(message => message.runStatus === 'failed', assistantId)).toBe(false);
   });
 
+  it('persists interrupted API preparation to its original chat after Workspace unmounts', async () => {
+    chatPaneMockState.wordpress = true;
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ body: '', handoff: null })));
+    let finish!: () => void;
+    vi.mocked(runByokSite).mockImplementation(() => new Promise((_, reject) => {
+      finish = () => reject(new DOMException('Detached', 'AbortError'));
+    }));
+    const view = renderProjectView();
+    await sendTestPrompt();
+    await waitFor(() => expect(runByokSite).toHaveBeenCalledTimes(1));
+    const assistantId = latestRenderedAssistantId();
+    view.unmount();
+    await act(async () => { finish(); });
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'canceled' && Boolean(message.endedAt), assistantId)).toBe(true));
+    expect(mockedSaveMessage.mock.calls.filter(([, , message]) => message.id === assistantId).every(([projectId, conversationId]) => projectId === project.id && conversationId === `conv-${project.id}`)).toBe(true);
+  });
+
   it('preserves cancellation while a previous failed attempt finishes persistence', async () => {
     chatPaneMockState.wordpress = true;
     vi.stubGlobal('fetch', vi.fn(async () => Response.json({ body: '', handoff: null })));

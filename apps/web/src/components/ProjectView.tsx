@@ -3832,7 +3832,11 @@ export function ProjectView({
           cancelSendTextBuffer();
           if (controller.signal.aborted) {
             const endedAt = Date.now();
-            updateMessageById(assistantId, previous => ({ ...previous, runStatus: 'canceled', endedAt }), true, { telemetryFinalized: true });
+            // The original chat may already be unmounted. Persist its terminal
+            // snapshot independently of React's currently visible message list.
+            latestAssistantMsg = { ...latestAssistantMsg, runStatus: 'canceled', endedAt };
+            updateAssistant(previous => ({ ...previous, runStatus: 'canceled', endedAt }));
+            void saveMessage(project.id, runConversationId, latestAssistantMsg, { telemetryFinalized: true });
             const ownsCurrentRun = clearCurrentRunStreamingMarker(runConversationId, controller, cancelController);
             if (ownsCurrentRun) updateConversationLatestRun('canceled', endedAt);
             return;

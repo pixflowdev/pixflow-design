@@ -2,6 +2,10 @@
 
 Updated 28 October 2026. Do not publish packages, change updater pointers, or include Team work. Extension approval is NOT a prerequisite for the ordinary v2.1.1 release.
 
+## Latest Mac fixes — review candidates, live acceptance pending
+
+Read [the updated fixes receipt](../../../docs/testing/2026-10-28-mac211-fixes.md) before using the historical pairs below. Core [PR #27](https://github.com/pixflowdev/pixflow-design/pull/27) implements independent browser-site discovery, remembered native enrollment/reconnect, Workspace disconnect errors and Mac font serialization. Private Pro [PR #16](https://github.com/pixflowdev/pixflow-design-pro/pull/16) fixes unavailable design routes and Mac test fixtures. Exact implementation pins, build checksums, passing automated checks and pending live tests are in the receipt. Browser extension 1.0.2 and native payload must update together. These local candidates do not approve final DMGs or publication.
+
 ## Get the source from Git
 
 Repository: https://github.com/pixflowdev/pixflow-design

@@ -31,6 +31,8 @@ it('stages only explicit native runtime, excludes browser consent, and leaves de
 it('Windows hooks use bundled Node and never delete runtime data or Chrome permissions', () => {
   const hooks = nativeWindowsHooks();
   expect(hooks.install).toContain('bin\\node.exe');
+  expect(hooks.install).toContain('ELECTRON_RUN_AS_NODE');
+  expect(hooks.install).toContain('$INSTDIR\\Pixflow Design Bridge.exe');
   expect(hooks.install).toContain('IfFileExists');
   expect(hooks.uninstall).toContain('install.mjs" uninstall');
   expect(JSON.stringify(hooks)).not.toMatch(/DeleteRegKey|RMDir|User Data|storage/);

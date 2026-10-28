@@ -4,5 +4,5 @@
     "strict": true, "noEmit": true, "skipLibCheck": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": ["node"]
   },
-  "include": ["src/**/*.ts", "build.ts", "setup.ts"]
+  "include": ["src/**/*.ts", "build.ts", "setup.ts", "store-build.ts"]
 }

@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 export type Registration = {
   platform: 'win32' | 'darwin' | 'linux'; home: string; hostName: string;
   extensionId: string; runtimeRoot: string; node: string;
+  electron?: boolean;
 };
 export interface Registry {
   read(key: string): string | null;
@@ -59,8 +60,8 @@ export async function installNativeHost(input: Registration, registry: Registry 
     if (registered && resolve(registered).toLowerCase() !== resolve(paths.manifest).toLowerCase()) throw Error('Native host registry entry belongs to another installation');
   }
   const launcher = input.platform === 'win32'
-    ? `@echo off\r\n"${input.node}" "${join(paths.root, 'host.mjs')}" %*\r\n`
-    : `#!/bin/sh\nexec ${quote(input.node)} ${quote(join(paths.root, 'host.mjs'))} "$@"\n`;
+    ? `@echo off\r\n${input.electron ? 'set "ELECTRON_RUN_AS_NODE=1"\r\n' : ''}"${input.node}" "${join(paths.root, 'host.mjs')}" %*\r\n`
+    : `#!/bin/sh\n${input.electron ? 'export ELECTRON_RUN_AS_NODE=1\n' : ''}exec ${quote(input.node)} ${quote(join(paths.root, 'host.mjs'))} "$@"\n`;
   await writeFile(paths.launcher, launcher, { mode: 0o700 });
   if (input.platform !== 'win32') await chmod(paths.launcher, 0o700);
   await mkdir(dirname(paths.manifest), { recursive: true });

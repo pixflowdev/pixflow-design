@@ -46,7 +46,7 @@ test('popup connects, recovers and disconnects without replaying runs',async({pa
 test('empty and long site choices stay usable with keyboard and narrow layout',async({page})=>{
  await page.addInitScript(()=>{(window as any).chrome={tabs:{query:async()=>[{url:'chrome://extensions'}]},runtime:{sendMessage:async(message:any)=>message.type==='configuration'?{sites:['https://a-very-long-customer-site-name.example.test:443','https://second.test'],enabled:[]}:{state:'direct'}}};});
  await page.route('https://popup.test/**',async route=>{const file=new URL(route.request().url()).pathname.slice(1)||'popup.html';await route.fulfill({body:await readFile(resolve(output,file)),contentType:file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.svg')?'image/svg+xml':'text/html'});});
- await page.setViewportSize({width:320,height:600});await page.goto('https://popup.test/popup.html');
+ await page.setViewportSize({width:352,height:600});await page.goto('https://popup.test/popup.html');
   await expect(page.getByRole('heading',{name:'Connect your site in Pixflow'})).toBeVisible();
  await expect(page.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeDisabled();
  await page.keyboard.press('Tab');await expect(page.getByRole('combobox')).toBeFocused();
@@ -54,4 +54,12 @@ test('empty and long site choices stay usable with keyboard and narrow layout',a
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await expect(page.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeEnabled();
  await page.locator('body').screenshot({path:test.info().outputPath('narrow-long-site.png'),animations:'disabled'});
+});
+
+
+test('toolbar popup keeps its intrinsic width when Chrome starts with a narrow measurement viewport',async({page})=>{
+ await page.route('https://popup.test/**',async route=>{const file=new URL(route.request().url()).pathname.slice(1)||'popup.html';await route.fulfill({path:resolve(output,file)});});
+ await page.setViewportSize({width:180,height:600});await page.goto('https://popup.test/popup.html');
+ expect(await page.evaluate(()=>document.documentElement.getBoundingClientRect().width)).toBe(352);
+ expect(await page.evaluate(()=>document.body.getBoundingClientRect().width)).toBe(352);
 });

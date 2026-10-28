@@ -36,6 +36,7 @@ import { resolvePackagedNamespacePaths } from "./paths.js";
 import { packagedEntryUrl, registerOdProtocol } from "./protocol.js";
 import { startPackagedSidecars } from "./sidecars.js";
 import { syncWindowsUninstallDisplayVersion } from "./windows-lifecycle.js";
+import { registerPackagedNativeHost } from "./native-registration.js";
 import { runPixflowBridgeTray } from "./bridge-tray.js";
 
 const require = createRequire(import.meta.url);
@@ -161,6 +162,7 @@ async function main(): Promise<void> {
   await app.whenReady();
 
   if (activeConfig.bridgeTrayMode) {
+    void registerPackagedNativeHost({ resourceRoot: activeConfig.resourceRoot }).then(status => writeEarlyStartupLog("optional browser registration", { status }));
     writeEarlyStartupLog("starting bridge tray mode", {
       source: launcherRuntime.source,
       targetVersion: launcherRuntime.targetVersion,

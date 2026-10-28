@@ -34,13 +34,21 @@ export async function stageNativeTransport(resourceRoot: string, payload = proce
   return true;
 }
 
-/** Hooks use the bundled Node; absence of the opt-in payload leaves direct Bridge unchanged. */
+/** Use the packaged Node runtime (standalone or Electron); absent payload leaves direct Bridge unchanged. */
 export function nativeWindowsHooks() {
   const root = '$INSTDIR\\resources\\open-design';
   const call = (operation: string) => `
   IfFileExists "${root}\\native-transport\\install.mjs" 0 native_${operation}_done
+  IfFileExists "${root}\\bin\\node.exe" native_${operation}_node 0
+  System::Call 'Kernel32::SetEnvironmentVariable(t "ELECTRON_RUN_AS_NODE", t "1") i.r0'
+  nsExec::ExecToLog '"$INSTDIR\\Pixflow Design Bridge.exe" "${root}\\native-transport\\install.mjs" ${operation}'
+  Pop $0
+  System::Call 'Kernel32::SetEnvironmentVariable(t "ELECTRON_RUN_AS_NODE", p 0)'
+  Goto native_${operation}_result
+native_${operation}_node:
   nsExec::ExecToLog '"${root}\\bin\\node.exe" "${root}\\native-transport\\install.mjs" ${operation}'
   Pop $0
+native_${operation}_result:
   DetailPrint "Optional Chrome connection ${operation} exit=$0 (direct connection remains available)"
 native_${operation}_done:
 `;

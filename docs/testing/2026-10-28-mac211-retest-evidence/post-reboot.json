@@ -18,5 +18,7 @@
     "transport": "Not captured; do not infer native transport"
   },
   "popup_after_reconnect": "User confirmed Site is listed after closing and reopening the Chrome extension popup.",
-  "finding": "Startup site discovery unavailable until explicit WordPress reconnect. enrollment.ts derives dropdown from active site-context and returns [] for site:null."
+  "finding": "Startup site discovery unavailable until explicit WordPress reconnect. enrollment.ts derives dropdown from active site-context and returns [] for site:null.",
+  "acceptance": "FAIL extension onboarding: listing and connecting a supported browser site must not require prior Bridge pairing. Manual WordPress reconnect is a workaround only.",
+  "required_flow": "Discover supported browser site, select and connect from extension, without local-network/apps-on-devices permission or site-settings changes; preserve explicit authorization checks."
 }

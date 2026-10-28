@@ -39,13 +39,17 @@ it.each([false, true])('restores the header Bridge control with a pre-open mode 
     const control=dom.window.document.querySelector('.pixflow-agent-bridge-status') as HTMLElement;
     expect(control).not.toBeNull();
     expect(control.hidden).toBe(!changedBeforeOpen);
+    expect(control.style.display).toBe(changedBeforeOpen ? '' : 'none');
     for (const event of ['pixflow-design:app-config-changed','open-design:app-config-changed']) {
       dom.window.dispatchEvent(new dom.window.CustomEvent(event,{detail:{mode:'daemon'}}));
       expect(control.hidden).toBe(false);
+      expect(control.style.display).toBe('');
       dom.window.dispatchEvent(new dom.window.CustomEvent(event,{detail:{theme:'dark'}}));
       expect(control.hidden).toBe(false);
+      expect(control.style.display).toBe('');
       dom.window.dispatchEvent(new dom.window.CustomEvent(event,{detail:{mode:'api'}}));
       expect(control.hidden).toBe(true);
+      expect(control.style.display).toBe('none');
     }
     expect(dom.window.document.querySelectorAll('.pixflow-agent-bridge-status')).toHaveLength(1);
   } finally {dom.window.close();}

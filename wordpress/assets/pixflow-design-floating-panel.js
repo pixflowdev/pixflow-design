@@ -434,6 +434,7 @@
       var mode = event && event.detail && event.detail.mode;
       if (mode !== 'api' && mode !== 'daemon') return;
       control.hidden = mode === 'api';
+      control.style.display = control.hidden ? 'none' : '';
       if (control.hidden) closePopout(false);
     }
     onExecutionMode({ detail: { mode: options.executionMode } });

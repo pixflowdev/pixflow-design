@@ -1,3 +1,4 @@
+import { conversationDraftKey } from '../pixflow/conversation-address';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { ChatHistoryControls } from '../pixflow/ChatHistoryControls';
 import { PageAnnotationMessage } from './PageAnnotationMessage';
@@ -991,7 +992,7 @@ export function ChatPane({
   );
   const showImportedFolderArtifacts = projectMetadata?.importedFrom === 'folder';
   const composerDraftStorageKey = projectId && activeConversationId
-    ? `od:chat-composer:draft:${projectId}:${activeConversationId}`
+    ? hasPixflowWordPressContext() ? conversationDraftKey({projectId, conversationId: activeConversationId}) : `od:chat-composer:draft:${projectId}:${activeConversationId}`
     : undefined;
   // Only the first user message gets the active-plugin chip — the
   // plugin is project-scoped so re-stamping it on every reply would be
@@ -1587,6 +1588,7 @@ export function ChatPane({
       sendDisabled={sendDisabled}
       initialDraft={initialDraft}
       draftStorageKey={composerDraftStorageKey}
+      draftStorageFallbackKey={projectId && activeConversationId ? `od:chat-composer:draft:${projectId}:${activeConversationId}` : undefined}
       onEnsureProject={onEnsureProject}
       commentAttachments={commentsToAttachments(attachedComments)}
       onRemoveCommentAttachment={onDetachComment}

@@ -35,6 +35,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = 2.1.1 (unreleased) =
 
+* Browse saved chats from the floating-panel header and continue the same conversation in Workspace or a supported editor without copying its history.
+* Keep unsent drafts scoped to their conversation when switching chats; close the chat drawer after selection and keep Feedback beside the composer tools.
+* Restore the last-active saved chat in a new tab or after logout/login in the same browser, separately for each site and WordPress user. Recheck access before loading; explicit chat links and New chat take priority.
+
 * Show a distinct, translated description for each Pro design slash command in the shared composer.
 * Copy only the displayed agent reply instead of a larger saved text snapshot, preserving message boundaries in the floating panel and Workspace.
 * Improve copy-button and timestamp contrast in light and dark themes, and reveal older reply actions when reached with the keyboard.

@@ -62,7 +62,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       onSessionModeChange: vi.fn(), skills: [], onSubmit: async () => true };
     const view = render(<WorkspaceHomeComposer {...props}/>);
     await flushMounts();
-    await act(async () => { typeAndSettle('Home draft that must survive navigation'); });
+    await act(async () => { await typeAndSettle('Home draft that must survive navigation'); });
     await waitFor(() => expect(composerText()).toBe('Home draft that must survive navigation'));
     view.unmount();
     render(<WorkspaceHomeComposer {...props}/>);
@@ -82,7 +82,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     renderComposer({ streaming: true, onSend, onStop });
     await flushMounts();
 
-    typeAndSettle('change the font');
+    await typeAndSettle('change the font');
 
     // The editor's onChange → setDraft settles a tick after typeAndSettle
     // returns; wait for the send button (which only shows once the composer has
@@ -115,7 +115,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     });
     await flushMounts();
 
-    typeAndSettle('send then clear');
+    await typeAndSettle('send then clear');
 
     await waitFor(() => expect(window.localStorage.getItem(key)).toBe('send then clear'));
     pressEnter({ meta: true });
@@ -132,7 +132,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     renderComposer({ onSend });
     await flushMounts();
 
-    typeAndSettle('keep this exact prompt');
+    await typeAndSettle('keep this exact prompt');
     await waitFor(() => expect(screen.getByTestId('chat-send')).toBeTruthy());
     fireEvent.click(screen.getByTestId('chat-send'));
 
@@ -154,7 +154,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       await flushMounts();
 
       for (const value of ['h', 'he', 'hel', 'hell', 'hello']) {
-        typeAndSettle(value);
+        await typeAndSettle(value);
       }
 
       const maxDepth = consoleError.mock.calls.find((args) =>
@@ -166,4 +166,20 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       consoleError.mockRestore();
     }
   });
+});
+
+it('keeps drafts isolated when the same composer switches conversations', async () => {
+  const props = { projectId: 'project-1', onEnsureProject: async () => 'project-1', projectFiles: [], streaming: false, onSend: vi.fn(), onStop: vi.fn(), skills: [] };
+  const view = render(<ChatComposer {...props} draftStorageKey="chat-a" />);
+  await flushMounts();
+  await typeAndSettle('Draft in A');
+  await waitFor(() => expect(localStorage.getItem('chat-a')).toBe('Draft in A'));
+  view.rerender(<ChatComposer {...props} draftStorageKey="chat-b" />);
+  await waitFor(() => expect(composerText().trim()).toBe(''));
+  await flushMounts();
+  await typeAndSettle('Draft in B');
+  await waitFor(() => expect(localStorage.getItem('chat-b')).toBe('Draft in B'));
+  view.rerender(<ChatComposer {...props} draftStorageKey="chat-a" />);
+  await waitFor(() => expect(composerText()).toBe('Draft in A'));
+  expect(localStorage.getItem('chat-b')).toBe('Draft in B');
 });

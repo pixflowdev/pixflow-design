@@ -1194,6 +1194,11 @@ export function SettingsDialog({
   const bricksIntegrationActive = getPixflowWordPressConfig()?.bricksIntegrationActive ?? initial.bricksIntegrationActive ?? false;
   const freeSettings = isPixflowWordPressEmbed() && !assetsAvailable();
   const [freeLicenseStatus, setFreeLicenseStatus] = useState(pixflowLicenseStatus);
+  useEffect(() => {
+    const closeForConversation = () => onClose();
+    window.addEventListener('pixflow-design:conversation-opened', closeForConversation);
+    return () => window.removeEventListener('pixflow-design:conversation-opened', closeForConversation);
+  }, [onClose]);
   useEffect(() => { if (pixflowLicenseStatus) setFreeLicenseStatus(pixflowLicenseStatus); }, [pixflowLicenseStatus]);
   useEffect(() => {
     const sync = (event: Event) => setFreeLicenseStatus((event as CustomEvent<PixflowLicenseStatus>).detail);

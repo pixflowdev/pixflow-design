@@ -1,4 +1,6 @@
+import { conversationBinding, conversationDraftKey } from './conversation-address';
 import { useFloatingConversation, normalizeFloatingRunMetadata, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
+import { rememberLastActiveChat } from './last-active-chat';
 import { notifyFloatingCanvasDeparture } from './floating-canvas-departure';
 import { usePixflowFeatureRuntime } from './feature-runtime';
 import { usePixflowLicenseRefresh } from './use-license-refresh';
@@ -552,7 +554,7 @@ export function readRawWpAdminHistory(key: string): WpAdminMessage[] {
 
 export function restoreMessages(key: string, persistenceSurface = 'admin'): WpAdminMessage[] {
   try {
-    const direct = key.startsWith('pixflow-direct:') || key.startsWith('bricks:');
+    const direct = key.startsWith('pixflow-direct:') || key.startsWith('bricks:') || !!conversationBinding(key);
     const pending = direct ? pendingDirectSiteRun(persistenceSurface) : null;
     const recovery = normalizeFloatingRunMetadata(pending?.metadata) as { sessionKey?: string; messageId?: string; messages?: unknown[] } | undefined;
     let raw: string | null = null;
@@ -603,7 +605,7 @@ export function persistMessages(key: string, messages: WpAdminMessage[], mode?: 
   // when verbose tool diagnostics no longer fit in the browser's shared quota.
   const compact = () => JSON.stringify(retained.map(({ events, ...message }) => ({ ...message, events: steeringTranscriptEvents(events) })));
   const raw = mode === 'daemon' && acknowledged ? compact() : JSON.stringify(retained);
-  if ((key.startsWith('pixflow-direct:') || key.startsWith('bricks:')) && typeof sessionStorage !== 'undefined') {
+  if ((key.startsWith('pixflow-direct:') || key.startsWith('bricks:') || !!conversationBinding(key)) && typeof sessionStorage !== 'undefined') {
     try { sessionStorage.setItem(`pixflow:admin-transcript:${key}`, raw); }
     catch {
       // The Bridge retains complete events; a full tab store can keep text
@@ -3174,7 +3176,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   const logRef = useRef<HTMLDivElement | null>(null);
   const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const nativeSessionKey = siteAccess.guarded ? contextStorageKey(runtime, contextIdentity) : builderHandoffConversationKey(`pixflow-direct:${contextSiteHash(runtime)}:${contextUserId(context)}`, nativePersistenceSurface, handoffBuilder);
-  const { historyKey: sessionKey, surface: persistenceSurface, continuing } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface, streaming);
+  const { historyKey: sessionKey, surface: persistenceSurface, continuing, restoring } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface, streaming);
   const [navigationReconnecting, setNavigationReconnecting] = useState(() => !!pendingDirectSiteRun(persistenceSurface));
   const pendingActionKey = siteAccess.guarded ? pendingActionStorageKey(runtime, contextIdentity) : `${sessionKey}:actions`;
   const pendingClarificationKey = siteAccess.guarded ? pendingClarificationStorageKey(runtime, contextIdentity) : `${sessionKey}:clarification`;
@@ -3183,7 +3185,10 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   useEffect(() => { setDirectQuestion(null); }, [sessionKey]);
   const [hydratedSessionKey, setHydratedSessionKey] = useState(sessionKey);
   const legacyHistory = useMemo(() => readRawWpAdminHistory(sessionKey), [sessionKey]);
-  const durableHistory = useDurableChatHistory({ sessionKey, messages, legacyMessages: legacyHistory, onHydrate: setMessages, enabled: hydratedSessionKey === sessionKey, scrollRef: logRef });
+  const durableHistory = useDurableChatHistory({ sessionKey, messages, legacyMessages: legacyHistory, onHydrate: setMessages, enabled: !restoring && hydratedSessionKey === sessionKey, scrollRef: logRef });
+  useEffect(() => {
+    if (!restoring && durableHistory.ready && durableHistory.binding && messages.length) rememberLastActiveChat(durableHistory.binding);
+  }, [restoring, durableHistory.ready, durableHistory.binding, messages.length]);
   const directSessionKeyRef = useRef(sessionKey);
   directSessionKeyRef.current = sessionKey;
   const reattachedDirectRunRef = useRef('');
@@ -4698,11 +4703,12 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               projectId={null}
               projectFiles={[]}
               streaming={streaming}
-              sendDisabled={Boolean(!siteAccess.ready || !!siteAccess.error || (config.mode === 'daemon' && (agents.length === 0 || bridgeUpdateState.required)))}
+              sendDisabled={Boolean(!durableHistory.ready || hydratedSessionKey !== sessionKey || !siteAccess.ready || !!siteAccess.error || (config.mode === 'daemon' && (agents.length === 0 || bridgeUpdateState.required)))}
               sessionMode={mode}
               sessionModeMenuExtra={<><EnhancedDesignGuidance surface="wp_admin" enabled={config.enhancedDesignGuidance} />{<DesignSystemSwitch />}</>}
               onSessionModeChange={selectSessionMode}
-              draftStorageKey="pixflow-design:wp-admin-agent:draft"
+              draftStorageKey={durableHistory.binding || conversationBinding(sessionKey) ? conversationDraftKey((durableHistory.binding || conversationBinding(sessionKey))!) : composerStorageKey('pixflow:draft:' + sessionKey)}
+              draftStorageFallbackKey={conversationBinding(sessionKey) ? undefined : composerStorageKey(durableHistory.binding ? 'pixflow:draft:' + sessionKey : 'pixflow-design:wp-admin-agent:draft')}
               onEnsureProject={ensureDirectAttachmentProject}
               skills={skills.filter((skill) => isDiscoverableSkillMention(skill.id)).map(composerSkill)}
               lockedSkills={lockedSkills}

@@ -7,6 +7,23 @@ function ownerKey(key: string): string {
   const site = getPixflowWordPressConfig();
   return JSON.stringify([site?.restBaseUrl || site?.siteUrl || '', site?.userId || '', key]);
 }
+
+const snapshots = new Map<string, string>();
+/** References to uploaded attachments only; no API keys or raw browser Files. */
+export function loadComposerSnapshot<T>(key?: string): T | null {
+  if (!key || typeof window === 'undefined') return null;
+  const address = 'pixflow:composer-snapshot:' + ownerKey(key);
+  try { return JSON.parse(snapshots.get(address) ?? localStorage.getItem(address) ?? 'null') as T | null; }
+  catch { return null; }
+}
+
+export function saveComposerSnapshot(key: string | undefined, snapshot: unknown): void {
+  if (!key || typeof window === 'undefined') return;
+  const address = 'pixflow:composer-snapshot:' + ownerKey(key);
+  const value = JSON.stringify(snapshot);
+  try { localStorage.setItem(address, value); snapshots.delete(address); }
+  catch { snapshots.set(address, value); /* Retain the tab-owned recovery copy. */ }
+}
 export function loadComposerDraft(key?: string): string | null {
   if (!key || typeof window === 'undefined') return null;
   const cached = fallback.get(ownerKey(key));

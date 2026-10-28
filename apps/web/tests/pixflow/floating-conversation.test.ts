@@ -15,10 +15,12 @@ it('does not replace an active run when selecting a saved Workspace chat', async
   rememberFloatingConversation('bricks:original', 'bricks');
   const originalRunKey = floatingRunStorageKey('bricks');
   const hook = renderHook(({ busy }) => useFloatingConversation('bricks:original', 'bricks', busy), { initialProps: { busy: true } });
-  act(() => selectFloatingConversation(binding));
+  let selection!: Promise<void>;
+  act(() => { selection = selectFloatingConversation(binding); });
   expect(hook.result.current.historyKey).toBe('bricks:original');
   expect(floatingRunStorageKey('bricks')).toBe(originalRunKey);
   hook.rerender({ busy: false });
+  await selection;
   expect(hook.result.current.historyKey).toBe(conversationSessionKey(binding));
   expect(readFloatingConversation()?.historyKey).toBe(conversationSessionKey(binding));
   expect(floatingRunStorageKey('bricks')).not.toBe(originalRunKey);
@@ -103,5 +105,19 @@ it('adopts on mount but respects New chat and explicit builder handoffs', async 
   hook.unmount();
   const handoff=renderHook(()=>useFloatingConversation('handoff:own','admin-handoff:receipt:tab'));
   expect(handoff.result.current.historyKey).toBe('handoff:own');
+  cleanup();
+});
+
+it('cancels a waiting selection without changing history when its picker closes', async () => {
+  const {renderHook, act, cleanup} = await import('@testing-library/react');
+  const hook = renderHook(({busy}) => useFloatingConversation('admin:original', 'admin', busy), {initialProps:{busy:true}});
+  const controller = new AbortController();
+  let selection!: Promise<void>;
+  act(() => { selection = selectFloatingConversation({projectId:'12345678-1234-1234-1234-123456789abc',conversationId:'other'}, {signal:controller.signal}); });
+  const rejected = expect(selection).rejects.toThrow('cancelled');
+  act(() => controller.abort());
+  await rejected;
+  hook.rerender({busy:false});
+  expect(hook.result.current.historyKey).toBe('admin:original');
   cleanup();
 });

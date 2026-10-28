@@ -1,6 +1,10 @@
 import type { PixflowChatHistoryBinding } from '@open-design/contracts';
+import { directTabStorageKey } from './direct-tab-storage';
 
 const prefix = 'pixflow:conversation:v1:';
+export function conversationDraftKey(binding: PixflowChatHistoryBinding): string {
+  return directTabStorageKey(`pixflow:chat-draft:${binding.projectId}:${binding.conversationId}`);
+}
 /** A storage address only. Every read/write still goes through WordPress permissions. */
 export function conversationSessionKey(binding: PixflowChatHistoryBinding): string {
   return prefix + encodeURIComponent(binding.projectId) + ':' + encodeURIComponent(binding.conversationId);

@@ -207,6 +207,7 @@ import type { PixflowBuilderDestination } from '@open-design/contracts';
 import { Button } from '@open-design/components';
 import { WorkspaceSummary, WorkspaceSummaryToggle } from './WorkspaceSummary';
 import { ChatExportButton } from '../pixflow/ChatExportButton';
+import { ConversationActions } from '../pixflow/ConversationActions';
 import {
   type PluginFolderAgentAction,
 } from './design-files/pluginFolderActions';
@@ -6300,6 +6301,7 @@ export function ProjectView({
                 setProjectActionsToast({ message, details: null });
               }}
               headerActions={<>
+                {hasPixflowWordPressContext() && activeConversationId && <ConversationActions workspace={false} disabled={currentConversationBusy} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && activeConversationId && <ChatExportButton key={activeConversationId} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && <BuilderDestinationControl key={builderChatId} chatId={builderChatId}
                   disabled={currentConversationBusy} open={destinationDialogOpen} onOpenChange={setDestinationDialogOpen}

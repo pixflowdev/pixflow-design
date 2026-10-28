@@ -449,6 +449,10 @@
       ];
       if (ready) commands.forEach(post); else pending = pending.concat(commands);
     }
+    window.addEventListener('pixflow-design:open-saved-conversation', function (event) {
+      if (!workspaceAvailable() || !event.detail || typeof event.detail.projectId !== 'string' || typeof event.detail.conversationId !== 'string') return;
+      open({ type: 'pixflow-design:open-saved-conversation', projectId: event.detail.projectId, conversationId: event.detail.conversationId });
+    });
     window.addEventListener('message', function (event) {
       if (!overlay || event.source !== window || event.origin !== window.location.origin) return;
       var data = event.data;

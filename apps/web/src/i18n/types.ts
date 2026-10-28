@@ -6572,6 +6572,10 @@ export interface Dict {
   "history.recoveryTitle": string;
   "history.recoveryExplanation": string;
 
+  "history.moreChats": string;
+  "history.continuePanel": string;
+  "history.switchWaiting": string;
+  "history.switchError": string;
   "history.export": string;
   "history.exporting": string;
   "history.exportHint": string;

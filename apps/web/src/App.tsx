@@ -30,6 +30,7 @@ import { agentReadinessBridgeStatusSignature, bridgeStatusCanWarmAgentReadiness,
 import { fetchAmrModels, fetchVelaLoginStatus, type VelaLoginStatus } from './providers/daemon';
 import { daemonIsLive, fetchAgents, fetchAgentsStream, fetchDesignSystems, fetchSkills } from './providers/registry';
 import { navigate, useRoute } from './router';
+import { useLastActiveWorkspaceChat } from './pixflow/use-last-active-workspace-chat';
 import { fetchDaemonConfig, fetchMediaProvidersFromDaemon, loadConfig, mergeDaemonConfig, mergeDaemonMediaProviders, saveConfig, syncComposioConfigToDaemon, syncConfigToDaemon } from './state/config';
 import { useAppearance } from './state/useAppearance';
 import type { AgentInfo, AgentModelChoice, ApiProtocol, AppConfig, AppVersionInfo, DesignSystemGenerationJob, DesignSystemSummary, ProviderModelOption, SkillSummary } from './types';
@@ -502,6 +503,7 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
   const route = useRoute();
 
   const workspaceAllowed = workspaceAccessAllowed(isPixflowWordPressEmbed(), workspaceAvailable(), pixflowLicenseStatus);
+  useLastActiveWorkspaceChat(route, isPixflowWordPressEmbed() && workspaceAllowed && pixflowWorkspaceCatalogVisible);
 
   const workspaceSetup = route.kind === 'home' && route.view === 'onboarding';
 
@@ -1445,6 +1447,8 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
       if (!sameWindow && !isTrustedPixflowParentMessage(event, window, site?.siteOrigin || site?.siteUrl || site?.restBaseUrl)) return;
       const data = event.data as {
         source?: unknown;
+        projectId?: unknown;
+        conversationId?: unknown;
         type?: unknown;
         open?: unknown;
         section?: unknown;
@@ -1459,6 +1463,11 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
       }
       if (data.type === 'pixflow-design:workspace-visibility') {
         setPixflowWorkspaceCatalogVisible(data.open === true || data.open === 'true');
+      }
+      if (data.type === 'pixflow-design:open-saved-conversation' && typeof data.projectId === 'string' && typeof data.conversationId === 'string') {
+        setToolbarWorkspaceTool(null);
+        setSettingsOpen(false);
+        navigate({ kind: 'project', projectId: data.projectId, conversationId: data.conversationId, fileName: null });
       }
       if (
         data.type === 'pixflow-design:change-theme'

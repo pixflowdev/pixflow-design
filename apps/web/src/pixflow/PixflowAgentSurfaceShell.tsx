@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FloatingChatMenu } from './FloatingChatMenu';
 import {
   getPixflowSettingsSurfaceProfile,
   PIXFLOW_SURFACE_FEATURES,
@@ -27,6 +28,7 @@ export function PixflowAgentSurfaceShell({ surface, children, className = '' }: 
       data-pixflow-stage-a={features.stageAHtmlCssJsPreview ? 'enabled' : 'disabled'}
       data-pixflow-settings-profile={settingsProfile.surface === 'wp_admin' ? 'wp_admin_slim' : 'full'}
     >
+      <FloatingChatMenu />
       {children}
     </div>
   );

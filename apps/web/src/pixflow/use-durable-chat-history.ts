@@ -264,6 +264,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   useEffect(() => {
     if (!active || readyKey !== sessionKey) return;
     const owner = generation.current;
+    const controller = new AbortController();
     const refresh = async () => {
       const target = binding.current;
       if (!target || refreshing.current || initialOwner.current !== chatHistoryOwnerScope()) return;
@@ -271,6 +272,26 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       try {
         const page = await readChatHistory<T>(target);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        for (let index = 0; index < page.messages.length; index++) {
+          const item = page.messages[index];
+          if (!item) continue;
+          const execution = item as T & { runId?: string; runStatus?: string; endedAt?: number };
+          if (!execution.runId || execution.endedAt || !['queued', 'running'].includes(execution.runStatus || '') || pending.current.has(item.id!)) continue;
+          const prior = known.current.get(item.id!);
+          const local = latest.current.find(message => message.id === item.id);
+          if (local && (!prior || historyMessageFingerprint(local) !== historyMessageFingerprint(prior))) continue;
+          const { recoverCompletedWorkspaceRun } = await import('./completed-workspace-run');
+          const recovered = await recoverCompletedWorkspaceRun(target, item, controller.signal);
+          if (controller.signal.aborted || owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+          const current = latest.current.find(message => message.id === item.id);
+          if (current && (!prior || historyMessageFingerprint(current) !== historyMessageFingerprint(prior))) continue;
+          if (recovered && !pending.current.has(item.id!)) {
+            // Revision-checked write: an active owner or another tab wins a race.
+            // Failed replay never replaces the existing partial transcript.
+            try { page.messages[index] = await saveChatHistoryMessage(target, recovered); } catch { /* Next refresh reads the winning revision. */ }
+          }
+        }
+        if (controller.signal.aborted || owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         const accepted = page.messages.filter(item => {
           if (!item.id || pending.current.has(item.id)) return false;
           const prior = known.current.get(item.id);
@@ -292,7 +313,9 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     window.addEventListener('focus', focus);
     document.addEventListener('visibilitychange', visible);
     const timer = window.setInterval(visible, 15000);
+    void refresh();
     return () => {
+      controller.abort();
       window.removeEventListener('focus', focus);
       document.removeEventListener('visibilitychange', visible);
       window.clearInterval(timer);
@@ -345,6 +368,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     finally { if (owner === generation.current) setRecovering(false); }
   }, [outboxKey, persistOutbox, recovering]);
   return {
+    binding: readyKey === sessionKey ? binding.current : null,
     ready: active && readyKey === sessionKey,
     messages: readyKey === sessionKey ? mergeChatHistory(history, messages) : messages,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,

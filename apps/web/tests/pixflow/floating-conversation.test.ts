@@ -5,7 +5,29 @@ let owner: Record<string, unknown>;
 import { rememberFloatingConversation, readFloatingConversation, floatingRunStorageKey, normalizeFloatingRunMetadata, mergeFloatingRecoveryMessages } from '../../src/pixflow/floating-conversation';
 import { rememberFloatingExecution, withFloatingExecution } from '../../src/pixflow/floating-conversation';
 import { DEFAULT_CONFIG } from '../../src/state/config';
+import { selectFloatingConversation, useFloatingConversation } from '../../src/pixflow/floating-conversation';
+import { conversationSessionKey } from '../../src/pixflow/conversation-address';
 beforeEach(() => { sessionStorage.clear(); owner = { restBaseUrl: 'https://example.test/wp-json/pixflow-design/v1', userId: 1, postId: 12 }; });
+
+it('does not replace an active run when selecting a saved Workspace chat', async () => {
+  const { renderHook, act, cleanup } = await import('@testing-library/react');
+  const binding = { projectId: '12345678-1234-1234-1234-123456789abc', conversationId: 'workspace-chat' };
+  rememberFloatingConversation('bricks:original', 'bricks');
+  const originalRunKey = floatingRunStorageKey('bricks');
+  const hook = renderHook(({ busy }) => useFloatingConversation('bricks:original', 'bricks', busy), { initialProps: { busy: true } });
+  let selection!: Promise<void>;
+  act(() => { selection = selectFloatingConversation(binding); });
+  expect(hook.result.current.historyKey).toBe('bricks:original');
+  expect(floatingRunStorageKey('bricks')).toBe(originalRunKey);
+  hook.rerender({ busy: false });
+  await selection;
+  expect(hook.result.current.historyKey).toBe(conversationSessionKey(binding));
+  expect(readFloatingConversation()?.historyKey).toBe(conversationSessionKey(binding));
+  expect(floatingRunStorageKey('bricks')).not.toBe(originalRunKey);
+  owner.postId = 99;
+  expect(readFloatingConversation()?.historyKey).toBe(conversationSessionKey(binding));
+  cleanup();
+});
 describe('floating conversation navigation', () => {
   it('carries CLI choice across editor seeds without copying credentials and isolates users', () => {
     rememberFloatingConversation('bricks:one','bricks');
@@ -83,5 +105,19 @@ it('adopts on mount but respects New chat and explicit builder handoffs', async 
   hook.unmount();
   const handoff=renderHook(()=>useFloatingConversation('handoff:own','admin-handoff:receipt:tab'));
   expect(handoff.result.current.historyKey).toBe('handoff:own');
+  cleanup();
+});
+
+it('cancels a waiting selection without changing history when its picker closes', async () => {
+  const {renderHook, act, cleanup} = await import('@testing-library/react');
+  const hook = renderHook(({busy}) => useFloatingConversation('admin:original', 'admin', busy), {initialProps:{busy:true}});
+  const controller = new AbortController();
+  let selection!: Promise<void>;
+  act(() => { selection = selectFloatingConversation({projectId:'12345678-1234-1234-1234-123456789abc',conversationId:'other'}, {signal:controller.signal}); });
+  const rejected = expect(selection).rejects.toThrow('cancelled');
+  act(() => controller.abort());
+  await rejected;
+  hook.rerender({busy:false});
+  expect(hook.result.current.historyKey).toBe('admin:original');
   cleanup();
 });

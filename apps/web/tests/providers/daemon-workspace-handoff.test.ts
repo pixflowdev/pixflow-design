@@ -7,9 +7,9 @@ import { streamViaDaemon } from '../../src/providers/daemon';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 describe('Workspace CLI source-bound session transport', () => {
-  it('sends credentials only in the transient header while retaining normal project run identity', async () => {
+  it.each(['Plain site', 'Café — 設計 👋'])('preserves session data for %s in an HTTP-safe header', async (siteLabel) => {
     const workspaceSource = { projectId: 'project', conversationId: 'chat', requestId: 'user-message' };
-    const session = { endpoint: 'https://site.test/?rest_route=/pixflow-design/v1/wp-admin/direct/tools', token: 'pfdirect_' + 'a'.repeat(64), workspaceSource, expiresAt: 9999999999, writable: true };
+    const session = { siteLabel, endpoint: 'https://site.test/?rest_route=/pixflow-design/v1/wp-admin/direct/tools', token: 'pfdirect_' + 'a'.repeat(64), workspaceSource, expiresAt: 9999999999, writable: true };
     state.session.mockResolvedValue(Response.json(session));
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -24,7 +24,7 @@ describe('Workspace CLI source-bound session transport', () => {
     expect(state.session).toHaveBeenCalledWith('/wp-admin/direct/sessions', expect.objectContaining({ body: JSON.stringify({ workspaceSource }) }));
     const call = fetcher.mock.calls.find(([url, init]) => String(url).endsWith('/api/runs') && init?.method === 'POST');
     expect(call).toBeDefined();
-    expect(new Headers(call![1]?.headers).get('X-Pixflow-Workspace-Session')).toBe(JSON.stringify(session));
+    expect(JSON.parse(new Headers(call![1]?.headers).get('X-Pixflow-Workspace-Session')!)).toEqual(session);
     expect(String(call![1]?.body)).not.toContain(session.token);
     expect(JSON.parse(String(call![1]?.body))).toMatchObject({ projectId: 'project', conversationId: 'chat', currentPrompt: 'Build a new page in Gutenberg.' });
   });

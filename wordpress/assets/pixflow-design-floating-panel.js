@@ -18,6 +18,8 @@
   // Presentation-only markers are translated by the mounted Pixflow i18n provider.
   // Never translate action identifiers, site keys, URLs or user-created names.
   var UI_LABEL_KEYS = {
+  "Connected directly": "bridge.connectedDirect",
+  "Connected via Chrome extension": "bridge.connectedExtension",
   "Bridge connections": "ui.nativeShell.connections",
   "Connected sites": "ui.nativeShell.connectedSites",
   "Close connections": "ui.nativeShell.closeConnections",
@@ -380,7 +382,8 @@
       var close = document.createElement('button'); close.type = 'button'; var closeIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); closeIcon.setAttribute('viewBox', '0 0 24 24'); closeIcon.setAttribute('fill', 'none'); closeIcon.setAttribute('stroke', 'currentColor'); closeIcon.setAttribute('stroke-width', '1.8'); closeIcon.setAttribute('stroke-linecap', 'round'); closeIcon.setAttribute('aria-hidden', 'true'); var closePath = document.createElementNS('http://www.w3.org/2000/svg', 'path'); closePath.setAttribute('d', 'M6 6l12 12M18 6 6 18'); closeIcon.appendChild(closePath); close.appendChild(closeIcon); setUiLabel(close, 'label', 'Close connections'); close.addEventListener('click', function () { closePopout(true); }); header.appendChild(close);
       notice = document.createElement('p'); notice.className = 'pixflow-bridge-sites__notice'; notice.setAttribute('role', 'status'); setUiLabel(notice, 'text', 'Refreshing connections…');
       list = document.createElement('div'); list.className = 'pixflow-bridge-sites__list';
-      popout.appendChild(header); popout.appendChild(list); popout.appendChild(notice); document.body.appendChild(popout);
+      var routeText = document.createElement('p'); routeText.className = 'pixflow-bridge-sites__route'; routeText.setAttribute('data-bridge-route', ''); routeText.hidden = true;
+      popout.appendChild(header); popout.appendChild(routeText); renderRoute(window.pixflowDesignBridgeStatus || {}); popout.appendChild(list); popout.appendChild(notice); document.body.appendChild(popout);
       positionPopout(); identity.setAttribute('aria-expanded', 'true');
       window.requestAnimationFrame(function () { if (popout) popout.dataset.open = 'true'; });
       close.focus({ preventScroll: true });
@@ -403,7 +406,17 @@
     });
     control.appendChild(reconnect);
 
+    function renderRoute(value) {
+      if (!popout) return;
+      var routeText = popout.querySelector('[data-bridge-route]');
+      if (!routeText) return;
+      var route = value && value.state === 'connected' && value.running === true && !value.error ? value.connectionRoute : '';
+      routeText.hidden = route !== 'direct' && route !== 'chrome-extension';
+      if (!routeText.hidden) setUiLabel(routeText, 'text', route === 'direct' ? 'Connected directly' : 'Connected via Chrome extension');
+    }
+
     function render(value) {
+      renderRoute(value);
       var status = normalizeBridgeStatus(value);
       if (status.state === 'connected' && latestRuntime === 'sleeping') { status.label = 'Bridge connected · Site sleeping'; }
       if (status.state === 'connected' && latestRuntime === 'waking') { status.label = 'Bridge connected · Connecting this site'; }

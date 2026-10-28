@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "bridge.connectedDirect": "เชื่อมต่อโดยตรงแล้ว",
+  "bridge.connectedExtension": "เชื่อมต่อผ่านส่วนขยาย Chrome แล้ว",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "บันทึกไปยัง Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "บันทึกไปยังระบบดีไซน์ของฉัน",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "อัปเดตสำเนาในคลัง",

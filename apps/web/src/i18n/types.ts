@@ -30,6 +30,8 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // flat (not deeply nested) so missing-key TS errors point straight at the
 // offending string instead of a generic object mismatch.
 export interface Dict {
+  "bridge.connectedDirect": string;
+  "bridge.connectedExtension": string;
   "guidance.requestFailed": string;
   "guidance.recovered": string;
   "guidance.saved": string;

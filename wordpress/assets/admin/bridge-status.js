@@ -5,6 +5,8 @@
   var currentState = '';
   var currentTitle = '';
   var currentVersion = '';
+  var observedRoute = '';
+  var publishedRoute = '';
   var hasResolvedOnce = false;
   var lastProbeAt = 0;
   var probeInFlight = false;
@@ -87,7 +89,9 @@
     // The healthy four-second heartbeat is intentionally frequent, but a successful
     // no-change probe must not churn shared application state or repaint any
     // of the subscribed panel/workspace controls. Publish only real changes.
-    if (stateChanged || titleChanged) {
+    var route = nextState === 'connected' ? observedRoute : '';
+    if (stateChanged || titleChanged || publishedRoute !== route) {
+      publishedRoute = route;
       currentState = nextState;
       currentTitle = nextTitle;
       var status = {
@@ -97,6 +101,7 @@
         status: nextState,
         updateRequired: nextState === 'update',
         version: currentVersion,
+        connectionRoute: route,
         error: nextState === 'missing' || nextState === 'error' ? nextTitle : ''
       };
       window.pixflowDesignBridgeStatus = status;
@@ -171,7 +176,14 @@
       signal: controller ? controller.signal : undefined
     }).then(function (response) {
       if (!response.ok) throw new Error('Pixflow Bridge returned HTTP ' + response.status);
-      return response.json().catch(function () { return {}; });
+      return response.json().catch(function () { return {}; }).then(function (payload) {
+        if (path === 'health' && payload && payload.ok !== false) {
+          var nativeRoute = response.headers && response.headers.get('X-Pixflow-Connection-Route');
+          observedRoute = nativeRoute === 'chrome-extension' ? 'chrome-extension'
+            : response.pixflowConnectionRoute === 'direct' || !window.__PIXFLOW_NATIVE_PROTOTYPE__ ? 'direct' : '';
+        }
+        return payload;
+      });
     }).catch(function (error) {
       if (error && error.name === 'AbortError') {
         throw new Error('Pixflow Design Bridge did not respond.');

@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "bridge.connectedDirect": "Connected directly",
+  "bridge.connectedExtension": "Connected via Chrome extension",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Save to Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Save to My Design Systems",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Update library copy",

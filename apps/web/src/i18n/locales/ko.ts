@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "bridge.connectedDirect": "직접 연결됨",
+  "bridge.connectedExtension": "Chrome 확장 프로그램으로 연결됨",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks에 저장",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "내 디자인 시스템에 저장",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "라이브러리 사본 업데이트",

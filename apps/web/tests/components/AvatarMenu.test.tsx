@@ -410,3 +410,14 @@ it('shows connection recovery guidance and clears it after successful discovery'
   act(()=>{beginProviderDiscovery(true)(true);});
   expect(screen.queryByRole('alert')).toBeNull();
 });
+
+it('updates a single quiet route label and removes it on disconnect', () => {
+  renderMenu(); const menu=openMenu();
+  for (const route of ['direct','chrome-extension']) {
+    act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'connected',running:true,connectionRoute:route}})));
+    expect(within(menu).getByText(route==='direct'?'bridge.connectedDirect':'bridge.connectedExtension')).toBeTruthy();
+  }
+  act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'missing',running:false}})));
+  expect(within(menu).queryByText('bridge.connectedExtension')).toBeNull();
+  cleanup();
+});

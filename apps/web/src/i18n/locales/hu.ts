@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "bridge.connectedDirect": "Közvetlenül csatlakoztatva",
+  "bridge.connectedExtension": "Csatlakoztatva a Chrome-bővítményen keresztül",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Mentés a Bricksbe",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Mentés a Saját dizájnrendszerekbe",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Könyvtári másolat frissítése",

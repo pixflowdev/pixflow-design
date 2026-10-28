@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "bridge.connectedDirect": "已直接连接",
+  "bridge.connectedExtension": "已通过 Chrome 扩展连接",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "保存到 Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "保存到我的设计系统",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "更新资源库副本",

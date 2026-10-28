@@ -1,6 +1,8 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "bridge.connectedDirect": "اتصال مستقیم برقرار است",
+  "bridge.connectedExtension": "اتصال از طریق افزونهٔ Chrome برقرار است",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "ذخیره در Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "ذخیره در سیستم‌های طراحی من",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "به‌روزرسانی نسخهٔ کتابخانه",

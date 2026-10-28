@@ -1,3 +1,4 @@
+import { useBridgeConnectionRoute } from '../pixflow/bridge-connection-route';
 import { composioAvailable } from '../pixflow/composio-contribution';
 import { usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 import { useT as usePixflowUiTranslation } from '../i18n';
@@ -182,6 +183,7 @@ export function AvatarMenu({
   );
 
   const installedAgents = agents.filter((a) => a.available);
+  const connectionRoute = useBridgeConnectionRoute();
   const localCliAvailable = daemonLive && installedAgents.length > 0;
   const localCliActive = config.mode === 'daemon' && localCliAvailable;
   const localCliUnavailable = config.mode === 'daemon' && !localCliAvailable;
@@ -321,6 +323,9 @@ export function AvatarMenu({
                     }`
                   : t('avatar.noAgentSelected')}
             </span>
+            {config.mode === 'daemon' && connectionRoute && <span className={styles.connectionRoute}>
+              {t(connectionRoute === 'chrome-extension' ? 'bridge.connectedExtension' : 'bridge.connectedDirect')}
+            </span>}
           </div>
           <div className={styles.scrollArea}>
             {config.mode === 'daemon' && discovery.phase === 'error' && discovery.error && (

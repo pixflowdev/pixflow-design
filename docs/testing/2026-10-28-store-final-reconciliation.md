@@ -54,3 +54,13 @@ Archive inspection confirmed the older reviewer EXE contains the earlier host wi
 - The reviewer-only website replacement is being prepared, not published. Final browser acceptance with the permanent ID is pending explicit approval to load that identity and grant isolated-site access; earlier prototype consent is not reused.
 
 The final exact-ID unpacked browser copy is local `exact-id-browser/`. Only this testing copy includes the Store public manifest key. The uploaded ZIP remains keyless and unchanged. The Windows host registration created by the isolated installer is the intended test change; chats, settings, normal Chrome permissions and live packages remain unchanged.
+
+## Permanent-ID browser acceptance
+
+With the user's explicit isolated-site approval, the final 1.0.2 browser copy was loaded into the Codex in-app browser. Its displayed ID matched `hbnbiboohlelmngadeolikeejamjlbkh`. The older 0.0.3 prototype was disabled (not removed) to avoid testing the wrong adapter. Only loopback site access was approved; no customer-site permissions were granted.
+
+The installed Windows native helper connected successfully. The extension popup reported **Bridge connected**, and the WordPress Bridge popover reported **Connected via Chrome extension**, with the isolated site listed as connected. Reloading WordPress restored the same saved chat and automatically reconnected without another consent prompt. Disconnecting through the extension then changed the WordPress popover to **Connected directly**. The popup explicitly stated active requests were not replayed. No chat prompt, content mutation or settings edit was performed.
+
+Local evidence: `permanent-id-connected.png` and `permanent-id-direct-fallback.png` in the reconciliation directory. This closes the current Windows permanent-ID connection/reload/direct-fallback gate; it does not establish the cause of the older Chrome for Testing prototype failure or claim new CLI streaming acceptance.
+
+Website preparation is committed at `pixflowdev/pixflow-website` revision `d31f13fc92142c7aa0158ec15cbff617862b7457`. The new reviewer-only download, reviewer guide and precise extension privacy section are not yet published. The currently public guide/download still describe the old 1.0.1 setup and must be replaced before submission. Final reviewer login, Store test instructions/screenshots and owner certifications remain outstanding. Intel/Linux must not be advertised as accepted.

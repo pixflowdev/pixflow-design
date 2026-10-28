@@ -127,3 +127,12 @@ pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts
 ```
 
 The native UI suites are e2e/ui/native-messaging-prototype.test.ts and e2e/ui/native-popup.test.ts, configured by e2e/lib/playwright/native.config.ts. Read their explicit environment opt-ins first; their local fixture/session inputs are not bundled credentials and must be created on the isolated test machine. Never point them at a customer site. Use the manual acceptance matrix for the public reviewer installation until its own isolated inputs are prepared.
+
+
+## Request to the coordinating agent: private Store identity material
+
+The user requested on 28 October 2026 that the coordinating agent add the Store draft's **public manifest key**, or an installable review link, to the private `pixflowdev/pixflow-design-pro` repository. The Mac test machine cannot currently reproduce extension ID `hbnbiboohlelmngadeolikeejamjlbkh` from the keyless source bundle.
+
+Please commit the public key/review-link reference and concise setup instructions in a private Pro testing document. Include a deterministic check that the unpacked development extension resolves to that exact ID, the corresponding Core/Pro revisions, and the returned private document path/commit in the next handoff. A temporary manifest with the public key belongs only in an isolated test-profile build; retain the Store upload bundle's intended keyless format. Do not commit a private signing key, credentials, cookies, access tokens or browser profiles.
+
+Until that material is supplied, real Chrome first-approval, revocation and automatic-connection acceptance is NOT RUN. Native filesystem/contract tests and a randomly assigned development extension ID do not substitute. Ordinary Bridge acceptance continues independently.

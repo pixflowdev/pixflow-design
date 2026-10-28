@@ -3,10 +3,22 @@ const transport = vi.hoisted(() => vi.fn());
 const owner = vi.hoisted(() => ({ id: 1 }));
 vi.mock('../../src/pixflow/runtime-fetch', () => ({ pixflowWordPressRestFetch: transport }));
 vi.mock('../../src/pixflow/wordpress-context', () => ({ getPixflowWordPressConfig: () => ({ siteHash: 'audit-site', userId: owner.id }) }));
-import { importChatHistory, mergeChatHistory, readChatHistory, saveChatHistoryMessage } from '../../src/pixflow/chat-history-client';
+import { importChatHistory, mergeChatHistory, readChatHistory, saveChatHistoryMessage, resolveChatHistory } from '../../src/pixflow/chat-history-client';
+import { conversationSessionKey } from '../../src/pixflow/conversation-address';
 
 const binding = { projectId: 'history-project', conversationId: 'history-conversation' };
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+it('resolves a selected Workspace identity through the permission-checked server without creating a panel clone', async () => {
+  transport.mockReset();
+  const selected = { projectId: '12345678-1234-1234-1234-123456789abc', conversationId: 'existing-chat' };
+  transport.mockResolvedValueOnce(response(selected));
+  expect(await resolveChatHistory({ sessionKey: conversationSessionKey(selected), create: false })).toEqual(selected);
+  expect(JSON.parse(transport.mock.calls[0]![1].body)).toMatchObject({ ...selected, create: false });
+  transport.mockResolvedValueOnce(response({ message: 'You cannot access this chat.' }, 403));
+  await expect(resolveChatHistory({ sessionKey: conversationSessionKey(selected) })).rejects.toThrow('You cannot access this chat.');
+  expect(transport).toHaveBeenCalledTimes(2);
+});
 
 it.each(['prefix', 'changed-text', 'changed-event', 'changed-agent', 'same-revision'])('acknowledges only a contained streaming observer: %s', async scenario => {
   transport.mockReset(); owner.id = 1;

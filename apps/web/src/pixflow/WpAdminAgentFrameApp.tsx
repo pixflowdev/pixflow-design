@@ -3174,7 +3174,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   const logRef = useRef<HTMLDivElement | null>(null);
   const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const nativeSessionKey = siteAccess.guarded ? contextStorageKey(runtime, contextIdentity) : builderHandoffConversationKey(`pixflow-direct:${contextSiteHash(runtime)}:${contextUserId(context)}`, nativePersistenceSurface, handoffBuilder);
-  const { historyKey: sessionKey, surface: persistenceSurface, continuing } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface);
+  const { historyKey: sessionKey, surface: persistenceSurface, continuing } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface, streaming);
   const [navigationReconnecting, setNavigationReconnecting] = useState(() => !!pendingDirectSiteRun(persistenceSurface));
   const pendingActionKey = siteAccess.guarded ? pendingActionStorageKey(runtime, contextIdentity) : `${sessionKey}:actions`;
   const pendingClarificationKey = siteAccess.guarded ? pendingClarificationStorageKey(runtime, contextIdentity) : `${sessionKey}:clarification`;

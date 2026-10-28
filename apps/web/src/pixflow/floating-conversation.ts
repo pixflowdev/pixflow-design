@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { directTabStorageKey } from './direct-tab-storage';
 import { mergeChatHistory, type HistoryMessage } from './chat-history-client';
 import type { AppConfig } from '../types';
+import { conversationBinding, conversationSessionKey } from './conversation-address';
+import type { PixflowChatHistoryBinding } from '@open-design/contracts';
 
 const executionKey = () => directTabStorageKey('pixflow:floating-execution:v1');
 /** Only execution choices cross documents. Credentials, CLI environment and personal data never do. */
@@ -34,16 +36,23 @@ type FloatingConversation = { historyKey: string; surface: string; runKey: strin
 const referenceKey = () => directTabStorageKey('pixflow:floating-conversation:v1');
 const legacyRunKey = (surface: string) => directTabStorageKey(surface === 'bricks' ? 'pixflow:direct-bricks-run' : `pixflow:direct-bricks-run:${surface}`);
 const ordinary = (surface: string) => surface === 'bricks' || surface === 'admin';
+const selectionEvent = 'pixflow-design:select-floating-conversation';
+
+/** Explicit, same-document selection. Active owners defer adoption until settled. */
+export function selectFloatingConversation(binding: PixflowChatHistoryBinding): void {
+  const historyKey = conversationSessionKey(binding);
+  window.dispatchEvent(new CustomEvent(selectionEvent, { detail: { historyKey } }));
+}
 
 /** A tab-owned address, not a transcript or permission grant. Existing chats stay separate. */
 export function readFloatingConversation(): FloatingConversation | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(referenceKey()) || 'null');
     if (!value || !ordinary(value.surface) || typeof value.historyKey !== 'string'
-      || !value.historyKey.length || value.historyKey.length > 512 || typeof value.runKey !== 'string') return null;
+      || !value.historyKey.length || value.historyKey.length > 1000 || typeof value.runKey !== 'string') return null;
     const base = legacyRunKey(value.surface).replace(/:post:\d+$/, '');
     const suffix = value.runKey.slice(base.length);
-    return value.runKey.startsWith(base) && (suffix === '' || (value.surface === 'bricks' && /^:post:[1-9]\d*$/.test(suffix))) ? value : null;
+    return value.runKey.startsWith(base) && (suffix === '' || suffix === `:conversation:${encodeURIComponent(value.historyKey)}` || (value.surface === 'bricks' && /^:post:[1-9]\d*$/.test(suffix))) ? value : null;
   } catch { return null; }
 }
 
@@ -65,8 +74,26 @@ export function rememberFloatingConversation(historyKey: string, surface: string
 }
 
 /** Adopt once on document mount. A native New chat selection still starts its own chat. */
-export function useFloatingConversation(historyKey: string, surface: string) {
+export function useFloatingConversation(historyKey: string, surface: string, busy = false) {
   const [selection, setSelection] = useState(() => ({source: historyKey, address: ordinary(surface) ? readFloatingConversation() : null, changed: false}));
+  const [requested, setRequested] = useState<{ historyKey: string; owner: string } | null>(null);
+  useEffect(() => {
+    if (!ordinary(surface)) return;
+    const select = (event: Event) => {
+      const key = (event as CustomEvent<{ historyKey: string }>).detail?.historyKey;
+      if (typeof key === 'string' && conversationBinding(key)) setRequested({ historyKey: key, owner: referenceKey() });
+    };
+    window.addEventListener(selectionEvent, select);
+    return () => window.removeEventListener(selectionEvent, select);
+  }, [surface]);
+  useEffect(() => {
+    if (!requested || busy) return;
+    if (requested.owner !== referenceKey()) { setRequested(null); return; }
+    const address = { historyKey: requested.historyKey, surface, runKey: `${legacyRunKey(surface).replace(/:post:\d+$/, '')}:conversation:${encodeURIComponent(requested.historyKey)}` };
+    try { sessionStorage.setItem(referenceKey(), JSON.stringify(address)); } catch { /* The mounted selection remains usable. */ }
+    setSelection({ source: historyKey, address, changed: false });
+    setRequested(null);
+  }, [requested, busy, historyKey, surface]);
   useEffect(() => {
     if (selection.changed) rememberFloatingConversation(selection.source, surface);
   }, [selection.changed, selection.source, surface]);

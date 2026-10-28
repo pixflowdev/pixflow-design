@@ -18,7 +18,7 @@ git -C pixflow-core fetch origin
 git -C pixflow-core worktree add --detach ../pixflow-211-core 4fa74d328b6ccf0619ca8cb701b180a6c4baca6a
 git -C pixflow-pro fetch origin
 git -C pixflow-pro worktree add --detach ../pixflow-211-pro 3f34d403eebce54c1ee14a0630fd199dd44c6491
-cd ../pixflow-211-core
+cd pixflow-211-core
 export PIXFLOW_DESIGN_PRO_ROOT="$(cd ../pixflow-211-pro && pwd)"
 export PIXFLOW_DESIGN_CORE_ROOT="$PWD"
 corepack pnpm install --frozen-lockfile
@@ -27,7 +27,7 @@ corepack pnpm install --frozen-lockfile
 pnpm setup:core
 ```
 
-Adapt only the initial existing clone paths. Use Node 24 and the pinned pnpm. Read repository/module AGENTS.md and the packaging guidance before building. Do not copy Pro implementations into Core.
+Run from the parent of the existing `pixflow-core` and `pixflow-pro` clones; adapt those clone paths as needed. Use Node 24 and the pinned pnpm. Read repository/module AGENTS.md and the packaging guidance before building. Do not copy Pro implementations into Core.
 
 ## Windows verification of this integration
 

@@ -1,6 +1,12 @@
 # v2.1.1 and optional Chrome extension: platform handoff
 
+**Current Mac review package:** [Windows review handoff](../../../docs/testing/2026-10-28-mac211-review-handoff.md). Review Core #27 and private Pro #16; evidence is in #26. Full OS reboot acceptance remains pending.
+
 Updated 28 October 2026. Do not publish packages, change updater pointers, or include Team work. Extension approval is NOT a prerequisite for the ordinary v2.1.1 release.
+
+## Latest Mac fixes — review candidates, live acceptance pending
+
+Read [the updated fixes receipt](../../../docs/testing/2026-10-28-mac211-fixes.md) before using the historical pairs below. Core [PR #27](https://github.com/pixflowdev/pixflow-design/pull/27) implements independent browser-site discovery, remembered native enrollment/reconnect, Workspace disconnect errors and Mac font serialization. Private Pro [PR #16](https://github.com/pixflowdev/pixflow-design-pro/pull/16) fixes unavailable design routes and Mac test fixtures. Exact implementation pins, build checksums, passing automated checks and pending live tests are in the receipt. Browser extension 1.0.2 and native payload must update together. These local candidates do not approve final DMGs or publication.
 
 ## Get the source from Git
 
@@ -129,6 +135,37 @@ pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts
 The native UI suites are e2e/ui/native-messaging-prototype.test.ts and e2e/ui/native-popup.test.ts, configured by e2e/lib/playwright/native.config.ts. Read their explicit environment opt-ins first; their local fixture/session inputs are not bundled credentials and must be created on the isolated test machine. Never point them at a customer site. Use the manual acceptance matrix for the public reviewer installation until its own isolated inputs are prepared.
 
 
-## Immediate Mac retest — supersedes the earlier pair
+## Historical request: private Store identity material (resolved)
+
+This request is retained for traceability. Private Pro identity material is now supplied as noted below; use the current review handoff at the top for acceptance status.
+
+The user requested on 28 October 2026 that the coordinating agent add the Store draft's **public manifest key**, or an installable review link, to the private `pixflowdev/pixflow-design-pro` repository. The Mac test machine cannot currently reproduce extension ID `hbnbiboohlelmngadeolikeejamjlbkh` from the keyless source bundle.
+
+Please commit the public key/review-link reference and concise setup instructions in a private Pro testing document. Include a deterministic check that the unpacked development extension resolves to that exact ID, the corresponding Core/Pro revisions, and the returned private document path/commit in the next handoff. A temporary manifest with the public key belongs only in an isolated test-profile build; retain the Store upload bundle's intended keyless format. Do not commit a private signing key, credentials, cookies, access tokens or browser profiles.
+
+Until that material is supplied, real Chrome first-approval, revocation and automatic-connection acceptance is NOT RUN. Native filesystem/contract tests and a randomly assigned development extension ID do not substitute. Ordinary Bridge acceptance continues independently.
+
+
+## Historical Mac retest receipt — 28 October 2026
+
+These findings describe the earlier candidate. The current review handoff records subsequent fixes and results.
+
+The new exact pairing (Core dbe241f6, Pro 398cf34e) has a separate receipt at `docs/testing/2026-10-28-mac211-retest.md`. Private Pro identity setup is now available and the real Chrome prompt/request/fallback tests ran. Manual offline profile save/reload/apply, uninstall/reinstall preservation, native registration repair and user-assisted tray Restart passed. Two Mac suite failures and active Workspace native-disconnect feedback remain findings; the queued-turn delay was traced to the period after provider-session startup. Post-reboot manual launch/history/reconnect/fresh request passed, but active site initially returned null and Chrome showed an empty site dropdown until WordPress reconnect; automatic site recovery remains a finding. Consult the receipt for precise partial/NOT RUN coverage; no release promotion is authorized.
+
+### Required extension onboarding behavior (user clarification)
+
+**FAIL: site discovery must work before Bridge pairing.** This is not merely an automatic restart/reconnect defect. The extension must offer the supported WordPress site open in the browser even when Bridge has no active site, including a new site never paired with Bridge. The user must be able to select it and connect from the extension without first using WordPress Reconnect, changing site settings, or granting the browser's local-network / “apps on devices” permission. The successful manual reconnect above is a workaround only and does not satisfy extension onboarding acceptance.
+
+Discover eligible sites through the browser independently of Bridge's current site-context. Keep discovery separate from authorization: listing a candidate must not itself grant privileged access, and connection must retain the intended explicit extension/site authorization checks. Do not resolve this by broadly allowing arbitrary page-supplied origins or bypassing authentication.
+
+Required retest: (1) running Bridge with site:null and an authenticated supported WordPress tab lists that site; (2) a never-paired supported site can be connected entirely from the extension; (3) the same flow works after reboot; (4) no local-network permission or site-settings detour is required; (5) unsupported pages and unauthorized sites cannot obtain privileged Bridge access. The never-paired scenario remains untested on this candidate; the observed site:null case already fails the required discovery behavior.
+
+
+### Remembered sites and automatic reconnection (user requirement)
+
+Previously connected, still-authorized sites must be remembered across browser restart, Bridge restart and machine reboot, remain visible in the extension dropdown even while disconnected, and reconnect automatically when the site and Bridge are available. Users must not repeat site selection, WordPress Reconnect, or the initial connection setup after a routine restart. Connection state must distinguish remembered/offline sites from connected sites.
+
+Persistence must not override an explicit disconnect or revoked authorization. Retest browser-first and Bridge-first startup, machine reboot, temporary Bridge unavailability followed by recovery, and multiple remembered sites. Verify that explicit disconnect/revocation prevents automatic reconnection and that recovery does not replay completed or interrupted agent requests. Automatic reconnect acceptance remains open; the observed post-reboot empty dropdown/manual-reconnect requirement fails this behavior.
+## Supplied identity material and earlier retest pair
 
 Read [the retest receipt](../../../docs/testing/2026-10-28-mac-retest.md). Exact Store identity material and setup are committed in the private Pro repository at `docs/testing/chrome-exact-id-retest.md` and `docs/testing/chrome-store-public-identity.json` (Pro commit `398cf34e30ecbbdbf1b98293461657f09b0d9c51`). Use only the public key in a separate unpacked test copy; keep Store output keyless.

@@ -1,0 +1,24 @@
+[
+  {
+    "file": "pixflow-design-bridge-2.1.1-ordinary-mac-arm64.dmg",
+    "sha256": "ed4218b1dc48759bdccb9170c67d3f651b36046acd6d52098408c0ac4d83aa7d",
+    "bytes": 209933927,
+    "bundleId": "dev.pixflow.bridge"
+  },
+  {
+    "file": "pixflow-design-bridge-2.1.1-extension-mac-arm64.dmg",
+    "sha256": "5f902de64fcb7bc811d905686f413fd5768c3700aa267a98fc67da0c08e99db8",
+    "bytes": 209940709,
+    "bundleId": "dev.pixflow.bridge"
+  },
+  {
+    "file": "pixflow-ai-2.1.1.zip",
+    "sha256": "425c200e83de6d9504b36556823079306be67d17a228b61e1b834686aafb5aba",
+    "bytes": 2377889
+  },
+  {
+    "file": "pixflow-design-pro-2.1.1.zip",
+    "sha256": "cbbbffbd9b26e5c884ba80c0abe03a8668ca0437c8bfa8769eff92c4b2744724",
+    "bytes": 5947317
+  }
+]

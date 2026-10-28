@@ -1,0 +1,30 @@
+[
+  {
+    "id": 686244706,
+    "name": "pixflow-design-bridge-2.1.1-mac-arm64.dmg",
+    "size": 209953793,
+    "digest": "sha256:ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-2da3790fffeb3da16b64/pixflow-design-bridge-2.1.1-mac-arm64.dmg"
+  },
+  {
+    "id": 686256446,
+    "name": "pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg",
+    "size": 209950752,
+    "digest": "sha256:857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-2da3790fffeb3da16b64/pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg"
+  },
+  {
+    "id": 686268715,
+    "name": "SHA256SUMS-mac-2.1.1.txt",
+    "size": 231,
+    "digest": "sha256:6b750b884b823ef75dfcdff653f58b5d2a683a5970e3653f126b8f7f0fe6f6ba",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-2da3790fffeb3da16b64/SHA256SUMS-mac-2.1.1.txt"
+  },
+  {
+    "id": 686268883,
+    "name": "mac-2.1.1-build-acceptance.json",
+    "size": 3553,
+    "digest": "sha256:a2c195368f1c25941e5a17d5aec057e76d63e841aa424e789d4205961c01d634",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-2da3790fffeb3da16b64/mac-2.1.1-build-acceptance.json"
+  }
+]

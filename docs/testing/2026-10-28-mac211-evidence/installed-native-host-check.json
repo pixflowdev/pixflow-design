@@ -1,0 +1,13 @@
+{
+  "approved_origin": {
+    "exit": 0,
+    "bytes": 47,
+    "response_type": "sites",
+    "site_count": 0
+  },
+  "wrong_origin": {
+    "exit": 1,
+    "bytes": 0
+  },
+  "system_node_in_path": false
+}

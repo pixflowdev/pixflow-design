@@ -1,0 +1,47 @@
+{
+  "extension_id": "hbnbiboohlelmngadeolikeejamjlbkh",
+  "site": "https://pixflow-204-mac-qa.test",
+  "permission_prompt": "User confirmed popup appeared and Allow clicked",
+  "chrome_request": {
+    "result": "CHROME PERMISSION RETEST OK",
+    "duration_seconds": 6.8
+  },
+  "chrome_after_reload": {
+    "result": "CHROME RELOAD RETEST OK",
+    "duration_seconds": 6.2
+  },
+  "transport_evidence": {
+    "expected_native_host_process_observed": true,
+    "direct_loopback_network_requests_observed": 0,
+    "network_capture_truncated": false
+  },
+  "second_permission_exchange": "User confirmed independently submitted from in-app browser after connecting extension there; not evidence of Chrome replay",
+  "remaining_extension_checks": [
+    "browser permission removal distinct from popup Disconnect",
+    "expired browser-login flow",
+    "fresh isolated Chrome profile requirement not met"
+  ],
+  "screenshots": [
+    "chrome-permission-success.png",
+    "chrome-reload-success.png"
+  ],
+  "direct_fallback": {
+    "result": "DIRECT TRANSPORT CHECK TWO",
+    "duration_seconds": 6.9,
+    "observed_transport": "POST http://127.0.0.1:7456/api/pixflow/direct-site/run-stream"
+  },
+  "workspace_fallback": {
+    "result": "WORKSPACE DIRECT FALLBACK OK",
+    "duration_seconds": 6.7,
+    "observed_transport": "POST /api/runs and GET /api/runs/<id>/events on loopback"
+  },
+  "workspace_reconnect": {
+    "user_reapproved": true,
+    "request_entered_native_transport": true,
+    "network_requests_observed": 23,
+    "loopback_requests_observed": 0,
+    "provider_session_started": true,
+    "outcome": "User disconnected while active; UI stayed Preparing. Explicit Stop canceled after 241.7 seconds. No second run in runtime database."
+  },
+  "capture_caveat": "Network capture after initial reload required re-enabling Network domain. Empty event captures are not transport evidence; fallback was rerun with 34 captured requests."
+}

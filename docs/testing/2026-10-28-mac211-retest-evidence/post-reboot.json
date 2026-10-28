@@ -1,0 +1,25 @@
+{
+  "boot_time": "2026-10-28T15:28:42Z",
+  "startup": "Isolated extension Bridge manually launched with tools-pack after reboot; auto-start not tested.",
+  "before_reconnect": {
+    "health": "running 2.1.1",
+    "site_context": {
+      "ok": true,
+      "site": null
+    },
+    "chrome_panel": "Bridge disconnected",
+    "popup": "User reported empty Website dropdown"
+  },
+  "recovery": "Clicked Reconnect in Chrome WordPress panel; Bridge connected and site-context returned https://pixflow-204-mac-qa.test.",
+  "history": "FINAL REINSTALL CHECK OK remained visible",
+  "fresh_request": {
+    "reply": "POST REBOOT CHECK OK",
+    "duration_seconds": 7.7,
+    "transport": "Not captured; do not infer native transport"
+  },
+  "popup_after_reconnect": "User confirmed Site is listed after closing and reopening the Chrome extension popup.",
+  "finding": "Startup site discovery unavailable until explicit WordPress reconnect. enrollment.ts derives dropdown from active site-context and returns [] for site:null.",
+  "acceptance": "FAIL extension onboarding: listing and connecting a supported browser site must not require prior Bridge pairing. Manual WordPress reconnect is a workaround only.",
+  "required_flow": "Discover supported browser site, select and connect from extension, without local-network/apps-on-devices permission or site-settings changes; preserve explicit authorization checks.",
+  "remembered_sites_requirement": "Persist previously connected, still-authorized sites across browser/Bridge restart and OS reboot; list them while disconnected and automatically reconnect when available. Honor explicit disconnect/revocation; never replay requests as part of connection recovery."
+}

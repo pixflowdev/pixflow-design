@@ -1,0 +1,11 @@
+{
+  "site": "https://pixflow-204-mac-qa.test",
+  "version": "2.1.1",
+  "nativeHosts": [
+    {
+      "pid": 13544,
+      "parentPid": 11676
+    }
+  ],
+  "debuggerDetachedByUser": true
+}

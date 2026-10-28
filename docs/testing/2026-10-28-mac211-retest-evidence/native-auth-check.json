@@ -1,0 +1,33 @@
+{
+  "invalid_auth": {
+    "body": "{\"type\":\"error\",\"message\":\"WordPress did not authorize this Direct session.\"}\n{\"type\":\"done\",\"ok\":false,\"outcome\":\"failed\",\"timings\":{\"totalMs\":35}}\n",
+    "exit_code": 0,
+    "frames": [
+      {
+        "type": "headers",
+        "status": 400
+      },
+      {
+        "type": "chunk"
+      },
+      {
+        "type": "end"
+      }
+    ]
+  },
+  "unapproved_site": {
+    "body": "",
+    "exit_code": 0,
+    "frames": [
+      {
+        "type": "error",
+        "error": "Native adapter rejected the site, destination, method or headers"
+      }
+    ]
+  },
+  "wrong_extension": {
+    "body": "",
+    "exit_code": 1,
+    "frames": []
+  }
+}

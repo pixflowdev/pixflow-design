@@ -1,0 +1,76 @@
+[
+  {
+    "elapsedSeconds": 0.0,
+    "site": null,
+    "chromePids": [],
+    "nativeHosts": []
+  },
+  {
+    "elapsedSeconds": 17.8,
+    "site": null,
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": [
+      {
+        "pid": 11700,
+        "ppid": 11676
+      }
+    ]
+  },
+  {
+    "elapsedSeconds": 18.8,
+    "site": "https://pixflow-204-mac-qa.test",
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": [
+      {
+        "pid": 11700,
+        "ppid": 11676
+      }
+    ]
+  },
+  {
+    "elapsedSeconds": 19.9,
+    "site": "https://pixflow-204-mac-qa.test",
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": []
+  },
+  {
+    "elapsedSeconds": 20.9,
+    "site": "https://pixflow-204-mac-qa.test",
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": [
+      {
+        "pid": 11800,
+        "ppid": 11676
+      }
+    ]
+  },
+  {
+    "elapsedSeconds": 23.0,
+    "site": "https://pixflow-204-mac-qa.test",
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": []
+  },
+  {
+    "elapsedSeconds": 24.1,
+    "site": "https://pixflow-204-mac-qa.test",
+    "chromePids": [
+      11676
+    ],
+    "nativeHosts": [
+      {
+        "pid": 11805,
+        "ppid": 11676
+      }
+    ]
+  }
+]

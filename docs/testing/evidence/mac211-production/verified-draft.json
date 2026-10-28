@@ -1,0 +1,38 @@
+{
+  "id": 427088978,
+  "tag_name": "bridge-v2.1.1",
+  "name": "Pixflow Design Bridge v2.1.1",
+  "draft": true,
+  "prerelease": false,
+  "html_url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-fa7263b197d3008b830d",
+  "assets": [
+    {
+      "id": 686268883,
+      "name": "mac-2.1.1-build-acceptance.json",
+      "size": 3553,
+      "state": "uploaded",
+      "digest": "sha256:a2c195368f1c25941e5a17d5aec057e76d63e841aa424e789d4205961c01d634"
+    },
+    {
+      "id": 686256446,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg",
+      "size": 209950752,
+      "state": "uploaded",
+      "digest": "sha256:857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe"
+    },
+    {
+      "id": 686244706,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64.dmg",
+      "size": 209953793,
+      "state": "uploaded",
+      "digest": "sha256:ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6"
+    },
+    {
+      "id": 686268715,
+      "name": "SHA256SUMS-mac-2.1.1.txt",
+      "size": 231,
+      "state": "uploaded",
+      "digest": "sha256:6b750b884b823ef75dfcdff653f58b5d2a683a5970e3653f126b8f7f0fe6f6ba"
+    }
+  ]
+}

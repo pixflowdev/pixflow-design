@@ -1,0 +1,16 @@
+[
+  {
+    "variant": "ordinary",
+    "CFBundleIdentifier": "dev.pixflow.bridge",
+    "CFBundleName": "Pixflow Design Bridge",
+    "CFBundleShortVersionString": "2.1.1",
+    "CFBundleVersion": "2.1.1"
+  },
+  {
+    "variant": "extension",
+    "CFBundleIdentifier": "dev.pixflow.bridge",
+    "CFBundleName": "Pixflow Design Bridge",
+    "CFBundleShortVersionString": "2.1.1",
+    "CFBundleVersion": "2.1.1"
+  }
+]

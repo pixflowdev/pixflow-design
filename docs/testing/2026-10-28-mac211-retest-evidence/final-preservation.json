@@ -1,0 +1,36 @@
+{
+  "wp_posts": {
+    "before": 12,
+    "after": 12,
+    "original_rows_unchanged": 12,
+    "all_original_rows_unchanged": true
+  },
+  "wp_postmeta": {
+    "before": 9,
+    "after": 9,
+    "original_rows_unchanged": 8,
+    "all_original_rows_unchanged": false
+  },
+  "wp_comments": {
+    "before": 1,
+    "after": 1,
+    "original_rows_unchanged": 1,
+    "all_original_rows_unchanged": true
+  },
+  "wp_users": {
+    "before": 1,
+    "after": 1,
+    "original_rows_unchanged": 1,
+    "all_original_rows_unchanged": true
+  },
+  "wp_pixflow_design_projects": {
+    "before": 4,
+    "after": 5,
+    "original_rows_unchanged": 2,
+    "all_original_rows_unchanged": false
+  },
+  "explanation": {
+    "wp_postmeta": "Only the synthetic page edit-lock timestamp changed; all 9 original rows remain.",
+    "wp_pixflow_design_projects": "Only updated_at changed on two synthetic test projects; all four originals remain; one synthetic fallback-test chat was added."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "native_registration_repair": "PASS: owned uninstall removed manifest; normal launch recreated exact-ID manifest and launcher",
+  "extension_signature": "PASS codesign --verify --deep --strict; ad hoc, not notarized",
+  "tray_restart": {
+    "user_confirmed": true,
+    "pid_before": 16816,
+    "pid_after": 17058,
+    "started_at_after": "2026-10-28T15:10:10.084Z",
+    "gateway_healthy_after": true,
+    "site_reconnect_required": true
+  },
+  "reboot": "PARTIAL: manual launch, retained chat history, reconnect and fresh request PASS (7.7s); active site initially null and user reports empty Chrome dropdown. Automatic site recovery not passed.",
+  "published_installer_upgrade": "NOT RUN: no matching published installer fixture used",
+  "relocation": "PASS within tools-pack root; restored original path",
+  "final_running_candidate": "extension arm64; ordinary stopped; Chrome QA extension disconnected",
+  "final_request": {
+    "result": "FINAL REINSTALL CHECK OK",
+    "duration_seconds": 5.5
+  }
+}

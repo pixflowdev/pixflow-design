@@ -308,3 +308,67 @@ it('preserves annotation batches and image references through queue restore, edi
   rerender({streaming:false});
   expect(send).not.toHaveBeenCalled();
 });
+
+
+it('automatically sends the next queued item after durable evidence resolves a steering failure', async () => {
+  const send = vi.fn();
+  const steer = vi.fn(async item => ({ messageId: item.id, state: 'unconfirmed' as const }));
+  const { result, rerender } = renderHook(({ streaming, receipts }) => useComposerQueue({
+    key: 'resolved-steering', streaming, disabled: false, outcome: 'succeeded', send, steer, acceptedSteeringIds: receipts,
+  }), { initialProps: { streaming: true, receipts: [] as string[] } });
+  act(() => { result.current.add('Guidance', [], []); result.current.add('Next turn', [], []); });
+  const guidance = result.current.items[0]!;
+  await act(async () => { await result.current.steer(guidance); });
+  expect(result.current.paused).toBe(true);
+  rerender({ streaming: true, receipts: [guidance.id] });
+  expect(send).not.toHaveBeenCalled();
+  rerender({ streaming: false, receipts: [guidance.id] });
+  expect(send).toHaveBeenCalledExactlyOnceWith('Next turn', [], [], undefined);
+});
+
+it('ignores a failed steering acknowledgement after durable acceptance was already replayed', async () => {
+  let resolve!: (value: any) => void;
+  const send = vi.fn();
+  const steer = vi.fn(() => new Promise<any>(done => { resolve = done; }));
+  const { result, rerender } = renderHook(({ streaming, receipts }) => useComposerQueue({
+    key: 'late-steering-response', streaming, disabled: false, outcome: 'succeeded', send, steer, acceptedSteeringIds: receipts,
+  }), { initialProps: { streaming: true, receipts: [] as string[] } });
+  act(() => { result.current.add('Guidance', [], []); result.current.add('Next turn', [], []); });
+  const guidance = result.current.items[0]!;
+  let pending!: Promise<void>;
+  act(() => { pending = result.current.steer(guidance); });
+  rerender({ streaming: true, receipts: [guidance.id] });
+  await act(async () => { resolve({ messageId: guidance.id, state: 'unconfirmed' }); await pending; });
+  rerender({ streaming: false, receipts: [guidance.id] });
+  expect(send).toHaveBeenCalledExactlyOnceWith('Next turn', [], [], undefined);
+});
+
+
+it.each(['stop', 'failed-run', 'another-uncertain-message'])('keeps the queue paused after a steering receipt when blocked by %s', async blocker => {
+  const send = vi.fn();
+  const steer = vi.fn(async item => ({ messageId: item.id, state: 'unconfirmed' as const }));
+  const { result, rerender } = renderHook(({ streaming, receipts, outcome }) => useComposerQueue({
+    key: 'preserve-pause', streaming, disabled: false, outcome, send, steer, acceptedSteeringIds: receipts,
+  }), { initialProps: { streaming: true, receipts: [] as string[], outcome: 'running' } });
+  act(() => { result.current.add('Guidance', [], []); result.current.add('Next turn', [], []); });
+  const guidance = result.current.items[0]!;
+  await act(async () => { await result.current.steer(guidance); });
+  if (blocker === 'stop') act(() => result.current.pause());
+  if (blocker === 'failed-run') rerender({ streaming: false, receipts: [], outcome: 'failed' });
+  if (blocker === 'another-uncertain-message') await act(async () => { await result.current.steer(result.current.items[1]!); });
+  rerender({ streaming: false, receipts: [guidance.id], outcome: blocker === 'failed-run' ? 'failed' : 'succeeded' });
+  expect(result.current.paused).toBe(true);
+  expect(send).not.toHaveBeenCalled();
+});
+
+it('resumes the remaining queue after reloading a delivery pause and replaying its receipt', async () => {
+  const send = vi.fn();
+  const steer = vi.fn(async item => ({ messageId: item.id, state: 'unconfirmed' as const }));
+  const first = renderHook(() => useComposerQueue({ key: 'persisted-pause', streaming: true, disabled: false, send, steer }));
+  act(() => { first.result.current.add('Guidance', [], []); first.result.current.add('Next turn', [], []); });
+  const guidance = first.result.current.items[0]!;
+  await act(async () => { await first.result.current.steer(guidance); });
+  first.unmount();
+  renderHook(() => useComposerQueue({ key: 'persisted-pause', streaming: false, disabled: false, outcome: 'succeeded', send, acceptedSteeringIds: [guidance.id] }));
+  expect(send).toHaveBeenCalledExactlyOnceWith('Next turn', [], [], undefined);
+});

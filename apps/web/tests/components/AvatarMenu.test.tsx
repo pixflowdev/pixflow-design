@@ -9,6 +9,7 @@ import type { AgentInfo, AppConfig, ExecMode } from '../../src/types';
 
 vi.mock('../../src/i18n', () => ({
   useT: () => (key: string) => key,
+  useI18n: () => ({ locale: 'en', t: (key: string) => key }),
 }));
 
 const codexAgent: AgentInfo = {

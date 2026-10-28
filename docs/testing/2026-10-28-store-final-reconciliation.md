@@ -74,3 +74,17 @@ The Store listing retains its icon, two screenshots, English (United Kingdom) la
 Local evidence: `store-reviewer-instructions-1.0.2.png` and `store-final-certification-gate.png` in `D:/pixflow-211-final/store-reconciliation/`.
 
 The website chat freshly authenticated the existing reviewer account on 28 October 2026 at 22:58:27 UTC, reached authenticated WordPress admin/profile, then logged out the synthetic test session. Credentials were not rotated or copied into this report. Public installer/guide/privacy deployment verification is tracked separately below.
+
+## Public reviewer deployment — 28 October 2026
+
+User-authorized reviewer-only publication completed. Independent HTTP checks returned 200 for the guide, new exact-name installer and public privacy policy. Guide identifies 1.0.2 and the correct versioned installer; installer HEAD reports 248,208,653 bytes. The extension privacy section now covers pre-consent site discovery, remembered metadata, reconnection, native forwarding and retention.
+
+Website chat's full public GET at 23:07:49 UTC confirmed 248,208,653 bytes and SHA256 `40490d3d9e41424697c51f84a09173b995bf2ef7c10ddd9309d43a7b399a1606`. Public guide and privacy desktop/mobile checks passed; reviewer guide no-store/noindex and staging 401 protection passed. Existing reviewer login/logout passed without rotation.
+
+- Guide: https://docs.pixflow.dev/extension-review/reviewer-guide
+- Installer: https://docs.pixflow.dev/extension-review/downloads/pixflow-design-bridge-2.1.1-extension-review-1.0.2-win-x64.exe
+- Privacy: https://pixflow.dev/privacy#browser-extension
+
+The Store draft remains unsubmitted; final owner certifications and submission approval are still required. The Windows reviewer path is verified; unverified Intel Mac/Linux claims remain excluded.
+
+Final preservation check passed: website chat compared all 202 normal download files (7.02 GB) against pre-publication filenames, sizes and SHA-256 values; all match. Protected service identities, configuration hashes and release endpoints also match. Only the authorized reviewer-specific download/guide and extension privacy content were published.

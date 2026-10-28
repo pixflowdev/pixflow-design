@@ -1091,13 +1091,18 @@ export async function streamViaDaemon({
     await syncWordPressPluginAssetsToBridgeProject(projectId, wordpressPluginAssetSync);
 
     if (workspaceSource) {
+      // Switching chats detaches the SSE viewer, not the submitted request.
+      // Only the explicit Stop signal may cancel admission before a run exists.
+      const admissionSignal = cancelSignal ?? signal;
+      admissionSignal.throwIfAborted();
       const sessionResponse = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
-        method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
+        method: 'POST', signal: admissionSignal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workspaceSource }),
       });
       if (!sessionResponse.ok) throw new Error('Could not connect this Workspace chat to WordPress. Please retry.');
       workspaceSession = await sessionResponse.json() as PixflowDirectSiteSession;
       if (!workspaceSession.token || !workspaceSession.workspaceSource) throw new Error('Update Pixflow to enable Workspace builder handoff.');
+      admissionSignal.throwIfAborted();
     }
 
     runCreationAttempted = true;

@@ -1,5 +1,5 @@
 import {showOnboardingPopup} from './onboarding-popup';
-/** Reconcile browser consent with the Bridge-owned pairing, never a page-supplied site. */
+/** Reconcile explicit browser consent with supported and remembered site candidates. */
 export function automaticConnection(chrome: any, discover: () => Promise<{sites: string[]}>, activate: (origin: string) => Promise<void>, now = Date.now) {
   let running: Promise<void> | undefined;
   let requested = false;
@@ -21,7 +21,7 @@ export function automaticConnection(chrome: any, discover: () => Promise<{sites:
               await chrome.permissions.removeHostAccessRequest?.({tabId, pattern}).catch(() => {});
               requests.delete(tabId);
             }
-            await activate(origin);
+            try { await activate(origin); } catch { /* A site or Bridge may be offline; retry on the next browser event/alarm. */ }
           } else {
             await showOnboardingPopup(chrome, origin);
             if (!chrome.permissions.addHostAccessRequest) continue;

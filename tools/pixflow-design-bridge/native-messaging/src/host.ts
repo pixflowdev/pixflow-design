@@ -1,5 +1,7 @@
+import {createHash} from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { decoder, relay, writer, validateRequest, type Configuration } from './relay';
+import {validateBrowserSite} from './browser-sites';
 import { discoverPairedSite } from './enrollment';
 const config:Configuration=JSON.parse(readFileSync(new URL('./config.json',import.meta.url),'utf8'));
 if(process.argv[2]!==config.extensionOrigin)process.exit(1);
@@ -21,7 +23,22 @@ function start(message:any){
   };
   void relay(message,config,controller.signal,stream).catch(()=>send({id:message.id,type:'error',error:'Native Bridge request failed. No request was replayed; inspect its result before retrying an edit.'})).finally(()=>{clearTimeout(timer);active.delete(message.id);acks.delete(message.id);});
 }
+let enrollment=Promise.resolve();
 const consume=decoder(message=>{
+  if(message.id==='enroll'&&message.type==='enroll'){
+    enrollment=enrollment.then(async()=>{
+      const site=validateBrowserSite(message.site,message.site?.siteOrigin);
+      if(!site||!config.discoverPairedSite||createHash('sha256').update(site.siteUrl).digest('hex')!==site.siteKey)throw Error('Invalid site metadata');
+      const health=await fetch(config.bridge+'/api/health',{headers:{Origin:site.siteOrigin,'x-pixflow-site-key':site.siteKey},redirect:'error',signal:AbortSignal.timeout(5000)}).then(r=>r.json()).catch(()=>null);
+      if(health?.site?.key!==site.siteKey){
+      const response=await fetch(config.bridge+'/api/pixflow/site-context/switch',{method:'POST',headers:{'content-type':'application/json',Origin:site.siteOrigin},body:JSON.stringify(site),redirect:'error',signal:AbortSignal.timeout(45000)});
+      if(!response.ok||(await response.json()).ok!==true)throw Error('Bridge could not connect this site');
+      }
+      if(!config.sites.includes(site.siteOrigin))config.sites.push(site.siteOrigin);
+      await send({id:'enroll',type:'enrolled'});
+    }).catch(()=>send({id:'enroll',type:'error',error:'Bridge could not connect this site'}));
+    return;
+  }
   if(message.id==='discover'&&message.type==='discover'){void send({id:'discover',type:'sites',sites:config.sites});return;}
   if(message.type==='ack'){acks.get(message.id)?.();return;}
   if(message.type==='cancel'){active.get(message.id)?.abort();clearUpload(message.id);return;}

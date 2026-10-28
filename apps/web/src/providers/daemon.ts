@@ -1483,6 +1483,7 @@ async function consumeDaemonRun({
         // permission state, not a transient SSE disconnect. Retrying it five
         // times only adds duplicate console failures and delays the actionable
         // Bridge permission banner.
+        if ((err as Error).name === 'PixflowNativeDisconnectedError') { handlers.onError(err as Error); return; }
         if (isPixflowOptionalBridgeLoopbackAccessError(err)) throw err;
         reconnects += 1;
         continue;
@@ -1509,6 +1510,7 @@ async function consumeDaemonRun({
           // catch so application bugs are never mistaken for transport loss.
           if ((err as Error).name === 'AbortError') throw err;
           try { await reader.cancel(); } catch {}
+          if ((err as Error).name === 'PixflowNativeDisconnectedError') { handlers.onError(err as Error); return; }
           break;
         }
         const { value, done } = readResult;

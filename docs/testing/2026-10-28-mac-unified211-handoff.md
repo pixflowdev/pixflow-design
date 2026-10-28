@@ -32,6 +32,7 @@ Run from the parent of the existing `pixflow-core` and `pixflow-pro` clones; ada
 ## Windows verification of this integration
 
 - Core guard and full typecheck passed; native module typecheck passed.
+- Exact-pair CI passed: [Core run 40752566323](https://github.com/pixflowdev/pixflow-design/actions/runs/40752566323) and [Pro run 40753002696](https://github.com/pixflowdev/pixflow-design-pro/actions/runs/40753002696). Later Core handoff commits are documentation-only; keep the build pin unchanged.
 - 54 native transport/enrollment/permission/registration tests passed, including the real isolated Windows registry test.
 - 184 focused shared-chat, draft, last-active restoration, stream and recovery tests passed.
 - 22 packaged registration/gateway tests and 3 packaging/native transport tests passed.
@@ -65,7 +66,7 @@ Build the ordinary release first, from clean output with `PIXFLOW_DESIGN_NATIVE_
 
 Build the optional extension-enabled candidate separately using the same source pair and the native payload built with permanent ID `hbnbiboohlelmngadeolikeejamjlbkh` (extension 1.0.2). Follow `tools/pixflow-design-bridge/native-messaging/PLATFORM-ACCEPTANCE.md`. Keep optional artifacts distinctly named; they must never replace ordinary installers. Exact-ID unpacked testing uses only the public key in private Pro documentation; Store ZIP stays keyless. Ordinary release readiness must not wait for Google approval.
 
-Upload destination: **existing draft release ID `427088978`, tag `bridge-v2.1.1`**, in `pixflowdev/pixflow-design`: [draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-ebe4cb489e2fef800c50).
+Upload destination: **existing draft release ID `427088978`, tag `bridge-v2.1.1`**, in `pixflowdev/pixflow-design`: [draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-2da3790fffeb3da16b64). GitHub may change a draft's temporary URL; locate it by release ID, not by guessing another release.
 
 Before upload, read the release and require `draft: true` and the expected tag/repository. Upload new asset names only. Never use clobber, delete old assets, publish the draft or update a public asset. Include architecture and candidate hash in new filenames if a name already exists. Upload SHA256SUMS and a redacted build/acceptance receipt with exact Core/Pro hashes, artifact sizes, signing/notarization status and pass/fail/not-run matrix. Only public Bridge artifacts belong in this Core draft; private Pro ZIPs/source remain private.
 

@@ -113,3 +113,15 @@ describe('Direct admin transcript durability',()=>{
     if(scenario==='completed')expect(restoreMessages(key)[0]?.status).not.toBe('streaming');
   });
 });
+
+it('restores a Bricks-owned active reply in the admin renderer after navigation', async () => {
+  const { rememberFloatingConversation, floatingRunStorageKey } = await import('../../src/pixflow/floating-conversation');
+  const key='bricks:cross-editor-task';
+  rememberFloatingConversation(key,'bricks');
+  sessionStorage.setItem(floatingRunStorageKey('bricks'),JSON.stringify({
+    connection:{id:'a'.repeat(32),token:'b'.repeat(64)},
+    metadata:{sessionKey:key,initial:[{id:'user',role:'user',content:'Update the ACF fields'},{id:'reply',role:'assistant',content:'Inspecting fields',status:'streaming',runStatus:'running',agentId:'codex'}],id:'reply',agentId:'codex'},
+  }));
+  expect(restoreMessages(key,'bricks')).toMatchObject([{id:'user',content:'Update the ACF fields'},{id:'reply',content:'Inspecting fields',status:'streaming',runStatus:'running'}]);
+  expect(readRawWpAdminHistory('pixflow-direct:unrelated:1')).toEqual([]);
+});

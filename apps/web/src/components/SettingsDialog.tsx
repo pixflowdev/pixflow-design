@@ -332,6 +332,8 @@ function compareVersionParts(a: string, b: string): number {
 interface Props {
   /** Per mount: do not infer this from the first WordPress root's global config. */
   portalToBody?: boolean;
+  /** Persistent toolbar intent survives lazy Pro asset loading. */
+  openManualDesignSystem?: boolean;
   initial: AppConfig;
   agents: AgentInfo[];
   agentsLoading?: boolean;
@@ -1151,6 +1153,7 @@ function normalizeSettingsRuntimeConfig(config: AppConfig): AppConfig {
 
 export function SettingsDialog({
   portalToBody = false,
+  openManualDesignSystem = false,
   initial,
   agents,
   agentsLoading = false,
@@ -4861,6 +4864,7 @@ export function SettingsDialog({
 
           {activeSection === 'designSystems' ? (
             <DesignSystemsSection
+              openManualEditor={openManualDesignSystem}
               cfg={cfg}
               setCfg={setCfg}
               onDesignSystemsChanged={onDesignSystemsChanged}

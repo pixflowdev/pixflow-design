@@ -5,6 +5,20 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - Unreleased
+
+- Make live review feedback more responsive by avoiding repeated updates to unchanged controls. Review the changed content instead of an untouched containing section, and prefer captions below the review frame.
+
+- Keep Design Your System toolbar requests available while Pro loads, and keep the settings overlay visible and dismissible if loading fails.
+
+- Refresh saved Pro access during active editor use when scheduled licence renewal has not run, and recover stale entitlement caches without asking users to re-enter their saved key. Existing licence and permission checks remain enforced.
+- Keep the same floating-panel conversation, active response and selected provider/model when moving between supported editor screens in the same tab. Show a loading indicator while the conversation reconnects.
+- Preserve the latest saved chat revisions when restoring an active run, avoiding false history conflicts caused by an older recovery snapshot.
+- Recover from navigation immediately after Send instead of leaving Preparing stuck. Keep the unsent message and explain when it needs to be sent again.
+- Allow an active Bricks conversation to reconnect to the same page in Gutenberg without rejecting its original editor identity. Retain page permissions and prevent another tab from taking over.
+- Handle pending builder commands safely during navigation: distinguish commands that never ran from edits whose outcome is still unconfirmed, without automatically repeating edits.
+- Use Pixflow Design Bridge 2.1.1 for this test candidate. API execution does not require Bridge.
+
 ## [2.1.0] - 2026-10-22
 
 - Preserve conflicting saved chat versions, recover older browser snapshots safely and refresh newer messages across open floating panels and Workspace chats without silently overwriting history.

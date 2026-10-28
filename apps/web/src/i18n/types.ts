@@ -2884,6 +2884,10 @@ export interface Dict {
   "ui.pixflowFrameworkDesignSystemBuilder.showLivePreview": string;
   "ui.pixflowFrameworkDesignSystemBuilder.checkingReusableSystem": string;
   "ui.pixflowFrameworkDesignSystemBuilder.saveDesignSystem": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": string;
   "ui.pixflowFrameworkDesignSystemBuilder.closeDesignSystem": string;
   "ui.pixflowFrameworkDesignSystemBuilder.myDesignSystems": string;
   "ui.pixflowFrameworkDesignSystemBuilder.updateReusableDesignSystem": string;
@@ -6560,6 +6564,7 @@ export interface Dict {
   "wp.trialVerification.rateLimited": string;
   "wp.trialVerification.retry": string;
   "history.loadEarlier": string;
+  "history.continuingConversation": string;
   "history.saveError": string;
   "history.loadError": string;
   "history.retry": string;

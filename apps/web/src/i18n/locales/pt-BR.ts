@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ptBR: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Salvar no Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Salvar em Meus sistemas de design",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Atualizar cópia da biblioteca",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Salvar no Bricks atualiza as variáveis e os estilos deste site. Salvar em Meus sistemas de design também salva uma cópia reutilizável na biblioteca.",
+  "history.continuingConversation": "Continuando sua conversa…",
   "guidance.requestFailed": "Não foi possível carregar ou salvar as orientações. Seu rascunho foi mantido.",
   "guidance.recovered": "Seu rascunho não salvo foi recuperado.",
   "guidance.saved": "Orientações salvas. As páginas e os sistemas de design existentes não foram alterados.",

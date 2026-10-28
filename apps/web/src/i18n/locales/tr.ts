@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks’e kaydet",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Tasarım Sistemlerim’e kaydet",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Kitaplık kopyasını güncelle",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks’e kaydetmek bu sitenin değişkenlerini ve stillerini günceller. Tasarım Sistemlerim’e kaydetmek ayrıca kitaplığa yeniden kullanılabilir bir kopya kaydeder.",
+  "history.continuingConversation": "Sohbetiniz sürdürülüyor…",
   "guidance.requestFailed": "Rehber yüklenemedi veya kaydedilemedi. Taslağınız korunuyor.",
   "guidance.recovered": "Kaydedilmemiş taslağınız kurtarıldı.",
   "guidance.saved": "Rehber kaydedildi. Mevcut sayfalar ve tasarım sistemleri değiştirilmedi.",

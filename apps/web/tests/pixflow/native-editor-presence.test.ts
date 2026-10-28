@@ -33,14 +33,14 @@ const show = (id = 'a') => presence.show([{ id, label: id.toUpperCase() }]);
 
 it('offers the selected live review area to optional UI and retires it on page changes', () => {
   let page = 1;
-  const { section, c } = fixture(() => page);
+  const { a, c } = fixture(() => page);
   const selections: CustomEvent[] = [];
   const capture = (event: Event) => selections.push(event as CustomEvent);
   document.addEventListener('pixflow:review-target', capture);
   presence.begin(); show('a'); show('c'); presence.finish();
   document.querySelector<HTMLButtonElement>('[aria-label="Review changes"]')!.click();
   const first = selections.at(-1)!.detail;
-  expect(first.element).toBe(section);
+  expect(first.element).toBe(a);
   expect(first.count).toBe(2);
   first.navigate(1);
   expect(selections.at(-1)!.detail.element).toBe(c);
@@ -275,4 +275,31 @@ it('reserves vertical room for annotations in short canvases and releases it on 
   expect(controls.style.getPropertyValue('--presence-list-height')).toBe('184px');
   window.dispatchEvent(new CustomEvent('pixflow-design:annotation-toolbar', { detail: { active: false } }));
   expect(controls.style.getPropertyValue('--presence-list-height')).toBe('240px');
+});
+
+it('reviews the changed wrapper rather than its unchanged containing section', () => {
+  const { doc, section } = fixture();
+  const wrapper = doc.createElement('div'); wrapper.id = 'wrapper';
+  const child = doc.createElement('h2'); child.id = 'new-title'; child.textContent = 'New content';
+  wrapper.append(child); section.append(wrapper);
+  const capture = vi.fn(); document.addEventListener('pixflow:review-target', capture);
+  presence.begin(); presence.show([{ id: 'wrapper', label: 'Wrapper' }, { id: 'new-title', label: 'Heading' }]); presence.finish();
+  document.querySelector<HTMLButtonElement>('[aria-label="Review changes"]')!.click();
+  expect(capture.mock.calls.at(-1)![0].detail.element).toBe(wrapper);
+  document.removeEventListener('pixflow:review-target', capture);
+});
+
+it('prefers a caption below the target when space is available', () => {
+  expect(placePresenceCaption({ left: 100, top: 100, right: 400, bottom: 200 }, { left: 0, top: 0, right: 800, bottom: 600 }, 180, 28)).toMatchObject({ top: 208, placement: 'below' });
+});
+
+it('does not rewrite unchanged review controls while the working highlight animates', async () => {
+  fixture(); presence.begin(); show(); await vi.advanceTimersByTimeAsync(280);
+  const controls = document.getElementById('pixflow-presence-controls')!;
+  const changes: MutationRecord[] = [];
+  const observer = new MutationObserver(records => changes.push(...records));
+  observer.observe(controls, { subtree: true, childList: true, attributes: true });
+  await vi.advanceTimersByTimeAsync(600);
+  observer.disconnect();
+  expect(changes).toHaveLength(0);
 });

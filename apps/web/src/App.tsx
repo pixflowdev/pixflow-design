@@ -1489,7 +1489,7 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
         } else if (data.tool === 'design-system') {
           setToolbarWorkspaceTool('design-system');
           setSettingsInitialSection('designSystems');
-          setPendingWorkspaceTool('design-system');
+          setPendingWorkspaceTool(null);
           setSettingsOpen(true);
         } else if (data.tool === 'sitemap' || data.tool === 'design-systems') {
           setToolbarWorkspaceTool(null);
@@ -1826,6 +1826,7 @@ function AppInner(props: AppProps) {
           appVersionInfo={appVersionInfo}
           welcome={settingsWelcome}
           initialSection={settingsInitialSection}
+          openManualDesignSystem={toolbarWorkspaceTool === 'design-system'}
           initialHighlight={settingsHighlight}
           composioConfigLoading={composioConfigLoading}
           onPersist={handleConfigPersist}

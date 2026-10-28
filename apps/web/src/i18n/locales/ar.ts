@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "حفظ في Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "حفظ في أنظمة التصميم الخاصة بي",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "تحديث نسخة المكتبة",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "يؤدي الحفظ في Bricks إلى تحديث متغيرات هذا الموقع وأنماطه. ويؤدي الحفظ في أنظمة التصميم الخاصة بي أيضًا إلى حفظ نسخة قابلة لإعادة الاستخدام في المكتبة.",
+  "history.continuingConversation": "جارٍ متابعة محادثتك…",
   "guidance.requestFailed": "تعذر تحميل الإرشادات أو حفظها. تم الاحتفاظ بمسودتك.",
   "guidance.recovered": "تمت استعادة مسودتك غير المحفوظة.",
   "guidance.saved": "تم حفظ الإرشادات. لم تتغير الصفحات وأنظمة التصميم الحالية.",

@@ -610,3 +610,29 @@ it.each(['direct','composio'] as const)('injects selected saved guidance for new
  await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},context:{siteDesignGuidance:'STALE-GUIDANCE',workspaceItems:[{label:'Explicit reference'}]},prompt:'Review the page',history,signal:new AbortController().signal,onUpdate:vi.fn()});
  expect(provider).toHaveBeenCalledOnce();expect(history).toEqual([{role:'user',content:'Preserved chat'}]);
 });
+
+it.each(['direct','composio'] as const)('recovers %s after editor navigation without repeating an accepted save', async apiTransport => {
+  const {rememberFloatingConversation,floatingRunStorageKey,readFloatingConversation}=await import('../../src/pixflow/floating-conversation');
+  rememberFloatingConversation('bricks:task-navigation','bricks');
+  const storageKey=floatingRunStorageKey('bricks');
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+  let writes=0,results=0,turns=0;
+  const provider=()=>++turns===1?{text:'',turns:[],calls:[{id:'save',input:{name:'bricks.save',arguments:{}}}]}:{text:'Saved',turns:[],calls:[]};
+  composio.turn.mockImplementation(async()=>provider());
+  vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+    if(init.method==='DELETE')return Response.json({closed:true});
+    const {tool,arguments:args}=JSON.parse(init.body);
+    if(tool==='provider.turn')return Response.json(provider());
+    if(tool==='bricks.save'){writes++;return Response.json({pending:true,commandId:'accepted-before-navigation'});}
+    if(tool==='bricks.result'){expect(args.commandId).toBe('accepted-before-navigation');if(++results===1)throw new TypeError('Navigation interrupted response');return Response.json({ok:true});}
+    return Response.json({});
+  }));
+  const input={config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Save',history:[],persistenceSurface:'bricks',persistenceMetadata:{sessionKey:'bricks:task-navigation',initial:[{id:'reply',role:'assistant',content:''}],id:'reply'},signal:new AbortController().signal,onUpdate:vi.fn()};
+  await expect(runByokSite(input)).rejects.toThrow('result is unknown');
+  window.history.replaceState({},'', '/wp-admin/post.php?post=99&action=edit');
+  const address=readFloatingConversation()!;
+  const saved=JSON.parse(sessionStorage.getItem(floatingRunStorageKey(address.surface))!);
+  expect(floatingRunStorageKey(address.surface)).toBe(storageKey);
+  await expect(runByokSite({...input,prompt:'',persistenceSurface:address.surface,resume:saved})).resolves.toBe('completed');
+  expect(writes).toBe(1);expect(results).toBe(2);
+});

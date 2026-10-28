@@ -1,3 +1,4 @@
+import { floatingRunStorageKey, floatingConversationScope, rememberFloatingConversation, rememberFloatingExecution } from './floating-conversation';
 import { withRunDesignGuidance } from './run-design-guidance';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { secureRandomUUID } from '../utils/uuid';
@@ -96,8 +97,11 @@ export function SiteAccessNotice({ access, busy = false }: { access: ReturnType<
 export const DIRECT_BRICKS_RUN_STORAGE = 'pixflow:direct-bricks-run';
 // Live controls must never depend on browser quota or persisted tool output.
 const activeRunOwners = new Map<string, PendingDirectSiteRun>();
-const runStorageKey = (surface = 'bricks') => directTabStorageKey(surface === 'bricks' ? DIRECT_BRICKS_RUN_STORAGE : `${DIRECT_BRICKS_RUN_STORAGE}:${surface}`);
+const runStorageKey = floatingRunStorageKey;
 export type PendingDirectSiteRun = {
+  preparing?: boolean;
+  preparationDocument?: string;
+  preparationEnded?: boolean;
   byok?: ByokSiteCheckpoint;
   connection: NonNullable<PixflowDirectSiteRunRequest['continuation']>;
   metadata: unknown;
@@ -113,7 +117,7 @@ export function directRunStatus(error: unknown): PixflowDirectSiteOutcome {
   return error instanceof DirectSiteRunError ? error.outcome : 'failed';
 }
 export function directConversationId(surface: string, history: PixflowDirectSiteRunRequest['history'], scope = ''): string {
-  const key=directTabStorageKey(`pixflow:direct-conversation:${surface}:${scope}`);
+  const key=directTabStorageKey(`pixflow:direct-conversation:${surface}:${floatingConversationScope(surface, scope)}`);
   let id: string | null=null;
   try {id=window.sessionStorage.getItem(key);}catch { /* Explicit IDs still work without storage. */ }
   if(!history.some(message=>message.role==='user' || message.role==='assistant') || !id || !/^[a-f0-9]{32}$/.test(id)) {
@@ -124,15 +128,41 @@ export function directConversationId(surface: string, history: PixflowDirectSite
 }
 export function pendingDirectSiteRun(surface = 'bricks'): PendingDirectSiteRun | null {
   try {
-    const value = JSON.parse(window.sessionStorage.getItem(directTabStorageKey(surface === 'bricks' ? DIRECT_BRICKS_RUN_STORAGE : `${DIRECT_BRICKS_RUN_STORAGE}:${surface}`)) || 'null');
+    const value = JSON.parse(window.sessionStorage.getItem(runStorageKey(surface)) || 'null');
+    if (value?.preparing && value.preparationEnded && value.preparationDocument === preparationDocument) return null;
     return /^[a-f0-9]{32}$/.test(value?.connection?.id) && /^[a-f0-9]{64}$/.test(value?.connection?.token) ? value : null;
   } catch { return null; }
+}
+
+const preparationDocument = secureRandomUUID();
+
+/** Record ownership before asynchronous preparation. This is never an executable receipt. */
+export function beginDirectPreparation(surface: string, sessionKey: string, metadata: Record<string, unknown>, controller: AbortController): () => void {
+  rememberFloatingConversation(sessionKey, surface);
+  const key = runStorageKey(surface);
+  const connection = {id:secureRandomUUID().replaceAll('-',''),token:(secureRandomUUID()+secureRandomUUID()).replaceAll('-','')};
+  const record: PendingDirectSiteRun = {connection,preparing:true,preparationDocument,metadata:{...metadata,sessionKey}};
+  try { sessionStorage.setItem(key,JSON.stringify(record)); } catch { /* The live request remains usable without storage. */ }
+  let leaving = false;
+  const ownsPreparation = () => { const pending=pendingDirectSiteRun(surface); return pending?.preparing === true && pending.connection.id === connection.id; };
+  const onHide = () => {
+    if (!ownsPreparation()) return;
+    leaving = true;
+    controller.abort();
+  };
+  window.addEventListener('pagehide',onHide);
+  return () => {
+    window.removeEventListener('pagehide',onHide);
+    // A navigation can reject fetch before pagehide. Retain recovery evidence
+    // until the next document; the current panel already displays its outcome.
+    if (!leaving && ownsPreparation()) try { sessionStorage.setItem(key,JSON.stringify({...record,preparationEnded:true})); } catch { /* Optional storage. */ }
+  };
 }
 
 /** Same authenticated owner as resume/cancel. An uncertain delivery remains visible. */
 export async function steerDirectSite(surface: string, item: ComposerQueueItem): Promise<PixflowDirectSiteSteerResponse> {
   const run = activeRunOwners.get(runStorageKey(surface)) ?? pendingDirectSiteRun(surface);
-  if (!run || run.byok || run.checkpoint?.outcome) return { messageId: item.id, state: 'rejected', message: 'The active run is no longer available. Keep this message queued.' };
+  if (!run || run.preparing || run.byok || run.checkpoint?.outcome) return { messageId: item.id, state: 'rejected', message: 'The active run is no longer available. Keep this message queued.' };
   const response = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'design' }),
   });
@@ -425,9 +455,23 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
 
 /** Release audio even when session preparation fails. */
 export async function runDirectSite(request: Parameters<typeof executeDirectSite>[0] & { config?: AppConfig }): Promise<PixflowDirectSiteOutcome> {
+  request.signal.throwIfAborted();
+  if (request.resume?.preparing) {
+    const pending = pendingDirectSiteRun(request.persistenceSurface);
+    if (pending?.preparing && pending.connection.id === request.resume.connection.id) {
+      try { sessionStorage.removeItem(runStorageKey(request.persistenceSurface)); } catch { /* No executable receipt is discarded. */ }
+    }
+    throw new DirectSiteRunError('The page changed before this request finished preparing. Your message has been kept. Send it again to continue.', 'interrupted');
+  }
+  if (!request.resume && request.historySource?.sessionKey && request.persistenceSurface) {
+    rememberFloatingConversation(request.historySource.sessionKey, request.persistenceSurface);
+    if (request.config && ['admin','bricks'].includes(request.persistenceSurface)) rememberFloatingExecution(request.config);
+    request = { ...request, persistenceMetadata: { ...(request.persistenceMetadata as object), sessionKey: request.historySource.sessionKey } };
+  }
   if (!request.resume && request.purpose !== 'guidance-draft') {
     const { resolveEditorRunTarget } = await import('./editor-run-target');
     request = { ...request, editorTarget: await resolveEditorRunTarget(request, request.signal) };
+    if (request.persistenceMetadata !== undefined) request = { ...request, persistenceMetadata: {...(request.persistenceMetadata as object), editorTarget: request.editorTarget} };
   }
   // Provider credentials belong only to the WordPress provider transport.
   const { config, ...execution } = request;

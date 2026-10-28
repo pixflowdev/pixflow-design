@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const fr: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Enregistrer dans Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Enregistrer dans Mes systèmes de design",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Actualiser la copie de la bibliothèque",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Enregistrer dans Bricks met à jour les variables et styles de ce site. Enregistrer dans Mes systèmes de design sauvegarde aussi une copie réutilisable dans la bibliothèque.",
+  "history.continuingConversation": "Reprise de votre conversation…",
   "guidance.requestFailed": "Impossible de charger ou d’enregistrer les consignes. Votre brouillon est conservé.",
   "guidance.recovered": "Votre brouillon non enregistré a été récupéré.",
   "guidance.saved": "Consignes enregistrées. Les pages et systèmes de design existants restent inchangés.",

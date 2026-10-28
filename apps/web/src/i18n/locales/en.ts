@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Save to Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Save to My Design Systems",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Update library copy",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Save to Bricks updates this site’s variables and styles. Saving to My Design Systems also saves a reusable library copy.",
+  "history.continuingConversation": "Continuing your conversation…",
   "guidance.requestFailed": "Could not load or save guidance. Your draft is kept.",
   "guidance.recovered": "Your unsaved draft was recovered.",
   "guidance.saved": "Guidance saved. Existing pages and design systems have not been changed.",

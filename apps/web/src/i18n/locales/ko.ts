@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks에 저장",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "내 디자인 시스템에 저장",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "라이브러리 사본 업데이트",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks에 저장하면 이 사이트의 변수와 스타일이 업데이트됩니다. 내 디자인 시스템에 저장하면 재사용 가능한 사본도 라이브러리에 저장됩니다.",
+  "history.continuingConversation": "대화를 이어가는 중…",
   "guidance.requestFailed": "안내를 불러오거나 저장하지 못했습니다. 초안은 유지됩니다.",
   "guidance.recovered": "저장하지 않은 초안을 복구했습니다.",
   "guidance.saved": "안내를 저장했습니다. 기존 페이지와 디자인 시스템은 변경되지 않았습니다.",

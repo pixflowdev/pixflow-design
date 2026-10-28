@@ -245,3 +245,49 @@ $attempts=count($GLOBALS['requests']);
 check((new CentralEntitlements())->status()['code']==='license_revoked' && !(new CentralEntitlements())->allows('wordpress:mutate'), 'Concurrent denial overwritten during installation preparation');
 check(count($GLOBALS['requests'])===$attempts, 'Changed installation contacted licensing authority');
 echo "Concurrent denial during saved licence recovery preserved.\n";
+
+// Active editors must renew signed grants even when a host never runs WP-Cron.
+function current_user_can($cap){return !empty($GLOBALS['editor_authenticated']);}
+function add_action($hook,$callback,...$args){$GLOBALS['actions'][$hook][]=$callback;}
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];
+$GLOBALS['editor_authenticated']=true;
+$GLOBALS['scheduled'][CentralEntitlements::REFRESH_HOOK]=time()-86400;
+$state=$GLOBALS['options']['pixflow_design_central_entitlements_v2'];
+$state['tokens']['wordpress']=SecretBox::encrypt(central_token('pixflow-design-wordpress-local',-1000));
+$state['denied']=false;$state['network_unavailable']=false;
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+$GLOBALS['responses']=[response(200,$challenge),response(200,$grants),response(200,$jwks)];
+$preservedLicense=$GLOBALS['options']['pixflow_design_site_license_cache'];
+check((new CentralEntitlements())->allows('wordpress:mutate'),'Expired grant did not renew during authenticated request with stalled cron');
+check($GLOBALS['options']['pixflow_design_site_license_cache']===$preservedLicense,'Renewal changed saved licence');
+$attempts=count($GLOBALS['requests']);
+check((new CentralEntitlements())->allows('wordpress:mutate') && count($GLOBALS['requests'])===$attempts,'Fresh grant triggered duplicate renewal');
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+$GLOBALS['responses']=[new WP_Error()];$GLOBALS['transients']=[];
+check((new CentralEntitlements())->allows('wordpress:mutate'),'Transport failure lost signed offline allowance');
+$attempts=count($GLOBALS['requests']);
+check((new CentralEntitlements())->allows('wordpress:mutate') && count($GLOBALS['requests'])===$attempts,'Outage polling repeated refresh inside cooldown');
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+$GLOBALS['transients']=[];$GLOBALS['editor_authenticated']=false;$attempts=count($GLOBALS['requests']);
+check(!(new CentralEntitlements())->allows('wordpress:mutate') && count($GLOBALS['requests'])===$attempts,'Anonymous request triggered licence HTTP');
+$GLOBALS['editor_authenticated']=true;$state['denied']=true;
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+check(!(new CentralEntitlements())->allows('wordpress:mutate') && count($GLOBALS['requests'])===$attempts,'Explicit denial triggered automatic refresh');
+echo "Authenticated stalled-cron renewal, throttling, offline and denial checks passed.\n";
+$GLOBALS['options']=$domain_baseline;$GLOBALS['transients']=[];$GLOBALS['actions']=[];
+(new ReflectionProperty(CentralEntitlements::class,'request_refresh_scheduled'))->setValue(null,false); // next simulated PHP request
+$state=$GLOBALS['options']['pixflow_design_central_entitlements_v2'];
+$state['tokens']['wordpress']=SecretBox::encrypt(central_token('pixflow-design-wordpress-local',-400));
+$state['denied']=false;$state['network_unavailable']=false;
+$GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
+$attempts=count($GLOBALS['requests']);
+check((new CentralEntitlements())->allows('wordpress:mutate'),'Due, unexpired grant lost access');
+check(count($GLOBALS['requests'])===$attempts,'Healthy heartbeat blocked on HTTP');
+check(count($GLOBALS['actions']['shutdown']??[])===1,'Due grant did not schedule cron-independent renewal');
+(new CentralEntitlements())->allows('wordpress:mutate');
+check(count($GLOBALS['actions']['shutdown'])===1,'Duplicate deferred refresh');
+$GLOBALS['responses']=[response(200,$challenge),response(200,$grants),response(200,$jwks)];
+($GLOBALS['actions']['shutdown'][0])();
+check(count($GLOBALS['requests'])===$attempts+3,'Deferred renewal did not fetch and verify fresh signed tokens');
+check((new CentralEntitlements())->allows('wordpress:mutate'),'Deferred renewal did not retain access');
+echo "Pre-expiry renewal does not block heartbeat or depend on WP-Cron.\n";

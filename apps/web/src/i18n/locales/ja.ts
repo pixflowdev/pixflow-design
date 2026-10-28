@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks に保存",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "マイデザインシステムに保存",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "ライブラリのコピーを更新",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks に保存すると、このサイトの変数とスタイルが更新されます。マイデザインシステムに保存すると、再利用可能なコピーもライブラリに保存されます。",
+  "history.continuingConversation": "会話を再開しています…",
   "guidance.requestFailed": "ガイダンスを読み込みまたは保存できませんでした。下書きは保持されています。",
   "guidance.recovered": "未保存の下書きを復元しました。",
   "guidance.saved": "ガイダンスを保存しました。既存のページとデザインシステムは変更されていません。",

@@ -2,112 +2,112 @@
   "schema": 1,
   "locales": {
     "id": {
-      "sha256": "b56af7dad678f63cfd5b2e86f08e971acdd580ba481b4a6e94f9ec3b6fd4b938",
-      "bytes": 588788,
+      "sha256": "3224f66600e6370637463a8d8976940c811468663de0979be36ad473e5277ebd",
+      "bytes": 589311,
       "wpLocale": "id_ID",
-      "file": "id-b56af7dad678f63cfd5b2e86f08e971acdd580ba481b4a6e94f9ec3b6fd4b938.json"
+      "file": "id-3224f66600e6370637463a8d8976940c811468663de0979be36ad473e5277ebd.json"
     },
     "de": {
-      "sha256": "eb0af06589a666a48cf1872dd7932d7f77749f2f5c1e9a965047b3963b1151d3",
-      "bytes": 548002,
+      "sha256": "6d9ba79baf32e2999a2039a8a96b957bb3c2f25f819903c5d4edb013136d547d",
+      "bytes": 548573,
       "wpLocale": "de_DE",
-      "file": "de-eb0af06589a666a48cf1872dd7932d7f77749f2f5c1e9a965047b3963b1151d3.json"
+      "file": "de-6d9ba79baf32e2999a2039a8a96b957bb3c2f25f819903c5d4edb013136d547d.json"
     },
     "zh-CN": {
-      "sha256": "86a9bc93f30b20dc1d3f9bde38655401f640fa3a2cbbfcb9a8f35f027bdb23c8",
-      "bytes": 558134,
+      "sha256": "3e2adb08702da3183c10d04c0dfb16672a106f49d995e5c6e223b5a2d2636f5c",
+      "bytes": 558634,
       "wpLocale": "zh_CN",
-      "file": "zh-CN-86a9bc93f30b20dc1d3f9bde38655401f640fa3a2cbbfcb9a8f35f027bdb23c8.json"
+      "file": "zh-CN-3e2adb08702da3183c10d04c0dfb16672a106f49d995e5c6e223b5a2d2636f5c.json"
     },
     "zh-TW": {
-      "sha256": "ceb464cec5bd50848a669a54f7bd43f42b6361ba75ec73dbf9b195df55282c6e",
-      "bytes": 561512,
+      "sha256": "c0a0ef30dfdbb08517840d6cd05f093337b5e2f9da8297285f112dbff6f38164",
+      "bytes": 562012,
       "wpLocale": "zh_TW",
-      "file": "zh-TW-ceb464cec5bd50848a669a54f7bd43f42b6361ba75ec73dbf9b195df55282c6e.json"
+      "file": "zh-TW-c0a0ef30dfdbb08517840d6cd05f093337b5e2f9da8297285f112dbff6f38164.json"
     },
     "pt-BR": {
-      "sha256": "f76f47e92a72f11c68199645f0df063806c1525e130b36ced60f7c4ad4f2702f",
-      "bytes": 625158,
+      "sha256": "3680be1226ef74c17941b830c0e7072247f44f49d8ab4fefcd3d2b584eb98d70",
+      "bytes": 625688,
       "wpLocale": "pt_BR",
-      "file": "pt-BR-f76f47e92a72f11c68199645f0df063806c1525e130b36ced60f7c4ad4f2702f.json"
+      "file": "pt-BR-3680be1226ef74c17941b830c0e7072247f44f49d8ab4fefcd3d2b584eb98d70.json"
     },
     "es-ES": {
-      "sha256": "9f73f6298091149376b3e297c9cb592db50f9812883b44c79cdd074ffa8c335d",
-      "bytes": 636720,
+      "sha256": "351cd769412917ef61bd211a0b97f0fca6de05a073445353e53e90ce141c2511",
+      "bytes": 637265,
       "wpLocale": "es_ES",
-      "file": "es-ES-9f73f6298091149376b3e297c9cb592db50f9812883b44c79cdd074ffa8c335d.json"
+      "file": "es-ES-351cd769412917ef61bd211a0b97f0fca6de05a073445353e53e90ce141c2511.json"
     },
     "ru": {
-      "sha256": "4548d3c5f9ae2b39d8dfe57aaa765efbe6066e9e5506a8f372fb45085ed19b8a",
-      "bytes": 742714,
+      "sha256": "62b7cfc2c2c676f68bc8612c45de50aae3f7c517c091515ce4f1026fa74490ff",
+      "bytes": 743455,
       "wpLocale": "ru_RU",
-      "file": "ru-4548d3c5f9ae2b39d8dfe57aaa765efbe6066e9e5506a8f372fb45085ed19b8a.json"
+      "file": "ru-62b7cfc2c2c676f68bc8612c45de50aae3f7c517c091515ce4f1026fa74490ff.json"
     },
     "fa": {
-      "sha256": "2c63adaf1e3d7f885b76a565c6a70a069477d98a8d2a6c39b36ce91152915fbc",
-      "bytes": 803224,
+      "sha256": "424f4bee89d9aa689d27008dcb1d17dff1d6ba521c9d22be4912bcf5dfb2cd7e",
+      "bytes": 803951,
       "wpLocale": "fa_IR",
-      "file": "fa-2c63adaf1e3d7f885b76a565c6a70a069477d98a8d2a6c39b36ce91152915fbc.json"
+      "file": "fa-424f4bee89d9aa689d27008dcb1d17dff1d6ba521c9d22be4912bcf5dfb2cd7e.json"
     },
     "ar": {
-      "sha256": "69594471dab6dd64bd232c29eb79c681540174e48a7f1e7cbe027754cf27c3cd",
-      "bytes": 753618,
+      "sha256": "61d34c1f6b8ed3ccdcd56cccaf69f3842f8e0ae6f45dfd63a6415092b80c43e8",
+      "bytes": 754305,
       "wpLocale": "ar",
-      "file": "ar-69594471dab6dd64bd232c29eb79c681540174e48a7f1e7cbe027754cf27c3cd.json"
+      "file": "ar-61d34c1f6b8ed3ccdcd56cccaf69f3842f8e0ae6f45dfd63a6415092b80c43e8.json"
     },
     "ja": {
-      "sha256": "eeebf919ed6fbabffb7980849f33b10114b61ce27bd8e230e99d790b38bf5a75",
-      "bytes": 730121,
+      "sha256": "571568f22db2c9c2268f1d465126858f56baf407e6b253064e7fe7d648acfeee",
+      "bytes": 730728,
       "wpLocale": "ja",
-      "file": "ja-eeebf919ed6fbabffb7980849f33b10114b61ce27bd8e230e99d790b38bf5a75.json"
+      "file": "ja-571568f22db2c9c2268f1d465126858f56baf407e6b253064e7fe7d648acfeee.json"
     },
     "ko": {
-      "sha256": "05d6d12d8439638893b68e9ce8ea32ce48a382d9808cb2fd584560a73bcb549c",
-      "bytes": 655576,
+      "sha256": "16e653d65e93dfd5fe5d1e818e175f7de9b352a495017fd49a2205db8930ed10",
+      "bytes": 656152,
       "wpLocale": "ko_KR",
-      "file": "ko-05d6d12d8439638893b68e9ce8ea32ce48a382d9808cb2fd584560a73bcb549c.json"
+      "file": "ko-16e653d65e93dfd5fe5d1e818e175f7de9b352a495017fd49a2205db8930ed10.json"
     },
     "pl": {
-      "sha256": "dd4c22222101290e04cbcb553fd836b1cd8e3336f4cb48f7b409d73d4fa531e9",
-      "bytes": 627492,
+      "sha256": "63d8c36475d1fc20eaf420bdfc4a2099bdabc29f305c9c100a7d69ab76cff2ac",
+      "bytes": 628015,
       "wpLocale": "pl_PL",
-      "file": "pl-dd4c22222101290e04cbcb553fd836b1cd8e3336f4cb48f7b409d73d4fa531e9.json"
+      "file": "pl-63d8c36475d1fc20eaf420bdfc4a2099bdabc29f305c9c100a7d69ab76cff2ac.json"
     },
     "hu": {
-      "sha256": "40ec97919e0cde06c6512b762227766bc88fb14fa22caef2d8f94ddffce852cf",
-      "bytes": 653164,
+      "sha256": "ec5d6418f3b706df853c574b60c59b19a2651e21e3082202ec291dbb96b3bb47",
+      "bytes": 653713,
       "wpLocale": "hu_HU",
-      "file": "hu-40ec97919e0cde06c6512b762227766bc88fb14fa22caef2d8f94ddffce852cf.json"
+      "file": "hu-ec5d6418f3b706df853c574b60c59b19a2651e21e3082202ec291dbb96b3bb47.json"
     },
     "fr": {
-      "sha256": "2370cbea1ed2df4a17b9754da9f16f5deb42383499f153e853865050dbbed370",
-      "bytes": 563970,
+      "sha256": "517be063bd44a3c68f46c9ab8fcd66e3fd7e4af14c0e6507947bb239171f8ef6",
+      "bytes": 564552,
       "wpLocale": "fr_FR",
-      "file": "fr-2370cbea1ed2df4a17b9754da9f16f5deb42383499f153e853865050dbbed370.json"
+      "file": "fr-517be063bd44a3c68f46c9ab8fcd66e3fd7e4af14c0e6507947bb239171f8ef6.json"
     },
     "uk": {
-      "sha256": "05a0004b9d42945526abe51f7846146d0730cc481365bb1d9fe30dfb7d9caaac",
-      "bytes": 875686,
+      "sha256": "26b258d2ad5dbfb6da5337ec0c04ba39aea491159e449e76eaf7534ee265fb31",
+      "bytes": 876409,
       "wpLocale": "uk",
-      "file": "uk-05a0004b9d42945526abe51f7846146d0730cc481365bb1d9fe30dfb7d9caaac.json"
+      "file": "uk-26b258d2ad5dbfb6da5337ec0c04ba39aea491159e449e76eaf7534ee265fb31.json"
     },
     "tr": {
-      "sha256": "7be865f9656145c72e4e6af723534b1221de6bf875de0d42d9cec1a4136da5e1",
-      "bytes": 626338,
+      "sha256": "424f495543da8140d1a47dbe16cb5a290bc88112398a9fe033fc32d145e4adf0",
+      "bytes": 626892,
       "wpLocale": "tr_TR",
-      "file": "tr-7be865f9656145c72e4e6af723534b1221de6bf875de0d42d9cec1a4136da5e1.json"
+      "file": "tr-424f495543da8140d1a47dbe16cb5a290bc88112398a9fe033fc32d145e4adf0.json"
     },
     "th": {
-      "sha256": "718070cbc105d2394a94d117e03de4ed5a491833b4d6da3c4b8f8b479d9111aa",
-      "bytes": 1039965,
+      "sha256": "48ce0e7a218a6049fb3d58e599020a69309212800f91e0d2bb37dad8f4118608",
+      "bytes": 1040868,
       "wpLocale": "th",
-      "file": "th-718070cbc105d2394a94d117e03de4ed5a491833b4d6da3c4b8f8b479d9111aa.json"
+      "file": "th-48ce0e7a218a6049fb3d58e599020a69309212800f91e0d2bb37dad8f4118608.json"
     },
     "it": {
-      "sha256": "c3c9db19507a04ecd1505dc078ef6353de0d9859e9b114540e1fc006ed66faf8",
-      "bytes": 623430,
+      "sha256": "fa383c7417aa0bf8fe1290ead8bf64c5e7ac1b826c0181cd9cb4eac53b637af7",
+      "bytes": 623963,
       "wpLocale": "it_IT",
-      "file": "it-c3c9db19507a04ecd1505dc078ef6353de0d9859e9b114540e1fc006ed66faf8.json"
+      "file": "it-fa383c7417aa0bf8fe1290ead8bf64c5e7ac1b826c0181cd9cb4eac53b637af7.json"
     }
   }
 }

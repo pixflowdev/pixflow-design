@@ -420,6 +420,15 @@ describe('direct site panel', () => {
     expect(directConversationId('sitemap',history)).not.toBe(fork);
   });
 
+  it('retains native CLI context when the same floating conversation moves to another page', async () => {
+    const { rememberFloatingConversation } = await import('../../src/pixflow/floating-conversation');
+    rememberFloatingConversation('bricks:carry', 'bricks');
+    const first = directConversationId('bricks', [], '12');
+    expect(directConversationId('bricks', [{role:'user',content:'Continue'}], '99')).toBe(first);
+    rememberFloatingConversation('bricks:separate', 'bricks');
+    expect(directConversationId('bricks', [{role:'user',content:'Different task'}], '99')).not.toBe(first);
+  });
+
   it('sends explicit Stop for a continued run instead of relying on stream disconnection', async () => {
     requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true,expiresAt:9999999999}));
     const controller=new AbortController();
@@ -516,4 +525,24 @@ it.each(['admin','workspace','bricks','etch','elementor','gutenberg'])('passes s
  await runDirectSite({agentId:'codex',prompt:'Review this',history:[],mode:'design',persistenceSurface:surface,context,signal:new AbortController().signal,onUpdate:vi.fn()});
  const body=JSON.parse(requests.daemon.mock.calls.at(-1)![1].body);
  expect(body.context).toEqual({siteDesignGuidance:guidance,workspaceItems:context.workspaceItems});expect(context.siteDesignGuidance).toBe('stale');
+});
+
+it('reattaches the original CLI run from the destination panel without a second launch', async()=>{
+  const {rememberFloatingConversation,readFloatingConversation}=await import('../../src/pixflow/floating-conversation');
+  rememberFloatingConversation('bricks:cli-navigation','bricks');
+  requests.wordpress.mockImplementation(async()=>Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true}));
+  requests.daemon.mockResolvedValueOnce(new Response('{"type":"text_delta","delta":"Before."}\n'))
+    .mockResolvedValueOnce(new Response('{"type":"text_delta","delta":"Before."}\n{"type":"text_delta","delta":"After."}\n{"type":"done","ok":true}\n'));
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({closed:true})));
+  const input={agentId:'codex',prompt:'Edit fields',history:[],mode:'design',persistenceSurface:'bricks',signal:new AbortController().signal,onUpdate:vi.fn()};
+  await expect(runDirectSite({...input,persistenceMetadata:{sessionKey:'bricks:cli-navigation',initial:[],id:'reply'}})).rejects.toThrow('before completion');
+  const original=pendingDirectSiteRun('bricks')!;
+  window.history.replaceState({},'', '/wp-admin/post.php?post=99&action=edit');
+  const address=readFloatingConversation()!;
+  const pending=pendingDirectSiteRun(address.surface)!;
+  expect(pending.connection).toEqual(original.connection);
+  const onUpdate=vi.fn();
+  await runDirectSite({...input,prompt:'',persistenceSurface:address.surface,resume:pending,onUpdate});
+  expect(requests.daemon.mock.calls.map(call=>call[0])).toEqual(['/api/pixflow/direct-site/run-stream','/api/pixflow/direct-site/resume-stream']);
+  expect(onUpdate.mock.calls.at(-1)?.[0]).toBe('Before.After.');
 });

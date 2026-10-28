@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const uk: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Зберегти в Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Зберегти в Мої дизайн-системи",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Оновити копію в бібліотеці",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Збереження в Bricks оновлює змінні та стилі цього сайту. Збереження в Мої дизайн-системи також зберігає копію в бібліотеці для повторного використання.",
+  "history.continuingConversation": "Продовжуємо вашу розмову…",
   "guidance.requestFailed": "Не вдалося завантажити або зберегти настанови. Чернетку збережено.",
   "guidance.recovered": "Незбережену чернетку відновлено.",
   "guidance.saved": "Настанови збережено. Наявні сторінки та дизайн-системи не змінено.",

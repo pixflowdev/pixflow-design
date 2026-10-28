@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const esES: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Guardar en Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Guardar en Mis sistemas de diseño",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Actualizar copia de la biblioteca",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Guardar en Bricks actualiza las variables y estilos de este sitio. Guardar en Mis sistemas de diseño también guarda una copia reutilizable en la biblioteca.",
+  "history.continuingConversation": "Continuando tu conversación…",
   "guidance.requestFailed": "No se pudieron cargar o guardar las instrucciones. Se conserva tu borrador.",
   "guidance.recovered": "Se ha recuperado tu borrador sin guardar.",
   "guidance.saved": "Instrucciones guardadas. Las páginas y los sistemas de diseño existentes no han cambiado.",

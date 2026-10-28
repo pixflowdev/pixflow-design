@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Сохранить в Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Сохранить в Мои дизайн-системы",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Обновить копию в библиотеке",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Сохранение в Bricks обновляет переменные и стили этого сайта. Сохранение в Мои дизайн-системы также сохраняет копию в библиотеке для повторного использования.",
+  "history.continuingConversation": "Продолжаем ваш разговор…",
   "guidance.requestFailed": "Не удалось загрузить или сохранить рекомендации. Черновик сохранён.",
   "guidance.recovered": "Несохранённый черновик восстановлен.",
   "guidance.saved": "Рекомендации сохранены. Существующие страницы и дизайн-системы не изменены.",

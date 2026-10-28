@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "บันทึกไปยัง Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "บันทึกไปยังระบบดีไซน์ของฉัน",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "อัปเดตสำเนาในคลัง",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "การบันทึกไปยัง Bricks จะอัปเดตตัวแปรและสไตล์ของเว็บไซต์นี้ การบันทึกไปยังระบบดีไซน์ของฉันจะบันทึกสำเนาที่นำกลับมาใช้ใหม่ได้ไว้ในคลังด้วย",
+  "history.continuingConversation": "กำลังดำเนินการสนทนาต่อ…",
   "guidance.requestFailed": "ไม่สามารถโหลดหรือบันทึกคำแนะนำได้ ร่างของคุณยังคงอยู่",
   "guidance.recovered": "กู้คืนร่างที่ยังไม่ได้บันทึกแล้ว",
   "guidance.saved": "บันทึกคำแนะนำแล้ว หน้าเว็บและระบบออกแบบเดิมไม่ได้เปลี่ยนแปลง",

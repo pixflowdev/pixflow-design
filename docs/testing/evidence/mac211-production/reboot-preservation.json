@@ -1,0 +1,78 @@
+{
+  "unchangedTables": [
+    "wp_commentmeta",
+    "wp_comments",
+    "wp_links",
+    "wp_pixflow_design_chat_bindings",
+    "wp_pixflow_design_chat_conversations",
+    "wp_pixflow_design_chat_messages",
+    "wp_pixflow_design_project_access",
+    "wp_pixflow_design_project_contexts",
+    "wp_pixflow_design_project_locks",
+    "wp_pixflow_design_project_versions",
+    "wp_pixflow_design_projects",
+    "wp_postmeta",
+    "wp_posts",
+    "wp_term_relationships",
+    "wp_term_taxonomy",
+    "wp_termmeta",
+    "wp_terms",
+    "wp_users"
+  ],
+  "changedTables": [
+    "wp_options",
+    "wp_usermeta"
+  ],
+  "missingTables": [],
+  "runtimeMissing": [],
+  "runtimeChanged": [
+    "app.sqlite-shm",
+    "app.sqlite-wal"
+  ],
+  "changedKeys": {
+    "wp_options": [
+      "_transient_doing_cron",
+      "_transient_timeout_pixflow_asset_revision_ec5612afeaf7fc7d624db36d99cf30a3",
+      "_transient_pixflow_asset_revision_3df41081f8cfb1961cf2002ef42721bb",
+      "_transient_pixflow_asset_revision_17e0a6e8dd667d40038b2590c275086b",
+      "_transient_timeout_pixflow_asset_revision_5140752be9a5f8cf8357e1c5b47ff060",
+      "_transient_pixflow_asset_revision_e8a9b4b3c9e703c726380696127012e1",
+      "cron",
+      "_transient_timeout_pixflow_asset_revision_ec5612afeaf7fc7d624db36d99cf30a3",
+      "_site_transient_update_core",
+      "_transient_pixflow_asset_revision_ab12f769d6bc604de38c8f40865cde8e",
+      "_transient_timeout_pixflow_asset_revision_e8a9b4b3c9e703c726380696127012e1",
+      "_transient_pixflow_asset_revision_ec5612afeaf7fc7d624db36d99cf30a3",
+      "_transient_timeout_pixflow_asset_revision_ab12f769d6bc604de38c8f40865cde8e",
+      "_transient_timeout_pixflow_asset_revision_3df41081f8cfb1961cf2002ef42721bb",
+      "_transient_timeout_pixflow_asset_revision_e8a9b4b3c9e703c726380696127012e1",
+      "_transient_timeout_pixflow_asset_revision_24331a31f5dd734af4406d0a92c89e0c",
+      "_transient_pixflow_asset_revision_17e0a6e8dd667d40038b2590c275086b",
+      "_transient_pixflow_asset_revision_ab12f769d6bc604de38c8f40865cde8e",
+      "pixflow_design_wp_admin_audit_v1",
+      "_transient_timeout_pixflow_asset_revision_3df41081f8cfb1961cf2002ef42721bb",
+      "_transient_pixflow_pro_inventory_85a059bb5960088e6533a4722620fe04",
+      "_transient_timeout_pixflow_pro_inventory_85a059bb5960088e6533a4722620fe04",
+      "_transient_timeout_pixflow_asset_revision_24331a31f5dd734af4406d0a92c89e0c",
+      "_transient_pixflow_asset_revision_ec5612afeaf7fc7d624db36d99cf30a3",
+      "_transient_pixflow_asset_revision_5140752be9a5f8cf8357e1c5b47ff060",
+      "pixflow_design_central_entitlements_v2",
+      "_transient_pixflow_asset_revision_24331a31f5dd734af4406d0a92c89e0c",
+      "_transient_pixflow_asset_revision_5140752be9a5f8cf8357e1c5b47ff060",
+      "_transient_timeout_pixflow_pro_inventory_85a059bb5960088e6533a4722620fe04",
+      "_transient_timeout_pixflow_asset_revision_17e0a6e8dd667d40038b2590c275086b",
+      "_transient_pixflow_asset_revision_3df41081f8cfb1961cf2002ef42721bb",
+      "_transient_pixflow_pro_inventory_85a059bb5960088e6533a4722620fe04",
+      "_transient_pixflow_asset_revision_24331a31f5dd734af4406d0a92c89e0c",
+      "_site_transient_timeout_community-events-d41d8cd98f00b204e9800998ecf8427e",
+      "_transient_timeout_pixflow_asset_revision_ab12f769d6bc604de38c8f40865cde8e",
+      "_transient_timeout_pixflow_asset_revision_17e0a6e8dd667d40038b2590c275086b",
+      "_transient_timeout_etch_license_is_active",
+      "_transient_pixflow_asset_revision_e8a9b4b3c9e703c726380696127012e1",
+      "_transient_timeout_pixflow_asset_revision_5140752be9a5f8cf8357e1c5b47ff060"
+    ],
+    "wp_usermeta": [
+      "pixflow_design_wp_admin_context_authority_v1"
+    ]
+  }
+}

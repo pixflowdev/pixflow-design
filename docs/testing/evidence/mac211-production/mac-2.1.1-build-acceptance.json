@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-28",
+  "version": "2.1.1",
+  "channel": "stable",
+  "releaseStatus": "draft only",
+  "core": "72d4dee346fab1a564703c84a47c3d9ecd7825a6",
+  "pro": "4a61d59a289483b0e364673b529f392d04712642",
+  "corePR": "https://github.com/pixflowdev/pixflow-design/pull/31",
+  "proPR": "https://github.com/pixflowdev/pixflow-design-pro/pull/19",
+  "releaseId": 427088978,
+  "releaseTag": "bridge-v2.1.1",
+  "artifacts": [
+    {
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64.dmg",
+      "kind": "ordinary",
+      "size": 209953793,
+      "sha256": "ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6",
+      "version": "2.1.1",
+      "architecture": "arm64",
+      "signature": "ad-hoc; codesign --verify --deep --strict passed",
+      "notarized": false,
+      "portable": true,
+      "bundledNativeTransport": false
+    },
+    {
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg",
+      "kind": "extension",
+      "size": 209950752,
+      "sha256": "857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe",
+      "version": "2.1.1",
+      "architecture": "arm64",
+      "signature": "ad-hoc; codesign --verify --deep --strict passed",
+      "notarized": false,
+      "portable": true,
+      "bundledNativeTransport": true
+    }
+  ],
+  "checks": {
+    "automated": "Core guard/typecheck/native typecheck; native 53 pass/1 Windows-only skip; packaged 22; packaging 3. Pro guard/typecheck/build-contract/PHP; browser 2220 pass/28 skip. Exact-head CI both success.",
+    "live": "Queue switching and automatic queue drain; Workspace steering/reload recovery and unique saved replies; Etch drawer and response; transparent header; revoke/reapprove with no replay; direct fallback in both panels; two-site distinct databases/history; repair/uninstall/reinstall 44 hashes preserved; relocation; tray Restart; new-tab last-active restoration; full OS reboot history preservation and popup-closed reconnect after manually launching Bridge; post-reboot request 4.1s; Bricks available/unavailable/stale-route fallback without save.",
+    "production": "Fresh ordinary and optional native-transport DMGs, portable configs, 2.1.1 identity, strict ad-hoc signature verification. Ordinary installed/launch/CLI response 5.5s. Optional installed/launch and permanent-ID native host registration. After QA reload with popup closed, Chrome launched the native helper from the production optional app and the panel reconnected.",
+    "userReported": "User stated remaining checks were completed manually and instructed production builds. Remaining checklist covered attachments/context ownership, explicit-link/logout-login restoration and multiword font-family result; itemized evidence was not supplied and these are not independently verified passes."
+  },
+  "limitations": [
+    "No Apple Developer ID signing or notarization; ad-hoc signed only.",
+    "Apple Silicon arm64 only; Intel macOS and Linux not built/tested here.",
+    "Bridge did not auto-launch at OS login; once launched, Chrome reconnected without popup or Reconnect.",
+    "Second site used installed Core/Pro 2.1.0; no live plugin update or content edit.",
+    "Floating chat selection remains deferred during active response; queued item stays with original chat and drains when reopened, not in background while another chat is selected.",
+    "Earlier unexplained provider delay remains unresolved."
+  ],
+  "ciNote": "Initial Pro job could not fetch newly pinned Core before push finished; rerun attempt 2 passed without source changes."
+}

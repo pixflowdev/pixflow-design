@@ -1,0 +1,2 @@
+ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6  pixflow-design-bridge-2.1.1-mac-arm64.dmg
+857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe  pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg

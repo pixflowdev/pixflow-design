@@ -1,3 +1,5 @@
+> Latest return: [Mac 2.1.1 production draft handoff](2026-10-28-mac211-production-handoff.md). This older document is historical evidence for its own source pair.
+
 # Mac 2.1.1 fixes: Windows review handoff
 
 Updated 28 October 2026. This is the current summary; older dated receipts retain the chronological evidence. Code is ready for review. Full Mac reboot acceptance is still pending; this is not production deployment approval.

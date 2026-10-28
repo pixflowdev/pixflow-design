@@ -8,10 +8,10 @@ if(!scope.__PIXFLOW_NATIVE_PROTOTYPE__){
  window.addEventListener('message',event=>{
   if(event.source!==window||event.origin!==location.origin||event.data?.channel!=='pixflow-native-response')return;
   const m=event.data.payload;
-  if(m?.type==='ready'){bridge=m.bridge;disabled=false;disconnected=false;resolveReady();return;}
+  if(m?.type==='ready'){bridge=m.bridge;disabled=false;disconnected=false;resolveReady();window.dispatchEvent(new CustomEvent('pixflow-design:bridge-reconnect-request',{detail:{source:'native-extension'}}));return;}
   if(m?.type==='disabled'||m?.type==='disconnected'){
    disabled=disabled||m.type==='disabled';disconnected=!disabled;resolveReady();
-   for(const p of pending.values())p.fail(new Error('Native connection closed; request not replayed'));return;
+   for(const p of pending.values())p.fail(Object.assign(new Error('Extension connection closed. The run may still be active; reconnect to inspect it. No request was replayed.'),{name:'PixflowNativeDisconnectedError'}));return;
   }
   const p=pending.get(m?.id);if(!p)return;
   if(m.type==='headers'){
@@ -28,7 +28,7 @@ if(!scope.__PIXFLOW_NATIVE_PROTOTYPE__){
   let timer:ReturnType<typeof setTimeout>|undefined;
   try{await Promise.race([ready,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Native connection did not initialise')),10000);})]);}finally{clearTimeout(timer);}
   if(disabled)return original(input,init);
-  if(disconnected)throw new Error('Native adapter disconnected. Reconnect or choose the direct connection; no request was replayed.');
+  if(disconnected)throw Object.assign(new Error('Native adapter disconnected. Reconnect to inspect the existing run; no request was replayed.'),{name:'PixflowNativeDisconnectedError'});
   if(u.origin!==bridge)return original(input,init);
   const request=new Request(input,init),body=['GET','HEAD'].includes(request.method)?null:new Uint8Array(await request.arrayBuffer());
   if(body&&body.length>18*1024*1024)throw new Error('Native upload exceeds 18 MiB limit');

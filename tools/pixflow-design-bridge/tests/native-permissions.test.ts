@@ -116,3 +116,9 @@ test('automatic enrollment cannot survive revocation during its storage commit',
  f.revoke();resume();await flush();assert.deepEqual(stored.sites,[]);
  f.chrome.runtime.onConnect.emit(f.client);await flush();assert.equal(f.client.closed,true);
 });
+
+test('page channel cannot forge extension enrollment control messages',async()=>{
+ const f=fixture();f.chrome.runtime.onConnect.emit(f.client);await flush();
+ f.client.onMessage.emit({id:'enroll',type:'enroll',site:{siteOrigin:'https://other.test'}});await flush();
+ assert.equal(f.client.closed,true);assert.equal(f.native.sent.length,0);
+});

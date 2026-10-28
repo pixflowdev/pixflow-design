@@ -132,3 +132,13 @@ The native UI suites are e2e/ui/native-messaging-prototype.test.ts and e2e/ui/na
 ## Immediate Mac retest — supersedes the earlier pair
 
 Read [the retest receipt](../../../docs/testing/2026-10-28-mac-retest.md). Exact Store identity material and setup are committed in the private Pro repository at `docs/testing/chrome-exact-id-retest.md` and `docs/testing/chrome-store-public-identity.json` (Pro commit `398cf34e30ecbbdbf1b98293461657f09b0d9c51`). Use only the public key in a separate unpacked test copy; keep Store output keyless.
+
+## Mac acceptance fixes in progress — 28 October 2026
+
+The extension no longer uses the active Bridge site as its dropdown directory. Clicking its action permits active-tab metadata inspection; persistent host access is still explicitly granted through Chrome. Supported candidates and remembered site metadata are separate from consent. The trusted extension background enrolls an approved origin through the native host, which checks its canonical URL/hash and uses the existing Bridge site switch; page channels cannot send enrollment control messages. Existing server-side WordPress session/entitlement checks remain in place.
+
+Remembered sites remain visible offline, reconnect on browser startup/navigation and a 30-second alarm, and honor explicit direct mode or removed host access. Retry only reconnects transport and never submits an agent prompt. Browser and native payloads must be updated together (extension 1.0.2); old native hosts cannot perform first-site enrollment. New `activeTab` permission supports pre-consent metadata discovery and `alarms` supports recovery after Bridge starts later. No local-network permission is needed for native enrollment.
+
+Workspace now surfaces explicit native disconnect as an error instead of reconnecting its stream through loopback fallback. The existing run may still be active; reconnection must inspect that run, not replay its prompt. Mac font fallback serialization consistently quotes multiword families. Paired Pro fixes canonicalize the temporary PHP fixture and distinguish unavailable legacy design routes from network failures.
+
+Automated and live evidence, exact source pins, and remaining acceptance limitations will be added after validation. This is not release approval.

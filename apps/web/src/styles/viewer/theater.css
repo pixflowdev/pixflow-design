@@ -336,7 +336,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text);
   cursor: pointer;
   overflow: visible;
 }
@@ -359,7 +359,7 @@
   outline-offset: 2px;
 }
 .assistant-copy-button[data-copied="true"] {
-  color: var(--accent);
+  color: var(--text);
   background: var(--accent-tint);
   border-color: var(--accent-soft);
 }

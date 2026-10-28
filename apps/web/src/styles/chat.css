@@ -499,7 +499,7 @@
   font-weight: 600;
 }
 .msg-time {
-  color: var(--text-faint);
+  color: var(--text);
   font-size: 11px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -830,7 +830,7 @@
 .msg.user .user-actions-time {
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-faint);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -839,7 +839,7 @@
   border: none;
   background: none;
   border-radius: var(--radius-sm);
-  color: var(--text-soft);
+  color: var(--text);
   cursor: pointer;
   display: inline-flex;
   transition: color 120ms var(--ease-out), background 120ms var(--ease-out);

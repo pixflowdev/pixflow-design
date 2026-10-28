@@ -1,5 +1,7 @@
 # v2.1.1 and optional Chrome extension: platform handoff
 
+> Superseded for the current candidate: use [the combined Mac/unified-chat handoff](../../../docs/testing/2026-10-28-mac-unified211-handoff.md) for exact pins, reboot gates and authorization to build/upload to the v2.1.1 draft. The older pins below are historical and must not be built as the current candidate.
+
 Updated 28 October 2026. Do not publish packages, change updater pointers, or include Team work. Extension approval is NOT a prerequisite for the ordinary v2.1.1 release.
 
 ## Get the source from Git

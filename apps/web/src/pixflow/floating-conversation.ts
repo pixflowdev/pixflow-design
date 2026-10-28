@@ -145,9 +145,11 @@ export function useFloatingConversation(historyKey: string, surface: string, bus
     restoreGeneration.current += 1;
     if (restoring) setRestoring(false);
     setSelection({source: historyKey, address: null, changed: true});
-    return {historyKey, surface, continuing: false, restoring: false};
+    return {historyKey, surface, continuing: false, restoring: false, selectionPending: true};
   }
-  return { ...(selection.address ?? {historyKey, surface}), restoring, continuing: !!selection.address && (selection.address.historyKey !== historyKey || selection.address.surface !== surface) };
+  // Keep composers paused in the render where an active run settles: adopting
+  // the requested chat and draining the old queue must not race in effects.
+  return { ...(selection.address ?? {historyKey, surface}), restoring, selectionPending: !!requested, continuing: !!selection.address && (selection.address.historyKey !== historyKey || selection.address.surface !== surface) };
 }
 
 /** Both renderers consume the same recovery receipt without rewriting provider checkpoints. */

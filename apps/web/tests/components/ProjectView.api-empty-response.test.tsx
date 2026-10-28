@@ -573,8 +573,9 @@ describe('ProjectView API empty response handling', () => {
     });
     renderProjectView();
     await sendTestPrompt();
-    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'succeeded' && message.content === '' && message.events?.some(event => event.kind === 'tool_result') === true)).toBe(true));
-    expect(hasSavedAssistantMessage(message => message.events?.some(event => event.kind === 'status' && event.label === 'empty_response') === true)).toBe(false);
+    const assistantId = latestRenderedAssistantId();
+    await waitFor(() => expect(hasSavedAssistantMessage(message => message.runStatus === 'succeeded' && message.content === '' && message.events?.some(event => event.kind === 'tool_result') === true, assistantId)).toBe(true));
+    expect(hasSavedAssistantMessage(message => message.events?.some(event => event.kind === 'status' && event.label === 'empty_response') === true, assistantId)).toBe(false);
   });
 
   it('retains the original source and inspect-first warning after an uncertain site result instead of retrying it', async () => {

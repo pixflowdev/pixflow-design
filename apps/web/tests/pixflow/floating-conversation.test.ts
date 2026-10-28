@@ -121,3 +121,26 @@ it('cancels a waiting selection without changing history when its picker closes'
   expect(hook.result.current.historyKey).toBe('admin:original');
   cleanup();
 });
+
+it('keeps automatic queue dispatch paused through a deferred chat selection', async () => {
+  const { renderHook, act, cleanup } = await import('@testing-library/react');
+  const { useEffect } = await import('react');
+  const binding = { projectId: '12345678-1234-1234-1234-123456789abc', conversationId: 'next-chat' };
+  rememberFloatingConversation('admin:original', 'admin');
+  const dispatched: string[] = [];
+  const hook = renderHook(({ busy }) => {
+    const selection = useFloatingConversation('admin:original', 'admin', busy);
+    useEffect(() => {
+      // Model the composer's automatic dispatch when streaming settles.
+      if (!busy && !selection.selectionPending) dispatched.push(selection.historyKey);
+    }, [busy, selection.historyKey, selection.selectionPending]);
+    return selection;
+  }, { initialProps: { busy: true } });
+  let selected!: Promise<void>;
+  act(() => { selected = selectFloatingConversation(binding); });
+  act(() => hook.rerender({ busy: false }));
+  await selected;
+  expect(dispatched).not.toContain('admin:original');
+  expect(hook.result.current.historyKey).toBe(conversationSessionKey(binding));
+  cleanup();
+});

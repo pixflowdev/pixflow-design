@@ -3176,7 +3176,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   const logRef = useRef<HTMLDivElement | null>(null);
   const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const nativeSessionKey = siteAccess.guarded ? contextStorageKey(runtime, contextIdentity) : builderHandoffConversationKey(`pixflow-direct:${contextSiteHash(runtime)}:${contextUserId(context)}`, nativePersistenceSurface, handoffBuilder);
-  const { historyKey: sessionKey, surface: persistenceSurface, continuing, restoring } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface, streaming);
+  const { historyKey: sessionKey, surface: persistenceSurface, continuing, restoring, selectionPending } = useFloatingConversation(nativeSessionKey, nativePersistenceSurface, streaming);
   const [navigationReconnecting, setNavigationReconnecting] = useState(() => !!pendingDirectSiteRun(persistenceSurface));
   const pendingActionKey = siteAccess.guarded ? pendingActionStorageKey(runtime, contextIdentity) : `${sessionKey}:actions`;
   const pendingClarificationKey = siteAccess.guarded ? pendingClarificationStorageKey(runtime, contextIdentity) : `${sessionKey}:clarification`;
@@ -4703,7 +4703,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               projectId={null}
               projectFiles={[]}
               streaming={streaming}
-              sendDisabled={Boolean(!durableHistory.ready || hydratedSessionKey !== sessionKey || !siteAccess.ready || !!siteAccess.error || (config.mode === 'daemon' && (agents.length === 0 || bridgeUpdateState.required)))}
+              sendDisabled={Boolean(selectionPending || !durableHistory.ready || hydratedSessionKey !== sessionKey || !siteAccess.ready || !!siteAccess.error || (config.mode === 'daemon' && (agents.length === 0 || bridgeUpdateState.required)))}
               sessionMode={mode}
               sessionModeMenuExtra={<><EnhancedDesignGuidance surface="wp_admin" enabled={config.enhancedDesignGuidance} />{<DesignSystemSwitch />}</>}
               onSessionModeChange={selectSessionMode}

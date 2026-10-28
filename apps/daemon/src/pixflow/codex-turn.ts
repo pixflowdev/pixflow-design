@@ -167,7 +167,18 @@ export async function runCodexTurn(options: {
         // turn/steer can stop the model's current text item mid-sentence. Wait
         // for that item before delivering; a completed final turn stays queued
         // for the ordinary next-turn path instead of being restarted here.
-        while (activeMessageId && !ended && !options.signal.aborted) await new Promise<void>(resolve => { replyWaiters.add(resolve); });
+        const replyDeadline = Date.now() + 120_000;
+        while (activeMessageId && !ended && !options.signal.aborted) {
+          const remaining = replyDeadline - Date.now();
+          // A long reply belongs to the current turn. Return ownership to the
+          // composer's queue before its transport deadline, without a late send.
+          if (remaining <= 0) return { messageId, state: 'queued' as const };
+          await new Promise<void>(resolve => {
+            const release = () => { clearTimeout(timer); replyWaiters.delete(release); resolve(); };
+            const timer = setTimeout(release, remaining);
+            replyWaiters.add(release);
+          });
+        }
         if (ended || options.signal.aborted) return completedCleanly && !options.signal.aborted
           ? { messageId, state: 'queued' as const }
           : { messageId, state: 'rejected' as const, message: 'The run stopped before this guidance was sent. Keep it queued.' };

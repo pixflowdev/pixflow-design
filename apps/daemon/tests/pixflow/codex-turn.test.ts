@@ -190,3 +190,19 @@ it('leaves ordinary workspace project discovery unchanged', async () => {
   await run.done;
   expect(mocks.spawn.mock.calls[0]![1]).not.toContain('project_root_markers=["AGENTS.md"]');
 });
+
+it('returns long reply guidance to the queue without a late or duplicate steer', async () => {
+  const run = fixture(); await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  vi.useFakeTimers();
+  try {
+    run.emit({ method: 'item/started', params: { threadId: 'thread-1', item: { id: 'long', type: 'agentMessage' } } });
+    const delivery = run.steer()!('long-guidance', 'Use blue');
+    await vi.advanceTimersByTimeAsync(120_001);
+    expect(await delivery).toMatchObject({state:'queued'});
+    run.emit({ method: 'item/completed', params: { threadId: 'thread-1', item: { id: 'long', type: 'agentMessage' } } });
+    await Promise.resolve();
+    expect(run.requests.some(request => request.method === 'turn/steer')).toBe(false);
+    run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+    await run.done;
+  } finally { vi.useRealTimers(); }
+});

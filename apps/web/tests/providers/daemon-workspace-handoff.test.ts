@@ -7,6 +7,37 @@ import { streamViaDaemon } from '../../src/providers/daemon';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 describe('Workspace CLI source-bound session transport', () => {
+  it('does not create a run when Stop cancels admission', async () => {
+    const cancel = new AbortController();
+    const workspaceSource = { projectId: 'project', conversationId: 'chat', requestId: 'user-message' };
+    state.session.mockImplementation(async () => {
+      cancel.abort();
+      return Response.json({ endpoint: 'https://site.test/tools', token: 'test-token', workspaceSource });
+    });
+    const fetcher = vi.fn(async (_input: RequestInfo | URL) => Response.json({}));
+    vi.stubGlobal('fetch', fetcher);
+    const onRunCreated = vi.fn();
+    await streamViaDaemon({ agentId: 'codex', workspaceSource, history: [{ id: 'user-message', role: 'user', content: 'Say hello.' }], signal: new AbortController().signal, cancelSignal: cancel.signal, onRunCreated, handlers: { onDelta: vi.fn(), onDone: vi.fn(), onAgentEvent: vi.fn(), onError: vi.fn() } });
+    expect(onRunCreated).not.toHaveBeenCalled();
+    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/api/runs'))).toBe(false);
+  });
+
+  it('keeps run admission alive when only the viewing chat detaches', async () => {
+    const view = new AbortController();
+    const cancel = new AbortController();
+    const workspaceSource = { projectId: 'project', conversationId: 'chat', requestId: 'user-message' };
+    state.session.mockImplementation(async (_path, init) => {
+      view.abort();
+      init.signal?.throwIfAborted();
+      return Response.json({ endpoint: 'https://site.test/tools', token: 'test-token', workspaceSource });
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ runId: 'run-detached', status: 'succeeded', exitCode: 0 })));
+    const onRunCreated = vi.fn();
+    await streamViaDaemon({ agentId: 'codex', workspaceSource, projectId: 'project', conversationId: 'chat', history: [{ id: 'user-message', role: 'user', content: 'Say hello.' }], signal: view.signal, cancelSignal: cancel.signal, onRunCreated, handlers: { onDelta: vi.fn(), onDone: vi.fn(), onAgentEvent: vi.fn(), onError: vi.fn() } });
+    expect(onRunCreated).toHaveBeenCalledWith('run-detached');
+    expect(state.session.mock.calls[0]?.[1].signal).toBe(cancel.signal);
+  });
+
   it.each(['Plain site', 'Café — 設計 👋'])('preserves session data for %s in an HTTP-safe header', async (siteLabel) => {
     const workspaceSource = { projectId: 'project', conversationId: 'chat', requestId: 'user-message' };
     const session = { siteLabel, endpoint: 'https://site.test/?rest_route=/pixflow-design/v1/wp-admin/direct/tools', token: 'pfdirect_' + 'a'.repeat(64), workspaceSource, expiresAt: 9999999999, writable: true };

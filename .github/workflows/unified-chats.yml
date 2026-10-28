@@ -26,6 +26,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm guard
       - run: pnpm typecheck
-      - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup
+      - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect
       - run: pnpm i18n:check
       - run: pnpm wordpress:web

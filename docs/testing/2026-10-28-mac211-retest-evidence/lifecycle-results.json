@@ -9,7 +9,7 @@
     "gateway_healthy_after": true,
     "site_reconnect_required": true
   },
-  "reboot": "PENDING user handoff",
+  "reboot": "PARTIAL: manual launch, retained chat history, reconnect and fresh request PASS (7.7s); active site initially null and user reports empty Chrome dropdown. Automatic site recovery not passed.",
   "published_installer_upgrade": "NOT RUN: no matching published installer fixture used",
   "relocation": "PASS within tools-pack root; restored original path",
   "final_running_candidate": "extension arm64; ordinary stopped; Chrome QA extension disconnected",

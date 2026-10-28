@@ -1,0 +1,22 @@
+{
+  "boot_time": "2026-10-28T15:28:42Z",
+  "startup": "Isolated extension Bridge manually launched with tools-pack after reboot; auto-start not tested.",
+  "before_reconnect": {
+    "health": "running 2.1.1",
+    "site_context": {
+      "ok": true,
+      "site": null
+    },
+    "chrome_panel": "Bridge disconnected",
+    "popup": "User reported empty Website dropdown"
+  },
+  "recovery": "Clicked Reconnect in Chrome WordPress panel; Bridge connected and site-context returned https://pixflow-204-mac-qa.test.",
+  "history": "FINAL REINSTALL CHECK OK remained visible",
+  "fresh_request": {
+    "reply": "POST REBOOT CHECK OK",
+    "duration_seconds": 7.7,
+    "transport": "Not captured; do not infer native transport"
+  },
+  "popup_after_reconnect": "Awaiting user visual confirmation",
+  "finding": "Startup site discovery unavailable until explicit WordPress reconnect. enrollment.ts derives dropdown from active site-context and returns [] for site:null."
+}

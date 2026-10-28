@@ -1,0 +1,10 @@
+{
+  "fromVersion": "2.0.2",
+  "toVersion": "2.1.1",
+  "method": "Finder copy from mounted DMG and Replace into isolated Applications directory",
+  "beforeFiles": 24,
+  "afterFiles": 24,
+  "missing": [],
+  "changed": [],
+  "new": []
+}

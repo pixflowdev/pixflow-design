@@ -1,5 +1,7 @@
 # v2.1.1 and optional Chrome extension: platform handoff
 
+**Current Mac review package:** [Windows review handoff](../../../docs/testing/2026-10-28-mac211-review-handoff.md). Review Core #27 and private Pro #16; evidence is in #26. Full OS reboot acceptance remains pending.
+
 Updated 28 October 2026. Do not publish packages, change updater pointers, or include Team work. Extension approval is NOT a prerequisite for the ordinary v2.1.1 release.
 
 ## Latest Mac fixes — review candidates, live acceptance pending

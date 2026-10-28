@@ -3,7 +3,7 @@
 Prepared 28 October 2026. Unpublished; not submitted for review.
 
 - Name: Pixflow Design Bridge
-- Version: 1.0.1
+- Prepared candidate version: 1.0.2; the Store draft must be checked and updated before submission.
 - Permanent extension ID: `hbnbiboohlelmngadeolikeejamjlbkh`
 - Native host: `dev.pixflow.bridge`
 - Approved native origin: `chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/`
@@ -42,7 +42,7 @@ The 1.0.1 ZIP is saved in the existing Store draft. Dedicated reviewer credentia
 
 ## Before submission
 
-- Permission minimization complete: removed redundant `activeTab`; retain `tabs` for focused paired-site setup before host permission exists.
+- Current 1.0.2 permissions are `nativeMessaging`, `storage`, `scripting`, `tabs`, `activeTab` and `alarms`. Update the older Store explanations: `activeTab` supports user-initiated pre-consent site discovery; `alarms` supports reconnection after Bridge starts. Neither grants persistent host access. The earlier 1.0.1 permission-removal statement is historical and no longer describes the candidate.
 - Public policy updated and verified at https://pixflow.dev/privacy#browser-extension. Store disclosures cover personal information, authentication, chat communications, website content and local tab-address processing (Web history). No browsing-history log is retained.
 - Dedicated reviewer WordPress login is available at https://docs.pixflow.dev/extension-review/wp-admin/ and its new synthetic account credentials are saved only in the Store confidential reviewer form/private local evidence. The separate Windows download and guide are verified at https://docs.pixflow.dev/extension-review/reviewer-guide. An independent in-app-browser download matched the full installer hash and byte count. Normal HTTPS-subpath PKCE pairing passed; unauthenticated, wrong-verifier and replay attempts were rejected, and the test token was revoked. Do not use public downloads as a substitute.
 - Test the final installer with this ID on each advertised platform. macOS/Linux filesystem contract tests do not replace actual installer acceptance.
@@ -60,3 +60,7 @@ The extension stores connection preferences and whether setup has been shown loc
 You can remove a site's extension permission in Chrome or choose the direct connection in the extension. This stops extension access; it does not delete your WordPress conversations, settings or Bridge data. The extension does not sell data, use it for advertising or credit decisions, or collect it for unrelated purposes.
 
 Platform acceptance plan: see [PLATFORM-ACCEPTANCE.md](PLATFORM-ACCEPTANCE.md). macOS/Linux automatic registration and persistent launchers are now implemented in source and tested at contract/entrypoint level. Actual platform installer acceptance remains outstanding. Seven focused installation/Store-contract tests passed on Windows on 28 October; they do not establish other-platform installer acceptance.
+
+## Reconciled candidate — 28 October 2026
+
+The historical checks above are not all checks of the final package. See [the current reconciliation](../../../docs/testing/2026-10-28-store-final-reconciliation.md) for the immutable source, package hash, latest Apple Silicon report and remaining gates. Apple Silicon installer acceptance has since passed; Intel Mac and Linux acceptance remain unverified. The final Windows browser check must use the permanent Store identity and matching native payload. A successful prototype-ID test does not establish that acceptance.

@@ -5,15 +5,16 @@ import { lastActiveChatOwner, rememberLastActiveChat, restoreLastActiveChat } fr
 
 /** Restore only the initial empty entry. Explicit routes and subsequent New chat actions win. */
 export function useLastActiveWorkspaceChat(route: Route, active: boolean): void {
-  const attempted = useRef(false);
+  const attempt = useRef<{ route: Route; result: ReturnType<typeof restoreLastActiveChat> } | null>(null);
   const routeRef = useRef(route);
   routeRef.current = route;
   useEffect(() => {
-    if (!active || attempted.current) return;
-    attempted.current = true;
-    if (route.kind !== 'home' || route.view !== 'home' || (location.hash && location.hash !== '#')) return;
+    if (!active) return;
+    // Reuse the initial permission check during effect replay; later routes never restore.
+    attempt.current ??= { route, result: route.kind === 'home' && route.view === 'home' && (!location.hash || location.hash === '#') ? restoreLastActiveChat() : Promise.resolve(null) };
+    if (attempt.current.route !== route) return;
     let cancelled = false;
-    void restoreLastActiveChat().then(binding => {
+    void attempt.current.result.then(binding => {
       if (!cancelled && binding && routeRef.current === route) navigate({ kind: 'project', ...binding, fileName: null }, { replace: true });
     });
     return () => { cancelled = true; };

@@ -4,7 +4,7 @@ import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflo
 
 import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
-import { loadComposerDraft, saveComposerDraft, loadComposerSnapshot, saveComposerSnapshot } from './composer-draft';
+import { loadComposerDraft, saveComposerDraft, loadComposerSnapshot, saveComposerSnapshot, subscribeComposerSnapshot } from './composer-draft';
 import { planningAvailable } from '../pixflow/planning-contribution';
 import { containsAnnotations, requireAnnotations } from '../pixflow/annotation-availability';
 import annotationFeedback from '../pixflow/AnnotationFeedback.module.css';
@@ -639,6 +639,11 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // Capture before switching keys so another conversation never receives this draft.
     const snapshot = { text: draft, attachments: staged, commentAttachments: stagedVisualComments, meta: currentRunContextMeta() };
     const snapshotFingerprint = JSON.stringify(snapshot);
+    useEffect(() => subscribeComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(draftStorageKey, next => {
+      if (draftOwner.current !== draftStorageKey || JSON.stringify(snapshotRef.current) === JSON.stringify(next)) return;
+      snapshotRef.current = next;
+      restoreComposerDraft(next);
+    }), [draftStorageKey]);
     useLayoutEffect(() => {
       if (!snapshotInitialized.current || draftOwner.current !== draftStorageKey) {
         if (snapshotInitialized.current) {
@@ -1237,14 +1242,22 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           return true;
         }
         const submittedOwner = draftOwner.current;
+        const recoverSubmission = () => {
+          if (draftOwner.current === submittedOwner) {
+            if (!draftRef.current) restoreComposerDraft({ text: prompt, attachments: nextAttachments, commentAttachments: nextCommentAttachments, meta });
+          } else {
+            const saved = loadComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(submittedOwner);
+            // Recovery belongs to the submitting chat, never the newly selected one.
+            if (!saved?.text && !saved?.attachments?.length && !saved?.commentAttachments?.length) {
+              saveComposerSnapshot(submittedOwner, { text: prompt, attachments: nextAttachments, commentAttachments: nextCommentAttachments, meta });
+              saveComposerDraft(submittedOwner, prompt);
+            }
+          }
+        };
         reset();
         void Promise.resolve(outcome).then(result => {
-          if (draftOwner.current === submittedOwner && result === 'restore-draft' && !draftRef.current) {
-            replaceEditorDraft(prompt); setStaged(nextAttachments); setStagedVisualComments(nextCommentAttachments);
-          }
-        }, () => {
-          if (draftOwner.current === submittedOwner && !draftRef.current) { replaceEditorDraft(prompt); setStaged(nextAttachments); setStagedVisualComments(nextCommentAttachments); }
-        });
+          if (result === 'restore-draft') recoverSubmission();
+        }, recoverSubmission);
       } else finishComposedSend(onSend(prompt, nextAttachments, nextCommentAttachments, meta));
       return true;
     }

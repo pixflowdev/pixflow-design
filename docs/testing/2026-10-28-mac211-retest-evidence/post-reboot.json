@@ -17,6 +17,6 @@
     "duration_seconds": 7.7,
     "transport": "Not captured; do not infer native transport"
   },
-  "popup_after_reconnect": "Awaiting user visual confirmation",
+  "popup_after_reconnect": "User confirmed Site is listed after closing and reopening the Chrome extension popup.",
   "finding": "Startup site discovery unavailable until explicit WordPress reconnect. enrollment.ts derives dropdown from active site-context and returns [] for site:null."
 }

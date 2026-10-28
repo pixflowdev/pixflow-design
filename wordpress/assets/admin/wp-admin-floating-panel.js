@@ -6,6 +6,14 @@
   }
 
   var config = window.pixflowDesignWpAdmin || {};
+  // Keep the header's initial mode current even before its first open.
+  function trackExecutionMode(event) {
+    var mode = event && event.detail && event.detail.mode;
+    if (mode !== 'api' && mode !== 'daemon') return;
+    config.appConfig = Object.assign({}, config.appConfig || {}, { mode: mode });
+  }
+  window.addEventListener('pixflow-design:app-config-changed', trackExecutionMode);
+  window.addEventListener('open-design:app-config-changed', trackExecutionMode);
   var shell = null;
   var root = null;
   var controller = null;
@@ -89,12 +97,13 @@
     }
     titleWrap.appendChild(mark);
     if (
-      (!config.appConfig || config.appConfig.mode !== 'api')
-      && window.PixflowDesignFloatingPanel
+      window.PixflowDesignFloatingPanel
       && typeof window.PixflowDesignFloatingPanel.createBridgeStatusControl === 'function'
     ) {
       titleWrap.appendChild(window.PixflowDesignFloatingPanel.createBridgeStatusControl({
-        surface: 'wp-admin-floating-panel'
+        surface: 'wp-admin-floating-panel',
+        followExecutionMode: true,
+        executionMode: config.appConfig && config.appConfig.mode
       }));
     }
     header.appendChild(titleWrap);

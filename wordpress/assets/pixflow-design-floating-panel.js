@@ -428,11 +428,24 @@
       render(window.pixflowDesignBridgeStatus || {});
     }
 
+    // Keep one mounted control across execution-mode changes, preserving status.
+    function onExecutionMode(event) {
+      if (!options.followExecutionMode) return;
+      var mode = event && event.detail && event.detail.mode;
+      if (mode !== 'api' && mode !== 'daemon') return;
+      control.hidden = mode === 'api';
+      if (control.hidden) closePopout(false);
+    }
+    onExecutionMode({ detail: { mode: options.executionMode } });
+    window.addEventListener('pixflow-design:app-config-changed', onExecutionMode);
+    window.addEventListener('open-design:app-config-changed', onExecutionMode);
     window.addEventListener('pixflow-design:bridge-status', onStatus);
     window.addEventListener('pixflow-design:bridge-runtime-state', onRuntimeState);
     render(options.initialStatus || window.pixflowDesignBridgeStatus || {});
     control.destroy = function () {
       closePopout(false);
+      window.removeEventListener('pixflow-design:app-config-changed', onExecutionMode);
+      window.removeEventListener('open-design:app-config-changed', onExecutionMode);
       window.removeEventListener('pixflow-design:bridge-status', onStatus);
       window.removeEventListener('pixflow-design:bridge-runtime-state', onRuntimeState);
     };

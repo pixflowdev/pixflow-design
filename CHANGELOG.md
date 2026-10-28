@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] - Unreleased
 
+- Restore the floating-panel Bridge control immediately when switching from API to Local CLI, including panels first opened in API mode.
+
 - Keep queued messages attached to their original chat while switching conversations; pause sending during the switch and resume that queue when its chat is reopened.
 - Recover completed replies and clear stale Working or save-warning states after reloading or moving between Workspace and the floating panel, without replaying edits.
 - Show more specific Bridge connection failures and recovery steps, distinguishing an unavailable Bridge from browser access, site authorization and version problems. Direct Bridge connections remain supported.

@@ -1,6 +1,6 @@
 # Chrome Web Store draft
 
-Prepared 28 October 2026. Unpublished; not submitted for review.
+Submitted 28 October 2026: version 1.0.2 is Pending review. Owner-authorized data-usage certifications are saved. Automatic publication is disabled; approval stages the extension for later publication. Live plugin and Bridge packages are unchanged. Earlier verification sections are chronological preparation records; see the final submission receipt in docs/testing/2026-10-28-store-final-reconciliation.md.
 
 - Name: Pixflow Design Bridge
 - Store draft version: 1.0.2; package and permission explanations are saved. Reviewer instructions were updated for the matching reviewer-only installer on 28 October 2026.

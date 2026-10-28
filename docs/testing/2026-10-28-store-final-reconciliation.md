@@ -1,6 +1,6 @@
 # Chrome Store candidate reconciliation
 
-28 October 2026. Preparation only; no Store submission, publication, live package change or updater change.
+28 October 2026. Extension 1.0.2 submitted; Google confirms Pending review. Publication is deferred. Live packages and updater settings are unchanged. Earlier sections record preparation chronologically.
 
 ## Candidate
 
@@ -88,3 +88,9 @@ Website chat's full public GET at 23:07:49 UTC confirmed 248,208,653 bytes and S
 The Store draft remains unsubmitted; final owner certifications and submission approval are still required. The Windows reviewer path is verified; unverified Intel Mac/Linux claims remain excluded.
 
 Final preservation check passed: website chat compared all 202 normal download files (7.02 GB) against pre-publication filenames, sizes and SHA-256 values; all match. Protected service identities, configuration hashes and release endpoints also match. Only the authorized reviewer-specific download/guide and extension privacy content were published.
+
+## Store submission receipt — 28 October 2026
+
+Following explicit owner authorization, all three final data-usage certifications were accepted and saved. The unchanged 1.0.2 package was submitted for review; Google displayed Your extension was submitted for review and Pending review (verified by 23:17 UTC). Automatic publication was unchecked: approval stages the item for later publication. Google states staged items expire 30 days after passing review.
+
+Evidence: D:/pixflow-211-final/store-reconciliation/store-submitted-1.0.2.png. No plugin or Bridge package, updater setting, customer data or permission was changed during submission.

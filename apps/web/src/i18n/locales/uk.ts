@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const uk: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Зберегти в Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Зберегти в Мої дизайн-системи",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Оновити копію в бібліотеці",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Збереження в Bricks оновлює змінні та стилі цього сайту. Збереження в Мої дизайн-системи також зберігає копію в бібліотеці для повторного використання.",
+  "history.continuingConversation": "Продовжуємо вашу розмову…",
   "guidance.requestFailed": "Не вдалося завантажити або зберегти настанови. Чернетку збережено.",
   "guidance.recovered": "Незбережену чернетку відновлено.",
   "guidance.saved": "Настанови збережено. Наявні сторінки та дизайн-системи не змінено.",
@@ -6435,6 +6440,10 @@ export const uk: Dict = {
   "history.recoverCopies": "Зберегти копії для відновлення",
   "history.recoveryTitle": "Відновлена історія чату",
   "history.recoveryExplanation": "Зберегти обидві версії в окремих приватних історіях, а тут використовувати збережену версію.",
+  "history.moreChats": "Завантажити ще чати",
+  "history.continuePanel": "Продовжити в плаваючій панелі",
+  "history.switchWaiting": "Очікування завершення поточної відповіді…",
+  "history.switchError": "Не вдалося відкрити цей чат. Спробуйте ще раз.",
   "history.export": "Експортувати чат",
   "history.exporting": "Експортування…",
   "history.exportHint": "Завантажте весь збережений чат у форматі JSON, включно з повідомленнями та відомостями про інструменти. Медіафайли представлені посиланнями й не входять до експорту.",
@@ -6481,4 +6490,14 @@ export const uk: Dict = {
   "reviewPill.adapt": "Адаптивний макет",
   "reviewPill.harden": "Особливі випадки",
   "reviewPill.optimize": "Продуктивність",
+  "designCommand.audit": "Знайти проблеми доступності, зручності та оформлення.",
+  "designCommand.critique": "Оцінити дизайн і визначити пріоритети покращень.",
+  "designCommand.polish": "Доопрацювати деталі для цілісного й завершеного дизайну.",
+  "designCommand.typeset": "Покращити шрифти, ієрархію тексту та читабельність.",
+  "designCommand.layout": "Покращити структуру, вирівнювання й відступи.",
+  "designCommand.colorize": "Удосконалити палітру та колірний контраст.",
+  "designCommand.clarify": "Зробити підписи, інструкції й тексти зрозумілішими.",
+  "designCommand.harden": "Обробити помилки, довгий вміст і крайні випадки.",
+  "designCommand.adapt": "Адаптувати дизайн до різних розмірів екрана.",
+  "designCommand.optimize": "Покращити швидкість завантаження та відображення.",
 };

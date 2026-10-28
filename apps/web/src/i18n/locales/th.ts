@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "บันทึกไปยัง Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "บันทึกไปยังระบบดีไซน์ของฉัน",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "อัปเดตสำเนาในคลัง",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "การบันทึกไปยัง Bricks จะอัปเดตตัวแปรและสไตล์ของเว็บไซต์นี้ การบันทึกไปยังระบบดีไซน์ของฉันจะบันทึกสำเนาที่นำกลับมาใช้ใหม่ได้ไว้ในคลังด้วย",
+  "history.continuingConversation": "กำลังดำเนินการสนทนาต่อ…",
   "guidance.requestFailed": "ไม่สามารถโหลดหรือบันทึกคำแนะนำได้ ร่างของคุณยังคงอยู่",
   "guidance.recovered": "กู้คืนร่างที่ยังไม่ได้บันทึกแล้ว",
   "guidance.saved": "บันทึกคำแนะนำแล้ว หน้าเว็บและระบบออกแบบเดิมไม่ได้เปลี่ยนแปลง",
@@ -6435,6 +6440,10 @@ export const th: Dict = {
   "history.recoverCopies": "บันทึกสำเนาสำหรับกู้คืน",
   "history.recoveryTitle": "ประวัติแชทที่กู้คืน",
   "history.recoveryExplanation": "เก็บทั้งสองเวอร์ชันเป็นประวัติส่วนตัวแยกกัน แล้วใช้เวอร์ชันที่บันทึกไว้ที่นี่",
+  "history.moreChats": "โหลดแชทเพิ่มเติม",
+  "history.continuePanel": "สนทนาต่อในแผงลอย",
+  "history.switchWaiting": "กำลังรอให้คำตอบปัจจุบันเสร็จสิ้น…",
+  "history.switchError": "เปิดแชตนี้ไม่ได้ โปรดลองอีกครั้ง",
   "history.export": "ส่งออกแชท",
   "history.exporting": "กำลังส่งออก…",
   "history.exportHint": "ดาวน์โหลดแชทที่บันทึกไว้ทั้งหมดเป็น JSON รวมถึงข้อความและรายละเอียดเครื่องมือ ไฟล์สื่อจะแสดงเป็นลิงก์โดยไม่แนบไฟล์มาด้วย",
@@ -6481,4 +6490,14 @@ export const th: Dict = {
   "reviewPill.adapt": "เลย์เอาต์ที่ตอบสนอง",
   "reviewPill.harden": "กรณีพิเศษ",
   "reviewPill.optimize": "ประสิทธิภาพ",
+  "designCommand.audit": "ค้นหาปัญหาการเข้าถึง การใช้งาน และภาพลักษณ์",
+  "designCommand.critique": "ประเมินดีไซน์และจัดลำดับการปรับปรุง",
+  "designCommand.polish": "เก็บรายละเอียดให้ดีไซน์สอดคล้องและสมบูรณ์",
+  "designCommand.typeset": "ปรับปรุงฟอนต์ ลำดับชั้นข้อความ และความอ่านง่าย",
+  "designCommand.layout": "ปรับปรุงโครงสร้าง การจัดแนว และระยะห่าง",
+  "designCommand.colorize": "ปรับชุดสีและความต่างระดับสี",
+  "designCommand.clarify": "ทำให้ป้ายกำกับ คำแนะนำ และข้อความชัดเจนขึ้น",
+  "designCommand.harden": "รองรับข้อผิดพลาด เนื้อหายาว และกรณีพิเศษ",
+  "designCommand.adapt": "ปรับดีไซน์ให้เหมาะกับหน้าจอหลายขนาด",
+  "designCommand.optimize": "ปรับปรุงประสิทธิภาพการโหลดและการแสดงผล",
 };

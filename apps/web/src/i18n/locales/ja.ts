@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks に保存",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "マイデザインシステムに保存",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "ライブラリのコピーを更新",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks に保存すると、このサイトの変数とスタイルが更新されます。マイデザインシステムに保存すると、再利用可能なコピーもライブラリに保存されます。",
+  "history.continuingConversation": "会話を再開しています…",
   "guidance.requestFailed": "ガイダンスを読み込みまたは保存できませんでした。下書きは保持されています。",
   "guidance.recovered": "未保存の下書きを復元しました。",
   "guidance.saved": "ガイダンスを保存しました。既存のページとデザインシステムは変更されていません。",
@@ -6435,6 +6440,10 @@ export const ja: Dict = {
   "history.recoverCopies": "復元用コピーを保存",
   "history.recoveryTitle": "復元したチャット履歴",
   "history.recoveryExplanation": "両方のバージョンを別々の非公開履歴として保存し、ここでは保存済みのバージョンを使用します。",
+  "history.moreChats": "チャットをさらに読み込む",
+  "history.continuePanel": "フローティングパネルで続ける",
+  "history.switchWaiting": "現在の応答の完了を待っています…",
+  "history.switchError": "このチャットを開けませんでした。再試行してください。",
   "history.export": "チャットをエクスポート",
   "history.exporting": "エクスポート中…",
   "history.exportHint": "保存されたチャット全体を、メッセージやツールの詳細を含むJSONとしてダウンロードします。メディアファイル本体は含まれず、リンクのみが保存されます。",
@@ -6481,4 +6490,14 @@ export const ja: Dict = {
   "reviewPill.adapt": "レスポンシブ配置",
   "reviewPill.harden": "例外ケース",
   "reviewPill.optimize": "パフォーマンス",
+  "designCommand.audit": "アクセシビリティ、使いやすさ、見た目の問題を探します。",
+  "designCommand.critique": "デザインを評価し、改善の優先順位を付けます。",
+  "designCommand.polish": "細部を整え、一貫性のある完成度に仕上げます。",
+  "designCommand.typeset": "フォント、文字の階層、読みやすさを改善します。",
+  "designCommand.layout": "構造、配置、余白を改善します。",
+  "designCommand.colorize": "配色と色のコントラストを調整します。",
+  "designCommand.clarify": "ラベル、説明、文章を明確にします。",
+  "designCommand.harden": "エラー、長いコンテンツ、例外的な状況に対応します。",
+  "designCommand.adapt": "異なる画面サイズにデザインを適応させます。",
+  "designCommand.optimize": "読み込みと描画の性能を改善します。",
 };

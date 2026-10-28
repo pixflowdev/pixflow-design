@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const de: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "In Bricks speichern",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "In Meine Designsysteme speichern",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Bibliothekskopie aktualisieren",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "In Bricks speichern aktualisiert die Variablen und Stile dieser Website. Beim Speichern in Meine Designsysteme wird zusätzlich eine wiederverwendbare Bibliothekskopie gespeichert.",
+  "history.continuingConversation": "Deine Unterhaltung wird fortgesetzt…",
   "guidance.requestFailed": "Die Vorgaben konnten nicht geladen oder gespeichert werden. Ihr Entwurf bleibt erhalten.",
   "guidance.recovered": "Ihr ungespeicherter Entwurf wurde wiederhergestellt.",
   "guidance.saved": "Vorgaben gespeichert. Bestehende Seiten und Designsysteme bleiben unverändert.",
@@ -6516,6 +6521,10 @@ export const de: Dict = {
   "history.recoverCopies": "Wiederherstellungskopien speichern",
   "history.recoveryTitle": "Wiederhergestellter Chatverlauf",
   "history.recoveryExplanation": "Beide Versionen als separate private Verläufe behalten und hier die gespeicherte Version verwenden.",
+  "history.moreChats": "Weitere Chats laden",
+  "history.continuePanel": "Im schwebenden Panel fortsetzen",
+  "history.switchWaiting": "Warten, bis die aktuelle Antwort abgeschlossen ist…",
+  "history.switchError": "Dieser Chat konnte nicht geöffnet werden. Bitte erneut versuchen.",
   "history.export": "Chat exportieren",
   "history.exporting": "Wird exportiert…",
   "history.exportHint": "Lade den vollständigen gespeicherten Chat als JSON herunter, einschließlich Nachrichten und Tool-Details. Mediendateien werden verlinkt, nicht mitgeliefert.",
@@ -6562,4 +6571,14 @@ export const de: Dict = {
   "reviewPill.adapt": "Responsives Layout",
   "reviewPill.harden": "Sonderfälle",
   "reviewPill.optimize": "Leistung",
+  "designCommand.audit": "Probleme bei Barrierefreiheit, Bedienung und Gestaltung finden.",
+  "designCommand.critique": "Design bewerten und Verbesserungen priorisieren.",
+  "designCommand.polish": "Details für ein stimmiges, fertiges Design verfeinern.",
+  "designCommand.typeset": "Schriften, Texthierarchie und Lesbarkeit verbessern.",
+  "designCommand.layout": "Struktur, Ausrichtung und Abstände verbessern.",
+  "designCommand.colorize": "Farbpalette und Kontraste verfeinern.",
+  "designCommand.clarify": "Beschriftungen, Anweisungen und Texte verständlicher machen.",
+  "designCommand.harden": "Fehler, lange Inhalte und Sonderfälle abfangen.",
+  "designCommand.adapt": "Design an verschiedene Bildschirmgrößen anpassen.",
+  "designCommand.optimize": "Lade- und Darstellungsleistung verbessern.",
 };

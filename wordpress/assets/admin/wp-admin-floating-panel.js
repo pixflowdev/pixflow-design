@@ -377,7 +377,23 @@
         && String(documentHandoff.postId) === (handoffParams.get('post') || handoffParams.get('post_id'))
         && (handoffParams.get('action') === 'edit' || handoffParams.get('action') === 'elementor' || handoffParams.get('etch') === 'magic');
     }
-    if (readOpenState() || hasBuilderHandoff) openPanel();
+    // A tab navigation may carry an unfinished run from a builder. Open its
+    // panel immediately; React still verifies the owner and resumes the receipt.
+    var hasFloatingRun = false;
+    try {
+      var scope = String(config.restRouteBaseUrl || config.restBaseUrl || window.location.origin)
+        + (config.userId ? ':user:' + config.userId : '');
+      var carried = JSON.parse(window.sessionStorage.getItem('pixflow:floating-conversation:v1:' + scope) || 'null');
+      var runBase = 'pixflow:direct-bricks-run' + (carried && carried.surface === 'admin' ? ':admin' : '') + ':' + scope;
+      if (carried && (carried.surface === 'bricks' || carried.surface === 'admin') && typeof carried.runKey === 'string'
+        && (carried.runKey === runBase || (carried.surface === 'bricks' && carried.runKey.startsWith(runBase + ':post:') && /^\d+$/.test(carried.runKey.slice((runBase + ':post:').length))))) {
+        var pending = JSON.parse(window.sessionStorage.getItem(carried.runKey) || 'null');
+        hasFloatingRun = Boolean(pending && /^[a-f0-9]{32}$/.test(pending.connection && pending.connection.id || '')
+          && /^[a-f0-9]{64}$/.test(pending.connection && pending.connection.token || '')
+          && pending.metadata && pending.metadata.sessionKey === carried.historyKey);
+      }
+    } catch (_) { /* History remains available if browser storage is blocked. */ }
+    if (readOpenState() || hasBuilderHandoff || hasFloatingRun) openPanel();
   }
 
   // Settings remain available in Free. Workspace access can change in place
@@ -433,6 +449,10 @@
       ];
       if (ready) commands.forEach(post); else pending = pending.concat(commands);
     }
+    window.addEventListener('pixflow-design:open-saved-conversation', function (event) {
+      if (!workspaceAvailable() || !event.detail || typeof event.detail.projectId !== 'string' || typeof event.detail.conversationId !== 'string') return;
+      open({ type: 'pixflow-design:open-saved-conversation', projectId: event.detail.projectId, conversationId: event.detail.conversationId });
+    });
     window.addEventListener('message', function (event) {
       if (!overlay || event.source !== window || event.origin !== window.location.origin) return;
       var data = event.data;

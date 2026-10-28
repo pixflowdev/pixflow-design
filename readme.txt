@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,27 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= 2.1.1 (unreleased) =
+
+* Keep numbered and bulleted chat lists visible when a builder such as Etch resets list markers; website content is unchanged.
+
+* Browse saved chats from the floating-panel header and continue the same conversation in Workspace or a supported editor without copying its history.
+* Keep unsent drafts scoped to their conversation when switching chats; close the chat drawer after selection and keep Feedback beside the composer tools.
+* Restore the last-active saved chat in a new tab or after logout/login in the same browser, separately for each site and WordPress user. Recheck access before loading; explicit chat links and New chat take priority.
+
+* Show a distinct, translated description for each Pro design slash command in the shared composer.
+* Copy only the displayed agent reply instead of a larger saved text snapshot, preserving message boundaries in the floating panel and Workspace.
+* Improve copy-button and timestamp contrast in light and dark themes, and reveal older reply actions when reached with the keyboard.
+* Make live review feedback more responsive by avoiding repeated updates to unchanged controls. Review the changed content instead of an untouched containing section, and prefer captions below the review frame.
+* Keep Design Your System toolbar requests available while Pro loads, and keep the settings overlay visible and dismissible if loading fails.
+* Refresh saved Pro access during active editor use when scheduled licence renewal has not run, and recover stale entitlement caches without asking users to re-enter their saved key. Existing licence and permission checks remain enforced.
+* Keep the same floating-panel conversation, active response and selected provider/model when moving between supported editor screens in the same tab. Show a loading indicator while the conversation reconnects.
+* Preserve the latest saved chat revisions when restoring an active run, avoiding false history conflicts caused by an older recovery snapshot.
+* Recover from navigation immediately after Send instead of leaving Preparing stuck. Keep the unsent message and explain when it needs to be sent again.
+* Allow an active Bricks conversation to reconnect to the same page in Gutenberg without rejecting its original editor identity. Retain page permissions and prevent another tab from taking over.
+* Handle pending builder commands safely during navigation: distinguish commands that never ran from edits whose outcome is still unconfirmed, without automatically repeating edits.
+* Use Pixflow Design Bridge 2.1.1 for this test candidate. API execution does not require Bridge.
 
 = 2.1.0 =
 * Preserve conflicting saved chat versions, recover older browser snapshots safely and refresh newer messages across open floating panels and Workspace chats without silently overwriting history.

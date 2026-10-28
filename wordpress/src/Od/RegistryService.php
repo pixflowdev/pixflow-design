@@ -541,6 +541,8 @@ final class RegistryService
 
         $skills = [];
         foreach ($roots as $scan_root) {
+            // Optional or retired catalogues may be absent in an installed package.
+            if (!is_dir($scan_root) || !is_readable($scan_root)) continue;
             foreach (new \DirectoryIterator($scan_root) as $entry) {
                 if ($entry->isDot() || !$entry->isDir()) {
                     continue;

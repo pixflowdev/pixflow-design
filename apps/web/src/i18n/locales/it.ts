@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const it: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Salva in Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Salva in I miei sistemi di design",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Aggiorna copia della libreria",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Salva in Bricks aggiorna le variabili e gli stili di questo sito. Salvare in I miei sistemi di design salva anche una copia riutilizzabile nella libreria.",
+  "history.continuingConversation": "Ripresa della conversazione…",
   "guidance.requestFailed": "Impossibile caricare o salvare le indicazioni. La bozza è conservata.",
   "guidance.recovered": "La bozza non salvata è stata recuperata.",
   "guidance.saved": "Indicazioni salvate. Pagine e sistemi di design esistenti non sono stati modificati.",
@@ -6516,6 +6521,10 @@ export const it: Dict = {
   "history.recoverCopies": "Salva copie di recupero",
   "history.recoveryTitle": "Cronologia recuperata",
   "history.recoveryExplanation": "Conserva entrambe le versioni come cronologie private separate, poi usa qui la versione salvata.",
+  "history.moreChats": "Carica altre chat",
+  "history.continuePanel": "Continua nel pannello mobile",
+  "history.switchWaiting": "In attesa del completamento della risposta corrente…",
+  "history.switchError": "Impossibile aprire questa chat. Riprova.",
   "history.export": "Esporta chat",
   "history.exporting": "Esportazione…",
   "history.exportHint": "Scarica l’intera chat salvata in formato JSON, inclusi i messaggi e i dettagli degli strumenti. I file multimediali sono collegati, ma non inclusi.",
@@ -6562,4 +6571,14 @@ export const it: Dict = {
   "reviewPill.adapt": "Layout adattivo",
   "reviewPill.harden": "Casi particolari",
   "reviewPill.optimize": "Prestazioni",
+  "designCommand.audit": "Individua problemi di accessibilità, usabilità e aspetto.",
+  "designCommand.critique": "Valuta il design e dai priorità ai miglioramenti.",
+  "designCommand.polish": "Rifinisci i dettagli per un design coerente e completo.",
+  "designCommand.typeset": "Migliora caratteri, gerarchia e leggibilità.",
+  "designCommand.layout": "Migliora struttura, allineamento e spaziatura.",
+  "designCommand.colorize": "Perfeziona la palette e il contrasto dei colori.",
+  "designCommand.clarify": "Rendi più chiari etichette, istruzioni e testi.",
+  "designCommand.harden": "Gestisci errori, contenuti lunghi e casi limite.",
+  "designCommand.adapt": "Adatta il design alle diverse dimensioni dello schermo.",
+  "designCommand.optimize": "Migliora le prestazioni di caricamento e rendering.",
 };

@@ -581,7 +581,11 @@ function AssistantMessageImpl({
     !hasResultDeliveryFailure &&
     (message.runStatus === "succeeded" || (!message.runStatus && !!message.endedAt));
   const canFork = !streaming && !!onForkFromMessage;
-  const copyMarkdown = message.content.trim().length > 0 ? message.content : undefined;
+  // Copy the same prose this row renders. A recovered content snapshot can
+  // include earlier replies even when the row's stream events are scoped.
+  // The events fallback above still supplies saved text after diagnostics expire.
+  const copyMarkdown = blocks.filter((block) => block.kind === 'text')
+    .map((block) => block.text).join('\n\n') || undefined;
   const showFeedback =
     !hasPixflowWordPressContext() &&
     !!onFeedback &&

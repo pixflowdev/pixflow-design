@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "ذخیره در Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "ذخیره در سیستم‌های طراحی من",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "به‌روزرسانی نسخهٔ کتابخانه",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "ذخیره در Bricks متغیرها و سبک‌های این سایت را به‌روزرسانی می‌کند. ذخیره در سیستم‌های طراحی من یک نسخهٔ قابل استفادهٔ مجدد را نیز در کتابخانه ذخیره می‌کند.",
+  "history.continuingConversation": "در حال ادامهٔ گفت‌وگوی شما…",
   "guidance.requestFailed": "بارگذاری یا ذخیره راهنما ممکن نشد. پیش‌نویس شما حفظ شده است.",
   "guidance.recovered": "پیش‌نویس ذخیره‌نشده شما بازیابی شد.",
   "guidance.saved": "راهنما ذخیره شد. صفحات و سیستم‌های طراحی موجود تغییر نکردند.",
@@ -6435,6 +6440,10 @@ export const fa: Dict = {
   "history.recoverCopies": "ذخیره نسخه‌های بازیابی",
   "history.recoveryTitle": "تاریخچه گفت‌وگوی بازیابی‌شده",
   "history.recoveryExplanation": "هر دو نسخه را در تاریخچه‌های خصوصی جداگانه نگه دارید و نسخه ذخیره‌شده را اینجا استفاده کنید.",
+  "history.moreChats": "بارگیری گفتگوهای بیشتر",
+  "history.continuePanel": "ادامه در پنل شناور",
+  "history.switchWaiting": "در انتظار پایان پاسخ فعلی…",
+  "history.switchError": "این گفتگو باز نشد. دوباره تلاش کنید.",
   "history.export": "خروجی گرفتن از گفتگو",
   "history.exporting": "در حال خروجی گرفتن…",
   "history.exportHint": "کل گفتگوی ذخیره‌شده را با قالب JSON، شامل پیام‌ها و جزئیات ابزارها، دانلود کنید. پیوند فایل‌های رسانه‌ای درج می‌شود، نه خود فایل‌ها.",
@@ -6481,4 +6490,14 @@ export const fa: Dict = {
   "reviewPill.adapt": "چیدمان واکنش‌گرا",
   "reviewPill.harden": "حالت‌های خاص",
   "reviewPill.optimize": "کارایی",
+  "designCommand.audit": "مشکلات دسترس‌پذیری، کاربردپذیری و ظاهر را پیدا کنید.",
+  "designCommand.critique": "طراحی را بررسی و بهبودها را اولویت‌بندی کنید.",
+  "designCommand.polish": "جزئیات را برای طراحی یکپارچه و کامل اصلاح کنید.",
+  "designCommand.typeset": "قلم‌ها، سلسله‌مراتب متن و خوانایی را بهبود دهید.",
+  "designCommand.layout": "ساختار، تراز و فاصله‌ها را بهبود دهید.",
+  "designCommand.colorize": "پالت و تضاد رنگ‌ها را اصلاح کنید.",
+  "designCommand.clarify": "برچسب‌ها، دستورالعمل‌ها و متن‌ها را روشن‌تر کنید.",
+  "designCommand.harden": "خطاها، محتوای طولانی و حالت‌های خاص را مدیریت کنید.",
+  "designCommand.adapt": "طراحی را با اندازه‌های مختلف صفحه سازگار کنید.",
+  "designCommand.optimize": "عملکرد بارگذاری و نمایش را بهبود دهید.",
 };

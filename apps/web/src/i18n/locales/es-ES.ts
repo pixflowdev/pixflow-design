@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const esES: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Guardar en Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Guardar en Mis sistemas de diseño",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Actualizar copia de la biblioteca",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Guardar en Bricks actualiza las variables y estilos de este sitio. Guardar en Mis sistemas de diseño también guarda una copia reutilizable en la biblioteca.",
+  "history.continuingConversation": "Continuando tu conversación…",
   "guidance.requestFailed": "No se pudieron cargar o guardar las instrucciones. Se conserva tu borrador.",
   "guidance.recovered": "Se ha recuperado tu borrador sin guardar.",
   "guidance.saved": "Instrucciones guardadas. Las páginas y los sistemas de diseño existentes no han cambiado.",
@@ -6516,6 +6521,10 @@ export const esES: Dict = {
   "history.recoverCopies": "Guardar copias de recuperación",
   "history.recoveryTitle": "Historial recuperado",
   "history.recoveryExplanation": "Conserva ambas versiones como historiales privados separados y usa aquí la versión guardada.",
+  "history.moreChats": "Cargar más chats",
+  "history.continuePanel": "Continuar en el panel flotante",
+  "history.switchWaiting": "Esperando a que termine la respuesta actual…",
+  "history.switchError": "No se pudo abrir este chat. Inténtalo de nuevo.",
   "history.export": "Exportar chat",
   "history.exporting": "Exportando…",
   "history.exportHint": "Descarga el chat completo guardado en formato JSON, incluidos los mensajes y los detalles de las herramientas. Los archivos multimedia se enlazan, pero no se incluyen.",
@@ -6562,4 +6571,14 @@ export const esES: Dict = {
   "reviewPill.adapt": "Diseño adaptable",
   "reviewPill.harden": "Casos especiales",
   "reviewPill.optimize": "Rendimiento",
+  "designCommand.audit": "Detectar problemas de accesibilidad, usabilidad y diseño.",
+  "designCommand.critique": "Evaluar el diseño y priorizar mejoras.",
+  "designCommand.polish": "Pulir detalles para un diseño coherente y acabado.",
+  "designCommand.typeset": "Mejorar fuentes, jerarquía y legibilidad.",
+  "designCommand.layout": "Mejorar estructura, alineación y espaciado.",
+  "designCommand.colorize": "Refinar la paleta y el contraste de colores.",
+  "designCommand.clarify": "Aclarar etiquetas, instrucciones y textos.",
+  "designCommand.harden": "Gestionar errores, contenido largo y casos límite.",
+  "designCommand.adapt": "Adaptar el diseño a distintos tamaños de pantalla.",
+  "designCommand.optimize": "Mejorar el rendimiento de carga y renderizado.",
 };

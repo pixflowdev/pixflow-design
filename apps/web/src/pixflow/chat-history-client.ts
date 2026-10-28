@@ -1,5 +1,6 @@
 import { pixflowWordPressRestFetch } from './runtime-fetch';
 import { getPixflowWordPressConfig } from './wordpress-context';
+import { conversationBinding } from './conversation-address';
 import type { PixflowChatHistoryBinding, PixflowChatHistoryPage, PixflowSavedChatHistory, PixflowChatHistoryListPage, PixflowChatHistoryImportResponse, PixflowChatHistoryResolveRequest, PixflowChatHistorySaveResponse, PixflowChatHistoryLookupResponse } from '@open-design/contracts';
 
 export type ChatHistoryBinding = PixflowChatHistoryBinding;
@@ -248,7 +249,8 @@ export const historyMessageFingerprint = (message: HistoryMessage) => {
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest & { create: false }): Promise<PixflowChatHistoryLookupResponse>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<ChatHistoryBinding>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<PixflowChatHistoryLookupResponse> {
-  return request('/chat-history/resolve', json('POST', input));
+  const selected = conversationBinding(input.sessionKey);
+  return request('/chat-history/resolve', json('POST', selected ? { ...input, ...selected } : input));
 }
 export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null): Promise<ChatHistoryPage<T>> {
   return request(`${base(binding)}?limit=50${before ? `&before=${encodeURIComponent(before)}` : ''}`);

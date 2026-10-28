@@ -2329,12 +2329,13 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   border: none;
   border-radius: 0;
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--text);
   width: fit-content;
   opacity: 0;
   transition: opacity 150ms var(--ease-out);
 }
 .msg.assistant:hover .assistant-footer,
+.msg.assistant:focus-within .assistant-footer,
 .assistant-footer[data-streaming="true"],
 .assistant-footer[data-last="true"] { opacity: 1; }
 .assistant-footer .dot {
@@ -2349,12 +2350,12 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
 }
 .assistant-footer .assistant-label {
   font-weight: 400;
-  color: var(--text-faint);
+  color: var(--text);
   font-size: 11px;
 }
 .assistant-footer .assistant-stats {
   font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
+  color: var(--text);
   font-size: 11px;
 }
 .assistant-footer[data-unfinished="true"] {

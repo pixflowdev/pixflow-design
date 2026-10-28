@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const pl: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Zapisz w Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Zapisz w Moich systemach projektowych",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Aktualizuj kopię w bibliotece",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Zapis w Bricks aktualizuje zmienne i style tej witryny. Zapis w Moich systemach projektowych zapisuje też kopię w bibliotece do ponownego użycia.",
+  "history.continuingConversation": "Wznawianie rozmowy…",
   "guidance.requestFailed": "Nie udało się wczytać lub zapisać wytycznych. Szkic został zachowany.",
   "guidance.recovered": "Odzyskano niezapisany szkic.",
   "guidance.saved": "Wytyczne zapisane. Istniejące strony i systemy projektowe nie zostały zmienione.",
@@ -6436,6 +6441,10 @@ export const pl: Dict = {
   "history.recoverCopies": "Zapisz kopie odzyskiwania",
   "history.recoveryTitle": "Odzyskana historia czatu",
   "history.recoveryExplanation": "Zachowaj obie wersje jako osobne prywatne historie, a tutaj użyj zapisanej wersji.",
+  "history.moreChats": "Wczytaj więcej czatów",
+  "history.continuePanel": "Kontynuuj w panelu pływającym",
+  "history.switchWaiting": "Oczekiwanie na zakończenie bieżącej odpowiedzi…",
+  "history.switchError": "Nie udało się otworzyć tego czatu. Spróbuj ponownie.",
   "history.export": "Eksportuj czat",
   "history.exporting": "Eksportowanie…",
   "history.exportHint": "Pobierz cały zapisany czat jako JSON, w tym wiadomości i szczegóły narzędzi. Pliki multimedialne są dostępne jako odnośniki, nie są dołączane.",
@@ -6482,4 +6491,14 @@ export const pl: Dict = {
   "reviewPill.adapt": "Układ responsywny",
   "reviewPill.harden": "Przypadki brzegowe",
   "reviewPill.optimize": "Wydajność",
+  "designCommand.audit": "Znajdź problemy z dostępnością, użytecznością i wyglądem.",
+  "designCommand.critique": "Oceń projekt i ustal priorytety ulepszeń.",
+  "designCommand.polish": "Dopracuj szczegóły, aby projekt był spójny i kompletny.",
+  "designCommand.typeset": "Popraw czcionki, hierarchię tekstu i czytelność.",
+  "designCommand.layout": "Popraw strukturę, wyrównanie i odstępy.",
+  "designCommand.colorize": "Dopracuj paletę i kontrast kolorów.",
+  "designCommand.clarify": "Uprość etykiety, instrukcje i treści.",
+  "designCommand.harden": "Obsłuż błędy, długie treści i przypadki brzegowe.",
+  "designCommand.adapt": "Dostosuj projekt do różnych rozmiarów ekranu.",
+  "designCommand.optimize": "Popraw wydajność ładowania i renderowania.",
 };

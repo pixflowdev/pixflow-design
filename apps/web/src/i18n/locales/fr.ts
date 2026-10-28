@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const fr: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Enregistrer dans Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Enregistrer dans Mes systèmes de design",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Actualiser la copie de la bibliothèque",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Enregistrer dans Bricks met à jour les variables et styles de ce site. Enregistrer dans Mes systèmes de design sauvegarde aussi une copie réutilisable dans la bibliothèque.",
+  "history.continuingConversation": "Reprise de votre conversation…",
   "guidance.requestFailed": "Impossible de charger ou d’enregistrer les consignes. Votre brouillon est conservé.",
   "guidance.recovered": "Votre brouillon non enregistré a été récupéré.",
   "guidance.saved": "Consignes enregistrées. Les pages et systèmes de design existants restent inchangés.",
@@ -6516,6 +6521,10 @@ export const fr: Dict = {
   "history.recoverCopies": "Enregistrer les copies de récupération",
   "history.recoveryTitle": "Historique récupéré",
   "history.recoveryExplanation": "Conserver les deux versions dans des historiques privés distincts, puis utiliser ici la version enregistrée.",
+  "history.moreChats": "Charger plus de discussions",
+  "history.continuePanel": "Continuer dans le panneau flottant",
+  "history.switchWaiting": "En attente de la fin de la réponse en cours…",
+  "history.switchError": "Impossible d’ouvrir cette conversation. Réessayez.",
   "history.export": "Exporter le chat",
   "history.exporting": "Exportation…",
   "history.exportHint": "Téléchargez l’intégralité du chat enregistré au format JSON, avec les messages et les détails des outils. Les fichiers multimédias sont référencés par des liens, mais ne sont pas inclus.",
@@ -6562,4 +6571,14 @@ export const fr: Dict = {
   "reviewPill.adapt": "Affichage adaptatif",
   "reviewPill.harden": "Cas particuliers",
   "reviewPill.optimize": "Performances",
+  "designCommand.audit": "Repérer les problèmes d’accessibilité, d’utilisation et de présentation.",
+  "designCommand.critique": "Évaluer le design et hiérarchiser les améliorations.",
+  "designCommand.polish": "Affiner les détails pour un design cohérent et soigné.",
+  "designCommand.typeset": "Améliorer les polices, la hiérarchie et la lisibilité.",
+  "designCommand.layout": "Améliorer la structure, l’alignement et les espacements.",
+  "designCommand.colorize": "Affiner la palette et les contrastes de couleurs.",
+  "designCommand.clarify": "Clarifier les libellés, les instructions et les textes.",
+  "designCommand.harden": "Gérer les erreurs, les contenus longs et les cas limites.",
+  "designCommand.adapt": "Adapter le design aux différentes tailles d’écran.",
+  "designCommand.optimize": "Améliorer les performances de chargement et de rendu.",
 };

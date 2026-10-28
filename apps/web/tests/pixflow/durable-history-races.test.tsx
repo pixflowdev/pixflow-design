@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDurableChatHistory } from '../../src/pixflow/use-durable-chat-history';
 import { importChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage } from '../../src/pixflow/chat-history-client';
+import { fetchChatRunStatus, reattachDaemonRun } from '../../src/providers/daemon';
+vi.mock('../../src/providers/daemon', () => ({ fetchChatRunStatus: vi.fn(), reattachDaemonRun: vi.fn() }));
 
 const account = vi.hoisted(() => ({ id: 1 }));
 const recovery = vi.hoisted(() => vi.fn());
@@ -37,6 +39,38 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('recovers a completed Workspace CLI reply when only the floating panel is mounted', async () => {
+    const partial = { ...saved(message(1)), content: 'Partial', runId: 'workspace-run', runStatus: 'running' };
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [partial], nextCursor: null, hasMore: false });
+    vi.mocked(fetchChatRunStatus).mockResolvedValue({ id: 'workspace-run', projectId: 'history-race-test', conversationId: 'conversation', assistantMessageId: partial.id, agentId: 'codex', status: 'succeeded', createdAt: 1, updatedAt: 30 });
+    vi.mocked(reattachDaemonRun).mockImplementation(async input => { input.handlers.onDelta('Recovered complete reply'); input.handlers.onDone(''); });
+    const owner = renderHook(() => useHarness([partial]));
+    await waitFor(() => expect(owner.result.current.messages[0]?.content).toBe('Recovered complete reply'));
+    expect(owner.result.current.messages[0]).toMatchObject({ id: partial.id, runStatus: 'succeeded', endedAt: 30, historyRevision: 2 });
+    expect(saveChatHistoryMessage).toHaveBeenCalledWith({projectId: 'history-race-test', conversationId: 'conversation'}, expect.objectContaining({ id: partial.id, historyRevision: 1 }));
+  });
+  it('does not release run recovery when the durable history read fails', async () => {
+    vi.mocked(readChatHistory).mockRejectedValueOnce(new Error('Offline'));
+    const owner = renderHook(() => useHarness([saved(message(1))]));
+    await waitFor(() => expect(owner.result.current.error).toBe('load'));
+    expect(owner.result.current.ready).toBe(false);
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+    act(() => owner.result.current.retry());
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages[0]?.content).toBe('Message 1');
+  });
+  it('allows run recovery only after canonical history and revisions are hydrated', async () => {
+    const read = deferred<{ messages: Message[]; nextCursor: null; hasMore: boolean }>();
+    vi.mocked(readChatHistory).mockReturnValueOnce(read.promise);
+    const owner = renderHook(() => useHarness([saved(message(1))]));
+    expect(owner.result.current.ready).toBe(false);
+    await act(async () => read.resolve({ messages: [{ ...saved(message(1)), historyRevision: 8 }], nextCursor: null, hasMore: false }));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages[0]?.historyRevision).toBe(8);
+    act(() => owner.result.current.setMessages([{ ...owner.result.current.messages[0]!, content: 'Recovered final reply', status: 'complete' }]));
+    await waitFor(() => expect(saveChatHistoryMessage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ historyRevision: 8, content: 'Recovered final reply' })));
+    expect(owner.result.current.error).toBeNull();
+  });
   it('does not archive every delta written by the same mounted owner', async () => {
     const initial = saved(message(1));
     const owner = renderHook(() => useHarness([initial]));

@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { cp } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stageNativeTransport } from './native-transport.js';
 
 function resolveToolsPackRoot(startDir: string): string {
   const maxDepth = 6;
@@ -82,8 +83,15 @@ export async function copyBundledResourceTrees({
   for (const entry of BUNDLED_RESOURCE_TREES) {
     await cp(join(workspaceRoot, entry.from), join(resourceRoot, entry.to), {
       recursive: true,
+      // Development extension configuration is never an installer payload.
+      // Native runtime staging is explicit; retain existing Bridge entrypoints.
+      filter: source => {
+        const path = relative(join(workspaceRoot, "tools", "pixflow-design-bridge"), source).replaceAll("\\", "/");
+        return !/^(native-messaging|tests)(\/|$)/.test(path);
+      },
     });
   }
+  await stageNativeTransport(resourceRoot);
   if (proRoot) {
     const source = join(resolve(proRoot), 'skills', 'web-clone');
     if (!existsSync(source)) throw new Error(`The paired Pro checkout is missing Bridge workflow skills: ${source}`);

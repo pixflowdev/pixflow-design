@@ -7095,7 +7095,7 @@ function buildPixflowStageBBricksFontFallbackValue(families) {
     return '';
   }
   return uniqueStrings(cleaned)
-    .map((family) => /[\s,]/.test(family) && !isStageBSystemFontFamily(family) ? `"${family.replace(/"/g, '\\"')}"` : family)
+    .map((family) => /[\s,]/.test(family) ? `"${family.replace(/"/g, '\\"')}"` : family)
     .join(', ');
 }
 

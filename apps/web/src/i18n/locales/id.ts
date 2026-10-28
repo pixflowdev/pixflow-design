@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Simpan ke Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Simpan ke Sistem Desain Saya",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Perbarui salinan pustaka",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Simpan ke Bricks memperbarui variabel dan gaya situs ini. Menyimpan ke Sistem Desain Saya juga menyimpan salinan yang dapat digunakan kembali di pustaka.",
+  "history.continuingConversation": "Melanjutkan percakapan Anda…",
   "guidance.requestFailed": "Panduan tidak dapat dimuat atau disimpan. Draf Anda tetap tersimpan.",
   "guidance.recovered": "Draf yang belum disimpan telah dipulihkan.",
   "guidance.saved": "Panduan disimpan. Halaman dan sistem desain yang ada tidak berubah.",
@@ -6435,6 +6440,10 @@ export const id: Dict = {
   "history.recoverCopies": "Simpan salinan pemulihan",
   "history.recoveryTitle": "Riwayat percakapan dipulihkan",
   "history.recoveryExplanation": "Simpan kedua versi sebagai riwayat pribadi terpisah, lalu gunakan versi tersimpan di sini.",
+  "history.moreChats": "Muat percakapan lainnya",
+  "history.continuePanel": "Lanjutkan di panel mengambang",
+  "history.switchWaiting": "Menunggu tanggapan saat ini selesai…",
+  "history.switchError": "Tidak dapat membuka percakapan ini. Silakan coba lagi.",
   "history.export": "Ekspor obrolan",
   "history.exporting": "Mengekspor…",
   "history.exportHint": "Unduh seluruh obrolan tersimpan sebagai JSON, termasuk pesan dan detail alat. File media disertakan sebagai tautan, bukan file.",
@@ -6481,4 +6490,14 @@ export const id: Dict = {
   "reviewPill.adapt": "Tata letak responsif",
   "reviewPill.harden": "Kasus khusus",
   "reviewPill.optimize": "Performa",
+  "designCommand.audit": "Temukan masalah aksesibilitas, kegunaan, dan visual.",
+  "designCommand.critique": "Tinjau desain dan prioritaskan perbaikan.",
+  "designCommand.polish": "Rapikan detail untuk desain yang konsisten dan tuntas.",
+  "designCommand.typeset": "Perbaiki font, hierarki teks, dan keterbacaan.",
+  "designCommand.layout": "Perbaiki struktur, perataan, dan jarak.",
+  "designCommand.colorize": "Sempurnakan palet dan kontras warna.",
+  "designCommand.clarify": "Perjelas label, petunjuk, dan teks.",
+  "designCommand.harden": "Tangani kesalahan, konten panjang, dan kasus khusus.",
+  "designCommand.adapt": "Sesuaikan desain dengan berbagai ukuran layar.",
+  "designCommand.optimize": "Tingkatkan kinerja pemuatan dan rendering.",
 };

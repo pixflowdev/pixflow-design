@@ -9,6 +9,8 @@ import { useAnnotationAvailability } from './annotation-availability';
 export interface PageAnnotationControlProps {
   onSend?: (prompt: string, screenshots?: File[]) => Promise<boolean>;
   onAdd: (prompt: string, screenshots?: File[]) => void | Promise<void>;
+  /** Append ordinary reference text without replacing annotation or attachment state. */
+  onAddText?: (prompt: string) => void | Promise<void>;
   onOpenSettings: () => void; disabled: boolean; streaming: boolean; contextKey?: string; draftPrompt?: string;
 }
 export interface AnnotationContribution {

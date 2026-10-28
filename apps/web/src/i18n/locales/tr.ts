@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks’e kaydet",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Tasarım Sistemlerim’e kaydet",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Kitaplık kopyasını güncelle",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks’e kaydetmek bu sitenin değişkenlerini ve stillerini günceller. Tasarım Sistemlerim’e kaydetmek ayrıca kitaplığa yeniden kullanılabilir bir kopya kaydeder.",
+  "history.continuingConversation": "Sohbetiniz sürdürülüyor…",
   "guidance.requestFailed": "Rehber yüklenemedi veya kaydedilemedi. Taslağınız korunuyor.",
   "guidance.recovered": "Kaydedilmemiş taslağınız kurtarıldı.",
   "guidance.saved": "Rehber kaydedildi. Mevcut sayfalar ve tasarım sistemleri değiştirilmedi.",
@@ -6436,6 +6441,10 @@ export const tr: Dict = {
   "history.recoverCopies": "Kurtarma kopyalarını kaydet",
   "history.recoveryTitle": "Kurtarılan sohbet geçmişi",
   "history.recoveryExplanation": "Her iki sürümü ayrı özel geçmişler olarak saklayın, ardından burada kayıtlı sürümü kullanın.",
+  "history.moreChats": "Daha fazla sohbet yükle",
+  "history.continuePanel": "Yüzen panelde devam et",
+  "history.switchWaiting": "Mevcut yanıtın tamamlanması bekleniyor…",
+  "history.switchError": "Bu sohbet açılamadı. Lütfen tekrar deneyin.",
   "history.export": "Sohbeti dışa aktar",
   "history.exporting": "Dışa aktarılıyor…",
   "history.exportHint": "Kaydedilmiş sohbetin tamamını, mesajlar ve araç ayrıntılarıyla birlikte JSON olarak indirin. Medya dosyalarının kendileri değil, bağlantıları eklenir.",
@@ -6482,4 +6491,14 @@ export const tr: Dict = {
   "reviewPill.adapt": "Duyarlı düzen",
   "reviewPill.harden": "Uç durumlar",
   "reviewPill.optimize": "Performans",
+  "designCommand.audit": "Erişilebilirlik, kullanılabilirlik ve görsel sorunları bulun.",
+  "designCommand.critique": "Tasarımı değerlendirin ve iyileştirmeleri önceliklendirin.",
+  "designCommand.polish": "Tutarlı ve tamamlanmış bir tasarım için ayrıntıları düzeltin.",
+  "designCommand.typeset": "Yazı tiplerini, metin hiyerarşisini ve okunabilirliği iyileştirin.",
+  "designCommand.layout": "Yapıyı, hizalamayı ve boşlukları iyileştirin.",
+  "designCommand.colorize": "Paleti ve renk kontrastını düzenleyin.",
+  "designCommand.clarify": "Etiketleri, yönergeleri ve metinleri netleştirin.",
+  "designCommand.harden": "Hataları, uzun içerikleri ve uç durumları ele alın.",
+  "designCommand.adapt": "Tasarımı farklı ekran boyutlarına uyarlayın.",
+  "designCommand.optimize": "Yükleme ve görüntüleme performansını iyileştirin.",
 };

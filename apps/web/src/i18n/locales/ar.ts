@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "حفظ في Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "حفظ في أنظمة التصميم الخاصة بي",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "تحديث نسخة المكتبة",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "يؤدي الحفظ في Bricks إلى تحديث متغيرات هذا الموقع وأنماطه. ويؤدي الحفظ في أنظمة التصميم الخاصة بي أيضًا إلى حفظ نسخة قابلة لإعادة الاستخدام في المكتبة.",
+  "history.continuingConversation": "جارٍ متابعة محادثتك…",
   "guidance.requestFailed": "تعذر تحميل الإرشادات أو حفظها. تم الاحتفاظ بمسودتك.",
   "guidance.recovered": "تمت استعادة مسودتك غير المحفوظة.",
   "guidance.saved": "تم حفظ الإرشادات. لم تتغير الصفحات وأنظمة التصميم الحالية.",
@@ -6435,6 +6440,10 @@ export const ar: Dict = {
   "history.recoverCopies": "حفظ نسخ الاسترداد",
   "history.recoveryTitle": "سجل محادثة مسترد",
   "history.recoveryExplanation": "احتفظ بالنسختين كسجلين خاصين منفصلين، ثم استخدم النسخة المحفوظة هنا.",
+  "history.moreChats": "تحميل المزيد من المحادثات",
+  "history.continuePanel": "المتابعة في اللوحة العائمة",
+  "history.switchWaiting": "بانتظار انتهاء الرد الحالي…",
+  "history.switchError": "تعذر فتح هذه المحادثة. يُرجى إعادة المحاولة.",
   "history.export": "تصدير المحادثة",
   "history.exporting": "جارٍ التصدير…",
   "history.exportHint": "نزّل المحادثة المحفوظة كاملةً بصيغة JSON، بما في ذلك الرسائل وتفاصيل الأدوات. تُرفق روابط ملفات الوسائط، وليس الملفات نفسها.",
@@ -6481,4 +6490,14 @@ export const ar: Dict = {
   "reviewPill.adapt": "تخطيط متجاوب",
   "reviewPill.harden": "الحالات الخاصة",
   "reviewPill.optimize": "الأداء",
+  "designCommand.audit": "اكتشف مشكلات إمكانية الوصول وسهولة الاستخدام والمظهر.",
+  "designCommand.critique": "راجع التصميم وحدد أولويات التحسين.",
+  "designCommand.polish": "حسّن التفاصيل للحصول على تصميم متناسق ومكتمل.",
+  "designCommand.typeset": "حسّن الخطوط وتسلسل النص وسهولة القراءة.",
+  "designCommand.layout": "حسّن البنية والمحاذاة والمسافات.",
+  "designCommand.colorize": "حسّن لوحة الألوان والتباين.",
+  "designCommand.clarify": "اجعل التسميات والتعليمات والنصوص أوضح.",
+  "designCommand.harden": "عالج الأخطاء والمحتوى الطويل والحالات الاستثنائية.",
+  "designCommand.adapt": "كيّف التصميم مع أحجام الشاشات المختلفة.",
+  "designCommand.optimize": "حسّن أداء التحميل والعرض.",
 };

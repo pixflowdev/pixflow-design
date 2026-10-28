@@ -14,8 +14,8 @@ export function placePresenceCaption(target: Bounds, viewport: Bounds, width: nu
   const clampX = (x: number) => Math.max(viewport.left + gap, Math.min(x, viewport.right - w - gap));
   const clampY = (y: number) => Math.max(viewport.top + gap, Math.min(y, viewport.bottom - height - gap));
   const positions = [
-    { top: target.top - height - gap, placement: 'above' },
     { top: target.bottom + gap, placement: 'below' },
+    { top: target.top - height - gap, placement: 'above' },
     { top: target.bottom - height - gap, placement: 'inside' },
   ];
   for (const candidate of positions) {
@@ -79,6 +79,13 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
         groups.set(sectionNode, area);
       }
       area.elements.push({ id, label: reviewLabel(node, item.label) });
+    }
+    // Review a changed subtree itself when it contains the whole change group.
+    // An untouched containing section is only a fallback for separate siblings.
+    for (const area of groups.values()) {
+      const nodes = area.elements.map(item => doc && resolve(doc, item.id)).filter((node): node is HTMLElement => !!node);
+      const changedRoot = nodes.find(node => nodes.every(other => node === other || node.contains(other)));
+      if (changedRoot) { area.node = changedRoot; area.label = reviewLabel(changedRoot, area.label); area.target = { ...area.target, node: changedRoot, label: area.label }; }
     }
     areas = [...groups.values()]; reviewIndex = Math.min(reviewIndex, Math.max(0, areas.length - 1));
   };
@@ -246,9 +253,12 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
         obstacleReadAt = Date.now();
       }
       const caption = placePresenceCaption({ left, top, right, bottom }, { left: Math.max(0, viewport.left), top: Math.max(0, viewport.top), right: Math.min(innerWidth, viewport.right), bottom: Math.min(innerHeight, viewport.bottom) }, cursor.offsetWidth || 180, cursor.offsetHeight || 28, obstacles);
-      cursor.style.maxWidth = `${caption.maxWidth}px`; cursor.style.visibility = caption.placement === 'occluded' ? 'hidden' : '';
+      const maxWidth = `${caption.maxWidth}px`, visibility = caption.placement === 'occluded' ? 'hidden' : '';
+      if (cursor.style.maxWidth !== maxWidth) cursor.style.maxWidth = maxWidth;
+      if (cursor.style.visibility !== visibility) cursor.style.visibility = visibility;
       const destination = `translate(${caption.left}px,${caption.top}px)`;
-      cursor.style.transform = destination; cursor.dataset.placement = caption.placement;
+      if (cursor.style.transform !== destination) cursor.style.transform = destination;
+      if (cursor.dataset.placement !== caption.placement) cursor.dataset.placement = caption.placement;
       if (root.dataset.targetId !== id) {
         clearTimeout(transition);
         const current = root.dataset.positioned ? cursor.getBoundingClientRect() : null;
@@ -291,7 +301,7 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
     else if (next.every(item => item.scope === 'content') || (group && !nodes.every(node => group!.contains(node)))) group = null;
     lastNode = nodes[0] ?? null; lastEditAt = Date.now(); changed = true; finished = false;
     targets = next; clearTimeout(timer); cancelAnimationFrame(frame); root.dataset.phase = 'editing'; brand.textContent = 'Updating…';
-    detail.textContent = next[0]!.label;
+    if (detail.textContent !== next[0]!.label) detail.textContent = next[0]!.label;
     root.setAttribute('aria-label', `Pixflow editing ${detail.textContent}`);
     if (root.dataset.state === 'completed') settle();
     frame = requestAnimationFrame(position);

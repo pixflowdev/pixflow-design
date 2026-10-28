@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Mentés a Bricksbe",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Mentés a Saját dizájnrendszerekbe",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Könyvtári másolat frissítése",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "A Bricksbe mentés frissíti a webhely változóit és stílusait. A Saját dizájnrendszerekbe mentés egy újra felhasználható könyvtári másolatot is ment.",
+  "history.continuingConversation": "Beszélgetés folytatása…",
   "guidance.requestFailed": "Az útmutató nem tölthető be vagy menthető. A piszkozat megmarad.",
   "guidance.recovered": "A nem mentett piszkozat helyreállítva.",
   "guidance.saved": "Útmutató mentve. A meglévő oldalak és tervezési rendszerek nem változtak.",
@@ -6436,6 +6441,10 @@ export const hu: Dict = {
   "history.recoverCopies": "Helyreállítási másolatok mentése",
   "history.recoveryTitle": "Helyreállított csevegési előzmények",
   "history.recoveryExplanation": "Mindkét változat külön privát előzményként marad meg, itt pedig a mentett változat használható.",
+  "history.moreChats": "További csevegések betöltése",
+  "history.continuePanel": "Folytatás a lebegő panelen",
+  "history.switchWaiting": "Várakozás az aktuális válasz befejezésére…",
+  "history.switchError": "A beszélgetés nem nyitható meg. Próbálja újra.",
   "history.export": "Beszélgetés exportálása",
   "history.exporting": "Exportálás…",
   "history.exportHint": "A teljes mentett beszélgetés letöltése JSON-formátumban, az üzenetekkel és az eszközök részleteivel együtt. A médiafájlokat hivatkozások jelölik, maguk a fájlok nem kerülnek bele.",
@@ -6482,4 +6491,14 @@ export const hu: Dict = {
   "reviewPill.adapt": "Reszponzív elrendezés",
   "reviewPill.harden": "Szélső esetek",
   "reviewPill.optimize": "Teljesítmény",
+  "designCommand.audit": "Akadálymentességi, használhatósági és vizuális hibák keresése.",
+  "designCommand.critique": "A terv értékelése és a javítások rangsorolása.",
+  "designCommand.polish": "Részletek finomítása az egységes, kész megjelenésért.",
+  "designCommand.typeset": "Betűtípusok, szöveghierarchia és olvashatóság javítása.",
+  "designCommand.layout": "Szerkezet, igazítás és térközök javítása.",
+  "designCommand.colorize": "Színpaletta és színkontraszt finomítása.",
+  "designCommand.clarify": "Címkék, útmutatók és szövegek érthetőbbé tétele.",
+  "designCommand.harden": "Hibák, hosszú tartalmak és szélső esetek kezelése.",
+  "designCommand.adapt": "A terv igazítása különböző képernyőméretekhez.",
+  "designCommand.optimize": "Betöltési és megjelenítési teljesítmény javítása.",
 };

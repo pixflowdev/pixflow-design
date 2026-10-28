@@ -1,9 +1,10 @@
+import { designCommandDescriptions } from '../pixflow/design-command-descriptions';
 import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 'use client';
 
 import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
-import { loadComposerDraft, saveComposerDraft } from './composer-draft';
+import { loadComposerDraft, saveComposerDraft, loadComposerSnapshot, saveComposerSnapshot, subscribeComposerSnapshot } from './composer-draft';
 import { planningAvailable } from '../pixflow/planning-contribution';
 import { containsAnnotations, requireAnnotations } from '../pixflow/annotation-availability';
 import annotationFeedback from '../pixflow/AnnotationFeedback.module.css';
@@ -15,6 +16,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -214,6 +216,7 @@ interface Props {
   initialDraft?: string;
   onDraftChange?: (text: string) => void;
   draftStorageKey?: string;
+  draftStorageFallbackKey?: string;
   // Lazy ensure â€” the composer calls this before its first upload, so the
   // project folder exists on disk before files land in it. Returns the
   // project id when ready.
@@ -403,6 +406,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       initialDraft,
       onDraftChange,
       draftStorageKey,
+      draftStorageFallbackKey,
       onEnsureProject,
       commentAttachments = [],
       onRemoveCommentAttachment,
@@ -479,7 +483,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         ? activeProjectFileName
         : null;
     const activeFileDisplayName = activeFileContext ? lastPathSegment(activeFileContext) : null;
-    const [draft, setDraft] = useState(() => initialDraft ?? loadComposerDraft(draftStorageKey) ?? "");
+    const [draft, setDraft] = useState(() => initialDraft ?? loadComposerDraft(draftStorageKey) ?? loadComposerDraft(draftStorageFallbackKey) ?? "");
     const onDraftChangeRef = useRef(onDraftChange);
     onDraftChangeRef.current = onDraftChange;
     useEffect(() => { onDraftChangeRef.current?.(draft); }, [draft]);
@@ -629,9 +633,37 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       }
     }, [initialDraft, draft]);
 
-    useEffect(() => {
+    const draftOwner = useRef(draftStorageKey);
+    const snapshotInitialized = useRef(false);
+    const snapshotRef = useRef<Parameters<ChatComposerHandle['restoreDraft']>[0]>({ text: draft });
+    // Capture before switching keys so another conversation never receives this draft.
+    const snapshot = { text: draft, attachments: staged, commentAttachments: stagedVisualComments, meta: currentRunContextMeta() };
+    const snapshotFingerprint = JSON.stringify(snapshot);
+    useEffect(() => subscribeComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(draftStorageKey, next => {
+      if (draftOwner.current !== draftStorageKey || JSON.stringify(snapshotRef.current) === JSON.stringify(next)) return;
+      snapshotRef.current = next;
+      restoreComposerDraft(next);
+    }), [draftStorageKey]);
+    useLayoutEffect(() => {
+      if (!snapshotInitialized.current || draftOwner.current !== draftStorageKey) {
+        if (snapshotInitialized.current) {
+          saveComposerSnapshot(draftOwner.current, snapshotRef.current);
+          saveComposerDraft(draftOwner.current, snapshotRef.current.text);
+        }
+        const first = !snapshotInitialized.current;
+        const restored = loadComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(draftStorageKey)
+          ?? (draftOwner.current === draftStorageFallbackKey ? snapshotRef.current : null);
+        const next = restored && typeof restored.text === 'string' ? restored
+          : { text: snapshotInitialized.current ? loadComposerDraft(draftStorageKey) ?? '' : draft };
+        draftOwner.current = draftStorageKey; snapshotInitialized.current = true;
+        snapshotRef.current = next;
+        if (!first || restored) restoreComposerDraft(next);
+        return;
+      }
+      snapshotRef.current = snapshot;
+      saveComposerSnapshot(draftStorageKey, snapshot);
       saveComposerDraft(draftStorageKey, draft);
-    }, [draftStorageKey, draft]);
+    }, [draftStorageKey, snapshotFingerprint]);
 
     useEffect(() => {
       if (previousWorkspaceContextIdRef.current === activeWorkspaceContextId) return;
@@ -816,7 +848,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const slashCommands = useMemo<SlashCommand[]>(() => {
       const list: SlashCommand[] = [];
       if (pixflowContextPicker && planningAvailable()) for (const operation of (pixflowFeatureConfiguration('planning')?.operations ?? []) as string[]) {
-        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: 'pixflow.guidance.hint', icon: 'sparkles' });
+        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: designCommandDescriptions[operation], icon: 'sparkles' });
       }
       if (onOpenSettings && planningAvailable()) list.push({ id: 'design-settings', label: '/design-settings', insert: '', descKey: 'guidance.title', icon: 'sliders' });
       if (onOpenBuilderHandoff) {
@@ -1170,9 +1202,10 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
 
     function finishComposedSend(outcome: ChatSendOutcome | Promise<ChatSendOutcome>) {
       const submittedDraft = draftRef.current;
+      const submittedOwner = draftOwner.current;
       void Promise.resolve(outcome).then(
         (result) => {
-          if (result !== 'restore-draft' && draftRef.current === submittedDraft) reset();
+          if (draftOwner.current === submittedOwner && result !== 'restore-draft' && draftRef.current === submittedDraft) reset();
         },
         () => {
           // A rejected startup leaves the user's prompt and files intact.
@@ -1208,14 +1241,23 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           finishComposedSend(outcome);
           return true;
         }
+        const submittedOwner = draftOwner.current;
+        const recoverSubmission = () => {
+          if (draftOwner.current === submittedOwner) {
+            if (!draftRef.current) restoreComposerDraft({ text: prompt, attachments: nextAttachments, commentAttachments: nextCommentAttachments, meta });
+          } else {
+            const saved = loadComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(submittedOwner);
+            // Recovery belongs to the submitting chat, never the newly selected one.
+            if (!saved?.text && !saved?.attachments?.length && !saved?.commentAttachments?.length) {
+              saveComposerSnapshot(submittedOwner, { text: prompt, attachments: nextAttachments, commentAttachments: nextCommentAttachments, meta });
+              saveComposerDraft(submittedOwner, prompt);
+            }
+          }
+        };
         reset();
         void Promise.resolve(outcome).then(result => {
-          if (result === 'restore-draft' && !draftRef.current) {
-            replaceEditorDraft(prompt); setStaged(nextAttachments); setStagedVisualComments(nextCommentAttachments);
-          }
-        }, () => {
-          if (!draftRef.current) { replaceEditorDraft(prompt); setStaged(nextAttachments); setStagedVisualComments(nextCommentAttachments); }
-        });
+          if (result === 'restore-draft') recoverSubmission();
+        }, recoverSubmission);
       } else finishComposedSend(onSend(prompt, nextAttachments, nextCommentAttachments, meta));
       return true;
     }
@@ -1535,6 +1577,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
 
     async function uploadFiles(files: File[]) {
       if (files.length === 0) return;
+      const uploadOwner = draftOwner.current;
       const id = await ensureProject();
       if (!id) return;
       setUploading(true);
@@ -1549,10 +1592,15 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         const result = await uploadProjectFiles(id, files);
         if (result.uploaded.length > 0) {
           const orderedUploaded = assignChatAttachmentOrders(result.uploaded.map(item => ({ ...item, projectId: id })), orderStart);
-          appendOrderedStagedAttachments(orderedUploaded);
+          if (draftOwner.current === uploadOwner) appendOrderedStagedAttachments(orderedUploaded);
+          else {
+            // A late upload belongs to its original chat, even after navigation.
+            const previous = loadComposerSnapshot<Parameters<ChatComposerHandle['restoreDraft']>[0]>(uploadOwner);
+            saveComposerSnapshot(uploadOwner, { ...previous, text: previous?.text ?? loadComposerDraft(uploadOwner) ?? '', attachments: [...(previous?.attachments ?? []), ...orderedUploaded] });
+          }
         }
         const partial = result.failed.length > 0;
-        if (partial) {
+        if (partial && draftOwner.current === uploadOwner) {
           const failedCount = result.failed.length;
           const uploadedCount = result.uploaded.length;
           const detail = result.error ? ` (${result.error})` : '';
@@ -1573,7 +1621,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         });
       } catch (err) {
         const detail = err instanceof Error ? err.message : String(err);
-        setUploadError(`Attachment upload failed (${detail}).`);
+        if (draftOwner.current === uploadOwner) setUploadError(`Attachment upload failed (${detail}).`);
         trackFileUploadResult(analytics.track, {
           page_name: 'chat_panel',
           area: 'chat_composer',
@@ -2669,6 +2717,10 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               disabled={effectiveSendDisabled || bridgeUpdateRequired}
               streaming={streaming}
               onOpenSettings={() => onOpenSettings?.('dictation')}
+              onAddText={prompt => {
+                const existing = currentEditorDraft();
+                replaceEditorDraft(`${existing}${existing ? '\n\n' : ''}${prompt}`);
+              }}
               onAdd={async (prompt, screenshots) => {
                 const owner = annotationContext.current;
                 setUploading(true);

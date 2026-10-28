@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "保存到 Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "保存到我的设计系统",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "更新资源库副本",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "保存到 Bricks 会更新此网站的变量和样式。保存到我的设计系统还会在资源库中保存可重复使用的副本。",
+  "history.continuingConversation": "正在继续你的对话…",
   "guidance.requestFailed": "无法加载或保存指导文档。你的草稿已保留。",
   "guidance.recovered": "已恢复未保存的草稿。",
   "guidance.saved": "指导文档已保存。现有页面和设计系统未被修改。",
@@ -6436,6 +6441,10 @@ export const zhCN: Dict = {
   "history.recoverCopies": "保存恢复副本",
   "history.recoveryTitle": "已恢复的聊天记录",
   "history.recoveryExplanation": "将两个版本保留为单独的私人记录，然后在此使用已保存的版本。",
+  "history.moreChats": "加载更多聊天",
+  "history.continuePanel": "在浮动面板中继续",
+  "history.switchWaiting": "正在等待当前回复完成…",
+  "history.switchError": "无法打开此聊天。请重试。",
   "history.export": "导出聊天",
   "history.exporting": "正在导出…",
   "history.exportHint": "将完整的已保存聊天下载为 JSON，包括消息和工具详情。媒体文件仅提供链接，不包含文件本身。",
@@ -6482,4 +6491,14 @@ export const zhCN: Dict = {
   "reviewPill.adapt": "响应式布局",
   "reviewPill.harden": "边界情况",
   "reviewPill.optimize": "性能",
+  "designCommand.audit": "查找无障碍、易用性和视觉问题。",
+  "designCommand.critique": "评估设计并确定改进优先级。",
+  "designCommand.polish": "打磨细节，让设计统一而完整。",
+  "designCommand.typeset": "改善字体、文字层次和可读性。",
+  "designCommand.layout": "改善结构、对齐和间距。",
+  "designCommand.colorize": "优化配色和色彩对比。",
+  "designCommand.clarify": "让标签、说明和文案更清晰。",
+  "designCommand.harden": "处理错误、长内容和边界情况。",
+  "designCommand.adapt": "让设计适应不同屏幕尺寸。",
+  "designCommand.optimize": "提升加载和渲染性能。",
 };

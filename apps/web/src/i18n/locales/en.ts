@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Save to Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Save to My Design Systems",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Update library copy",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Save to Bricks updates this site’s variables and styles. Saving to My Design Systems also saves a reusable library copy.",
+  "history.continuingConversation": "Continuing your conversation…",
   "guidance.requestFailed": "Could not load or save guidance. Your draft is kept.",
   "guidance.recovered": "Your unsaved draft was recovered.",
   "guidance.saved": "Guidance saved. Existing pages and design systems have not been changed.",
@@ -6435,6 +6440,10 @@ export const en: Dict = {
   "history.recoverCopies": "Save recovery copies",
   "history.recoveryTitle": "Recovered chat history",
   "history.recoveryExplanation": "Keep both versions as separate private history entries, then use the saved version here.",
+  "history.moreChats": "Load more chats",
+  "history.continuePanel": "Continue in floating panel",
+  "history.switchWaiting": "Waiting for the current response to finish…",
+  "history.switchError": "Could not open this chat. Please retry.",
   "history.export": "Export chat",
   "history.exporting": "Exporting…",
   "history.exportHint": "Download the complete saved chat as JSON, including messages and tool details. Media files are linked, not included.",
@@ -6481,4 +6490,14 @@ export const en: Dict = {
   "reviewPill.adapt": "Responsive layout",
   "reviewPill.harden": "Edge cases",
   "reviewPill.optimize": "Performance",
+  "designCommand.audit": "Find accessibility, usability and visual issues.",
+  "designCommand.critique": "Review the design and prioritise improvements.",
+  "designCommand.polish": "Refine details for a consistent, finished design.",
+  "designCommand.typeset": "Improve fonts, text hierarchy and readability.",
+  "designCommand.layout": "Improve structure, alignment and spacing.",
+  "designCommand.colorize": "Refine the palette and colour contrast.",
+  "designCommand.clarify": "Make labels, instructions and copy clearer.",
+  "designCommand.harden": "Handle errors, long content and edge cases.",
+  "designCommand.adapt": "Adapt the design to different screen sizes.",
+  "designCommand.optimize": "Improve loading and rendering performance.",
 };

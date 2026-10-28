@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Сохранить в Bricks",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Сохранить в Мои дизайн-системы",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Обновить копию в библиотеке",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Сохранение в Bricks обновляет переменные и стили этого сайта. Сохранение в Мои дизайн-системы также сохраняет копию в библиотеке для повторного использования.",
+  "history.continuingConversation": "Продолжаем ваш разговор…",
   "guidance.requestFailed": "Не удалось загрузить или сохранить рекомендации. Черновик сохранён.",
   "guidance.recovered": "Несохранённый черновик восстановлен.",
   "guidance.saved": "Рекомендации сохранены. Существующие страницы и дизайн-системы не изменены.",
@@ -6435,6 +6440,10 @@ export const ru: Dict = {
   "history.recoverCopies": "Сохранить копии для восстановления",
   "history.recoveryTitle": "Восстановленная история чата",
   "history.recoveryExplanation": "Сохранить обе версии в отдельных личных историях, а здесь использовать сохранённую версию.",
+  "history.moreChats": "Загрузить ещё чаты",
+  "history.continuePanel": "Продолжить в плавающей панели",
+  "history.switchWaiting": "Ожидание завершения текущего ответа…",
+  "history.switchError": "Не удалось открыть этот чат. Повторите попытку.",
   "history.export": "Экспорт чата",
   "history.exporting": "Экспорт…",
   "history.exportHint": "Скачайте весь сохранённый чат в формате JSON, включая сообщения и сведения об инструментах. Медиафайлы представлены ссылками и не включаются в экспорт.",
@@ -6481,4 +6490,14 @@ export const ru: Dict = {
   "reviewPill.adapt": "Адаптивный макет",
   "reviewPill.harden": "Особые случаи",
   "reviewPill.optimize": "Производительность",
+  "designCommand.audit": "Найти проблемы доступности, удобства и оформления.",
+  "designCommand.critique": "Оценить дизайн и расставить приоритеты улучшений.",
+  "designCommand.polish": "Доработать детали для цельного и завершённого дизайна.",
+  "designCommand.typeset": "Улучшить шрифты, иерархию текста и читаемость.",
+  "designCommand.layout": "Улучшить структуру, выравнивание и отступы.",
+  "designCommand.colorize": "Доработать палитру и цветовой контраст.",
+  "designCommand.clarify": "Сделать подписи, инструкции и тексты понятнее.",
+  "designCommand.harden": "Обработать ошибки, длинный контент и крайние случаи.",
+  "designCommand.adapt": "Адаптировать дизайн к разным размерам экрана.",
+  "designCommand.optimize": "Улучшить скорость загрузки и отрисовки.",
 };

@@ -59,6 +59,15 @@ describe('daemon SSE reconnection', () => {
     expect(onDone).not.toHaveBeenCalled();expect(onError).toHaveBeenCalledWith(expect.objectContaining({code:'RUN_REPLAY_UNAVAILABLE'}));expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('surfaces an explicit native disconnect without falling back or replaying a run', async () => {
+    const failure=Object.assign(new Error('Native connection closed; request not replayed'),{name:'PixflowNativeDisconnectedError'});
+    const fetchMock=vi.fn(async()=>streamResponse(reader([],failure)));
+    globalThis.fetch=fetchMock as unknown as typeof fetch;
+    const onError=vi.fn(),onDone=vi.fn();
+    await reattachDaemonRun({runId:'native-disconnect',signal:new AbortController().signal,handlers:{onDelta:vi.fn(),onAgentEvent:vi.fn(),onDone,onError}});
+    expect(onError).toHaveBeenCalledWith(failure);expect(onDone).not.toHaveBeenCalled();expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('resumes from the last event when reader.read rejects', async () => {
     const first = reader([
       bytes(event(1, 'start', { bin: 'codex' })),

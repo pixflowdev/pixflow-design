@@ -332,6 +332,8 @@ function compareVersionParts(a: string, b: string): number {
 interface Props {
   /** Per mount: do not infer this from the first WordPress root's global config. */
   portalToBody?: boolean;
+  /** Persistent toolbar intent survives lazy Pro asset loading. */
+  openManualDesignSystem?: boolean;
   initial: AppConfig;
   agents: AgentInfo[];
   agentsLoading?: boolean;
@@ -1151,6 +1153,7 @@ function normalizeSettingsRuntimeConfig(config: AppConfig): AppConfig {
 
 export function SettingsDialog({
   portalToBody = false,
+  openManualDesignSystem = false,
   initial,
   agents,
   agentsLoading = false,
@@ -1191,6 +1194,11 @@ export function SettingsDialog({
   const bricksIntegrationActive = getPixflowWordPressConfig()?.bricksIntegrationActive ?? initial.bricksIntegrationActive ?? false;
   const freeSettings = isPixflowWordPressEmbed() && !assetsAvailable();
   const [freeLicenseStatus, setFreeLicenseStatus] = useState(pixflowLicenseStatus);
+  useEffect(() => {
+    const closeForConversation = () => onClose();
+    window.addEventListener('pixflow-design:conversation-opened', closeForConversation);
+    return () => window.removeEventListener('pixflow-design:conversation-opened', closeForConversation);
+  }, [onClose]);
   useEffect(() => { if (pixflowLicenseStatus) setFreeLicenseStatus(pixflowLicenseStatus); }, [pixflowLicenseStatus]);
   useEffect(() => {
     const sync = (event: Event) => setFreeLicenseStatus((event as CustomEvent<PixflowLicenseStatus>).detail);
@@ -4861,6 +4869,7 @@ export function SettingsDialog({
 
           {activeSection === 'designSystems' ? (
             <DesignSystemsSection
+              openManualEditor={openManualDesignSystem}
               cfg={cfg}
               setCfg={setCfg}
               onDesignSystemsChanged={onDesignSystemsChanged}

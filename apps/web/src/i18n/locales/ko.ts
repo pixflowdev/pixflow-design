@@ -1,6 +1,11 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks에 저장",
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "내 디자인 시스템에 저장",
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "라이브러리 사본 업데이트",
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": "Bricks에 저장하면 이 사이트의 변수와 스타일이 업데이트됩니다. 내 디자인 시스템에 저장하면 재사용 가능한 사본도 라이브러리에 저장됩니다.",
+  "history.continuingConversation": "대화를 이어가는 중…",
   "guidance.requestFailed": "안내를 불러오거나 저장하지 못했습니다. 초안은 유지됩니다.",
   "guidance.recovered": "저장하지 않은 초안을 복구했습니다.",
   "guidance.saved": "안내를 저장했습니다. 기존 페이지와 디자인 시스템은 변경되지 않았습니다.",
@@ -6435,6 +6440,10 @@ export const ko: Dict = {
   "history.recoverCopies": "복구 사본 저장",
   "history.recoveryTitle": "복구된 채팅 기록",
   "history.recoveryExplanation": "두 버전을 별도의 비공개 기록으로 보관한 후 여기서는 저장된 버전을 사용합니다.",
+  "history.moreChats": "채팅 더 불러오기",
+  "history.continuePanel": "플로팅 패널에서 계속",
+  "history.switchWaiting": "현재 응답이 완료되기를 기다리는 중…",
+  "history.switchError": "이 채팅을 열 수 없습니다. 다시 시도해 주세요.",
   "history.export": "채팅 내보내기",
   "history.exporting": "내보내는 중…",
   "history.exportHint": "메시지와 도구 세부 정보를 포함한 저장된 전체 채팅을 JSON으로 다운로드합니다. 미디어 파일은 포함되지 않고 링크로 제공됩니다.",
@@ -6481,4 +6490,14 @@ export const ko: Dict = {
   "reviewPill.adapt": "반응형 레이아웃",
   "reviewPill.harden": "예외 상황",
   "reviewPill.optimize": "성능",
+  "designCommand.audit": "접근성, 사용성, 시각적 문제를 찾습니다.",
+  "designCommand.critique": "디자인을 평가하고 개선 우선순위를 정합니다.",
+  "designCommand.polish": "세부 사항을 다듬어 일관되고 완성도 높은 디자인을 만듭니다.",
+  "designCommand.typeset": "글꼴, 텍스트 계층, 가독성을 개선합니다.",
+  "designCommand.layout": "구조, 정렬, 간격을 개선합니다.",
+  "designCommand.colorize": "색상 팔레트와 대비를 다듬습니다.",
+  "designCommand.clarify": "레이블, 안내, 문구를 명확하게 만듭니다.",
+  "designCommand.harden": "오류, 긴 콘텐츠, 예외 상황에 대응합니다.",
+  "designCommand.adapt": "다양한 화면 크기에 디자인을 맞춥니다.",
+  "designCommand.optimize": "로딩 및 렌더링 성능을 개선합니다.",
 };

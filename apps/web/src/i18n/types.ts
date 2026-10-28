@@ -2884,6 +2884,10 @@ export interface Dict {
   "ui.pixflowFrameworkDesignSystemBuilder.showLivePreview": string;
   "ui.pixflowFrameworkDesignSystemBuilder.checkingReusableSystem": string;
   "ui.pixflowFrameworkDesignSystemBuilder.saveDesignSystem": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": string;
+  "ui.pixflowFrameworkDesignSystemBuilder.manualSaveHelp": string;
   "ui.pixflowFrameworkDesignSystemBuilder.closeDesignSystem": string;
   "ui.pixflowFrameworkDesignSystemBuilder.myDesignSystems": string;
   "ui.pixflowFrameworkDesignSystemBuilder.updateReusableDesignSystem": string;
@@ -6560,6 +6564,7 @@ export interface Dict {
   "wp.trialVerification.rateLimited": string;
   "wp.trialVerification.retry": string;
   "history.loadEarlier": string;
+  "history.continuingConversation": string;
   "history.saveError": string;
   "history.loadError": string;
   "history.retry": string;
@@ -6567,6 +6572,10 @@ export interface Dict {
   "history.recoveryTitle": string;
   "history.recoveryExplanation": string;
 
+  "history.moreChats": string;
+  "history.continuePanel": string;
+  "history.switchWaiting": string;
+  "history.switchError": string;
   "history.export": string;
   "history.exporting": string;
   "history.exportHint": string;
@@ -6612,4 +6621,14 @@ export interface Dict {
   "reviewPill.adapt": string;
   "reviewPill.harden": string;
   "reviewPill.optimize": string;
+  "designCommand.audit": string;
+  "designCommand.critique": string;
+  "designCommand.polish": string;
+  "designCommand.typeset": string;
+  "designCommand.layout": string;
+  "designCommand.colorize": string;
+  "designCommand.clarify": string;
+  "designCommand.harden": string;
+  "designCommand.adapt": string;
+  "designCommand.optimize": string;
 }

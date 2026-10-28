@@ -17,7 +17,10 @@ namespace PixflowDesign\WordPress\Admin {
 namespace PixflowDesign\WordPress\Modules {
     final class FeatureContributions { public static function available(string $feature): bool { return true; } }
     final class ImageGenerationAccess { public static function available(): bool { return true; } }
-    final class BuilderIntegrations { public static function active(string $builder): bool { return false; } }
+    final class BuilderIntegrations {
+        public static function active(string $builder): bool { return false; }
+        public static function present(string $builder): bool { return !empty($GLOBALS['builder_present']); }
+    }
     final class ComposioAccess { public static function configured(): bool { return false; } }
 }
 namespace {
@@ -72,5 +75,11 @@ namespace {
     check($controller->session_permission($draftRequest), 'Draft authenticates normally');
     check($controller->tools($draftRequest)['writable'] === false, 'Model arguments cannot upgrade a draft session');
     check($controller->sessions(new WP_REST_Request(['purpose' => 'guidance-draft', 'workspaceSource' => $source])) instanceof WP_Error, 'Draft cannot start a builder handoff');
-    echo "Workspace handoff session tests passed.\n";
+    $GLOBALS['builder_present']=true;
+    $error=$controller->canvas(new WP_REST_Request(['builder'=>'bricks','action'=>'poll']));
+    check($error instanceof WP_Error && $error->code==='pixflow_pro_required' && $error->data['status']===403,'Present builder with denied Pro access reported a theme change');
+    $GLOBALS['builder_present']=false;
+    $error=$controller->canvas(new WP_REST_Request(['builder'=>'bricks','action'=>'poll']));
+    check($error instanceof WP_Error && $error->code==='builder_unavailable' && $error->data['status']===409,'Missing integration was not distinguished from Pro denial');
+    echo "Workspace handoff session and builder availability tests passed.\n";
 }

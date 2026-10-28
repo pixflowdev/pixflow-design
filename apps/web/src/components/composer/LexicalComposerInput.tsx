@@ -1,5 +1,7 @@
 'use client';
 
+import { ContextAttachmentNode } from './ContextAttachmentNode';
+
 import {
   forwardRef,
   useEffect,
@@ -680,7 +682,7 @@ export const LexicalComposerInput = forwardRef<
   const initialConfig: InitialConfigType = {
     namespace: 'chat-composer',
     editable: true,
-    nodes: [MentionNode, AnnotationNode, AnnotationBatchNode],
+    nodes: [MentionNode, AnnotationNode, AnnotationBatchNode, ContextAttachmentNode],
     theme: EDITOR_THEME,
     onError(err) {
       if (process.env.NODE_ENV !== 'production') {

@@ -8,7 +8,7 @@ type Actions = { resume(): void; pause(): void; review(direction: number): void;
 export function createPresenceControls(getFrame: () => HTMLIFrameElement | null, actions: Actions) {
   const root = document.createElement('div'); root.id = 'pixflow-presence-controls'; root.hidden = true;
   root.setAttribute('role', 'group'); root.setAttribute('aria-label', 'Agent change review'); root.dataset.pixflowAnnotation = 'controls';
-  let state: ReviewState | undefined, expanded = false, signature = '';
+  let state: ReviewState | undefined, expanded = false, signature = '', renderedState = '';
   let annotationActive = !!document.querySelector('[data-pixflow-annotation-toolbar]');
   const openGroups = new Set<string>();
   const bar = document.createElement('div'); bar.className = 'presence-bar';
@@ -128,5 +128,5 @@ export function createPresenceControls(getFrame: () => HTMLIFrameElement | null,
   window.addEventListener('pixflow-design:annotation-toolbar', annotationLayout);
   const themeObserver = new MutationObserver(theme); themeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-theme'], subtree: true });
   root.addEventListener('keydown', escape); window.addEventListener('resize', position); window.addEventListener('scroll', position, true);
-  return { root, update(value: ReviewState) { state = value; render(); }, hide() { state = undefined; root.hidden = true; }, reset() { state = undefined; expanded = false; signature = ''; openGroups.clear(); list.replaceChildren(); root.hidden = true; }, dispose() { unsubscribePreference(); observer?.disconnect(); themeObserver.disconnect(); root.remove(); window.removeEventListener('pixflow-design:annotation-toolbar', annotationLayout); window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); } };
+  return { root, update(value: ReviewState) { const next = JSON.stringify(value); if (state && renderedState === next) return; renderedState = next; state = value; render(); }, hide() { state = undefined; root.hidden = true; }, reset() { state = undefined; expanded = false; signature = ''; openGroups.clear(); list.replaceChildren(); root.hidden = true; }, dispose() { unsubscribePreference(); observer?.disconnect(); themeObserver.disconnect(); root.remove(); window.removeEventListener('pixflow-design:annotation-toolbar', annotationLayout); window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); } };
 }

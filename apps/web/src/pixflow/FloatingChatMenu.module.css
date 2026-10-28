@@ -1,9 +1,9 @@
 .toolbar { flex:none; display:flex; align-items:center; padding:6px 10px; }
 .toolbar[data-header=true] { padding:0; height:0; }
 .headerSlot { display:flex; align-items:center; flex:none; margin-inline-end:6px; }
-.headerSlot > button { width:30px; height:30px; padding:0; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--text-muted); }
-.headerSlot > button:hover,.headerSlot > button:focus-visible { background:color-mix(in srgb,var(--text) 7%,transparent); color:var(--text); }
-.headerSlot > button svg { width:19px; height:19px; min-width:19px; flex:none; }
+.headerSlot > button:global(.ghost) { width:30px; height:30px; padding:0; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--text-muted); }
+.headerSlot > button:global(.ghost):hover,.headerSlot > button:global(.ghost):focus-visible { background:color-mix(in srgb,var(--text) 7%,transparent); color:var(--text); }
+.headerSlot > button:global(.ghost) svg { width:19px; height:19px; min-width:19px; flex:none; }
 .toolbar > button { width:36px; height:32px; border-radius:8px; color:var(--text); }
 .layer { position:absolute; inset:0; z-index:20; overflow:hidden; border-radius:inherit; corner-shape:inherit; pointer-events:none; visibility:hidden; transition:visibility 0s 140ms; }
 .layer[data-open=true] { visibility:visible; transition-delay:0s; }

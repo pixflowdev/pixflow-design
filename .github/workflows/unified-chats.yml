@@ -27,5 +27,7 @@ jobs:
       - run: pnpm guard
       - run: pnpm typecheck
       - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect completed-workspace-run
+      - run: pnpm --filter @open-design/web test bridge-connection-route AvatarMenu WorkspaceBridgeStatus
+      - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts
       - run: pnpm i18n:check
       - run: pnpm wordpress:web

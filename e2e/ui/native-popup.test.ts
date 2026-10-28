@@ -50,6 +50,8 @@ test('empty and long site choices stay usable with keyboard and narrow layout',a
   await expect(page.getByRole('heading',{name:'Connect your site in Pixflow'})).toBeVisible();
  await expect(page.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeDisabled();
  await page.keyboard.press('Tab');await expect(page.getByRole('combobox')).toBeFocused();
+ await expect(page.getByRole('combobox')).toHaveCSS('outline-style','none');
+ await expect(page.getByRole('combobox')).toHaveCSS('box-shadow','none');
  await page.getByRole('combobox').selectOption({index:1});await expect(page.getByRole('heading',{name:'Connect this site'})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await expect(page.getByRole('button',{name:'Connect to Pixflow Bridge'})).toBeEnabled();

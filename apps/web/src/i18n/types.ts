@@ -6617,4 +6617,14 @@ export interface Dict {
   "reviewPill.adapt": string;
   "reviewPill.harden": string;
   "reviewPill.optimize": string;
+  "designCommand.audit": string;
+  "designCommand.critique": string;
+  "designCommand.polish": string;
+  "designCommand.typeset": string;
+  "designCommand.layout": string;
+  "designCommand.colorize": string;
+  "designCommand.clarify": string;
+  "designCommand.harden": string;
+  "designCommand.adapt": string;
+  "designCommand.optimize": string;
 }

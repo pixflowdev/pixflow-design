@@ -1,3 +1,4 @@
+import { designCommandDescriptions } from '../pixflow/design-command-descriptions';
 import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 'use client';
 
@@ -816,7 +817,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const slashCommands = useMemo<SlashCommand[]>(() => {
       const list: SlashCommand[] = [];
       if (pixflowContextPicker && planningAvailable()) for (const operation of (pixflowFeatureConfiguration('planning')?.operations ?? []) as string[]) {
-        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: 'pixflow.guidance.hint', icon: 'sparkles' });
+        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: designCommandDescriptions[operation], icon: 'sparkles' });
       }
       if (onOpenSettings && planningAvailable()) list.push({ id: 'design-settings', label: '/design-settings', insert: '', descKey: 'guidance.title', icon: 'sliders' });
       if (onOpenBuilderHandoff) {

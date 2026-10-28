@@ -35,10 +35,14 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = 2.1.1 (unreleased) =
 
+* Keep queued messages attached to their original chat while switching conversations; pause sending during the switch and resume that queue when its chat is reopened.
+* Recover completed replies and clear stale Working or save-warning states after reloading or moving between Workspace and the floating panel, without replaying edits.
+* Show more specific Bridge connection failures and recovery steps, distinguishing an unavailable Bridge from browser access, site authorization and version problems. Direct Bridge connections remain supported.
+
 * Keep numbered and bulleted chat lists visible when a builder such as Etch resets list markers; website content is unchanged.
 
 * Browse saved chats from the floating-panel header and continue the same conversation in Workspace or a supported editor without copying its history.
-* Keep unsent drafts scoped to their conversation when switching chats; close the chat drawer after selection and keep Feedback beside the composer tools.
+* Keep unsent drafts scoped to their conversation when switching chats; close the chat drawer after selection.
 * Restore the last-active saved chat in a new tab or after logout/login in the same browser, separately for each site and WordPress user. Recheck access before loading; explicit chat links and New chat take priority.
 
 * Show a distinct, translated description for each Pro design slash command in the shared composer.
@@ -52,7 +56,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Recover from navigation immediately after Send instead of leaving Preparing stuck. Keep the unsent message and explain when it needs to be sent again.
 * Allow an active Bricks conversation to reconnect to the same page in Gutenberg without rejecting its original editor identity. Retain page permissions and prevent another tab from taking over.
 * Handle pending builder commands safely during navigation: distinguish commands that never ran from edits whose outcome is still unconfirmed, without automatically repeating edits.
-* Use Pixflow Design Bridge 2.1.1 for this test candidate. API execution does not require Bridge.
+* Use Pixflow Design Bridge 2.1.1 for Local CLI. API execution does not require Bridge.
 
 = 2.1.0 =
 * Preserve conflicting saved chat versions, recover older browser snapshots safely and refresh newer messages across open floating panels and Workspace chats without silently overwriting history.

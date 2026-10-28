@@ -39,3 +39,18 @@ Chrome's documented separate Chrome for Testing native-host paths concern macOS/
 5. Obtain the owner's confirmation for final Store certifications and submission. Extension approval remains independent of the plugin maintenance release.
 
 No chats, content, settings, permissions, Team source or published packages were modified by this reconciliation.
+
+## Store update and replacement Windows reviewer candidate
+
+The Store draft now displays **1.0.2** and all six expected permissions. Native computer controls completed the upload despite the browser API becoming unavailable again. The `activeTab` and `alarms` explanations were added; `tabs` and `scripting` explanations were aligned with pre-consent discovery. Save draft became disabled after saving. Certifications were not accepted and submission was not clicked. Screenshot: local `store-draft-1.0.2.png` beside the package receipt.
+
+Archive inspection confirmed the older reviewer EXE contains the earlier host without the new enrollment handler. A separate replacement was compiled from the final Windows payload archives and generated NSIS template, adding only the three verified native payload files. Published downloads were not replaced.
+
+- Reviewer EXE: `pixflow-design-bridge-2.1.1-extension-review-1.0.2-win-x64.exe`, 248,208,653 bytes.
+- SHA256: `40490d3d9e41424697c51f84a09173b995bf2ef7c10ddd9309d43a7b399a1606`.
+- Extraction confirms all three embedded native files match the candidate hashes above.
+- Equivalent isolated QA installer retains the existing `D:/p211qa` identity and data paths. Full install and repair both exited 0. All ten saved-data files match their pre-install hashes after repair. Native registration targets the installed helper and exact permanent Store ID. Production Bridge restarted successfully.
+- Real NSIS native-hook install/repair/uninstall test passed with a separate disposable registration and preserved saved-data sentinel. This does not claim full customer EXE uninstall acceptance.
+- The reviewer-only website replacement is being prepared, not published. Final browser acceptance with the permanent ID is pending explicit approval to load that identity and grant isolated-site access; earlier prototype consent is not reused.
+
+The final exact-ID unpacked browser copy is local `exact-id-browser/`. Only this testing copy includes the Store public manifest key. The uploaded ZIP remains keyless and unchanged. The Windows host registration created by the isolated installer is the intended test change; chats, settings, normal Chrome permissions and live packages remain unchanged.

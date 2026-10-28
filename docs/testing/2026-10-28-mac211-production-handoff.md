@@ -36,7 +36,7 @@ Both passed `codesign --verify --deep --strict`: **ad-hoc signatures only, no Ap
 | `pixflow-design-bridge-2.1.1-mac-arm64.dmg` | 209953793 | `ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6` |
 | `pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg` | 209950752 | `857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe` |
 
-Draft destination: [Core draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-2da3790fffeb3da16b64), release ID **427088978**, tag **bridge-v2.1.1**. Upload receipt lists final asset IDs, sizes and server digests. Only the two public Bridge DMGs, checksums and redacted acceptance receipt belong there. Private Pro ZIP/source stays private.
+Draft destination: [Core draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-2da3790fffeb3da16b64), release ID **427088978**, tag **bridge-v2.1.1**. All four assets are uploaded. [Upload receipt](evidence/mac211-production/uploaded-assets.json) lists final asset IDs, sizes and server digests. Each GitHub digest matches its local SHA256; [verified release metadata](evidence/mac211-production/verified-draft.json) confirms `draft: true`, `prerelease: false`. Only the two public Bridge DMGs, checksums and redacted acceptance receipt belong there. Private Pro ZIP/source stays private.
 
 ## Windows agent next steps
 

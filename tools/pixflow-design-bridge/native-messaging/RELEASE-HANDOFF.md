@@ -5,20 +5,55 @@ Updated 28 October 2026. Do not publish packages, change updater pointers, or in
 ## Get the source from Git
 
 Repository: https://github.com/pixflowdev/pixflow-design
-Branch: `codex/chrome-store-preparation`
+Branch: `codex/release211-mac-acceptance`
 
 Use a separate clone/worktree; do not overwrite another task's checkout:
 
 ```sh
-git clone --branch codex/chrome-store-preparation https://github.com/pixflowdev/pixflow-design.git pixflow-extension-checks
+git clone --branch codex/release211-mac-acceptance https://github.com/pixflowdev/pixflow-design.git pixflow-extension-checks
 cd pixflow-extension-checks
+git checkout --detach 4935eb5e2044da92b19277cd126e63969afd03f4
 git rev-parse HEAD
 corepack pnpm install --frozen-lockfile
 ```
 
 Record that exact commit in every test/build receipt. Source, build scripts, tests and this handoff are in Git; the earlier Windows ZIP/source patch is not required. Node 24 and the package-manager version in package.json are required. Read root AGENTS.md, apps/AGENTS.md, tools/AGENTS.md and tools/pack/AGENTS.md before changing packaging.
 
-The paired Pro repository is private: https://github.com/pixflowdev/pixflow-design-pro. Obtain access normally. Do not copy credentials or private Pro source into this public repository. Full Bridge builds require an explicitly configured compatible Pro checkout through PIXFLOW_DESIGN_PRO_ROOT. The last local v2.1.1 test Pro checkout was commit `120ed24` with uncommitted Bricks work, pinned to Core `9235328a9af3138d32c7d998cc94e9a6f148df3c`; that is evidence, NOT a clean final pairing. Before producing releasable full installers, the coordinator must identify the reviewed Pro commit, reconcile the Core pin and exclude Team changes. Never silently disable the pin check or treat a dirty local checkout as the release source.
+The approved **isolated testing pair**, not a release approval, is:
+
+- Core: `4935eb5e2044da92b19277cd126e63969afd03f4`
+- Pro: `99efa4ecb8a9d9b347e621fc9046abc772302ec8`
+- Both branches: `codex/release211-mac-acceptance`.
+
+This supersedes af03030dd for full paired tests: it includes the committed direct-connection, navigation, history and Unicode session-header fixes. Pro pins that exact clean Core revision, module API 14. No Team source was added by this pairing. Pro remains private at https://github.com/pixflowdev/pixflow-design-pro. Do not copy its source into Core.
+
+```sh
+# From a parent directory alongside the Core clone:
+git clone --branch codex/release211-mac-acceptance https://github.com/pixflowdev/pixflow-design-pro.git pixflow-pro-checks
+cd pixflow-pro-checks
+git checkout --detach 99efa4ecb8a9d9b347e621fc9046abc772302ec8
+export PIXFLOW_DESIGN_CORE_ROOT="$(cd ../pixflow-extension-checks && pwd)"
+pnpm install --frozen-lockfile
+pnpm setup:core
+pnpm guard
+pnpm typecheck
+pnpm test:build
+pnpm test:web
+pnpm test:php
+pnpm wordpress:zip
+cd ../pixflow-extension-checks
+export PIXFLOW_DESIGN_PRO_ROOT="$(cd ../pixflow-pro-checks && pwd)"
+```
+
+Do not set PIXFLOW_DESIGN_ALLOW_CORE_WORKTREE or change the pin to get a build through. Read this handoff on the branch tip, but build the immutable revisions above. Current broad-test failures are recorded in [the pairing receipt](../../../docs/testing/2026-10-28-mac-pairing.md); reproduce/triage them, do not silently skip them or claim release readiness. Platform testing may proceed independently on a disposable fixture.
+
+## Live-site acceptance setup
+
+Use a dedicated reachable WordPress test site with backups and real authorized Pro access. The Mac agent's existing LocalWP site can be cloned to an isolated fixture; do not overwrite its original installation/content. The public reviewer site is Free-only and cannot establish Pro acceptance. Obtain reviewer credentials and a legitimate test licence privately; do not store either in Git or receipts. If access is unavailable, record the affected test as BLOCKED instead of bypassing authorization.
+
+Before upgrading, export/hash posts, postmeta, Pixflow chats/resources/settings and licence records (keep sensitive exports local). Record installed plugin basenames and versions. Upgrade the fixture from published Free/Pro to the newly built ZIPs without uninstalling. Use new synthetic pages/chats only. Verify original rows/files are unchanged, allowing only documented migration metadata and synthetic additions. Test Free alone, Pro active, expired/revoked access and renewed access without deleting saved data.
+
+In both floating panel and Pro Workspace, use the full installed Bridge and real Codex: send, observe streaming, steer, queue, navigate between Bricks and WP/ACF, reload immediately after Send and mid-reply, then reload again after completion. Require complete durable history, no duplicated edits, no stuck Preparing/Working, and accurate connection/recovery status. Repeat without the extension, then with it enabled. Test manual Bricks Design Your System with Bridge stopped. Use the builder/Feedback and authorization matrix below. Never use a real customer page for mutation tests.
 
 ## Two independent candidates
 
@@ -86,7 +121,7 @@ pnpm guard
 pnpm typecheck
 pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-*.test.ts
 pnpm exec tsc -p tools/pixflow-design-bridge/native-messaging/tsconfig.json --noEmit
-pnpm --filter @open-design/packaged test -- native-registration
+pnpm --dir apps/packaged exec vitest run -c vitest.config.ts tests/native-registration.test.ts
 pnpm --filter @open-design/packaged build
 pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts
 ```

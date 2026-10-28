@@ -76,3 +76,19 @@ Use a separate PR for fixes discovered by testing. Upload installers only as NEW
 The website chat verified current public Free, Pro and Bridge are still 2.1.0, using snapshot release-2.1.0-final-ed4ab60b-5a7c4ff5. The review-only Free 2.1.1 package has JSON-equivalent language pins to public Free 2.1.0; all 18 pins passed public hash/size and immutable-cache checks. Recheck the final build; unchanged pins need no republishing.
 
 Known website release blocker: the Mac install-notice component currently lists unsigned/ad-hoc disclosures for 2.0.4, 2.0.6 and 2.1.0, not 2.1.1. If final 2.1.1 DMGs remain ad-hoc/not notarized, the website team must add correct version-aware disclosure and account-page coverage before deployment. The Mac agent must report actual signing/notarization status, not assume it.
+
+Website-owned detailed checklist (committed separately in the private website repository): [v2.1.1 website gates](https://github.com/pixflowdev/pixflow-website/blob/7bb25dc3c48ac5e6acfba35cb4fca5f4b9ac71ef/docs/releases/2.1.1-website-gates.md). It covers immutable release/account snapshots, final download/auth/updater/Linux/alias/rollback checks, separate Design/Pro changelogs and Bridge notes, and staged-to-live promotion. Access requires the existing website repository permission; no credentials are included here.
+
+## Local test commands before platform builds
+
+```sh
+pnpm guard
+pnpm typecheck
+pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-*.test.ts
+pnpm exec tsc -p tools/pixflow-design-bridge/native-messaging/tsconfig.json --noEmit
+pnpm --filter @open-design/packaged test -- native-registration
+pnpm --filter @open-design/packaged build
+pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts
+```
+
+The native UI suites are e2e/ui/native-messaging-prototype.test.ts and e2e/ui/native-popup.test.ts, configured by e2e/lib/playwright/native.config.ts. Read their explicit environment opt-ins first; their local fixture/session inputs are not bundled credentials and must be created on the isolated test machine. Never point them at a customer site. Use the manual acceptance matrix for the public reviewer installation until its own isolated inputs are prepared.

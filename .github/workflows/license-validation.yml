@@ -1,0 +1,33 @@
+name: Licence validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'wordpress/src/License/**'
+      - 'wordpress/tests/central-*.test.php'
+      - 'wordpress/tests/licensing-staging-origin.test.php'
+      - '.github/workflows/license-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Licence validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - name: Artifact authorization and licence recovery
+        run: |
+          php wordpress/tests/central-artifact-license-preservation.test.php
+          php wordpress/tests/central-artifact-download.test.php
+          php wordpress/tests/central-artifact-selection.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/central-entitlements-cache-recovery.test.php
+          php wordpress/tests/central-entitlements-atomic.test.php
+          php wordpress/tests/licensing-staging-origin.test.php

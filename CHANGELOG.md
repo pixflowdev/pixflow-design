@@ -5,7 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.2] - Unreleased
+## [Unreleased]
+
+- Prevent failed protected-resource requests, including local or staging site identity mismatches, from incorrectly disabling a saved licence. Licence expiry and revocation checks remain enforced.
+
+## [2.1.2]
 
 - Find the optional Chrome extension in Execution > Local CLI settings; hide the install banner when the extension is detected on the current site.
 

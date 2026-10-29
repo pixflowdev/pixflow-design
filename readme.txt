@@ -33,6 +33,9 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Prevent failed protected-resource requests, including local or staging site identity mismatches, from incorrectly disabling a saved licence. Licence expiry and revocation checks remain enforced.
+
 = 2.1.2 =
 * Find the optional Chrome extension helper in Execution > Local CLI settings. The install banner hides when the extension is detected on the current site; Bridge remains required.
 

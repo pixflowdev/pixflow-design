@@ -19,11 +19,17 @@ export function claudeDesktopCandidates(options: {
         if (!version.isDirectory() || !/^\d+\.\d+\.\d+$/.test(version.name)) continue;
         for (const hash of readdirSync(path.join(base, version.name), { withFileTypes: true })) {
           if (!hash.isDirectory() || !/^[a-zA-Z0-9_-]+$/.test(hash.name)) continue;
-          const file = path.join(base, version.name, hash.name, platform === 'win32' ? 'claude.exe' : 'claude');
-          try {
-            const info = statSync(file);
-            if (info.isFile() && info.size > 0) candidates.push({ file, version: version.name.split('.').map(Number), modified: info.mtimeMs });
-          } catch { /* An app update may still be downloading this version. */ }
+          const download = path.join(base, version.name, hash.name);
+          // macOS Desktop downloads a CLI app bundle; retain flat downloads for older layouts.
+          const files = platform === 'darwin'
+            ? [path.join(download, 'claude.app', 'Contents', 'MacOS', 'claude'), path.join(download, 'claude')]
+            : [path.join(download, 'claude.exe')];
+          for (const file of files) {
+            try {
+              const info = statSync(file);
+              if (info.isFile() && info.size > 0) candidates.push({ file, version: version.name.split('.').map(Number), modified: info.mtimeMs });
+            } catch { /* An app update may still be downloading this version. */ }
+          }
         }
       }
     } catch { /* Desktop is optional, including on restricted profiles. */ }

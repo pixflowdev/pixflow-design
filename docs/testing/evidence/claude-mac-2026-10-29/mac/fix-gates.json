@@ -1,0 +1,117 @@
+[
+  {
+    "check": "guard",
+    "command": [
+      "pnpm",
+      "guard"
+    ],
+    "exitCode": 0,
+    "seconds": 5.37
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "seconds": 25.71
+  },
+  {
+    "check": "daemon-build",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@open-design/daemon",
+      "build"
+    ],
+    "exitCode": 0,
+    "seconds": 3.32
+  },
+  {
+    "check": "claude-runtime",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@open-design/daemon",
+      "exec",
+      "vitest",
+      "run",
+      "tests/runtimes/claude-desktop.test.ts",
+      "tests/runtimes/claude-model-probe.test.ts",
+      "tests/runtimes/claude-resume-args.test.ts",
+      "tests/runtimes/claude-sign-in.test.ts",
+      "tests/runtimes/claude-models.test.ts",
+      "tests/runtimes/claude-effort.test.ts"
+    ],
+    "exitCode": 0,
+    "seconds": 0.88
+  },
+  {
+    "check": "native",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsx",
+      "--test",
+      "tools/pixflow-design-bridge/tests/native-installation.test.ts",
+      "tools/pixflow-design-bridge/tests/native-enrollment.test.ts",
+      "tools/pixflow-design-bridge/tests/native-remembered.test.ts",
+      "tools/pixflow-design-bridge/tests/native-route-label.test.ts",
+      "tools/pixflow-design-bridge/tests/native-onboarding.test.ts",
+      "tools/pixflow-design-bridge/tests/native-reconnect.test.ts",
+      "tools/pixflow-design-bridge/tests/native-content.test.ts",
+      "tools/pixflow-design-bridge/tests/native-portable.test.ts",
+      "tools/pixflow-design-bridge/tests/native-automatic.test.ts",
+      "tools/pixflow-design-bridge/tests/native-load.test.ts",
+      "tools/pixflow-design-bridge/tests/native-source-runtime.test.ts",
+      "tools/pixflow-design-bridge/tests/native-store-package.test.ts",
+      "tools/pixflow-design-bridge/tests/native-messaging.test.ts",
+      "tools/pixflow-design-bridge/tests/native-status.test.ts",
+      "tools/pixflow-design-bridge/tests/native-browser-sites.test.ts",
+      "tools/pixflow-design-bridge/tests/native-permissions.test.ts"
+    ],
+    "exitCode": 0,
+    "seconds": 0.61
+  },
+  {
+    "check": "reconnect",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@open-design/e2e",
+      "exec",
+      "vitest",
+      "run",
+      "tests/pixflow/bridge-reconnect.test.ts"
+    ],
+    "exitCode": 0,
+    "seconds": 0.52
+  },
+  {
+    "check": "web",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@open-design/web",
+      "exec",
+      "vitest",
+      "run",
+      "tests/components/ClaudeSignIn.test.tsx",
+      "tests/components/BridgeConnectionSettings.test.tsx",
+      "tests/components/SettingsDialog.provider-sync.test.tsx",
+      "tests/utils/agentReasoning.test.ts",
+      "tests/components/AssistantMessage.voice-role.test.tsx",
+      "tests/components/AssistantMessage.error-pill.test.tsx",
+      "tests/components/AssistantMessage.feedback-analytics.test.tsx",
+      "tests/components/AssistantMessage.linkClick.test.tsx",
+      "tests/components/AssistantMessage.test.tsx",
+      "tests/components/AssistantMessage.pluginInstall.test.tsx",
+      "tests/components/AssistantMessage.test.ts",
+      "tests/components/AssistantMessage.compaction.test.tsx",
+      "tests/components/AssistantMessage.nextStep.test.tsx"
+    ],
+    "exitCode": 0,
+    "seconds": 4.86
+  }
+]

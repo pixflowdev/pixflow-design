@@ -1,0 +1,14 @@
+
+> @pixflow-design/pro@2.1.1 test:web <local-path>
+> tsx scripts/test-paired.ts web apps/web/tests/components/assistant-message-unfinished-todos.test.tsx
+
+
+ RUN  v4.1.11 <local-path>
+
+
+ Test Files  1 passed (1)
+      Tests  43 passed (43)
+   Start at  12:30:02
+   Duration  1.08s (transform 377ms, setup 14ms, import 555ms, tests 97ms, environment 353ms)
+
+Paired web lane: passed; source workspace <local-path>

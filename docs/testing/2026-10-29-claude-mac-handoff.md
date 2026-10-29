@@ -6,9 +6,9 @@ This handoff supersedes earlier build-only instructions for this new feature can
 
 ## Exact paired source
 
-- Core candidate: `fc185c2ccd5eba8a94c27e1169d056dc9afbb75f`, branch `codex/claude-mac-candidate` in `pixflowdev/pixflow-design`.
-- Private Pro candidate: `a4942a73da108758709bbb0260b2ec149ba87b78`, same branch name in `pixflowdev/pixflow-design-pro`.
-- Pro changes only its Core pin from released/default source `b77341e0c6afa3869e0c852125257e6e3b885e32`; module API remains 14. Do not bypass pin validation or pull a Team branch.
+- Core candidate: `6e13644ac17c8b97d451b0639b031f00d01093db`, reachable from `codex/claude-mac-candidate` in `pixflowdev/pixflow-design`.
+- Private Pro candidate: `17b358fb11dcfdbab6e4f8e095c1a981b3dc497a`, branch `codex/mac-acceptance-gates` in `pixflowdev/pixflow-design-pro`.
+- Pro includes the reviewed footer expectation, route-aware heartbeat regression and portable synthetic launcher, plus the Core pin, based on released/default source `b77341e0c6afa3869e0c852125257e6e3b885e32`; module API remains 14. Do not bypass pin validation or pull a Team branch.
 - Core is a test integration snapshot of Claude #39, footer #40, native endpoint #41, and the reconnect/wording changes. It is not a merge to main or a production release approval. #39/#40/#41 CI passed on their recorded heads; the combined Mac pair still requires the checks below.
 
 Read this document from the handoff branch tip, but build the exact source revisions above in clean, separate worktrees. Set `PIXFLOW_DESIGN_CORE_ROOT` and `PIXFLOW_DESIGN_PRO_ROOT` explicitly. Use Node 24 and pnpm 10.33.2, frozen dependency installation, then Pro `pnpm setup:core`. Record both SHAs and clean status. Do not modify the coordinator's branches to fix discovered bugs: use a focused `codex/` branch and PR and report which acceptance must be rerun.
@@ -71,3 +71,11 @@ This source still carries the released v2.1.1 version. Do not overwrite or uploa
 For the final new-version build, require hdiutil verify, correct bundle identity/version, actual per-architecture payloads, native host registration for the permanent ID, install/repair/restart preservation, direct and extension smoke tests, signature classification (do not claim notarization for ad-hoc signing), SHA256/size and a draft-only upload receipt. If Intel runs under Rosetta, say so; do not call it physical Intel acceptance.
 
 Push a redacted report under `docs/testing/evidence/claude-mac-2026-10-29/` on a dedicated branch and open a documentation PR. Include exact source/runtime versions, per-check PASS/FAIL/NOT RUN, screenshots, logs without credentials, remaining blockers and any fix PRs. Do not submit the Store update or publish artifacts. The coordinator will reconcile Mac evidence before resuming submission.
+
+## Coordinator follow-up — corrected pair, 29 October 2026
+
+Read the initial Mac report under `evidence/claude-mac-2026-10-29/mac/README.md`. Core #42 fixes the actual app-bundle layout and retains flat downloads. Pro #23 corrects the footer expectation; Pro #24 repairs the two stale Bridge assertions, exercises route-change publication without heartbeat churn, and supplies a POSIX mock launcher. Original provenance is retained. The exact source pair at the top supersedes the first frozen pair.
+
+Windows coordinator validation: Core guard and full typecheck passed; focused Claude discovery/model/effort tests passed (11 passed, one Mac-only skip). Pro guard/typecheck and all three build-contract checks passed. Paired focused web: 57 passed. Paired Bridge: 18 passed, one skipped. This is a focused retest, not a claimed full paired web rerun or Mac acceptance.
+
+Next Mac action: use the corrected exact pair, rerun the full paired web and Bridge lanes with PHP and generated bundles available, then complete all live checks above. Confirm the new POSIX launcher really executes its synthetic runner; do not let a real installed OpenCode substitute for it. Extension ZIP 1.0.3 and all ten browser payload hashes are unchanged, so use the already supplied draft asset. Test new Mac native helper registration with the same permanent ID. Store submission and all production releases remain on hold.

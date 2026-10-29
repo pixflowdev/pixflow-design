@@ -1,0 +1,47 @@
+[
+  {
+    "check": "guard",
+    "command": [
+      "pnpm",
+      "guard"
+    ],
+    "exitCode": 0,
+    "seconds": 0.71
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "seconds": 15.24
+  },
+  {
+    "check": "test-build",
+    "command": [
+      "pnpm",
+      "test:build"
+    ],
+    "exitCode": 0,
+    "seconds": 0.31
+  },
+  {
+    "check": "web",
+    "command": [
+      "pnpm",
+      "test:web"
+    ],
+    "exitCode": 1,
+    "seconds": 68.15
+  },
+  {
+    "check": "bridge",
+    "command": [
+      "pnpm",
+      "test:bridge"
+    ],
+    "exitCode": 1,
+    "seconds": 2.02
+  }
+]

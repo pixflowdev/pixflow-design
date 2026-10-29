@@ -1,0 +1,155 @@
+{
+  "source": "desktop",
+  "models": [
+    {
+      "id": "default",
+      "label": "Default (recommended)",
+      "reasoningOptions": [
+        {
+          "id": "default",
+          "label": "Default (Claude)"
+        },
+        {
+          "id": "low",
+          "label": "Low"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "high",
+          "label": "High"
+        },
+        {
+          "id": "xhigh",
+          "label": "Extra"
+        },
+        {
+          "id": "max",
+          "label": "Max"
+        }
+      ]
+    },
+    {
+      "id": "opus",
+      "label": "Opus",
+      "reasoningOptions": [
+        {
+          "id": "default",
+          "label": "Default (Claude)"
+        },
+        {
+          "id": "low",
+          "label": "Low"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "high",
+          "label": "High"
+        },
+        {
+          "id": "xhigh",
+          "label": "Extra"
+        },
+        {
+          "id": "max",
+          "label": "Max"
+        }
+      ]
+    },
+    {
+      "id": "fable",
+      "label": "Fable",
+      "reasoningOptions": [
+        {
+          "id": "default",
+          "label": "Default (Claude)"
+        },
+        {
+          "id": "low",
+          "label": "Low"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "high",
+          "label": "High"
+        },
+        {
+          "id": "xhigh",
+          "label": "Extra"
+        },
+        {
+          "id": "max",
+          "label": "Max"
+        }
+      ]
+    },
+    {
+      "id": "sonnet",
+      "label": "Sonnet",
+      "reasoningOptions": [
+        {
+          "id": "default",
+          "label": "Default (Claude)"
+        },
+        {
+          "id": "low",
+          "label": "Low"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "high",
+          "label": "High"
+        },
+        {
+          "id": "xhigh",
+          "label": "Extra"
+        },
+        {
+          "id": "max",
+          "label": "Max"
+        }
+      ]
+    },
+    {
+      "id": "haiku",
+      "label": "Haiku",
+      "reasoningOptions": [
+        {
+          "id": "default",
+          "label": "Default (Claude)"
+        },
+        {
+          "id": "low",
+          "label": "Low"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "high",
+          "label": "High"
+        },
+        {
+          "id": "xhigh",
+          "label": "Extra"
+        },
+        {
+          "id": "max",
+          "label": "Max"
+        }
+      ]
+    }
+  ]
+}

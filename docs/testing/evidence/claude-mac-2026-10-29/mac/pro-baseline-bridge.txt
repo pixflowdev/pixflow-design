@@ -1,0 +1,34 @@
+
+> @pixflow-design/pro@2.1.1 test:bridge <local-path>
+> tsx scripts/test-paired.ts bridge
+
+
+ RUN  v4.1.11 <local-path>
+
+ ❯ tests/dynamic-data-mutation.test.ts (17 tests | 1 failed | 1 skipped) 71ms
+     × runs one bounded repair and converts only the validated Dynamic Data intent 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/dynamic-data-mutation.test.ts > Bricks Agent structured dynamic-data mutations > runs one bounded repair and converts only the validated Dynamic Data intent
+Error: Command failed: <local-path> <local-path> quick-text-edit --input <temporary-path> --workspace <temporary-path> --runner opencode --json
+Error: OpenCode was selected, but none of these commands were found on this machine: opencode-cli, opencode.
+
+ ❯ tests/dynamic-data-mutation.test.ts:572:7
+    570|     try {
+    571|       const bridgeCli = fileURLToPath(new URL('../bricks-handoff-cli.m…
+    572|       execFileSync(process.execPath, [
+       |       ^
+    573|         bridgeCli,
+    574|         'quick-text-edit',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 17 passed | 1 skipped (19)
+   Start at  12:29:19
+   Duration  209ms (transform 55ms, setup 0ms, import 93ms, tests 74ms, environment 0ms)
+
+Paired bridge lane: FAILED; source workspace <local-path>
+ ELIFECYCLE  Command failed with exit code 1.

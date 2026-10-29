@@ -35,6 +35,31 @@ test('discovers macOS Desktop downloads independently of Windows environment', (
   expect(claudeDesktopCandidates({ platform: 'darwin', home, scoped: true })).toEqual([file]);
 });
 
+test('discovers macOS app-bundled downloads and skips incomplete updates', () => {
+  const home = root();
+  const base = join(home, 'Library/Application Support/Claude/claude-code');
+  const runtimeDir = join(base, '2.1.309/abc/claude.app/Contents/MacOS');
+  mkdirSync(runtimeDir, { recursive: true });
+  const file = join(runtimeDir, 'claude'); writeFileSync(file, 'fixture'); chmodSync(file, 0o755);
+  mkdirSync(join(base, '2.1.400/partial/claude.app/Contents/MacOS'), { recursive: true });
+  expect(claudeDesktopCandidates({ platform: 'darwin', home, scoped: true })).toEqual([file]);
+});
+
+test.skipIf(process.platform !== 'darwin')('shared resolver prefers the macOS app runtime and restores CLI fallback', () => {
+  const home = root();
+  const cli = join(home, 'standalone-claude'); writeFileSync(cli, 'fixture'); chmodSync(cli, 0o755);
+  withEnvSnapshot(['OD_AGENT_HOME', 'OD_SANDBOX_MODE', 'OD_DATA_DIR'], () => {
+    process.env.OD_AGENT_HOME = home; delete process.env.OD_SANDBOX_MODE; delete process.env.OD_DATA_DIR;
+    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(cli);
+    const dir = join(home, 'Library/Application Support/Claude/claude-code/2.1.309/abc/claude.app/Contents/MacOS');
+    mkdirSync(dir, { recursive: true });
+    const app = join(dir, 'claude'); writeFileSync(app, 'fixture'); chmodSync(app, 0o755);
+    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli })).toMatchObject({ selectedPath: app, appBundlePath: app });
+    rmSync(app);
+    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(cli);
+  });
+});
+
 test.skipIf(process.platform !== 'win32')('shared resolver prefers Desktop and falls back when its download is absent', () => {
   const home = root();
   const cli = runtime(join(home, 'standalone'), '2.1.162');

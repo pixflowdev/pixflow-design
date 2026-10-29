@@ -10,7 +10,7 @@
 - macOS 26.5.1, Apple Silicon, Node 24.19.0, pnpm 10.33.2. Candidate app is arm64 Electron 44.7.0, isolated namespace `qa-claude-mac-103`, app version 2.1.1 for local acceptance only. No production DMG was built or uploaded.
 - Claude Desktop 4.29.0; app-managed CLI 2.1.309, including the macOS `claude.app/Contents/MacOS/claude` layout. No installed runtime changed.
 - Extension 1.0.3 frozen ZIP SHA256 `4750cbe937d5365c771c8ade9f5ebed7456d5841dee0101d977e8e3be2144839`, all ten payload hashes verified. Permanent ID `hbnbiboohlelmngadeolikeejamjlbkh` supplied by the existing public manifest key in a disposable unpacked copy.
-- Owner loaded the extension into Ellie’s Chrome, which retained old approvals. A fresh `Pixflow QA` profile has been requested for the outstanding consent matrix. This is **not** a fresh-profile consent pass.
+- Owner loaded the extension into Ellie’s Chrome, which retained old approvals, then into Chris’s Chrome for the unapproved-site consent matrix. Chrome Details confirmed version 1.0.3, permanent ID and the intended test folder. The owner signed into QA without opening Pixflow or approving site access. The fresh QA permission flow subsequently passed with explicit owner approval.
 
 ## Automated gates
 
@@ -51,7 +51,11 @@ The first Bridge attempt refused a temporarily dirty Core pin while a simultaneo
 | Representative direct provider requests | PASS: Claude Workspace exact response in 8.7s / 15 output tokens; Codex floating exact response in 4.7s |
 | Full restart/revoke/steering/cancel matrix across both panels | INCOMPLETE on this candidate; older v2.1.1 evidence does not substitute |
 | Standalone fallback | NOT RUN: no standalone binary found at usual existing install locations; no runtime installed/removed merely to pass |
-| Fresh isolated Chrome consent, foreign/subframe live cases | NOT RUN; deterministic coverage passed |
+| Unapproved-site discovery and Execution entry point in Chris’s Chrome | PASS: foreground Execution Reconnect opened `Connect this site`; Website already listed QA before approval. WordPress retained its direct route |
+| Fresh QA permission completion | PASS: owner approved the action; Chrome requested access only to QA; Allow completed and popup reported `Bridge connected` |
+| Reload and new-tab automatic native route in Chris’s Chrome | PASS: popup closed, no Reconnect click; Execution reported `Bridge connected via Chrome extension` in both cases |
+| Bridge restart with Chris’s popup closed | PASS: namespaced packaged stop produced `Bridge disconnected`; packaged start initially had no active site; background recovery restored QA and Execution reported extension route without opening popup or clicking Reconnect. Transient other-site message was observed during recovery; no exact recovery duration asserted |
+| Browser restart in Chris’s Chrome, foreign/subframe live cases | NOT RUN; deterministic coverage passed |
 
 ## Popup defect and fix
 

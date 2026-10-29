@@ -1,6 +1,6 @@
-# Intel Mac v2.1.1 build, acceptance and draft upload
+# Extension-ready Mac v2.1.1 build-only handoff
 
-29 October 2026. Authorized scope: build and test the missing ordinary Intel DMG, then upload it and its checksum to the existing draft. Do not publish releases, update websites/updater pointers, replace existing assets, or change customer data. Team changes remain excluded. This supersedes only the Intel continuation of earlier handoffs; retain earlier Apple Silicon evidence.
+29 October 2026. Authorized scope: build extension-ready Apple Silicon and Intel DMGs, verify build artifacts, then upload them and their checksums to the existing draft. Full Mac acceptance is already complete per the maintainer; do not repeat it. Do not publish releases, update websites/updater pointers, replace existing assets, or change customer data. Team changes remain excluded. This supersedes the ordinary/optional split and Intel continuation of earlier handoffs; retain earlier Apple Silicon evidence.
 
 ## Immutable source pair
 
@@ -16,7 +16,14 @@ The existing Mac wrapper selects architecture from process.arch. Its `--x64` arg
 
 Prefer an Intel Mac. On Apple Silicon, use an explicitly installed x64 Node24/toolchain under Rosetta, with x64 Node first on PATH for every child process. Confirm `node -p process.arch` reports `x64`; record host architecture separately. Do not silently install Rosetta or alter the user's normal toolchain without their approval. If no suitable toolchain is available, report the blocker rather than fabricate acceptance.
 
-Use scripts/build-pixflow-design-bridge-mac-installers.mjs and its pixflowPackEnv identity/icon recipe. Keep ordinary release native-extension payload unset. Prepare icons using that recipe, then build a fresh portable artifact through the existing tools-pack entrypoint, under the verified x64 execution environment:
+Use scripts/build-pixflow-design-bridge-mac-installers.mjs and its pixflowPackEnv identity/icon recipe. Build the native payload first and require it in BOTH release installers:
+
+```sh
+pnpm exec tsx tools/pixflow-design-bridge/native-messaging/store-build.ts hbnbiboohlelmngadeolikeejamjlbkh
+export PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR="$PWD/.tmp/chrome-store/native"
+```
+
+This payload contains only host.mjs, install.mjs and config.json. Extension support is included in the main installer; users may continue using direct connections without installing the extension. Do not build a separate direct-only release or use prototype identity. Do not upload or change the already-submitted extension1.0.2 ZIP. Prepare icons using that recipe, then build a fresh portable artifact through the existing tools-pack entrypoint, under the verified x64 execution environment:
 
 ```sh
 pnpm tools-pack mac build --to dmg --portable --namespace release-stable-pixflow-bridge-mac-x64 --app-version 2.1.1 --json
@@ -28,28 +35,19 @@ Carry the recipe's PIXFLOW_DESIGN_PACK_APP_ID, PRODUCT_NAME, PACKAGE_NAME, REGIS
 node scripts/build-pixflow-design-bridge-mac-installers.mjs --x64 /absolute/path/from/build/report.dmg
 ```
 
-Expected output: `dist/bridge-release/packages/pixflow-design-bridge-2.1.1-mac-x64.dmg`. Verify Info.plist product/bundle identity and version2.1.1, inspect executable architectures using file/lipo (Electron, helper/Node executables, and native .node dependencies). Verify x86_64 payloads, no baked build-machine paths, and no optional extension-review payload. Use hdiutil verify and codesign --verify --deep --strict. Ad-hoc signing is expected; do not claim Developer ID or notarization.
+Required outputs: `pixflow-design-bridge-2.1.1-mac-arm64.dmg` and `pixflow-design-bridge-2.1.1-mac-x64.dmg`, both extension-ready. Build arm64 under arm64 Node and x64 under the verified x64 toolchain; use separate output roots/namespaces to avoid architecture contamination. The command above shows the x64 lane; use the matching arm64 namespace and environment for that lane. Verify Info.plist product/bundle identity and version2.1.1, inspect executable architectures using file/lipo (Electron, helper/Node executables, and native .node dependencies). Verify x86_64 payloads, no baked build-machine paths, and the expected permanent-ID native payload (not browser files or reviewer credentials). Use hdiutil verify and codesign --verify --deep --strict. Ad-hoc signing is expected; do not claim Developer ID or notarization.
 
-## Acceptance before upload
+## Build-only scope — no repeated Mac acceptance
 
-Run Core guard/typecheck and release-version-consistency/packaging regression tests; Pro guard/typecheck/test:build with the exact pin. Stop and report failures. Windows already validated the launcher regression red/green and universal ZIP; this does not replace Mac install checks.
+The maintainer confirms Mac acceptance is complete and explicitly requests builds only. Reuse the existing acceptance receipts, keeping their actual architecture/runtime boundaries visible. Do not repeat the full installed-browser, reboot, steering or preservation suite. Do not claim newly observed acceptance for this build.
 
-Use an isolated install path, runtime data and WordPress fixture with legitimate Pro access. Record private before/after hashes/counts for original chats, settings, notes, content and Bridge data. Never erase or migrate the user's normal Bridge data to make a test pass. Keep credentials and customer content out of Git and draft assets.
-
-1. Mount and install the exact DMG; launch installed app, verify2.1.1 health and correct site binding. Verify direct Bridge connection with extension disabled in the isolated profile.
-2. Floating panel and Workspace: synthetic read-only CLI request, streaming, steering, reload recovery, chat switching and cross-panel continuity. Confirm no duplicate sends or stale Working state. Preserve original drafts/settings.
-3. Upgrade from the preserved previous installed version, repair/reinstall, tray Restart, quit/relaunch, and relocation if supported. Verify data preservation and automatic site reconnection once Bridge is running. Record actual login/reboot behavior; do not infer OS auto-launch.
-4. Inspect native module loading and process architecture. On Apple Silicon, report **x64 under Rosetta**, not native Intel hardware acceptance. If native Intel hardware is unavailable, explicitly mark that limitation; never describe native Intel tests as passed.
-5. Restore fixture permissions/settings and original app state. Save redacted results with observed pass/fail/blocked, architecture, macOS/Node versions, build commands, source SHAs, artifact bytes/hash, signing status and preservation summary.
+Perform artifact verification only: fresh build success; app identity/version2.1.1; actual arm64/x86_64 executables and native modules; compiled native host/config/install payload for the permanent extension ID; portable runtime paths; hdiutil verification; signature classification; file size and SHA256. Record existing acceptance references separately from these new build checks. If the build needs a product-code change, stop and report the impact rather than assuming old acceptance covers changed behavior.
 
 ## Draft upload only
 
 Repository: pixflowdev/pixflow-design. Existing draft release ID **427088978**, tag **bridge-v2.1.1**. Verify it remains draft before any upload. Do not create a new release, move the tag, change its target, publish it, or replace the arm64/optional-native artifacts.
 
-Upload only:
-- pixflow-design-bridge-2.1.1-mac-x64.dmg
-- SHA256SUMS-mac-x64-2.1.1.txt
-- mac-x64-2.1.1-build-acceptance.json (redacted)
+Upload one extension-ready DMG per architecture plus checksums and a redacted build receipt. Existing draft names may already contain older direct-only builds: preserve them, do not overwrite. If a canonical filename is occupied by different bytes, upload the new build under a source-qualified name such as pixflow-design-bridge-2.1.1-mac-arm64-037a867b-extension-ready.dmg (and x64 equivalent) and identify it as the intended release candidate. The coordinator will reconcile canonical names at promotion; do not publish both variants as customer choices. Use SHA256SUMS-mac-extension-ready-2.1.1.txt and mac-extension-ready-2.1.1-build.json for new receipts.
 
 Compute SHA256 with shasum -a256 and byte count from the final file. Upload via GitHub release asset API or gh release upload after checking existing names. Do not use --clobber. If a same-name asset exists, compare hash/size and stop on differences; preserve existing archives. Verify uploaded size and GitHub digest, then independently download and hash the DMG. Record asset ID/name/bytes/SHA256 and draft:true in Git.
 

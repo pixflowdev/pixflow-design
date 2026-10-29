@@ -1,0 +1,249 @@
+
+> @pixflow-design/pro@2.1.1 test:web <local-path>
+> tsx scripts/test-paired.ts web apps/web/tests/bricks/bridgeSiteSwitch.test.ts apps/web/tests/components/assistant-message-unfinished-todos.test.tsx
+
+
+ RUN  v4.1.11 <local-path>
+
+ ❯ tests/bricks/bridgeSiteSwitch.test.ts (14 tests | 2 failed) 11ms
+     × keeps Bridge chrome and health traffic out of BYOK mode 4ms
+     × keeps heartbeat probes from republishing unchanged shared status 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/bricks/bridgeSiteSwitch.test.ts > Pixflow bridge site switching > keeps Bridge chrome and health traffic out of BYOK mode
+AssertionError: expected 'function renderBricksAgentShell() {\n…' to contain 'config.mode !== \'api\''
+
+- Expected
++ Received
+
+- config.mode !== 'api'
++ function renderBricksAgentShell() {
++     if (!state.bricksAgentOpen && !state.bricksAgentPreloaded) {
++       return;
++     }
++
++     var shell = document.getElementById('pixflow-bricks-agent-shell');
++     if (!shell) {
++       mountBricksAgentShell();
++       shell = document.getElementById('pixflow-bricks-agent-shell');
++     }
++     if (!shell) {
++       return;
++     }
++
++     shell.dataset.status = state.bricksAgentStatus;
++     applyBricksAgentPanelFrame(shell);
++
++     var useHostedFrame = shouldUseHostedBricksAgentFrame();
++     var existingPanel = shell.querySelector('.pixflow-bricks-agent-panel');
++     var existingRoot = shell.querySelector(useHostedFrame ? '#pixflow-bricks-agent-hosted-root' : '#pixflow-bricks-agent-react-root');
++     var desiredCollapsed = Boolean(state.bricksAgentPanel && state.bricksAgentPanel.collapsed);
++     var desiredHasRoot = !desiredCollapsed || !state.bricksAgentOpen;
++     var existingCanStay = existingPanel && (
++       (!desiredHasRoot && !existingRoot) ||
++       (desiredHasRoot && existingRoot)
++     );
++     if (existingCanStay) {
++       // Pixflow-owned: streamed Bricks handoff events can arrive many times per
++       // second. Do not remount the panel/React root on each event; publish state
++       // into the mounted React app to avoid visible flashing and lost popovers.
++       if (useHostedFrame) {
++         syncBricksAgentHostedLoadingState(existingRoot);
++       }
++       updateBricksAgentPanelToolbarControls();
++       publishBricksAgentReactState();
++       return;
++     }
++
++     var previousBridgeControl = shell.querySelector('.pixflow-agent-bridge-status');
++     if (previousBridgeControl && typeof previousBridgeControl.destroy === 'function') {
++       previousBridgeControl.destroy();
++     }
++     shell.innerHTML = '';
++
++     var panel = createElement('div', { className: 'pixflow-bricks-agent-panel' });
++     var header = createElement('header', { className: 'pixflow-bricks-agent-panel__head' });
++     bindBricksAgentPanelDrag(header);
++     var titleWrap = createElement('div', { className: 'pixflow-bricks-agent-panel__title' });
++     var mark = createElement('span', { className: 'pixflow-bricks-agent-panel__mark', 'aria-hidden': 'true' });
++     if (config.iconUrl) {
++       mark.appendChild(createElement('img', { src: config.iconUrl, alt: '' }));
++     } else {
++       mark.textContent = 'P';
++     }
++     titleWrap.appendChild(mark);
++     if (
++       window.PixflowDesignFloatingPanel
++       && typeof window.PixflowDesignFloatingPanel.createBridgeStatusControl === 'function'
++     ) {
++       titleWrap.appendChild(window.PixflowDesignFloatingPanel.createBridgeStatusControl({
++         surface: 'bricks-floating-panel',
++         followExecutionMode: true,
++         executionMode: config.mode,
++         initialStatus: window.pixflowDesignBridgeStatus || null
++       }));
++     }
++     header.appendChild(titleWrap);
++
++     var actions = createElement('div', { className: 'pixflow-bricks-agent-panel__actions' });
++     var panelBridgeReady = !useHostedFrame || isHostedBricksAgentFrameReady();
++     var panelControlsDisabled = useHostedFrame && state.bricksAgentWaitingForBridge && !panelBridgeReady;
++     var sizes = createElement('div', { className: 'pixflow-bricks-agent-panel__sizes' });
++     setPanelUiLabel(sizes, 'label', 'Panel size presets');
++     ['sm', 'md', 'lg'].forEach(function (sizeKey) {
++       var sizeButton = createElement('button', {
++         type: 'button',
++         className: 'pixflow-bricks-agent-panel__icon-button',
++         text: sizeKey.charAt(0).toUpperCase(),
++         title: 'Set panel size ' + sizeKey.toUpperCase()
++       });
++       setPanelUiLabel(sizeButton, 'title', 'Set panel size {value1}', { value1: sizeKey.toUpperCase() });
++       setPanelUiLabel(sizeButton, 'label', 'Set panel size {value1}', { value1: sizeKey.toUpperCase() });
++       if (panelControlsDisabled) {
++         sizeButton.disabled = true;
++       }
++       sizeButton.addEventListener('click', function () {
++         setBricksAgentPanelSize(sizeKey);
++       });
++       sizes.appendChild(sizeButton);
++     });
++     actions.appendChild(sizes);
++     var collapse = createElement('button', {
++       type: 'button',
++       className: 'pixflow-bricks-agent-panel__icon-button',
++       title: state.bricksAgentPanel.collapsed ? 'Expand panel' : 'Collapse panel'
++     });
++     setPanelUiLabel(collapse, 'title', state.bricksAgentPanel.collapsed ? 'Expand panel' : 'Collapse panel');
++     setPanelUiLabel(collapse, 'label', state.bricksAgentPanel.collapsed ? 'Expand panel' : 'Collapse panel');
++     collapse.appendChild(createBuilderSvgIcon(state.bricksAgentPanel.collapsed ? 'expand' : 'collapse'));
++     if (panelControlsDisabled) {
++       collapse.disabled = true;
++     }
++     collapse.addEventListener('click', toggleBricksAgentPanelCollapse);
++     var close = createElement('button', {
++       type: 'button',
++       className: 'pixflow-bricks-agent-panel__icon-button',
++       title: 'Close'
++     });
++     setPanelUiLabel(close, 'title', 'Close');
++     setPanelUiLabel(close, 'label', 'Close');
++     close.appendChild(createBuilderSvgIcon('close'));
++     close.addEventListener('click', closeBricksAgentShell);
++     actions.appendChild(collapse);
++     actions.appendChild(close);
++     header.appendChild(actions);
++     panel.appendChild(header);
++
++     if (!state.bricksAgentPanel.collapsed || !state.bricksAgentOpen) {
++       var body = createElement('div', { className: 'pixflow-bricks-agent-panel__body' });
++       var agentRoot = createElement('div', {
++         id: useHostedFrame ? 'pixflow-bricks-agent-hosted-root' : 'pixflow-bricks-agent-react-root',
++         className: useHostedFrame ? 'pixflow-bricks-agent-hosted-root' : 'pixflow-bricks-agent-react-root'
++       });
++       if (useHostedFrame) {
++         syncBricksAgentHostedLoadingState(agentRoot);
++       }
++       body.appendChild(agentRoot);
++       if (useHostedFrame && window.pixflowDesignBricksFrameShell && typeof window.pixflowDesignBricksFrameShell.mountInto === 'function') {
++         window.pixflowDesignBricksFrameShell.mountInto(agentRoot, {
++           config: {
++             bootReason: 'hosted-frame'
++           }
++         });
++       } else if (!useHostedFrame) {
++         publishBricksAgentReactState();
++       } else {
++         agentRoot.appendChild(createElement('div', {
++           className: 'pixflow-bricks-agent-panel__loading',
++           text: 'Loading Pixflow Bricks Agent...'
++         }));
++       }
++       if (useHostedFrame) {
++         syncBricksAgentHostedLoadingState(agentRoot);
++       }
++       panel.appendChild(body);
++
++       // Pixflow-owned: keep the resize affordance in the shell so floating
++       // state can be restored without reauthoring UI. CSS disables it while
++       // docked because the docked panel inherits Bricks side-panel geometry.
++       var resizeHandle = createElement('span', {
++         className: 'pixflow-bricks-agent-panel__resize',
++         'aria-hidden': 'true'
++       });
++       bindBricksAgentPanelResize(resizeHandle);
++       panel.appendChild(resizeHandle);
++     }
++     shell.appendChild(panel);
++     updateBricksAgentPanelToolbarControls();
++     publishBricksAgentReactState();
++   }
++
++   function normalizeBricksHandoffPayload
+
+ ❯ tests/bricks/bridgeSiteSwitch.test.ts:131:25
+    129|
+    130|     expect(probe).toContain("if (config.mode === 'api')");
+    131|     expect(panelRender).toContain("config.mode !== 'api'");
+       |                         ^
+    132|     expect(builderSource).toContain("control.hidden = config.mode === …
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/bricks/bridgeSiteSwitch.test.ts > Pixflow bridge site switching > keeps heartbeat probes from republishing unchanged shared status
+AssertionError: expected 'function setState(state, label, title…' to contain 'if (stateChanged || titleChanged)'
+
+- Expected
++ Received
+
+- if (stateChanged || titleChanged)
++ function setState(state, label, title) {
++     var nextState = state || '';
++     var nextTitle = title || label || BRIDGE_HELP_TITLE;
++     var titleChanged = currentTitle !== nextTitle;
++     var stateChanged = currentState !== nextState;
++
++     // The healthy four-second heartbeat is intentionally frequent, but a successful
++     // no-change probe must not churn shared application state or repaint any
++     // of the subscribed panel/workspace controls. Publish only real changes.
++     var route = nextState === 'connected' ? observedRoute : '';
++     if (stateChanged || titleChanged || publishedRoute !== route) {
++       publishedRoute = route;
++       currentState = nextState;
++       currentTitle = nextTitle;
++       var status = {
++         checked: nextState !== 'checking',
++         running: nextState === 'connected' || nextState === 'update',
++         state: nextState,
++         status: nextState,
++         updateRequired: nextState === 'update',
++         version: currentVersion,
++         connectionRoute: route,
++         error: nextState === 'missing' || nextState === 'error' ? nextTitle : ''
++       };
++       window.pixflowDesignBridgeStatus = status;
++       window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status', { detail: status }));
++     }
++   }
++
++   function applyCachedPreconnect
+
+ ❯ tests/bricks/bridgeSiteSwitch.test.ts:234:27
+    232|     expect(stateRenderer).toContain('var titleChanged = currentTitle !…
+    233|     expect(stateRenderer).toContain('var stateChanged = currentState !…
+    234|     expect(stateRenderer).toContain('if (stateChanged || titleChanged)…
+       |                           ^
+    235|     expect(stateRenderer).toContain("new CustomEvent('pixflow-design:b…
+    236|     expect(stateRenderer).not.toContain('root.');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 55 passed (57)
+   Start at  12:29:16
+   Duration  1.07s (transform 385ms, setup 27ms, import 562ms, tests 111ms, environment 348ms)
+
+Paired web lane: FAILED; source workspace <local-path>
+ ELIFECYCLE  Command failed with exit code 1.

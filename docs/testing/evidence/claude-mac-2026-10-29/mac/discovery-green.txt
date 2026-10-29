@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 <local-path>
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed | 1 skipped (7)
+   Start at  12:25:56
+   Duration  231ms (transform 133ms, setup 12ms, import 153ms, tests 10ms, environment 0ms)

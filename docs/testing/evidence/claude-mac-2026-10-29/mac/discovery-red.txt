@@ -1,0 +1,65 @@
+
+ RUN  v4.1.11 <local-path>
+
+ ❯ tests/runtimes/claude-desktop.test.ts (7 tests | 2 failed | 1 skipped) 14ms
+   × discovers macOS app-bundled downloads and skips incomplete updates 4ms
+   × shared resolver prefers the macOS app runtime and restores CLI fallback 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/runtimes/claude-desktop.test.ts > discovers macOS app-bundled downloads and skips incomplete updates
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "<temporary-path> Support/Claude/claude-code/2.1.309/abc/claude.app/Contents/MacOS/claude",
+- ]
++ []
+
+ ❯ tests/runtimes/claude-desktop.test.ts:45:79
+     43|   const file = join(runtimeDir, 'claude'); writeFileSync(file, 'fixtur…
+     44|   mkdirSync(join(base, '2.1.400/partial/claude.app/Contents/MacOS'), {…
+     45|   expect(claudeDesktopCandidates({ platform: 'darwin', home, scoped: t…
+       |                                                                               ^
+     46| });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/runtimes/claude-desktop.test.ts > shared resolver prefers the macOS app runtime and restores CLI fallback
+AssertionError: expected { …(4) } to match object { …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "appBundlePath": "<temporary-path> Support/Claude/claude-code/2.1.309/abc/claude.app/Contents/MacOS/claude",
+-   "selectedPath": "<temporary-path> Support/Claude/claude-code/2.1.309/abc/claude.app/Contents/MacOS/claude",
++   "appBundlePath": null,
++   "selectedPath": "<temporary-path>",
+  }
+
+ ❯ tests/runtimes/claude-desktop.test.ts:57:83
+     55|     mkdirSync(dir, { recursive: true });
+     56|     const app = join(dir, 'claude'); writeFileSync(app, 'fixture'); ch…
+     57|     expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_B…
+       |                                                                                   ^
+     58|     rmSync(app);
+     59|     expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_B…
+ ❯ withEnvSnapshot tests/runtimes/helpers/test-helpers.ts:185:14
+ ❯ tests/runtimes/claude-desktop.test.ts:51:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed | 1 skipped (7)
+   Start at  12:25:32
+   Duration  290ms (transform 169ms, setup 14ms, import 195ms, tests 14ms, environment 0ms)
+
+undefined
+<local-path>
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run tests/runtimes/claude-desktop.test.ts

@@ -32,9 +32,11 @@ Artifact: `pixflow-design-bridge-2.1.1-9e28485f2b69.zip`, 4,655,123 bytes, SHA25
 
 ## Remaining release gates
 
-1. Finish CI/review for the Linux runtime PR and reconcile stacked Core/Pro source pins before promotion. Do not describe a missing CI run as passing; manual Free/native workflows were dispatched for the exact Linux commit.
-2. Receive extension-ready arm64 and x64 Mac DMGs, hashes and build receipts from the existing build-only handoff. Full Mac acceptance is already complete per the maintainer; do not repeat it.
+1. Review/merge the remaining stacked Core/Pro changes and reconcile source pins before promotion. Exact Linux commit CI passed: Free validation `40795433003` and Native transport `40795435791`.
+2. Independently verify downloaded Mac bytes against the new build report. Both extension-ready DMGs are now present in the draft: arm64 asset `686838822` (209,966,857 bytes; SHA256 `6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f`) and x64 asset `686840916` (221,084,602 bytes; SHA256 `d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf`). Report `686841977` matches the approved Core/Pro pair, correct native architectures, permanent-ID helper, hdiutil and ad-hoc signature verification. Full Mac acceptance is already complete per the maintainer; do not repeat it.
 3. Verify the final combined downloads, aliases, authorization, updater metadata, language-pack hashes and changelogs against those exact assets. Website chat has prepared the checks privately.
 4. Preserve older draft assets as historical evidence; publish only the intended single extension-ready installer for each platform. Extension approval is independent of the direct Bridge release path.
 
 No live promotion is authorized by this evidence document.
+
+QA-only desktop, Start Menu and startup shortcuts were archived after installation checks to prevent the isolated installer from changing normal login behavior. Normal Bridge shortcuts and data were not changed. The isolated candidate remains available for the current session.

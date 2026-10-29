@@ -47,6 +47,9 @@ async function main() {
     runPnpm(appRoot, ['--filter', '@open-design/daemon', 'build']);
   }
 
+  const native = registerInstalledNativeHost(appRoot);
+  if (native === 'failed') logInstall('Chrome connection registration could not finish; direct Bridge remains available. Reinstall to retry.');
+
   await fs.writeFile(path.join(installRoot, 'manifest.json'), `${JSON.stringify({
     type: 'pixflow_design_bridge_installation',
     version: 1,
@@ -80,6 +83,17 @@ async function main() {
 
   logInstall(`Installed at ${installRoot}`);
   logInstall(`Command: ${path.join(binRoot, process.platform === 'win32' ? 'pixflow-design-bridge.cmd' : 'pixflow-design-bridge')}`);
+}
+
+/** Registration never blocks direct startup or changes browser permissions. */
+export function registerInstalledNativeHost(appRoot) {
+  const helper = path.join(appRoot, 'native-transport', 'install.mjs');
+  if (!existsSync(helper)) return 'absent';
+  const result = spawnSync(process.execPath, [helper, 'install'], {
+    cwd: path.dirname(helper), encoding: 'utf8', stdio: 'pipe',
+    timeout: 10_000, windowsHide: true, shell: false,
+  });
+  return result.status === 0 && !result.error ? 'registered' : 'failed';
 }
 
 async function stopExistingBridge({ installRoot, dataDir }) {
@@ -209,12 +223,13 @@ export async function resolveRuntimeCopySources(sourceRoot, workflowSources) {
     'tools/pack',
     'tools/serve',
     'tools/pixflow-design-bridge',
+    'native-transport',
   ];
   const sources = [];
   for (const relativePath of required) {
     const source = path.join(sourceRoot, relativePath);
     if (!existsSync(source)) {
-      if (relativePath === 'tools/dev' || relativePath === 'tools/pack' || relativePath === 'tools/serve') {
+      if (relativePath === 'native-transport' || relativePath === 'tools/dev' || relativePath === 'tools/pack' || relativePath === 'tools/serve') {
         continue;
       }
       throw new Error(`Bridge runtime source is missing ${relativePath} in ${sourceRoot}`);

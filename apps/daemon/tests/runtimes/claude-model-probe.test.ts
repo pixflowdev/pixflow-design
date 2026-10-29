@@ -31,4 +31,3 @@ test('runtime errors and malformed catalogues return unavailable',async()=>{
  child({type:'control_response',response:{request_id:'pixflow-models',subtype:'success',response:{models:'invalid'}}});
  expect(await discoverClaudeModels('claude',{})).toBeNull();
 });
-

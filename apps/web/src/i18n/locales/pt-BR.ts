@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ptBR: Dict = {
+  "history.editorTransitionFailed": "Não foi possível confirmar a mudança de editor. Reabra este painel para reconectar. Nenhuma edição pendente foi repetida.",
+  "bridge.connectedDirect": "Conectado diretamente",
+  "bridge.connectedExtension": "Conectado pela extensão do Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Salvar no Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Salvar em Meus sistemas de design",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Atualizar cópia da biblioteca",

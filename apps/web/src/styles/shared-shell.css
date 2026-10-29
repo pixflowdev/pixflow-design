@@ -1887,3 +1887,6 @@ main.app.pixflow-bricks-agent-frame-app,
 .pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel { border-radius: 0; filter: none; }
 }
 
+
+/* Bridge popover connection provenance, subordinate to the site list. */
+.pixflow-bridge-sites__route { margin: 0; padding: 0 10px 8px; color: var(--text-muted); font-size: 12px; line-height: 1.5; }

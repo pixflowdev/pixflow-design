@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "history.editorTransitionFailed": "편집기 전환을 확인할 수 없습니다. 이 패널을 다시 열어 연결하세요. 대기 중인 편집은 다시 실행되지 않았습니다.",
+  "bridge.connectedDirect": "직접 연결됨",
+  "bridge.connectedExtension": "Chrome 확장 프로그램으로 연결됨",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks에 저장",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "내 디자인 시스템에 저장",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "라이브러리 사본 업데이트",

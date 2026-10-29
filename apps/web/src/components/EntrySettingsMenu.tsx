@@ -1,3 +1,4 @@
+import { LanguageUpdateDot, LanguageUpdateIcon } from './LanguageUpdateDot';
 import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
 import { LanguagePreferenceControl } from './LanguagePreferenceControl';
 import {
@@ -146,7 +147,7 @@ export function EntrySettingsMenu({
         aria-expanded={open}
         data-testid="entry-settings-menu-trigger"
       >
-        <Icon name="settings" size={17} />
+        <LanguageUpdateIcon><Icon name="settings" size={17} /></LanguageUpdateIcon>
       </button>
       {open ? (
         <div
@@ -290,7 +291,7 @@ export function EntrySettingsMenu({
             <span className="entry-settings-menu__item-icon" aria-hidden>
               <Icon name="settings" size={14} />
             </span>
-            <span>{t('avatar.settings')}</span>
+            <span>{t('avatar.settings')}<LanguageUpdateDot /></span>
             <span className="entry-settings-menu__item-meta">
               {t('homeHero.details')}
             </span>

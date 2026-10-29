@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "history.editorTransitionFailed": "Не удалось подтвердить переход между редакторами. Откройте эту панель снова для подключения. Ожидающие изменения не выполнялись повторно.",
+  "bridge.connectedDirect": "Подключено напрямую",
+  "bridge.connectedExtension": "Подключено через расширение Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Сохранить в Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Сохранить в Мои дизайн-системы",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Обновить копию в библиотеке",

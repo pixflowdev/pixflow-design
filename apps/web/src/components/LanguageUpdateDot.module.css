@@ -1,0 +1,13 @@
+.dot {
+  display: inline-block;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  margin-inline-start: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+.icon { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.icon .dot { position: absolute; inset-block-start: -3px; inset-inline-end: -5px; margin: 0; }

@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "history.editorTransitionFailed": "Nem sikerült megerősíteni a szerkesztőváltást. A kapcsolódáshoz nyisd meg újra ezt a panelt. Egyetlen függőben lévő módosítás sem lett újra végrehajtva.",
+  "bridge.connectedDirect": "Közvetlenül csatlakoztatva",
+  "bridge.connectedExtension": "Csatlakoztatva a Chrome-bővítményen keresztül",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Mentés a Bricksbe",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "Mentés a Saját dizájnrendszerekbe",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "Könyvtári másolat frissítése",

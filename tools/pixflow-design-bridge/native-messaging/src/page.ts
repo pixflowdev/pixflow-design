@@ -16,20 +16,22 @@ if(!scope.__PIXFLOW_NATIVE_PROTOTYPE__){
   const p=pending.get(m?.id);if(!p)return;
   if(m.type==='headers'){
    const noBody=[204,205,304].includes(m.status)||p.method==='HEAD';
-   p.resolve(new Response(noBody?null:new ReadableStream({start(c){p.controller=c;},pull(){if(p.ack){p.ack=false;post({id:m.id,type:'ack'});}},cancel(){post({id:m.id,type:'cancel'});p.cleanup();}}),{status:m.status,headers:m.headers}));
+   p.resolve(new Response(noBody?null:new ReadableStream({start(c){p.controller=c;},pull(){if(p.ack){p.ack=false;post({id:m.id,type:'ack'});}},cancel(){post({id:m.id,type:'cancel'});p.cleanup();}}),{status:m.status,headers:{...m.headers,'X-Pixflow-Connection-Route':'chrome-extension'}}));
   }else if(m.type==='chunk'){
    p.controller?.enqueue(Uint8Array.from(atob(m.data),(s:string)=>s.charCodeAt(0)));
    if(!p.controller||p.controller.desiredSize>0)post({id:m.id,type:'ack'});else p.ack=true;
   }else if(m.type==='end'){p.controller?.close();p.cleanup();}else if(m.type==='error')p.fail(new Error(m.error));
  });
+ const direct=async(input:RequestInfo|URL,init:RequestInit)=>{const response=await original(input,init);Object.defineProperty(response,'pixflowConnectionRoute',{value:'direct'});return response;};
  const transport=async(input:RequestInfo|URL,init:RequestInit={})=>{
   const u=new URL(input instanceof Request?input.url:String(input),location.href);
-  if(!['127.0.0.1','[::1]'].includes(u.hostname)||!u.pathname.startsWith('/api/')||disabled)return original(input,init);
+  if(!['127.0.0.1','[::1]'].includes(u.hostname)||!u.pathname.startsWith('/api/') )return original(input,init);
+  if(disabled)return direct(input,init);
   let timer:ReturnType<typeof setTimeout>|undefined;
   try{await Promise.race([ready,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Native connection did not initialise')),10000);})]);}finally{clearTimeout(timer);}
-  if(disabled)return original(input,init);
+  if(disabled)return direct(input,init);
   if(disconnected)throw Object.assign(new Error('Native adapter disconnected. Reconnect to inspect the existing run; no request was replayed.'),{name:'PixflowNativeDisconnectedError'});
-  if(u.origin!==bridge)return original(input,init);
+  if(u.origin!==bridge)return direct(input,init);
   const request=new Request(input,init),body=['GET','HEAD'].includes(request.method)?null:new Uint8Array(await request.arrayBuffer());
   if(body&&body.length>18*1024*1024)throw new Error('Native upload exceeds 18 MiB limit');
   if(pending.size>=8)throw new Error('Native transport is busy; wait for an active request to finish');

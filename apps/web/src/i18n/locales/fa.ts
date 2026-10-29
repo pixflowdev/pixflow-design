@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "history.editorTransitionFailed": "تغییر ویرایشگر تأیید نشد. برای اتصال مجدد، این پنل را دوباره باز کنید؛ هیچ ویرایش در انتظاری دوباره اجرا نشده است.",
+  "bridge.connectedDirect": "اتصال مستقیم برقرار است",
+  "bridge.connectedExtension": "اتصال از طریق افزونهٔ Chrome برقرار است",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "ذخیره در Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "ذخیره در سیستم‌های طراحی من",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "به‌روزرسانی نسخهٔ کتابخانه",

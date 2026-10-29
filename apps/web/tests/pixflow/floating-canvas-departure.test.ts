@@ -5,6 +5,11 @@ vi.mock('../../src/pixflow/runtime-fetch',()=>({pixflowWordPressRestFetch:reques
 import {notifyFloatingCanvasDeparture} from '../../src/pixflow/floating-canvas-departure';
 afterEach(()=>{vi.restoreAllMocks();request.mockReset();});
 const metadata={editorTarget:{builder:'bricks',canvasId:'a'.repeat(32),postId:10}};
+it('uses the supplied localized recovery message when transition confirmation fails',async()=>{
+ Object.defineProperty(navigator,'locks',{configurable:true,value:{request:vi.fn(async(_id,_opts,cb)=>cb({name:'lock'}))}});
+ request.mockResolvedValue({ok:false});
+ await expect(notifyFloatingCanvasDeparture(metadata,10,undefined,'Übergang nicht bestätigt.')).rejects.toThrow('Übergang nicht bestätigt.');
+});
 it('notifies the same-page transition while holding the originating canvas lock',async()=>{
  Object.defineProperty(navigator,'locks',{configurable:true,value:{request:vi.fn(async(_id,_opts,cb)=>cb({name:'lock'}))}});
  request.mockResolvedValue({ok:true});

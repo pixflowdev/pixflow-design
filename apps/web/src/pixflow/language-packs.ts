@@ -47,10 +47,19 @@ function validatePack(value: unknown, locale: DownloadableLocale): LanguagePack 
   return pack;
 }
 
-export async function getLanguagePackStatus(): Promise<LanguagePackStatus> {
-  const status = await request('') as LanguagePackStatus;
-  if (!Array.isArray(status?.languages) || typeof status.canInstall !== 'boolean') throw new Error('Invalid language status.');
-  return status;
+const statusRequests = new Map<string, Promise<LanguagePackStatus>>();
+export function getLanguagePackStatus(): Promise<LanguagePackStatus> {
+  const { url, nonce } = endpoint('');
+  const key = `${url}:${nonce}`;
+  const pending = statusRequests.get(key);
+  if (pending) return pending;
+  const result = request('').then((value) => {
+    const status = value as LanguagePackStatus;
+    if (!Array.isArray(status?.languages) || typeof status.canInstall !== 'boolean') throw new Error('Invalid language status.');
+    return status;
+  }).finally(() => statusRequests.delete(key));
+  statusRequests.set(key, result);
+  return result;
 }
 
 /** Reads only a locally installed, server-verified pack. Never installs on load. */

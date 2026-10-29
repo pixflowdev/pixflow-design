@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "history.editorTransitionFailed": "تعذّر تأكيد الانتقال بين المحرّرات. أعد فتح هذه اللوحة لإعادة الاتصال؛ لم يُنفَّذ أي تعديل معلّق مرة أخرى.",
+  "bridge.connectedDirect": "متصل مباشرةً",
+  "bridge.connectedExtension": "متصل عبر إضافة Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "حفظ في Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "حفظ في أنظمة التصميم الخاصة بي",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "تحديث نسخة المكتبة",

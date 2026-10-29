@@ -9,6 +9,7 @@ import type { AgentInfo, AppConfig, ExecMode } from '../../src/types';
 
 vi.mock('../../src/i18n', () => ({
   useT: () => (key: string) => key,
+  useI18n: () => ({ locale: 'en', t: (key: string) => key }),
 }));
 
 const codexAgent: AgentInfo = {
@@ -409,4 +410,15 @@ it('shows connection recovery guidance and clears it after successful discovery'
   expect(screen.getByRole('alert').textContent).toContain('Check Bridge status');
   act(()=>{beginProviderDiscovery(true)(true);});
   expect(screen.queryByRole('alert')).toBeNull();
+});
+
+it('updates a single quiet route label and removes it on disconnect', () => {
+  renderMenu(); const menu=openMenu();
+  for (const route of ['direct','chrome-extension']) {
+    act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'connected',running:true,connectionRoute:route}})));
+    expect(within(menu).getByText(route==='direct'?'bridge.connectedDirect':'bridge.connectedExtension')).toBeTruthy();
+  }
+  act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'missing',running:false}})));
+  expect(within(menu).queryByText('bridge.connectedExtension')).toBeNull();
+  cleanup();
 });

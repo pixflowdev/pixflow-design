@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "history.editorTransitionFailed": "ไม่สามารถยืนยันการเปลี่ยนตัวแก้ไขได้ เปิดแผงนี้อีกครั้งเพื่อเชื่อมต่อใหม่ โดยไม่มีการดำเนินการแก้ไขที่ค้างอยู่ซ้ำ",
+  "bridge.connectedDirect": "เชื่อมต่อโดยตรงแล้ว",
+  "bridge.connectedExtension": "เชื่อมต่อผ่านส่วนขยาย Chrome แล้ว",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "บันทึกไปยัง Bricks",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToLibrary": "บันทึกไปยังระบบดีไซน์ของฉัน",
   "ui.pixflowFrameworkDesignSystemBuilder.updateLibraryCopy": "อัปเดตสำเนาในคลัง",

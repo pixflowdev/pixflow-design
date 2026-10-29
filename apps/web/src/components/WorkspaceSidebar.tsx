@@ -1,3 +1,4 @@
+import { LanguageUpdateIcon } from './LanguageUpdateDot';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button, Input } from '@open-design/components';
 import type { WorkspaceOrganization, WorkspaceOrganizationAction, WorkspaceProjectGroup } from '@open-design/contracts';
@@ -194,7 +195,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       <Button variant="ghost" className={styles.destination} title={t('entry.navHome')} aria-label={t('entry.navHome')} aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => onNavigate('home')}><IconHome size={19} stroke={1.6} /></Button>
       <Button variant="ghost" className={styles.destination} title={t('workspaceSidebar.newChat')} aria-label={t('workspaceSidebar.newChat')} onClick={() => onNewChat(null)}><IconPencilPlus size={19} stroke={1.6} /></Button>
       {([{ view: 'media', label: 'entry.navMedia', Icon: IconPhoto }, { view: 'sitemap', label: 'entry.navSitemap', Icon: IconSitemap }, { view: 'design-systems', label: 'entry.navDesignSystems', Icon: IconPalette }] as const).map(item => <Button variant="ghost" className={styles.destination} key={item.view} title={t(item.label)} aria-label={t(item.label)} aria-current={activeView === item.view ? 'page' : undefined} onClick={() => onNavigate(item.view)}><item.Icon size={19} stroke={1.6} /></Button>)}
-      <Button variant="ghost" className={`${styles.destination} ${styles.settings}`} title={t('entry.openSettingsAria')} aria-label={t('entry.openSettingsAria')} onClick={onSettings}><IconSettings size={19} stroke={1.6} /></Button>
+      <Button variant="ghost" className={`${styles.destination} ${styles.settings}`} title={t('entry.openSettingsAria')} aria-label={t('entry.openSettingsAria')} onClick={onSettings}><LanguageUpdateIcon><IconSettings size={19} stroke={1.6} /></LanguageUpdateIcon></Button>
       {helpControl}
     </nav>
     <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} {...(collapsed ? { inert: '' } as Record<string, string> : {})}>

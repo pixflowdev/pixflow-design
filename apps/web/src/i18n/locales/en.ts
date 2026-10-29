@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "settings.claudeSignIn": "Sign in with Claude",
+  "settings.claudeWaiting": "Waiting for sign-in…",
+  "settings.claudeSignInFailed": "Sign-in did not complete. Check Bridge and try again.",
+  "settings.claudeBrowserHint": "Finish signing in in your browser. Pixflow will check the connection automatically.",
+  "settings.claudeSignedIn": "Signed in",
   "history.editorTransitionFailed": "Could not confirm the editor transition. Reopen this panel to reconnect; no pending edit has been repeated.",
+  "settings.modelDiscoveryUnavailable": "Model discovery unavailable — using Claude’s default",
+  "settings.modelSourceCliFallback": "Live from CLI (Desktop discovery unavailable)",
   "bridge.connectedDirect": "Connected directly",
   "bridge.connectedExtension": "Connected via Chrome extension",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Save to Bricks",
@@ -1837,6 +1844,8 @@ export const en: Dict = {
   'settings.themeDark': 'Dark',
   'settings.agentModelHead': 'Model for:',
   'settings.modelPicker': 'Model',
+  'settings.modelSourceDesktop': "Live from Desktop app",
+  'settings.modelPickerDesktopHint': "Models come from the runtime managed by your desktop app. Default uses its own configuration.",
   'settings.modelSourceLive': 'Live from CLI',
   'settings.modelSourceFallback': 'Built-in list',
   'settings.reasoningPicker': 'Reasoning effort',

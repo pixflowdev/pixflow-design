@@ -1,3 +1,4 @@
+import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { useBridgeConnectionRoute } from '../pixflow/bridge-connection-route';
 import { composioAvailable } from '../pixflow/composio-contribution';
@@ -205,8 +206,9 @@ export function AvatarMenu({
     (config.agentId && config.agentModels?.[config.agentId]) || {};
   const currentModelId =
     currentChoice.model ?? currentAgent?.models?.[0]?.id ?? null;
+  const reasoningOptions = agentReasoningOptions(currentAgent, currentModelId);
   const currentReasoningId =
-    currentChoice.reasoning ?? currentAgent?.reasoningOptions?.[0]?.id ?? null;
+    (reasoningOptions.some(option => option.id === currentChoice.reasoning) ? currentChoice.reasoning : reasoningOptions[0]?.id) ?? null;
   const currentModelLabel = currentAgent?.models?.find(
     (m) => m.id === currentModelId,
   )?.label;
@@ -449,8 +451,8 @@ export function AvatarMenu({
               {currentAgent &&
               currentAgent.available &&
               ((currentAgent.models && currentAgent.models.length > 0) ||
-                (currentAgent.reasoningOptions &&
-                  currentAgent.reasoningOptions.length > 0)) ? (
+                (reasoningOptions &&
+                  reasoningOptions.length > 0)) ? (
                 <div className="avatar-model-section">
                   {currentAgent.models && currentAgent.models.length > 0 ? (
                     <label className="avatar-select-row">
@@ -488,8 +490,8 @@ export function AvatarMenu({
                       />
                     </label>
                   ) : null}
-                  {currentAgent.reasoningOptions &&
-                  currentAgent.reasoningOptions.length > 0 ? (
+                  {reasoningOptions &&
+                  reasoningOptions.length > 0 ? (
                     <label className="avatar-select-row">
                       <span className="avatar-select-label">
                         {t('avatar.reasoningLabel')}
@@ -499,7 +501,7 @@ export function AvatarMenu({
                         aria-label={t('avatar.reasoningLabel')}
                         value={currentReasoningId ?? ''}
                         onChange={(value) => onAgentModelChange(currentAgent.id, { reasoning: value })}
-                        models={currentAgent.reasoningOptions}
+                        models={reasoningOptions}
                         searchPlaceholder={t('avatar.reasoningLabel')}
                         popoverTestId="avatar-reasoning-popover"
                         popoverClassName="avatar-model-select-popover"

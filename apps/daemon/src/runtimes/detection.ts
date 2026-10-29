@@ -7,7 +7,7 @@ import {
   getRememberedLiveModels,
   rememberLiveModels,
 } from './models.js';
-import { applyAgentLaunchEnv, resolveAgentLaunch } from './launch.js';
+import { agentRuntimeSource, applyAgentLaunchEnv, resolveAgentLaunch } from './launch.js';
 import { spawnEnvForAgent } from './env.js';
 import { probeAgentAuthStatus } from './auth.js';
 import { agentCapabilities } from './capabilities.js';
@@ -91,6 +91,7 @@ async function fetchModels(
   if (typeof def.fetchModels === 'function') {
     try {
       const parsed = await def.fetchModels(resolvedBin, env);
+      if (parsed && !Array.isArray(parsed)) return parsed.models.length ? parsed : { models: def.fallbackModels, source: 'fallback' };
       if (!parsed || parsed.length === 0) {
         return { models: def.fallbackModels, source: 'fallback' };
       }
@@ -332,6 +333,7 @@ async function probe(
   onInstalled({
     ...stripFns(def), models: def.fallbackModels ?? [DEFAULT_MODEL_OPTION],
     modelsSource: 'fallback', available: true, path: launch.selectedPath,
+    runtimeSource: agentRuntimeSource(launch),
     version: outcome.version, ...installMetaForAgent(def.id),
   });
   // The version probe must finish first (it gates availability), but the
@@ -360,6 +362,7 @@ async function probe(
     modelsSource: surfacedModelResult.source,
     available: true,
     path: launch.selectedPath,
+    runtimeSource: agentRuntimeSource(launch),
     version: outcome.version,
     ...(auth
       ? {

@@ -5052,6 +5052,7 @@ async function runAgents(args) {
     console.log(`Usage:
   od agents list [--force] [--json]
   od agents readiness <agentId> [--model <id>] [--force] [--json]
+  od agents sign-in claude [--status | --cancel] [--json]
 
 Checks are non-generating and do not consume provider usage.
 
@@ -5063,10 +5064,23 @@ Common options:
   const sub = args[0];
   const rest = args.slice(1);
   const stringFlags = new Set(['daemon-url', 'model']);
-  const booleanFlags = new Set(['force', 'json', 'help', 'h']);
+  const booleanFlags = new Set(['force', 'json', 'help', 'h', 'status', 'cancel']);
   const flags = parseFlags(rest, { string: stringFlags, boolean: booleanFlags });
   const base = (await projectDaemonUrl(flags)).replace(/\/$/, '');
 
+  if (sub === 'sign-in') {
+    if (flags.status && flags.cancel) throw new Error('Choose either --status or --cancel.');
+    const [agentId] = collectCliPositionals(rest, stringFlags);
+    if (agentId !== 'claude') throw new Error('Sign-in currently supports claude only.');
+    const resp = await fetch(`${base}/api/agents/claude/sign-in${flags.cancel ? '/cancel' : ''}`, {
+      method: flags.status ? 'GET' : 'POST',
+      ...(flags.status ? {} : { headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+    });
+    if (!resp.ok) return structuredHttpFailure(resp);
+    const data = await resp.json();
+    process.stdout.write(flags.json ? JSON.stringify(data, null, 2) + '\n' : `${data.state}\n`);
+    return;
+  }
   if (sub === 'list') {
     const resp = await fetch(`${base}/api/agents${flags.force ? '?force=1' : ''}`);
     if (!resp.ok) return structuredHttpFailure(resp);

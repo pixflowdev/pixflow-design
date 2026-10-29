@@ -9,6 +9,7 @@ import { wellKnownUserToolchainBins } from '@open-design/platform';
 import { resolveSandboxRuntimeConfigFromEnv } from '../sandbox-mode.js';
 import { expandHomePath } from './paths.js';
 import type { RuntimeAgentDef } from './types.js';
+import { claudeDesktopCandidates } from './claude-desktop.js';
 
 const RUNTIME_PROJECT_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -264,9 +265,17 @@ function packagedBuiltInExecutable(
   }
 }
 
-// Codex App owns the preferred CLI. Detection, model discovery and execution
+// Desktop apps own the preferred CLI. Detection, model discovery and execution
 // all use this resolver; scoped detection never searches host applications.
-function codexAppBundleExecutable(def: RuntimeAgentDef): string | null {
+function appBundleExecutable(def: RuntimeAgentDef): string | null {
+  if (def.id === 'claude') {
+    const { home, hasOverride } = resolveDetectionHome();
+    for (const candidate of claudeDesktopCandidates({ platform: process.platform, home, scoped: hasOverride })) {
+      const resolved = executableFilePath(candidate);
+      if (resolved) return resolved;
+    }
+    return null;
+  }
   if (def.id !== 'codex') return null;
   for (const candidate of codexAppBundleCandidates()) {
     const resolved = executableFilePath(candidate);
@@ -424,7 +433,7 @@ export function inspectAgentExecutableResolution(
     if (standaloneCliPath) break;
   }
   const builtInPath = packagedBuiltInExecutable(def, configuredEnv);
-  const appBundlePath = codexAppBundleExecutable(def);
+  const appBundlePath = appBundleExecutable(def);
   return {
     configuredOverridePath,
     appBundlePath,

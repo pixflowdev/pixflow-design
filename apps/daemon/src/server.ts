@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { resolveRuntimeReasoning } from './runtimes/claude-models.js';
 import type { DesktopExportPdfInput, DesktopExportPdfResult } from '@open-design/sidecar-proto';
 import express from 'express';
 import { mayClaimPixflowDaemonSite } from './pixflow-site-switch-authority.js';
@@ -421,6 +422,7 @@ import {
   setToken,
 } from './mcp-tokens.js';
 import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKnobs, writeAppConfig } from './app-config.js';
+import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
@@ -7633,6 +7635,8 @@ export async function startServer({
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
   const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
+  const stopClaudeSignIn = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   app.post('/api/pixflow/bricks-agent/run-stream', async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
@@ -16830,10 +16834,7 @@ export async function startServer({
       process.env,
       requestedLiveModelScope,
     );
-    const safeReasoning =
-      typeof reasoning === 'string' && Array.isArray(def.reasoningOptions)
-        ? (def.reasoningOptions.find((r) => r.id === reasoning)?.id ?? null)
-        : null;
+    const safeReasoning = resolveRuntimeReasoning(def, safeModel, reasoning) ?? null;
     const requestedFastMode = fastMode === true;
     const safeFastMode = requestedFastMode
       ? modelSupportsFastMode(def, safeModel, requestedLiveModelScope)
@@ -20776,6 +20777,7 @@ export async function startServer({
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
       stopDirectHistoryRetention();
+      stopClaudeSignIn();
       composioConnectorProvider.stopCatalogRefreshLoop();
       orbitService.stop();
       routineService?.stop();

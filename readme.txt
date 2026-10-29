@@ -33,6 +33,13 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+
+* Use Claude Desktop’s managed runtime first, with the installed Claude CLI as fallback; no separate CLI installation is needed when Desktop supplies it.
+* Sign in with Claude from Execution settings and detect completed browser sign-in automatically.
+* Discover Claude models and supported reasoning effort from the installed runtime instead of an outdated built-in list; label live CLI fallback clearly.
+* Show Desktop runtime sources and separate Execution provider cards with consistent selection and hover styling.
+
 = 2.1.1 (unreleased) =
 
 * Show a Settings notification dot when the active language pack needs updating, with safe download failure and retry handling.

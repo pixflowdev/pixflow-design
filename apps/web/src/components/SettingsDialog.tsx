@@ -1,4 +1,6 @@
+import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
+import { ClaudeSignIn } from './ClaudeSignIn';
 import { BridgeConnectorSection } from './BridgeConnectorSection';
 export { deriveComposioCredentialState } from './composio-credential-state';
 import { composioAvailable } from '../pixflow/composio-contribution';
@@ -3184,9 +3186,8 @@ export function SettingsDialog({
   const renderAgentModelConfig = (selected: AgentInfo) => {
     const hasModels =
       Array.isArray(selected.models) && selected.models.length > 0;
-    const hasReasoning =
-      Array.isArray(selected.reasoningOptions) &&
-      selected.reasoningOptions.length > 0;
+    const reasoningOptions = agentReasoningOptions(selected, cfg.agentModels?.[selected.id]?.model);
+    const hasReasoning = reasoningOptions.length > 0;
     // AMR's live catalog only lands a beat after sign-in. While the user is
     // signed in but the model list hasn't arrived yet, show the picker in a
     // loading state instead of hiding it — so the dropdown appears at sign-in
@@ -3254,8 +3255,7 @@ export function SettingsDialog({
         ? selected.models?.[0]?.id ?? ''
         : configuredModel ?? selected.models?.[0]?.id ?? '';
     const reasoningValue =
-      choice.reasoning ??
-      selected.reasoningOptions?.[0]?.id ?? '';
+      (reasoningOptions.some(option => option.id === choice.reasoning) ? choice.reasoning : reasoningOptions[0]?.id) ?? '';
     const customActive =
       allowCustomModel &&
       hasModels &&
@@ -3270,15 +3270,17 @@ export function SettingsDialog({
     const fastModeAvailable = codexModelSupportsFastMode(selected, modelValue);
     const modelSource = selected.modelsSource ?? 'fallback';
     const modelSourceLabel =
-      modelSource === 'live'
-        ? t('settings.modelSourceLive')
-        : t('settings.modelSourceFallback');
+      modelSource === 'cli-fallback' ? t('settings.modelSourceCliFallback') : modelSource === 'live'
+        ? t(selected.runtimeSource === 'desktop' ? 'settings.modelSourceDesktop' : 'settings.modelSourceLive')
+        : t(selected.id === 'claude' ? 'settings.modelDiscoveryUnavailable' : 'settings.modelSourceFallback');
     const modelSourceHint =
-      modelSource === 'live'
-        ? selected.supportsCustomModel === false
+      modelSource === 'cli-fallback' ? t('settings.modelPickerLiveHint') : modelSource === 'live'
+        ? selected.runtimeSource === 'desktop'
+          ? t('settings.modelPickerDesktopHint')
+          : selected.supportsCustomModel === false
           ? t('settings.modelPickerLiveCatalogOnlyHint')
           : t('settings.modelPickerLiveHint')
-        : t('settings.modelPickerFallbackHint');
+        : t(selected.id === 'claude' ? 'settings.modelDiscoveryUnavailable' : 'settings.modelPickerFallbackHint');
     return (
       <div className="agent-card-config">
         {hasModels ? (
@@ -3372,7 +3374,7 @@ export function SettingsDialog({
                   setChoice({ reasoning: e.target.value })
                 }
               >
-                {selected.reasoningOptions!.map((r) => (
+                {reasoningOptions.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label}
                   </option>
@@ -3798,7 +3800,7 @@ export function SettingsDialog({
                                 setHoveredAgentCardId(null);
                               }}
                             >
-                              <div className="agent-card-main">
+                              <div className={`agent-card-main${a.id === 'claude' && a.authStatus !== 'ok' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
                                 <button
                                   type="button"
                                   className="agent-card-select"
@@ -3864,6 +3866,7 @@ export function SettingsDialog({
                                           <span title={metaTitle}>
                                             {metaLabel}
                                           </span>
+                                            {a.runtimeSource === 'desktop' && a.authStatus !== 'missing' ? <span className="agent-runtime-source">{t('settings.modelSourceDesktop')}</span> : null}
                                         </div>
                                       ) : null}
                                       {amrCardEmail ? (
@@ -3935,7 +3938,9 @@ export function SettingsDialog({
                                     />
                                   )
                                 ) : null}
-                                {active && !isAmrAgent ? (
+                                {a.id === 'claude' && a.authStatus !== 'ok' ? (
+                                  <ClaudeSignIn onConnected={() => { void handleRefreshAgents(); }} />
+                                ) : active && !isAmrAgent ? (
                                   <button
                                     type="button"
                                     className={
@@ -3961,7 +3966,8 @@ export function SettingsDialog({
                                   </button>
                                 ) : null}
                               </div>
-                              {(a.diagnostics ?? []).map((diagnostic, i) => (
+
+                              {(a.diagnostics ?? []).filter(diagnostic => !(a.id === 'claude' && diagnostic.reason === 'auth-missing')).map((diagnostic, i) => (
                                 <AgentDiagnosticRow
                                   key={`${diagnostic.reason}-${i}`}
                                   diagnostic={diagnostic}

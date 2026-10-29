@@ -49,13 +49,17 @@ The first Bridge attempt refused a temporarily dirty Core pin while a simultaneo
 | Actual Claude process model/effort | PASS: `--model sonnet --effort low`; redacted metadata in `claude-active-runtime.json` |
 | Authenticated runtime catalogue | PASS: full runtime result saved in `authenticated-catalogue.json`, UI choices matched observed names/capabilities |
 | Representative direct provider requests | PASS: Claude Workspace exact response in 8.7s / 15 output tokens; Codex floating exact response in 4.7s |
+| Codex floating native request after browser restart | PASS: exact requested synthetic response, Done 10s |
+| Claude floating streaming/completion and Stop | PASS: 100-name no-change response completed at 41s / 3,246 output tokens. A separate longer response was stopped during streaming and displayed Canceled at 18s. The first completion raced the Stop click and is not counted as cancellation evidence |
+| Claude floating live steering | NOT SUPPORTED in this candidate: queued instruction had no Steer control while streaming. `WpAdminAgentFrameApp.tsx` enables it only for Codex/OpenCode, and `apps/daemon/src/pixflow/direct-site-routes.ts` rejects other agents. The synthetic queued instruction was removed before it ran. This does not satisfy the handoff's Claude steering requirement; changing only the button would be incorrect |
 | Full restart/revoke/steering/cancel matrix across both panels | INCOMPLETE on this candidate; older v2.1.1 evidence does not substitute |
 | Standalone fallback | NOT RUN: no standalone binary found at usual existing install locations; no runtime installed/removed merely to pass |
 | Unapproved-site discovery and Execution entry point in Chris’s Chrome | PASS: foreground Execution Reconnect opened `Connect this site`; Website already listed QA before approval. WordPress retained its direct route |
 | Fresh QA permission completion | PASS: owner approved the action; Chrome requested access only to QA; Allow completed and popup reported `Bridge connected` |
 | Reload and new-tab automatic native route in Chris’s Chrome | PASS: popup closed, no Reconnect click; Execution reported `Bridge connected via Chrome extension` in both cases |
 | Bridge restart with Chris’s popup closed | PASS: namespaced packaged stop produced `Bridge disconnected`; packaged start initially had no active site; background recovery restored QA and Execution reported extension route without opening popup or clicking Reconnect. Transient other-site message was observed during recovery; no exact recovery duration asserted |
-| Browser restart in Chris’s Chrome, foreign/subframe live cases | NOT RUN; deterministic coverage passed |
+| Browser restart in Chris’s Chrome | PASS: owner quit Chrome completely, reopened Chris and QA without popup/Reconnect; Execution reported `Bridge connected via Chrome extension` before any popup interaction |
+| Foreign/subframe live cases | NOT RUN; deterministic coverage passed |
 
 ## Popup defect and fix
 

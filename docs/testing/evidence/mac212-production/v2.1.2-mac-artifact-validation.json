@@ -1,0 +1,368 @@
+{
+  "arm64": {
+    "artifact": {
+      "architecture": "arm64",
+      "execution": "native arm64 Node 24.19.0",
+      "name": "pixflow-design-bridge-2.1.2-mac-arm64.dmg",
+      "bytes": 209977197,
+      "sha256": "a17263235bd4246343a74640b612ae726a2f2f4b4ad712fa0d9c3960b16bc510",
+      "core": "3c77ca403e2d5a3ceaac845c3619e011ae3d9696",
+      "pro": "4271c500eae347288af3ddfd68bc17da43b37e5e",
+      "identity": {
+        "CFBundleIdentifier": "dev.pixflow.bridge",
+        "CFBundleName": "Pixflow Design Bridge",
+        "CFBundleShortVersionString": "2.1.2",
+        "CFBundleVersion": "2.1.2"
+      },
+      "config": {
+        "appVersion": "2.1.2",
+        "bridgeTrayMode": true,
+        "daemonCliEntryRelative": "app/prebundled/daemon/daemon-cli.mjs",
+        "daemonSidecarEntryRelative": "app/prebundled/daemon/daemon-sidecar.mjs",
+        "namespace": "release-stable-pixflow-bridge-mac-arm64",
+        "webSidecarEntryRelative": "app/prebundled/web-sidecar.mjs",
+        "webOutputMode": "standalone"
+      },
+      "nativeConfig": {
+        "hostName": "dev.pixflow.bridge",
+        "bridge": "http://127.0.0.1:7456",
+        "sites": [],
+        "discoverPairedSite": true,
+        "extensionOrigin": "chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/"
+      },
+      "nativePayloadHashes": {
+        "config.json": "9e43de61915fc597e1b1cc2d73e747b785d02a4252292512555993f77184d478",
+        "host.mjs": "e5734affe5454b61ec785d1e82e53b75c519ed725914cb313bc82e2281fdebb6",
+        "install.mjs": "dff8e0609e40cb79466390554f7c029a83124182ffd3b853d3b1f591af1e5625"
+      },
+      "machOBinaries": [
+        {
+          "path": "Contents/MacOS/Pixflow Design Bridge",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/prebuilds/darwin-arm64.node",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/vela",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/opencode/opencode",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/whisper/whisper-cli",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (GPU).app/Contents/MacOS/Pixflow Design Bridge Helper (GPU)",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper.app/Contents/MacOS/Pixflow Design Bridge Helper",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Renderer).app/Contents/MacOS/Pixflow Design Bridge Helper (Renderer)",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Plugin).app/Contents/MacOS/Pixflow Design Bridge Helper (Plugin)",
+          "architectures": [
+            "arm64"
+          ]
+        }
+      ],
+      "signature": "ad-hoc",
+      "notarized": false,
+      "strictSignatureVerification": "pass",
+      "dmgVerification": "pass",
+      "newInstalledAcceptance": "pending artifact lifecycle checks"
+    },
+    "smoke": {
+      "architecture": "arm64",
+      "directHealth": "pass",
+      "nativeHealth": "pass",
+      "nativeFrames": [
+        {
+          "type": "headers",
+          "status": 200
+        },
+        {
+          "type": "chunk"
+        },
+        {
+          "type": "end"
+        }
+      ],
+      "version": "2.1.2",
+      "site": "QA",
+      "foreignOriginRejected": true,
+      "wrongExtensionRejected": true,
+      "registrationScope": "isolated per-user registration using installed artifact; normal Chrome registration preserved"
+    },
+    "preservation": {
+      "architecture": "arm64",
+      "repairPreservedRuntimeFiles": 8,
+      "missing": [],
+      "changed": [],
+      "installedRestart": "pass",
+      "dataScope": "isolated namespace; normal data untouched"
+    }
+  },
+  "x64": {
+    "artifact": {
+      "architecture": "x64",
+      "execution": "x64 Node 24.19.0 under existing Rosetta on arm64 host",
+      "name": "pixflow-design-bridge-2.1.2-mac-x64.dmg",
+      "bytes": 221105338,
+      "sha256": "83a96b1ede8ee398bfac434f67c66112218646d5f4f34d91023c0d8bf6b85873",
+      "core": "3c77ca403e2d5a3ceaac845c3619e011ae3d9696",
+      "pro": "4271c500eae347288af3ddfd68bc17da43b37e5e",
+      "identity": {
+        "CFBundleIdentifier": "dev.pixflow.bridge",
+        "CFBundleName": "Pixflow Design Bridge",
+        "CFBundleShortVersionString": "2.1.2",
+        "CFBundleVersion": "2.1.2"
+      },
+      "config": {
+        "appVersion": "2.1.2",
+        "bridgeTrayMode": true,
+        "daemonCliEntryRelative": "app/prebundled/daemon/daemon-cli.mjs",
+        "daemonSidecarEntryRelative": "app/prebundled/daemon/daemon-sidecar.mjs",
+        "namespace": "release-stable-pixflow-bridge-mac-x64",
+        "webSidecarEntryRelative": "app/prebundled/web-sidecar.mjs",
+        "webOutputMode": "standalone"
+      },
+      "nativeConfig": {
+        "hostName": "dev.pixflow.bridge",
+        "bridge": "http://127.0.0.1:7456",
+        "sites": [],
+        "discoverPairedSite": true,
+        "extensionOrigin": "chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/"
+      },
+      "nativePayloadHashes": {
+        "config.json": "9e43de61915fc597e1b1cc2d73e747b785d02a4252292512555993f77184d478",
+        "host.mjs": "e5734affe5454b61ec785d1e82e53b75c519ed725914cb313bc82e2281fdebb6",
+        "install.mjs": "dff8e0609e40cb79466390554f7c029a83124182ffd3b853d3b1f591af1e5625"
+      },
+      "machOBinaries": [
+        {
+          "path": "Contents/MacOS/Pixflow Design Bridge",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/prebuilds/darwin-x64.node",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/vela",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/opencode/opencode",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/whisper/whisper-cli",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (GPU).app/Contents/MacOS/Pixflow Design Bridge Helper (GPU)",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper.app/Contents/MacOS/Pixflow Design Bridge Helper",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Renderer).app/Contents/MacOS/Pixflow Design Bridge Helper (Renderer)",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Plugin).app/Contents/MacOS/Pixflow Design Bridge Helper (Plugin)",
+          "architectures": [
+            "x86_64"
+          ]
+        }
+      ],
+      "signature": "ad-hoc",
+      "notarized": false,
+      "strictSignatureVerification": "pass",
+      "dmgVerification": "pass",
+      "newInstalledAcceptance": "pending artifact lifecycle checks"
+    },
+    "smoke": {
+      "architecture": "x64",
+      "directHealth": "pass",
+      "nativeHealth": "pass",
+      "nativeFrames": [
+        {
+          "type": "headers",
+          "status": 200
+        },
+        {
+          "type": "chunk"
+        },
+        {
+          "type": "end"
+        }
+      ],
+      "version": "2.1.2",
+      "site": "QA",
+      "foreignOriginRejected": true,
+      "wrongExtensionRejected": true,
+      "registrationScope": "isolated per-user registration using installed artifact; normal Chrome registration preserved"
+    },
+    "preservation": {
+      "architecture": "x64",
+      "repairPreservedRuntimeFiles": 8,
+      "missing": [],
+      "changed": [],
+      "installedRestart": "pass",
+      "dataScope": "isolated namespace; normal data untouched"
+    }
+  }
+}

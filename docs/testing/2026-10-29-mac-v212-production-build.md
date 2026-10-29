@@ -29,3 +29,8 @@ Upload both production DMGs, SHA256 checksums, sizes, final source-pair manifest
 Return draft URL, asset IDs, checksums and remaining artifact limitations to the coordinator. No further handoff is required to carry out the preparation, build, checks and draft uploads above.
 
 Prior detailed report: [Mac handoff](2026-10-29-mac-to-windows-v212-handoff.md).
+
+
+## Mac build return
+
+Production v2.1.2 arm64 and x64 DMGs have been built and validated from Core `3c77ca403e2d5a3ceaac845c3619e011ae3d9696` and Pro `4271c500eae347288af3ddfd68bc17da43b37e5e`. See the [artifact report](evidence/mac212-production/README.md), final source-pair manifest and upload receipts in that directory. Release preparation PRs: [Core #45](https://github.com/pixflowdev/pixflow-design/pull/45), [Pro #25](https://github.com/pixflowdev/pixflow-design-pro/pull/25). Intel evidence is Rosetta on Apple Silicon. Both DMGs are ad-hoc signed and not notarized. Public deployment and Store submission remain on hold.

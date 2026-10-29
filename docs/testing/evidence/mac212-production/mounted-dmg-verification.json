@@ -1,0 +1,26 @@
+[
+  {
+    "architecture": "arm64",
+    "dmg": "pixflow-design-bridge-2.1.2-mac-arm64.dmg",
+    "readOnlyMount": true,
+    "identityVersion": "pass",
+    "strictCodeSignature": "pass",
+    "nativePayloadHashes": "match verified build",
+    "machOBinaries": 18,
+    "architectures": "match verified build",
+    "portableConfig": "pass",
+    "standaloneLauncherVersion": "2.1.2"
+  },
+  {
+    "architecture": "x64",
+    "dmg": "pixflow-design-bridge-2.1.2-mac-x64.dmg",
+    "readOnlyMount": true,
+    "identityVersion": "pass",
+    "strictCodeSignature": "pass",
+    "nativePayloadHashes": "match verified build",
+    "machOBinaries": 18,
+    "architectures": "match verified build",
+    "portableConfig": "pass",
+    "standaloneLauncherVersion": "2.1.2"
+  }
+]

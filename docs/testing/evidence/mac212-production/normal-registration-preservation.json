@@ -1,0 +1,6 @@
+{
+  "nativePayloadUnchanged": true,
+  "nativeManifestUnchanged": true,
+  "normalChromePermissions": "not modified by artifact checks",
+  "testedRegistration": "isolated per-user fixture using installed app executable"
+}

@@ -107,7 +107,8 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    const generation=permissionGeneration;
    await connectRemembered(message.origin);
    if(generation!==permissionGeneration||!await enabled(message.origin)){reply({state:'permission'});return;}
-   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName);
+   const site=config.candidates?.find((candidate:BrowserSite)=>candidate.siteOrigin===message.origin);
+   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName,site);
    reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
   }
   const generation=permissionGeneration;

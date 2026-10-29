@@ -34,19 +34,18 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.1.2 =
-* Discover the Claude Desktop-managed CLI and its live model capabilities on macOS.
-* Correct multi-site Chrome extension connection health checks.
-* Use the matching Pixflow Design Bridge 2.1.2 for Local CLI. Existing content, chats and settings are preserved.
 
-= Unreleased =
+* Use the Claude Desktop-managed runtime first on Windows and macOS, with an installed Claude CLI as the fallback; no separate CLI installation is needed when the app runtime is available.
+* Sign in with Claude from Execution settings, with a visible waiting state, cancellation and automatic connection refresh after browser authorization.
+* Discover Claude models and supported effort levels from the selected runtime instead of showing a fixed, outdated model list.
+* Identify Desktop-app runtimes in Execution settings and improve provider-card spacing, active-row hover states and sign-in controls.
+* Remove misleading dollar estimates from chat response footers while preserving recorded usage and token information.
+* Show whether Bridge is connected directly or through the Chrome extension in Execution settings, matching the Bridge and account menus.
+* Let Connect and Reconnect request the optional extension connection from Execution settings and chat controls, opening its approval popup when needed while retaining direct Bridge access. Requires the updated Chrome extension, pending Google review and publication.
+* Allow provider connection tests through the extension connection. The matching extension update also corrects connection status when several sites are approved and adds a Close button to its popup; these extension changes are pending Google review and publication.
+* Update Pixflow Design Bridge to 2.1.2 for Local CLI. Existing content, chats, credentials and settings are preserved; API execution does not require Bridge.
 
-* Use Claude Desktop first with installed Claude CLI fallback, live model/effort discovery and browser sign-in from Execution settings.
-* Clarify Desktop runtime sources and improve Execution provider-card layout and sign-in waiting states.
-* Remove misleading dollar estimates from response footers while retaining stored usage.
-* Reconnect through the optional Chrome extension from Execution, floating-panel and Workspace controls; show the actual connection route. Extension update is pending review/publication.
-* Allow provider connection tests through the native extension transport without exposing unrelated endpoints.
-
-= 2.1.1 (unreleased) =
+= 2.1.1 =
 
 * Show a Settings notification dot when the active language pack needs updating, with safe download failure and retry handling.
 

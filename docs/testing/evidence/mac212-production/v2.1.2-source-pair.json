@@ -1,0 +1,31 @@
+{
+  "version": "2.1.2",
+  "channel": "production",
+  "core": "3c77ca403e2d5a3ceaac845c3619e011ae3d9696",
+  "pro": "4271c500eae347288af3ddfd68bc17da43b37e5e",
+  "proModuleApi": 14,
+  "extensionId": "hbnbiboohlelmngadeolikeejamjlbkh",
+  "corePr": "https://github.com/pixflowdev/pixflow-design/pull/45",
+  "proPr": "https://github.com/pixflowdev/pixflow-design-pro/pull/25",
+  "popupFixPr": "https://github.com/pixflowdev/pixflow-design/pull/44",
+  "artifacts": [
+    {
+      "name": "pixflow-design-bridge-2.1.2-mac-arm64.dmg",
+      "bytes": 209977197,
+      "sha256": "a17263235bd4246343a74640b612ae726a2f2f4b4ad712fa0d9c3960b16bc510"
+    },
+    {
+      "name": "pixflow-design-bridge-2.1.2-mac-x64.dmg",
+      "bytes": 221105338,
+      "sha256": "83a96b1ede8ee398bfac434f67c66112218646d5f4f34d91023c0d8bf6b85873"
+    },
+    {
+      "name": "pixflow-design-bridge-extension-1.0.3-v2.1.2.zip",
+      "bytes": 42754,
+      "sha256": "5ee8924e5dc62e8be9d73570a52da3f57403a1e1b5ce586dfffb0ac977087b41"
+    }
+  ],
+  "intelEvidence": "x64 under Rosetta on Apple Silicon; not physical Intel",
+  "signing": "ad-hoc; not notarized",
+  "publication": "draft only"
+}

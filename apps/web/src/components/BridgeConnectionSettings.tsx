@@ -46,7 +46,7 @@ export function BridgeConnectionSettings() {
       <div className={styles.copy}>
         <strong>{t('ui.settingsDialog.bridge')}</strong>
         <span className={styles.status} role="status" aria-live="polite">
-          <i data-state={status.state} aria-hidden="true" />{t(status.label)}
+          <i data-state={status.state} aria-hidden="true" />{t(connected && payload.connectionRoute === 'chrome-extension' ? 'bridge.statusExtension' : connected && payload.connectionRoute === 'direct' ? 'bridge.statusDirect' : status.label)}
         </span>
       </div>
       <Button disabled={checking} onClick={() => {

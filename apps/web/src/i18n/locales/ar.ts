@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "settings.claudeSignIn": "تسجيل الدخول باستخدام Claude",
+  "settings.claudeWaiting": "بانتظار تسجيل الدخول…",
+  "settings.claudeSignInFailed": "لم يكتمل تسجيل الدخول. تحقق من Bridge وحاول مجددًا.",
+  "settings.claudeBrowserHint": "أكمل تسجيل الدخول في المتصفح. سيتحقق Pixflow من الاتصال تلقائيًا.",
+  "settings.claudeSignedIn": "تم تسجيل الدخول",
   "history.editorTransitionFailed": "تعذّر تأكيد الانتقال بين المحرّرات. أعد فتح هذه اللوحة لإعادة الاتصال؛ لم يُنفَّذ أي تعديل معلّق مرة أخرى.",
+  "settings.modelDiscoveryUnavailable": "اكتشاف النماذج غير متاح — يُستخدم نموذج Claude الافتراضي",
+  "settings.modelSourceCliFallback": "مباشرةً من CLI (اكتشاف تطبيق سطح المكتب غير متاح)",
+  "bridge.statusDirect": "Bridge متصل مباشرةً",
+  "bridge.statusExtension": "Bridge متصل عبر إضافة Chrome",
   "bridge.connectedDirect": "متصل مباشرةً",
   "bridge.connectedExtension": "متصل عبر إضافة Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "حفظ في Bricks",
@@ -557,6 +566,8 @@ export const ar: Dict = {
   'settings.themeDark': 'داكن',
   'settings.agentModelHead': 'النموذج لـ:',
   'settings.modelPicker': 'النموذج',
+  'settings.modelSourceDesktop': "مباشر من تطبيق سطح المكتب",
+  'settings.modelPickerDesktopHint': "تأتي النماذج من بيئة التشغيل التي يديرها تطبيق سطح المكتب. يستخدم الخيار الافتراضي إعداداتها الخاصة.",
   'settings.modelSourceLive': 'مباشر من CLI',
   'settings.modelSourceFallback': 'القائمة المضمنة',
   'settings.reasoningPicker': 'جهد التفكير',

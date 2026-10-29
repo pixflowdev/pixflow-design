@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "settings.claudeSignIn": "使用 Claude 登录",
+  "settings.claudeWaiting": "正在等待登录…",
+  "settings.claudeSignInFailed": "登录未完成。请检查 Bridge 后重试。",
+  "settings.claudeBrowserHint": "请在浏览器中完成登录。Pixflow 将自动检查连接。",
+  "settings.claudeSignedIn": "已登录",
   "history.editorTransitionFailed": "无法确认编辑器切换。请重新打开此面板以重新连接；未重复执行任何待处理的编辑。",
+  "settings.modelDiscoveryUnavailable": "模型发现不可用 — 使用 Claude 默认模型",
+  "settings.modelSourceCliFallback": "从 CLI 实时获取（桌面应用发现不可用）",
+  "bridge.statusDirect": "Bridge 已直接连接",
+  "bridge.statusExtension": "Bridge 已通过 Chrome 扩展连接",
   "bridge.connectedDirect": "已直接连接",
   "bridge.connectedExtension": "已通过 Chrome 扩展连接",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "保存到 Bricks",
@@ -557,6 +566,8 @@ export const zhCN: Dict = {
   'settings.themeDark': '深色',
   'settings.agentModelHead': '模型：',
   'settings.modelPicker': '模型',
+  'settings.modelSourceDesktop': "实时来自桌面应用",
+  'settings.modelPickerDesktopHint': "模型来自桌面应用管理的运行时。默认选项使用该运行时的配置。",
   'settings.modelSourceLive': '来自 CLI 的实时列表',
   'settings.modelSourceFallback': '内置列表',
   'settings.reasoningPicker': '推理强度',

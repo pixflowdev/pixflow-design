@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "settings.claudeSignIn": "Claudeでサインイン",
+  "settings.claudeWaiting": "サインインを待っています…",
+  "settings.claudeSignInFailed": "サインインが完了しませんでした。Bridgeを確認して再試行してください。",
+  "settings.claudeBrowserHint": "ブラウザーでサインインを完了してください。Pixflowが接続を自動的に確認します。",
+  "settings.claudeSignedIn": "サインイン済み",
   "history.editorTransitionFailed": "エディターの切り替えを確認できませんでした。このパネルを開き直して再接続してください。保留中の編集は再実行されていません。",
+  "settings.modelDiscoveryUnavailable": "モデルを検出できません — Claude のデフォルトを使用",
+  "settings.modelSourceCliFallback": "CLI から取得（デスクトップの検出は利用不可）",
+  "bridge.statusDirect": "Bridge は直接接続中",
+  "bridge.statusExtension": "Bridge は Chrome 拡張機能経由で接続中",
   "bridge.connectedDirect": "直接接続中",
   "bridge.connectedExtension": "Chrome 拡張機能経由で接続中",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks に保存",
@@ -557,6 +566,8 @@ export const ja: Dict = {
   'settings.themeDark': 'ダーク',
   'settings.agentModelHead': 'モデル：',
   'settings.modelPicker': 'モデル',
+  'settings.modelSourceDesktop': "デスクトップアプリから取得",
+  'settings.modelPickerDesktopHint': "モデルはデスクトップアプリが管理するランタイムから取得します。デフォルトではその設定を使用します。",
   'settings.modelSourceLive': 'CLI から取得',
   'settings.modelSourceFallback': '組み込みリスト',
   'settings.reasoningPicker': '推論の強さ',

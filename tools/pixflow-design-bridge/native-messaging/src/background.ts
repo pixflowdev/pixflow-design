@@ -2,13 +2,15 @@ import {probeBridge} from './connection-status';
 import {discoverBrowserSites, validateBrowserSite, type BrowserSite} from './browser-sites';
 import {enrollNativeSite} from './native-enroll';
 import {automaticConnection} from './automatic-connection';
+import {reconnectRequest} from './reconnect-request';
 declare const chrome:any;
 const configPromise=fetch(chrome.runtime.getURL('config.json')).then(r=>r.json());
+const requestedSites = new Map<string, BrowserSite>();
 async function configuration(){
  const config=await configPromise;
  if(!config.discoverPairedSite)return config;
  const stored=await chrome.storage.local.get(['rememberedSites','sites','directSites']);
- const candidates=await discoverBrowserSites(chrome);
+ const candidates=[...await discoverBrowserSites(chrome), ...requestedSites.values()];
  const remembered=(stored.rememberedSites||[]).map((site:any)=>validateBrowserSite(site,site?.siteOrigin)).filter(Boolean) as BrowserSite[];
  const sites=[...new Set([...candidates.map(site=>site.siteOrigin),...remembered.map(site=>site.siteOrigin),...(stored.sites||[]),...(stored.directSites||[])])];
  return {...config,sites,candidates:[...candidates,...remembered]};
@@ -75,6 +77,15 @@ const reconcile = automaticConnection(chrome, configuration, async origin => {
  }
 });
 const refresh=()=>void reconcile().catch(()=>{});
+const reconnect = reconnectRequest(chrome, reconcile, site => {
+ requestedSites.set(site.siteOrigin, site);
+ if(requestedSites.size>50)requestedSites.delete(requestedSites.keys().next().value!);
+});
+chrome.runtime.onMessageExternal?.addListener((message:any,sender:any,reply:any)=>{
+ if(message?.type!=='pixflow-bridge-reconnect')return;
+ void reconnect(message,sender).then(reply,()=>reply({state:'unavailable'}));
+ return true;
+});
 chrome.runtime.onInstalled.addListener(refresh);
 chrome.runtime.onStartup.addListener(refresh);
 chrome.alarms?.create('pixflow-reconnect',{periodInMinutes:0.5});
@@ -96,7 +107,8 @@ chrome.runtime.onMessage.addListener((message:any,sender:any,reply:any)=>{
    const generation=permissionGeneration;
    await connectRemembered(message.origin);
    if(generation!==permissionGeneration||!await enabled(message.origin)){reply({state:'permission'});return;}
-   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName);
+   const site=config.candidates?.find((candidate:BrowserSite)=>candidate.siteOrigin===message.origin);
+   const state=await probeBridge(chrome.runtime,message.origin,config.bridge,7000,config.hostName,site);
    reply({state:generation===permissionGeneration&&await enabled(message.origin)?state:'permission'});return;
   }
   const generation=permissionGeneration;

@@ -3,6 +3,7 @@ declare const chrome:any;
 const element=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const site=element<HTMLSelectElement>('site'),action=element<HTMLButtonElement>('action'),disconnect=element<HTMLButtonElement>('disconnect');
 const title=element('state-title'),description=element('state-description'),status=element('connection'),notice=element('notice');
+element<HTMLButtonElement>('close').onclick=()=>window.close();
 let origin='',busy=false,state:ConnectionState|'unsupported'='direct';
 const copy:Record<string,[string,string,string]>={
  direct:['Connect this site','Use your local CLI from Pixflow in WordPress or your builder.','Connect to Pixflow Bridge'],

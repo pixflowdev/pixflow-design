@@ -34,6 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.1.2 =
+* Find the optional Chrome extension helper in Execution > Local CLI settings. The install banner hides when the extension is detected on the current site; Bridge remains required.
 
 * Use the Claude Desktop-managed runtime first on Windows and macOS, with an installed Claude CLI as the fallback; no separate CLI installation is needed when the app runtime is available.
 * Sign in with Claude from Execution settings, with a visible waiting state, cancellation and automatic connection refresh after browser authorization.
@@ -41,8 +42,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Identify Desktop-app runtimes in Execution settings and improve provider-card spacing, active-row hover states and sign-in controls.
 * Remove misleading dollar estimates from chat response footers while preserving recorded usage and token information.
 * Show whether Bridge is connected directly or through the Chrome extension in Execution settings, matching the Bridge and account menus.
-* Let Connect and Reconnect request the optional extension connection from Execution settings and chat controls, opening its approval popup when needed while retaining direct Bridge access. Requires the updated Chrome extension, pending Google review and publication.
-* Allow provider connection tests through the extension connection. The matching extension update also corrects connection status when several sites are approved and adds a Close button to its popup; these extension changes are pending Google review and publication.
+* Let Connect and Reconnect request the optional extension connection from Execution settings and chat controls, opening its approval popup when needed while retaining direct Bridge access. Requires Chrome extension 1.0.3 or later.
+* Allow provider connection tests through the extension connection. The matching extension update also corrects connection status when several sites are approved and adds a Close button to its popup; these changes are available in Chrome extension 1.0.3.
 * Update Pixflow Design Bridge to 2.1.2 for Local CLI. Existing content, chats, credentials and settings are preserved; API execution does not require Bridge.
 
 = 2.1.1 =

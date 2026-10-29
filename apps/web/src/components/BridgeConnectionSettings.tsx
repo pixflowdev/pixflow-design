@@ -5,6 +5,7 @@ import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
 import { installerUrlForPlatform } from '../pixflow/bridge-update';
 import { normalizeBridgeStatus, type BridgeStatusPayload } from './WorkspaceBridgeStatus';
 import styles from './BridgeConnectionSettings.module.css';
+import { BridgeExtensionBanner } from './BridgeExtensionBanner';
 
 function useBridgePayload() {
   const [payload, setPayload] = useState<BridgeStatusPayload>(() =>
@@ -24,7 +25,7 @@ export function BridgeCliSettings({ embedded, children }: { embedded: boolean; c
   const payload = useBridgePayload();
   const t = useT();
   if (!embedded) return <>{children}</>;
-  return <><BridgeConnectionSettings />{normalizeBridgeStatus(payload).state === 'connected'
+  return <><BridgeConnectionSettings /><BridgeExtensionBanner />{normalizeBridgeStatus(payload).state === 'connected'
     ? children : <p className={styles.offlineNote}>{t('settings.cliConnectToView')}</p>}</>;
 }
 

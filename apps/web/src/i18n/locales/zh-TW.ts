@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const zhTW: Dict = {
+  "settings.extensionInstall": "安裝 Pixflow Design Bridge Chrome 擴充功能",
+  "settings.extensionHint": "選用的輔助工具，透過 Chrome 將 WordPress 連線至 Pixflow Design Bridge。您的電腦仍須安裝並執行 Bridge。",
+
   "settings.claudeSignIn": "使用 Claude 登入",
   "settings.claudeWaiting": "正在等待登入…",
   "settings.claudeSignInFailed": "登入未完成。請檢查 Bridge 後重試。",

@@ -1,0 +1,8 @@
+.banner { display: flex; align-items: flex-start; gap: 12px; padding: 16px; margin-block: -8px 20px; border-radius: 16px; corner-shape: squircle; background: var(--bg-fill-tertiary, var(--bg-elevated)); color: var(--text); }
+.icon { flex-shrink: 0; margin-top: 1px; color: var(--text-muted); }
+.copy { min-width: 0; display: grid; gap: 5px; }
+.link { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.5; text-decoration: none; }
+.link svg { flex-shrink: 0; }
+.link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.copy p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }

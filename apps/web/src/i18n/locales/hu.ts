@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "settings.extensionInstall": "A Pixflow Design Bridge Chrome-bővítmény telepítése",
+  "settings.extensionHint": "Opcionális segédeszköz, amely a Chrome-on keresztül kapcsolja össze a WordPress és a Pixflow Design Bridge alkalmazást. A Bridge alkalmazásnak továbbra is telepítve kell lennie és futnia kell a számítógépén.",
+
   "settings.claudeSignIn": "Bejelentkezés Claude-dal",
   "settings.claudeWaiting": "Várakozás a bejelentkezésre…",
   "settings.claudeSignInFailed": "A bejelentkezés nem fejeződött be. Ellenőrizd a Bridge-et, majd próbáld újra.",

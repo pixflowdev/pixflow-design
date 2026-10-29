@@ -53,7 +53,7 @@ The first Bridge attempt refused a temporarily dirty Core pin while a simultaneo
 | Claude floating streaming/completion and Stop | PASS: 100-name no-change response completed at 41s / 3,246 output tokens. A separate longer response was stopped during streaming and displayed Canceled at 18s. The first completion raced the Stop click and is not counted as cancellation evidence |
 | Claude floating live steering | NOT APPLICABLE: owner clarified that steering acceptance is for Codex only; Claude steering has not been implemented and is not a release blocker. The missing Claude Steer button matches the backend capability. The synthetic queued instruction was removed before it ran |
 | Full restart/revoke/steering/cancel matrix across both panels | INCOMPLETE on this candidate; older v2.1.1 evidence does not substitute |
-| Standalone fallback | NOT RUN: no standalone binary found at usual existing install locations; no runtime installed/removed merely to pass |
+| Standalone fallback | Scoped resolver check PASS with the real existing Desktop-managed CLI reused as the configured CLI: 13 runtime models returned, Desktop preference restored, isolated unauthenticated state confirmed. A separately installed standalone distribution was unavailable and remains NOT RUN |
 | Unapproved-site discovery and Execution entry point in Chris’s Chrome | PASS: foreground Execution Reconnect opened `Connect this site`; Website already listed QA before approval. WordPress retained its direct route |
 | Fresh QA permission completion | PASS: owner approved the action; Chrome requested access only to QA; Allow completed and popup reported `Bridge connected` |
 | Reload and new-tab automatic native route in Chris’s Chrome | PASS: popup closed, no Reconnect click; Execution reported `Bridge connected via Chrome extension` in both cases |
@@ -75,8 +75,19 @@ Native popup screenshots are retained locally pending privacy review because the
 
 ## Preservation and remaining work
 
-Full QA database/plugin and native-registration backups exist locally, outside Git. Synthetic chat additions are intentional. Test-only Claude auth preference is currently retained for continuing acceptance; restore it when the run is complete. Normal Claude authentication was not logged out. A second previously approved site enrolled automatically, but no prompt/content mutation was sent there.
+Full QA database/plugin and native-registration backups exist locally, outside Git. Synthetic chat additions are intentional. The final check found no test-only CLAUDE_CONFIG_DIR override remaining in the QA daemon config; isolated authentication directories and backups remain local. Normal Claude authentication was not logged out. A second previously approved site enrolled automatically, but no prompt/content mutation was sent there.
 
 Complete the remaining live gates and backup reconciliation, then return acceptance to the coordinator. Final production DMGs require a new version/source pair: do not overwrite released 2.1.1 or publish Store/release/updater changes. Earlier Core #42, Pro #23/#24 and report #43 remain provenance for the corrected candidate.
 
 Owner identifies v2.1.2 as the intended production version. This resolves the version direction, not the outstanding acceptance checks or final source freeze including the popup fix and matching Pro pin. Claude steering is explicitly excluded from the remaining checks.
+
+
+## Final session additions and owner decision
+
+- Owner clarified that steering is required for Codex only. Claude steering is not implemented and is not a blocker.
+- Owner requested avoiding the five-minute live timeout wait. Live timeout is waived; deterministic sign-in timeout/cancel/retry, discovery and model-probe tests passed: 15 passed, one Windows-only skip. Provider UI checks: 14 passed. Native boundary rerun: 64 passed, one skipped.
+- Fresh isolated sign-in completed and the UI automatically showed `Signed in`. The provider card still showed `Authentication required` after the test-only config was overwritten. This is inconclusive fixture evidence, not a confirmed product defect or a clean automatic-card-refresh pass.
+- Codex floating native Steer was delivered during streaming; reload reattached the active response; Stop then displayed Canceled at 1m 02s. No new prompt was submitted on reload.
+- Live Chrome permission withholding was applied during a synthetic run. Debugger interference and an intervening popup interaction prevent a clean assertion about native-port closure. QA-only persistent access was restored; the route recovered via Chrome extension and stopped history remained present. Deterministic revocation/foreign-origin/subframe checks passed; live foreign/subframe cases remain NOT RUN.
+- Database comparison found no changes to posts, post metadata, comments, taxonomies or existing chat messages. Intentional synthetic chats/project records were added; options, session metadata and caches also changed. This is not a claim that the entire database is byte-identical. Backups remain intact.
+- Owner agreed to proceed toward v2.1.2 production installer builds once the final paired source/native payload is frozen. No confirmed additional Bridge-specific defect blocks producing draft installers. This is not unconditional release/Store publication approval. See `docs/testing/2026-10-29-mac-to-windows-v212-handoff.md`.

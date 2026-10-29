@@ -89,3 +89,15 @@ details[open] summary svg { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { *, *:after { animation: none !important; transition: none !important; } }
 
 .site-picker select:focus, .site-picker select:focus-visible { outline: none; box-shadow: none; }
+
+/* The browser owns the outer window; round the inset app surface instead. */
+body { padding: 8px; background: var(--surface); }
+.popup-surface { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+header { padding: 12px 16px; }
+main { padding: 0 16px 14px; }
+.close { margin-left: auto; display: grid; place-items: center; width: 32px; height: 32px; min-height: 32px; padding: 6px; flex-shrink: 0; background: transparent; color: var(--muted); border-radius: 10px; }
+.close svg { width: 18px; height: 18px; }
+.close:hover { background: var(--hover); color: var(--text); }
+@supports (corner-shape: superellipse(1.5)) {
+  .popup-surface { corner-shape: superellipse(1.5); }
+}

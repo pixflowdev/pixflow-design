@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "settings.claudeSignIn": "Войти через Claude",
+  "settings.claudeWaiting": "Ожидание входа…",
+  "settings.claudeSignInFailed": "Вход не завершён. Проверьте Bridge и повторите попытку.",
+  "settings.claudeBrowserHint": "Завершите вход в браузере. Pixflow автоматически проверит подключение.",
+  "settings.claudeSignedIn": "Вход выполнен",
   "history.editorTransitionFailed": "Не удалось подтвердить переход между редакторами. Откройте эту панель снова для подключения. Ожидающие изменения не выполнялись повторно.",
+  "settings.modelDiscoveryUnavailable": "Обнаружение моделей недоступно — используется модель Claude по умолчанию",
+  "settings.modelSourceCliFallback": "Из CLI (обнаружение моделей Desktop недоступно)",
+  "bridge.statusDirect": "Bridge подключён напрямую",
+  "bridge.statusExtension": "Bridge подключён через расширение Chrome",
   "bridge.connectedDirect": "Подключено напрямую",
   "bridge.connectedExtension": "Подключено через расширение Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Сохранить в Bricks",
@@ -557,6 +566,8 @@ export const ru: Dict = {
   'settings.themeDark': 'Тёмная',
   'settings.agentModelHead': 'Модель для:',
   'settings.modelPicker': 'Модель',
+  'settings.modelSourceDesktop': "Из настольного приложения",
+  'settings.modelPickerDesktopHint': "Модели поступают из среды выполнения, управляемой настольным приложением. По умолчанию используется её конфигурация.",
   'settings.modelSourceLive': 'Из CLI в реальном времени',
   'settings.modelSourceFallback': 'Встроенный список',
   'settings.reasoningPicker': 'Сложность рассуждений',

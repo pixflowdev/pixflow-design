@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pixflow Bridge</title><link rel="stylesheet" href="popup.css"></head>
-<body>
- <header><img src="brand.svg" width="24" height="24" alt=""><span>Pixflow Bridge</span></header>
+<body><div class="popup-surface">
+ <header><img src="brand.svg" width="24" height="24" alt=""><span>Pixflow Bridge</span><button id="close" class="close" type="button" aria-label="Close Pixflow Bridge" title="Close"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
  <main>
   <div class="site-picker"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg><select id="site" aria-label="Website"><option value="" disabled selected>Select a website</option></select></div>
   <section id="connection" data-state="checking" aria-live="polite" aria-atomic="true">
@@ -13,5 +13,5 @@
   <p id="notice" role="status"></p>
   <div class="utilities"><details><summary>Connection help<svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 4 4 4-4 4"/></svg></summary><div class="help"><p>Keep Pixflow Bridge running on your computer. In WordPress, open Pixflow → Execution → Local CLI and rescan if your agents are not listed.</p><p>The extension is optional. Disconnecting it keeps your chats and settings, and leaves the direct connection available.</p><p>Only the site paired with Bridge can connect after you allow Chrome access. WordPress permissions still apply.</p></div></details><button id="disconnect" class="secondary" hidden>Disconnect this site</button></div>
  </main>
- <script src="popup.js"></script>
+ </div><script src="popup.js"></script>
 </body></html>

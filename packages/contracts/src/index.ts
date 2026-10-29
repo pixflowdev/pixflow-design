@@ -97,3 +97,4 @@ export * from './prompts/wordpress-admin-tools.js';
 export * from './api/pixflow-chat-history.js';
 export * from './api/pixflow-feature-runtime.js';
 export * from './api/pixflow-bricks-session.js';
+export * from './api/claude-sign-in.js';

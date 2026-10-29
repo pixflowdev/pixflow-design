@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "settings.claudeSignIn": "Bejelentkezés Claude-dal",
+  "settings.claudeWaiting": "Várakozás a bejelentkezésre…",
+  "settings.claudeSignInFailed": "A bejelentkezés nem fejeződött be. Ellenőrizd a Bridge-et, majd próbáld újra.",
+  "settings.claudeBrowserHint": "Fejezd be a bejelentkezést a böngészőben. A Pixflow automatikusan ellenőrzi a kapcsolatot.",
+  "settings.claudeSignedIn": "Bejelentkezve",
   "history.editorTransitionFailed": "Nem sikerült megerősíteni a szerkesztőváltást. A kapcsolódáshoz nyisd meg újra ezt a panelt. Egyetlen függőben lévő módosítás sem lett újra végrehajtva.",
+  "settings.modelDiscoveryUnavailable": "A modellek felismerése nem érhető el — a Claude alapértelmezése érvényes",
+  "settings.modelSourceCliFallback": "Élő lista a CLI-ből (az asztali felismerés nem érhető el)",
+  "bridge.statusDirect": "A Bridge közvetlenül csatlakoztatva",
+  "bridge.statusExtension": "A Bridge a Chrome-bővítményen keresztül csatlakoztatva",
   "bridge.connectedDirect": "Közvetlenül csatlakoztatva",
   "bridge.connectedExtension": "Csatlakoztatva a Chrome-bővítményen keresztül",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Mentés a Bricksbe",
@@ -557,6 +566,8 @@ export const hu: Dict = {
   'settings.themeDark': 'Sötét',
   'settings.agentModelHead': 'Modell ehhez:',
   'settings.modelPicker': 'Modell',
+  'settings.modelSourceDesktop': "Élőben az asztali alkalmazásból",
+  'settings.modelPickerDesktopHint': "A modellek az asztali alkalmazás által kezelt futtatókörnyezetből származnak. Az alapértelmezett annak beállításait használja.",
   'settings.modelSourceLive': 'Élőben a CLI-ből',
   'settings.modelSourceFallback': 'Beépített lista',
   'settings.reasoningPicker': 'Gondolkodási erőfeszítés',

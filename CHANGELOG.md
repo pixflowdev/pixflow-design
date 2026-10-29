@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Use Claude Desktop first with installed Claude CLI fallback, live model/effort discovery and browser sign-in from Execution settings.
+- Clarify Desktop runtime sources and improve Execution provider-card layout and sign-in waiting states.
+- Remove misleading dollar estimates from response footers while retaining stored usage.
+- Reconnect through the optional Chrome extension from Execution, floating-panel and Workspace controls; show the actual connection route. Extension update is pending review/publication.
+- Allow provider connection tests through the native extension transport without exposing unrelated endpoints.
+
 ## [2.1.1] - Unreleased
 
 - Show a notification dot in Settings when the active language pack needs updating; keep the update available after a failed download and clear it after a successful retry.

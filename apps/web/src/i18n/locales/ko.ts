@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "settings.claudeSignIn": "Claude로 로그인",
+  "settings.claudeWaiting": "로그인 대기 중…",
+  "settings.claudeSignInFailed": "로그인이 완료되지 않았습니다. Bridge를 확인하고 다시 시도하세요.",
+  "settings.claudeBrowserHint": "브라우저에서 로그인을 완료하세요. Pixflow가 자동으로 연결을 확인합니다.",
+  "settings.claudeSignedIn": "로그인됨",
   "history.editorTransitionFailed": "편집기 전환을 확인할 수 없습니다. 이 패널을 다시 열어 연결하세요. 대기 중인 편집은 다시 실행되지 않았습니다.",
+  "settings.modelDiscoveryUnavailable": "모델 검색 불가 — Claude 기본값 사용",
+  "settings.modelSourceCliFallback": "CLI에서 실시간 조회 (데스크톱 검색 불가)",
+  "bridge.statusDirect": "Bridge 직접 연결됨",
+  "bridge.statusExtension": "Bridge Chrome 확장 프로그램으로 연결됨",
   "bridge.connectedDirect": "직접 연결됨",
   "bridge.connectedExtension": "Chrome 확장 프로그램으로 연결됨",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks에 저장",
@@ -557,6 +566,8 @@ export const ko: Dict = {
   'settings.themeDark': '다크',
   'settings.agentModelHead': '모델:',
   'settings.modelPicker': '모델',
+  'settings.modelSourceDesktop': "데스크톱 앱에서 실시간 제공",
+  'settings.modelPickerDesktopHint': "모델은 데스크톱 앱이 관리하는 런타임에서 제공됩니다. 기본값은 해당 런타임의 설정을 사용합니다.",
   'settings.modelSourceLive': 'CLI에서 실시간 가져옴',
   'settings.modelSourceFallback': '내장 목록',
   'settings.reasoningPicker': '추론 (Reasoning)',

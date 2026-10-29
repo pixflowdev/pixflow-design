@@ -373,7 +373,40 @@
     });
   }
 
-  function requestReconnect() {
+  var extensionReconnectPending = false;
+  function requestReconnect(event) {
+    // Every explicit recovery surface shares this path. Extension readiness is
+    // a transport notification, not another user request (avoid a reconnect loop).
+    var source = event && event.detail && event.detail.source;
+    if (source !== 'native-extension' && source !== 'license-pairing' && window.chrome && window.chrome.runtime && typeof window.chrome.runtime.sendMessage === 'function') {
+      if (extensionReconnectPending) return;
+      extensionReconnectPending = true;
+      var settled = false;
+      var finish = function () {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        extensionReconnectPending = false;
+        reconnectDirect();
+      };
+      var timer = window.setTimeout(finish, 2000);
+      var site = window.__PIXFLOW_DESIGN_WORDPRESS__ || window.pixflowDesignWpAdmin || window.pixflowDesignShell || config;
+      try {
+        window.chrome.runtime.sendMessage('hbnbiboohlelmngadeolikeejamjlbkh', {
+          type: 'pixflow-bridge-reconnect',
+          site: {siteKey: site.siteHash, siteOrigin: site.siteOrigin, siteUrl: site.siteUrl, siteLabel: site.siteLabel}
+        }, function () {
+          // Older/absent extensions are normal: retain the existing direct flow.
+          void window.chrome.runtime.lastError;
+          finish();
+        });
+      } catch (_) { finish(); }
+      return;
+    }
+    reconnectDirect();
+  }
+
+  function reconnectDirect() {
     if (hasResolvedOnce && currentState === 'update') {
       window.open(installerUrl(), '_blank', 'noopener,noreferrer');
       return;

@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const fr: Dict = {
+  "settings.claudeSignIn": "Se connecter avec Claude",
+  "settings.claudeWaiting": "Connexion en attente…",
+  "settings.claudeSignInFailed": "La connexion n’a pas abouti. Vérifiez Bridge et réessayez.",
+  "settings.claudeBrowserHint": "Terminez la connexion dans votre navigateur. Pixflow vérifiera automatiquement la connexion.",
+  "settings.claudeSignedIn": "Connecté",
   "history.editorTransitionFailed": "Impossible de confirmer le changement d’éditeur. Rouvrez ce panneau pour rétablir la connexion. Aucune modification en attente n’a été répétée.",
+  "settings.modelDiscoveryUnavailable": "Détection des modèles indisponible — modèle par défaut de Claude utilisé",
+  "settings.modelSourceCliFallback": "En direct du CLI (détection Desktop indisponible)",
+  "bridge.statusDirect": "Bridge connecté directement",
+  "bridge.statusExtension": "Bridge connecté via l’extension Chrome",
   "bridge.connectedDirect": "Connexion directe",
   "bridge.connectedExtension": "Connecté via l’extension Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Enregistrer dans Bricks",
@@ -557,6 +566,8 @@ export const fr: Dict = {
   'settings.themeDark': 'Sombre',
   'settings.agentModelHead': 'Modèle pour :',
   'settings.modelPicker': 'Modèle',
+  'settings.modelSourceDesktop': "En direct depuis l’application de bureau",
+  'settings.modelPickerDesktopHint': "Les modèles proviennent du moteur géré par votre application de bureau. Par défaut utilise sa configuration.",
   'settings.modelSourceLive': 'En direct depuis la CLI',
   'settings.modelSourceFallback': 'Liste intégrée',
   'settings.reasoningPicker': 'Effort de raisonnement',

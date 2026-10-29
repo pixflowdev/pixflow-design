@@ -1,7 +1,16 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "settings.claudeSignIn": "ورود با Claude",
+  "settings.claudeWaiting": "در انتظار ورود…",
+  "settings.claudeSignInFailed": "ورود کامل نشد. Bridge را بررسی کنید و دوباره تلاش کنید.",
+  "settings.claudeBrowserHint": "ورود را در مرورگر تکمیل کنید. Pixflow اتصال را به‌طور خودکار بررسی می‌کند.",
+  "settings.claudeSignedIn": "وارد شدید",
   "history.editorTransitionFailed": "تغییر ویرایشگر تأیید نشد. برای اتصال مجدد، این پنل را دوباره باز کنید؛ هیچ ویرایش در انتظاری دوباره اجرا نشده است.",
+  "settings.modelDiscoveryUnavailable": "شناسایی مدل‌ها در دسترس نیست — پیش‌فرض Claude استفاده می‌شود",
+  "settings.modelSourceCliFallback": "مستقیم از CLI (شناسایی برنامهٔ دسکتاپ در دسترس نیست)",
+  "bridge.statusDirect": "Bridge مستقیماً متصل است",
+  "bridge.statusExtension": "Bridge از طریق افزونهٔ Chrome متصل است",
   "bridge.connectedDirect": "اتصال مستقیم برقرار است",
   "bridge.connectedExtension": "اتصال از طریق افزونهٔ Chrome برقرار است",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "ذخیره در Bricks",
@@ -557,6 +566,8 @@ export const fa: Dict = {
   'settings.themeDark': 'تاریک',
   'settings.agentModelHead': 'مدل برای:',
   'settings.modelPicker': 'مدل',
+  'settings.modelSourceDesktop': "زنده از برنامه دسکتاپ",
+  'settings.modelPickerDesktopHint': "مدل‌ها از محیط اجرای مدیریت‌شده توسط برنامه دسکتاپ دریافت می‌شوند. گزینه پیش‌فرض از تنظیمات همان محیط استفاده می‌کند.",
   'settings.modelSourceLive': 'زنده از CLI',
   'settings.modelSourceFallback': 'فهرست داخلی',
   'settings.reasoningPicker': 'سطح استدلال',

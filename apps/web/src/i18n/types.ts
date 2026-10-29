@@ -30,7 +30,16 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // flat (not deeply nested) so missing-key TS errors point straight at the
 // offending string instead of a generic object mismatch.
 export interface Dict {
+  "settings.claudeSignIn": string;
+  "settings.claudeWaiting": string;
+  "settings.claudeSignInFailed": string;
+  "settings.claudeBrowserHint": string;
+  "settings.claudeSignedIn": string;
   "history.editorTransitionFailed": string;
+  "settings.modelDiscoveryUnavailable": string;
+  "settings.modelSourceCliFallback": string;
+  "bridge.statusDirect": string;
+  "bridge.statusExtension": string;
   "bridge.connectedDirect": string;
   "bridge.connectedExtension": string;
   "guidance.requestFailed": string;
@@ -3476,6 +3485,8 @@ export interface Dict {
   'settings.themeDark': string;
   'settings.agentModelHead': string;
   'settings.modelPicker': string;
+  'settings.modelSourceDesktop': string;
+  'settings.modelPickerDesktopHint': string;
   'settings.modelSourceLive': string;
   'settings.modelSourceFallback': string;
   'settings.reasoningPicker': string;

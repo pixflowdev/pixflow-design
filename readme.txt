@@ -33,6 +33,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
+* Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
+
 = 2.1.2 =
 * Find the optional Chrome extension helper in Execution > Local CLI settings. The install banner hides when the extension is detected on the current site; Bridge remains required.
 

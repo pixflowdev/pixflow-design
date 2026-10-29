@@ -5,7 +5,12 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.2] - Unreleased
+## [Unreleased]
+
+- Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
+- Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
+
+## [2.1.2]
 
 - Find the optional Chrome extension in Execution > Local CLI settings; hide the install banner when the extension is detected on the current site.
 

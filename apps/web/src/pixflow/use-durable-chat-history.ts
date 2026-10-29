@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObje
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
 import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
 import { historicalRecoveryCopy, preserveHistoryCopies } from './history-recovery';
+import { conversationBinding } from './conversation-address';
 
 /** The browser outbox is a recovery copy, never an expiring transcript cache. */
 function readOutbox<T extends HistoryMessage>(key: string): { messages: T[]; readable: boolean; migrationIds?: string[] } {
@@ -176,7 +177,10 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     void (async () => {
       try {
         const hasMessages = initial.length > 0 || initialLegacy.length > 0 || pending.current.size > 0;
-        const target = hasMessages ? await resolveChatHistory({ sessionKey }) : await resolveChatHistory({ sessionKey, create: false });
+        // A selected canonical address needs no alias lookup. The history read
+        // still authorizes access before hydration; migration/recovery retains
+        // the existing resolver path when there are local messages to preserve.
+        const target = hasMessages ? await resolveChatHistory({ sessionKey }) : conversationBinding(sessionKey) ?? await resolveChatHistory({ sessionKey, create: false });
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         if (!target.projectId || !target.conversationId) {
           // A confirmed empty lookup is ready for its first message. Adopt the

@@ -33,6 +33,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+
+* Allow the existing provider connection test through the optional Chrome extension route without enabling unrelated test endpoints. Requires an updated Bridge; the approved extension package is unchanged.
+
 = 2.1.1 (unreleased) =
 
 * Show a Settings notification dot when the active language pack needs updating, with safe download failure and retry handling.

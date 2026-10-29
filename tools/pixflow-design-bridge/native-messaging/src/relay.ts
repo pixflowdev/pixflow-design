@@ -10,7 +10,7 @@ export function validateRequest(value: any, config: Configuration) {
   if (base.protocol !== 'http:' || !['127.0.0.1','[::1]'].includes(base.hostname) || base.username || base.password) throw new Error('Invalid loopback configuration');
   if (url.origin !== base.origin || url.username || url.password || url.hash || /\\|%2f|%5c|%00/i.test(url.pathname)) throw new Error('Destination rejected');
   // Existing browser-facing API families; the Bridge retains authorization.
-  if (!/^\/api\/(?:health|version|agents|app-config|active|chat|runs|projects|conversations|messages|pixflow|connectors|mcp|media|audio|uploads|files|skills|design-systems|models|providers|research|auth|amr|artifacts|dialog|editors|import|integrations|applied-plugins|pixflow-sync|plugins)(?:\/|$)/.test(url.pathname)) throw new Error('Endpoint not enabled in prototype');
+  if (url.pathname !== '/api/test/connection' && !/^\/api\/(?:health|version|agents|app-config|active|chat|runs|projects|conversations|messages|pixflow|connectors|mcp|media|audio|uploads|files|skills|design-systems|models|providers|research|auth|amr|artifacts|dialog|editors|import|integrations|applied-plugins|pixflow-sync|plugins)(?:\/|$)/.test(url.pathname)) throw new Error('Endpoint not enabled in native adapter');
   if (/^\/api\/pixflow\/(?:daemon|shutdown|update)(?:\/|$)/.test(url.pathname)) throw new Error('Lifecycle endpoint rejected');
   const method = String(value.method || 'GET').toUpperCase();
   if (!['GET','HEAD','POST','PUT','PATCH','DELETE'].includes(method)) throw new Error('Method rejected');

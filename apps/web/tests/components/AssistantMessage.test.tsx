@@ -735,3 +735,9 @@ describe('AssistantMessage recovered produced files', () => {
     expect(screen.getByText('agent-sketch.sketch.json')).toBeTruthy();
   });
 });
+it('does not present provider cost estimates as charges in the response footer', () => {
+ const view = render(<AssistantMessage message={baseMessage({agentId:'claude', events:[{kind:'usage',costUsd:0.1455,outputTokens:5,durationMs:7200}]})} streaming={false} projectId="cost-test" />);
+ expect(view.container.querySelector('.assistant-footer')?.textContent).not.toContain('$');
+ expect(view.container.querySelector('.assistant-footer')?.textContent).toContain('5');
+});
+

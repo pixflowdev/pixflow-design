@@ -33,6 +33,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+
+* Remove misleading dollar estimates from chat response footers; retain duration, token counts and stored usage information.
+
 = 2.1.1 (unreleased) =
 
 * Show a Settings notification dot when the active language pack needs updating, with safe download failure and retry handling.

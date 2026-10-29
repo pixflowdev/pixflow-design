@@ -40,3 +40,8 @@ The ZIP is browser-only, manifest version 1.0.3, rebuilt with the popup correcti
 Target: [GitHub draft bridge-v2.1.2](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-672053e956d050394f51), release ID `427963549`. Production version, `prerelease=false`, **draft=true**. Asset receipts record server digests and independent DMG download hashes after upload.
 
 No release publication, Store submission, updater-pointer change, customer deployment or v2.1.1 asset replacement. Existing chats/settings and normal Chrome permission/registration state were preserved. Artifact runtimes are stopped after verification and the prior isolated acceptance app is restored. Staged installer checkouts and backups remain available; they are not the user's normal Applications installation.
+
+
+## Completed upload receipt
+
+All seven primary assets are uploaded and server-digest verified. Both DMGs were independently downloaded and their byte counts/SHA256 hashes matched. See [asset IDs and receipts](v2.1.2-upload-receipts.json). Final release state was verified as `draft=true`, `prerelease=false`. [Return handoff PR #46](https://github.com/pixflowdev/pixflow-design/pull/46).

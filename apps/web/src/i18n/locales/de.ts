@@ -2,7 +2,7 @@ import type { Dict } from '../types';
 
 export const de: Dict = {
   "settings.extensionInstall": "Pixflow Design Bridge Chrome-Erweiterung installieren",
-  "settings.extensionHint": "Optional. Über Chrome verbinden oder die direkte Bridge-Verbindung weiterverwenden.",
+  "settings.extensionHint": "Optionaler Helfer, der WordPress über Chrome mit Pixflow Design Bridge verbindet. Bridge muss weiterhin auf Ihrem Computer installiert sein und ausgeführt werden.",
 
   "settings.claudeSignIn": "Mit Claude anmelden",
   "settings.claudeWaiting": "Warten auf Anmeldung…",

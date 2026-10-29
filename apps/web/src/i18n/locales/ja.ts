@@ -2,7 +2,7 @@ import type { Dict } from '../types';
 
 export const ja: Dict = {
   "settings.extensionInstall": "Pixflow Design Bridge Chrome 拡張機能をインストール",
-  "settings.extensionHint": "任意です。Chrome 経由で接続するか、Bridge への直接接続を引き続き使用できます。",
+  "settings.extensionHint": "Chrome 経由で WordPress と Pixflow Design Bridge を接続する任意の補助ツールです。引き続きパソコンに Bridge をインストールし、起動しておく必要があります。",
 
   "settings.claudeSignIn": "Claudeでサインイン",
   "settings.claudeWaiting": "サインインを待っています…",

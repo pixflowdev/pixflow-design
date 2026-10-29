@@ -10,7 +10,7 @@
 - macOS 26.5.1, Apple Silicon, Node 24.19.0, pnpm 10.33.2. Candidate app is arm64 Electron 44.7.0, isolated namespace `qa-claude-mac-103`, app version 2.1.1 for local acceptance only. No production DMG was built or uploaded.
 - Claude Desktop 4.29.0; app-managed CLI 2.1.309, including the macOS `claude.app/Contents/MacOS/claude` layout. No installed runtime changed.
 - Extension 1.0.3 frozen ZIP SHA256 `4750cbe937d5365c771c8ade9f5ebed7456d5841dee0101d977e8e3be2144839`, all ten payload hashes verified. Permanent ID `hbnbiboohlelmngadeolikeejamjlbkh` supplied by the existing public manifest key in a disposable unpacked copy.
-- Owner loaded the extension into Ellie’s Chrome, which retained old approvals. This is **not** a fresh-profile consent pass.
+- Owner loaded the extension into Ellie’s Chrome, which retained old approvals. A fresh `Pixflow QA` profile has been requested for the outstanding consent matrix. This is **not** a fresh-profile consent pass.
 
 ## Automated gates
 
@@ -44,7 +44,12 @@ The first Bridge attempt refused a temporarily dirty Core pin while a simultaneo
 | Popup health with two approved sites | FAIL on frozen 1.0.3; PASS after this branch’s browser fix and owner-approved reload |
 | Execution / floating / Workspace reconnect | PASS separately: each opens the native extension popup from the actual foreground UI. Background automation is correctly rejected by the focused-tab guard |
 | Popup Close and direct preference | PASS: closing without Connect leaves direct route; explicit Disconnect changes Execution/popover wording to direct |
-| Full restart/revoke/steering/cancel/direct-provider matrix | INCOMPLETE on this candidate; older v2.1.1 evidence does not substitute |
+| Codex Workspace streaming, live steering and cancel | PASS: Steer delivered during stream, subsequent names followed flower instruction, Stop produced Canceled at 44s |
+| Claude navigation recovery | PASS: page reloaded during active Workspace run; returning showed one completed response, 32s / 3,138 output tokens |
+| Actual Claude process model/effort | PASS: `--model sonnet --effort low`; redacted metadata in `claude-active-runtime.json` |
+| Authenticated runtime catalogue | PASS: full runtime result saved in `authenticated-catalogue.json`, UI choices matched observed names/capabilities |
+| Representative direct provider requests | PASS: Claude Workspace exact response in 8.7s / 15 output tokens; Codex floating exact response in 4.7s |
+| Full restart/revoke/steering/cancel matrix across both panels | INCOMPLETE on this candidate; older v2.1.1 evidence does not substitute |
 | Standalone fallback | NOT RUN: no standalone binary found at usual existing install locations; no runtime installed/removed merely to pass |
 | Fresh isolated Chrome consent, foreign/subframe live cases | NOT RUN; deterministic coverage passed |
 

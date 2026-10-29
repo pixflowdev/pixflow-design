@@ -1,0 +1,359 @@
+[
+  {
+    "id": "default",
+    "label": "Default (recommended)",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "opus",
+    "label": "Opus 5.5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "sonnet",
+    "label": "Sonnet 5.5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "fable",
+    "label": "Fable 5.1",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "haiku",
+    "label": "Haiku 5.5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-haiku-4-5-20251001",
+    "label": "Haiku 4.5",
+    "reasoningOptions": []
+  },
+  {
+    "id": "claude-sonnet-5",
+    "label": "Sonnet 5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-opus-5",
+    "label": "Opus 5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-fable-5",
+    "label": "Fable 5",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-opus-4-8",
+    "label": "Opus 4.8",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-opus-4-7",
+    "label": "Opus 4.7",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "xhigh",
+        "label": "Extra"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-opus-4-6",
+    "label": "Opus 4.6",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  },
+  {
+    "id": "claude-sonnet-4-6",
+    "label": "Sonnet 4.6",
+    "reasoningOptions": [
+      {
+        "id": "default",
+        "label": "Default (Claude)"
+      },
+      {
+        "id": "low",
+        "label": "Low"
+      },
+      {
+        "id": "medium",
+        "label": "Medium"
+      },
+      {
+        "id": "high",
+        "label": "High"
+      },
+      {
+        "id": "max",
+        "label": "Max"
+      }
+    ]
+  }
+]

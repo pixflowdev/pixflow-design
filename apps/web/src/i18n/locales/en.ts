@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "settings.extensionInstall": "Install Pixflow Design Bridge Chrome Extension",
+  "settings.extensionHint": "Optional. Connect through Chrome, or keep using your direct Bridge connection.",
+
   "settings.claudeSignIn": "Sign in with Claude",
   "settings.claudeWaiting": "Waiting for sign-in…",
   "settings.claudeSignInFailed": "Sign-in did not complete. Check Bridge and try again.",

@@ -1,6 +1,9 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "settings.extensionInstall": "Pixflow Design Bridge Chrome 확장 프로그램 설치",
+  "settings.extensionHint": "선택 사항입니다. Chrome을 통해 연결하거나 Bridge 직접 연결을 계속 사용하세요.",
+
   "settings.claudeSignIn": "Claude로 로그인",
   "settings.claudeWaiting": "로그인 대기 중…",
   "settings.claudeSignInFailed": "로그인이 완료되지 않았습니다. Bridge를 확인하고 다시 시도하세요.",

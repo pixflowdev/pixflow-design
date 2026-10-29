@@ -32,6 +32,8 @@ export interface ModelMetadata {
 }
 
 export interface AgentModelOption {
+  /** Runtime-advertised effort choices for this model; empty means unsupported. */
+  reasoningOptions?: Array<{ id: string; label: string }>;
   id: string;
   label: string;
   /** Whether the current account/tier can use this model. */
@@ -125,6 +127,8 @@ export interface AgentInfo {
   available: boolean;
   authStatus?: 'ok' | 'missing' | 'unknown';
   authMessage?: string;
+  /** Origin of the executable selected by Bridge, not the model catalogue. */
+  runtimeSource?: 'desktop' | 'cli';
   path?: string;
   version?: string | null;
   /**
@@ -135,7 +139,7 @@ export interface AgentInfo {
   diagnostics?: AgentDiagnostic[];
   models?: AgentModelOption[];
   /** Whether models came from the installed CLI or Pixflow Design's static fallback. */
-  modelsSource?: 'live' | 'fallback';
+  modelsSource?: 'live' | 'fallback' | 'cli-fallback';
   reasoningOptions?: AgentModelOption[];
   /** Runtime/transport input support; model understanding remains on the model option. */
   inputCapabilities?: ModelInputCapabilities;

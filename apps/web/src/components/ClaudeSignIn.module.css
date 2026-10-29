@@ -1,0 +1,11 @@
+/* Let instructions occupy a separate full-width row in the provider grid. */
+.root { display: contents; }
+.actions { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; }
+.hint { font-size: 12px; line-height: 1.5; color: var(--text); grid-column: 1 / -1; padding: 0 16px 12px; }
+
+.actions .signIn { background: var(--bg-fill-tertiary, var(--bg-muted)); border-color: transparent; }
+.actions .signIn:hover:not(:disabled) { background: var(--bg-fill-tertiary, var(--bg-muted)); border-color: var(--border-strong); }
+
+.actions button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.actions button svg { flex-shrink: 0; }
+@media (max-width: 480px) { .actions { justify-content: flex-start; padding: 0 16px 12px; flex-wrap: wrap; } }

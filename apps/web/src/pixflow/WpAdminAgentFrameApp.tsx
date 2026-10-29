@@ -794,7 +794,9 @@ function WpAdminSettingsController({
   const refreshAgents = useCallback(async () => {
     setAgentsLoading(true);
     try {
-      const next = filterWpAdminAgents(await fetchPixflowOptionalBridgeAgents());
+      // Explicit settings refreshes also follow authentication changes: cached
+      // discovery may still describe the signed-out account.
+      const next = filterWpAdminAgents(await fetchPixflowOptionalBridgeAgents({ force: true }));
       setAgents(next);
       return next;
     } catch {

@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "settings.claudeSignIn": "Claude ile giriş yap",
+  "settings.claudeWaiting": "Giriş bekleniyor…",
+  "settings.claudeSignInFailed": "Giriş tamamlanmadı. Bridge’i kontrol edip tekrar deneyin.",
+  "settings.claudeBrowserHint": "Tarayıcınızda girişi tamamlayın. Pixflow bağlantıyı otomatik olarak kontrol edecek.",
+  "settings.claudeSignedIn": "Giriş yapıldı",
   "history.editorTransitionFailed": "Düzenleyici geçişi doğrulanamadı. Yeniden bağlanmak için bu paneli tekrar açın. Bekleyen hiçbir düzenleme tekrarlanmadı.",
+  "settings.modelDiscoveryUnavailable": "Model keşfi kullanılamıyor — Claude varsayılanı kullanılıyor",
+  "settings.modelSourceCliFallback": "CLI üzerinden canlı (Masaüstü keşfi kullanılamıyor)",
   "bridge.connectedDirect": "Doğrudan bağlı",
   "bridge.connectedExtension": "Chrome uzantısı üzerinden bağlı",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Bricks’e kaydet",
@@ -557,6 +564,8 @@ export const tr: Dict = {
   'settings.themeDark': 'Koyu',
   'settings.agentModelHead': 'Model için:',
   'settings.modelPicker': 'Model',
+  'settings.modelSourceDesktop': "Masaüstü uygulamasından canlı",
+  'settings.modelPickerDesktopHint': "Modeller, masaüstü uygulamanızın yönettiği çalışma ortamından gelir. Varsayılan, bu ortamın yapılandırmasını kullanır.",
   'settings.modelSourceLive': 'CLI\'dan canlı',
   'settings.modelSourceFallback': 'Yerleşik liste',
   'settings.reasoningPicker': 'Akıl yürütme eforu',

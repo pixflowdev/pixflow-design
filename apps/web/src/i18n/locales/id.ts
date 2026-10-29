@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "settings.claudeSignIn": "Masuk dengan Claude",
+  "settings.claudeWaiting": "Menunggu proses masuk…",
+  "settings.claudeSignInFailed": "Proses masuk belum selesai. Periksa Bridge dan coba lagi.",
+  "settings.claudeBrowserHint": "Selesaikan proses masuk di browser. Pixflow akan memeriksa koneksi secara otomatis.",
+  "settings.claudeSignedIn": "Sudah masuk",
   "history.editorTransitionFailed": "Perpindahan editor tidak dapat dikonfirmasi. Buka kembali panel ini untuk menyambungkan ulang. Tidak ada perubahan tertunda yang diulangi.",
+  "settings.modelDiscoveryUnavailable": "Penemuan model tidak tersedia — menggunakan default Claude",
+  "settings.modelSourceCliFallback": "Langsung dari CLI (penemuan Desktop tidak tersedia)",
   "bridge.connectedDirect": "Terhubung langsung",
   "bridge.connectedExtension": "Terhubung melalui ekstensi Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Simpan ke Bricks",
@@ -557,6 +564,8 @@ export const id: Dict = {
   'settings.themeDark': 'Gelap',
   'settings.agentModelHead': 'Model untuk:',
   'settings.modelPicker': 'Model',
+  'settings.modelSourceDesktop': "Langsung dari aplikasi desktop",
+  'settings.modelPickerDesktopHint': "Model berasal dari runtime yang dikelola aplikasi desktop Anda. Default menggunakan konfigurasinya sendiri.",
   'settings.modelSourceLive': 'Langsung dari CLI',
   'settings.modelSourceFallback': 'Daftar bawaan',
   'settings.reasoningPicker': 'Kekuatan penalaran',

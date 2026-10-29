@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "settings.claudeSignIn": "ลงชื่อเข้าใช้ด้วย Claude",
+  "settings.claudeWaiting": "กำลังรอการลงชื่อเข้าใช้…",
+  "settings.claudeSignInFailed": "ลงชื่อเข้าใช้ไม่สำเร็จ ตรวจสอบ Bridge แล้วลองอีกครั้ง",
+  "settings.claudeBrowserHint": "ลงชื่อเข้าใช้ให้เสร็จในเบราว์เซอร์ Pixflow จะตรวจสอบการเชื่อมต่อโดยอัตโนมัติ",
+  "settings.claudeSignedIn": "ลงชื่อเข้าใช้แล้ว",
   "history.editorTransitionFailed": "ไม่สามารถยืนยันการเปลี่ยนตัวแก้ไขได้ เปิดแผงนี้อีกครั้งเพื่อเชื่อมต่อใหม่ โดยไม่มีการดำเนินการแก้ไขที่ค้างอยู่ซ้ำ",
+  "settings.modelDiscoveryUnavailable": "ไม่สามารถค้นหารุ่นได้ — ใช้รุ่นเริ่มต้นของ Claude",
+  "settings.modelSourceCliFallback": "จาก CLI โดยตรง (ไม่สามารถค้นหารุ่นจากแอปเดสก์ท็อปได้)",
   "bridge.connectedDirect": "เชื่อมต่อโดยตรงแล้ว",
   "bridge.connectedExtension": "เชื่อมต่อผ่านส่วนขยาย Chrome แล้ว",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "บันทึกไปยัง Bricks",
@@ -557,6 +564,8 @@ export const th: Dict = {
   'settings.themeDark': 'มืด',
   'settings.agentModelHead': 'โมเดลสำหรับ:',
   'settings.modelPicker': 'โมเดล',
+  'settings.modelSourceDesktop': "ส่งตรงจากแอปเดสก์ท็อป",
+  'settings.modelPickerDesktopHint': "โมเดลมาจากรันไทม์ที่จัดการโดยแอปเดสก์ท็อปของคุณ ค่าเริ่มต้นจะใช้การตั้งค่าของรันไทม์นั้น",
   'settings.modelSourceLive': 'สดจาก CLI',
   'settings.modelSourceFallback': 'รายการในตัว',
   'settings.reasoningPicker': 'ความพยายามในการให้เหตุผล',

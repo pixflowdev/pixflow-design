@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const ptBR: Dict = {
+  "settings.claudeSignIn": "Entrar com Claude",
+  "settings.claudeWaiting": "Aguardando login…",
+  "settings.claudeSignInFailed": "O login não foi concluído. Verifique o Bridge e tente novamente.",
+  "settings.claudeBrowserHint": "Conclua o login no navegador. O Pixflow verificará a conexão automaticamente.",
+  "settings.claudeSignedIn": "Conectado",
   "history.editorTransitionFailed": "Não foi possível confirmar a mudança de editor. Reabra este painel para reconectar. Nenhuma edição pendente foi repetida.",
+  "settings.modelDiscoveryUnavailable": "Descoberta de modelos indisponível — usando o padrão do Claude",
+  "settings.modelSourceCliFallback": "Ao vivo pela CLI (detecção do Desktop indisponível)",
   "bridge.connectedDirect": "Conectado diretamente",
   "bridge.connectedExtension": "Conectado pela extensão do Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Salvar no Bricks",
@@ -557,6 +564,8 @@ export const ptBR: Dict = {
   'settings.themeDark': 'Escuro',
   'settings.agentModelHead': 'Modelo para:',
   'settings.modelPicker': 'Modelo',
+  'settings.modelSourceDesktop': "Direto do aplicativo para desktop",
+  'settings.modelPickerDesktopHint': "Os modelos vêm do ambiente gerenciado pelo aplicativo para desktop. Padrão usa a configuração desse ambiente.",
   'settings.modelSourceLive': 'Ao vivo da CLI',
   'settings.modelSourceFallback': 'Lista integrada',
   'settings.reasoningPicker': 'Esforço de raciocínio',

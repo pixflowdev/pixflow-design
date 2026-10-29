@@ -1,17 +1,12 @@
 import { agentCapabilities } from '../capabilities.js';
 import { DEFAULT_MODEL_OPTION } from './shared.js';
+import { discoverClaudeCatalogue, rememberClaudeModels, claudeSupportsEffort } from '../claude-models.js';
+import { resolveOnPath } from '../executables.js';
 import { loadMmdRouteModels } from '../mmd-routes.js';
 import type { RuntimeAgentDef } from '../types.js';
 
-const CLAUDE_FALLBACK_MODELS = [
-  DEFAULT_MODEL_OPTION,
-  { id: 'sonnet', label: 'Sonnet (alias)' },
-  { id: 'opus', label: 'Opus (alias)' },
-  { id: 'haiku', label: 'Haiku (alias)' },
-  { id: 'claude-opus-4-5', label: 'claude-opus-4-5' },
-  { id: 'claude-sonnet-4-5', label: 'claude-sonnet-4-5' },
-  { id: 'claude-haiku-4-5', label: 'claude-haiku-4-5' },
-];
+// Default delegates selection to Claude; it is not a hard-coded model catalogue.
+const CLAUDE_FALLBACK_MODELS = [DEFAULT_MODEL_OPTION];
 
 export const claudeAgentDef = {
     id: 'claude',
@@ -36,12 +31,18 @@ export const claudeAgentDef = {
       // Fixes issue #430: --add-dir never detected because it wasn't in global help.
       '--include-partial-messages': 'partialMessages',
       '--add-dir': 'addDir',
+      '--effort': 'effort',
     },
-    // `claude` has no list-models subcommand. Prefer local mmd/MMS routes
-    // when present so proxy-backed Claude-compatible models appear in the
-    // picker, then keep the built-in aliases as fallback hints.
+    // Discover from the chosen runtime; preserve explicitly configured proxy catalogues.
     fallbackModels: CLAUDE_FALLBACK_MODELS,
-    fetchModels: async (_resolvedBin, env) => loadMmdRouteModels(env, CLAUDE_FALLBACK_MODELS),
+    fetchModels: async (resolvedBin, env) => {
+      const routes = await loadMmdRouteModels(env, []);
+      if (routes) { rememberClaudeModels(null); return routes; }
+      const catalogue = await discoverClaudeCatalogue(resolvedBin, resolveOnPath('claude'), env);
+      // A fallback catalogue cannot authorize flags on a different selected executable.
+      rememberClaudeModels(catalogue?.source === 'live' ? catalogue.models : null);
+      return catalogue;
+    },
     // Prompt delivered via stdin to avoid both Linux `spawn E2BIG`
     // (MAX_ARG_STRLEN caps a single argv entry at ~128 KB) and Windows
     // `spawn ENAMETOOLONG` (CreateProcess caps the full command line at
@@ -65,6 +66,9 @@ export const claudeAgentDef = {
       }
       if (options.model && options.model !== 'default') {
         args.push('--model', options.model);
+      }
+      if (caps.effort && options.reasoning && claudeSupportsEffort(options.model, options.reasoning)) {
+        args.push('--effort', options.reasoning);
       }
       const dirs = (extraAllowedDirs || []).filter(
         (d) => typeof d === 'string' && d.length > 0,

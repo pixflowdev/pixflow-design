@@ -384,6 +384,15 @@ function sessionHeader(value: PixflowDirectSiteSession): string {
     '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
+export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel', signal?: AbortSignal): Promise<import('@open-design/contracts').ClaudeSignInStatus> {
+  const response = await daemonFetch(`/api/agents/claude/sign-in${action === 'cancel' ? '/cancel' : ''}`, {
+    method: action === 'status' ? 'GET' : 'POST', signal, cache: 'no-store',
+    ...(action === 'status' ? {} : { headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+  });
+  if (!response.ok) throw new Error('Claude sign-in is unavailable. Check Bridge and try again.');
+  return response.json();
+}
+
 function daemonFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const url = daemonApiUrl(path);
   const headers = new Headers(init.headers || {});

@@ -1,7 +1,14 @@
 import type { Dict } from '../types';
 
 export const it: Dict = {
+  "settings.claudeSignIn": "Accedi con Claude",
+  "settings.claudeWaiting": "In attesa dell’accesso…",
+  "settings.claudeSignInFailed": "Accesso non completato. Controlla Bridge e riprova.",
+  "settings.claudeBrowserHint": "Completa l’accesso nel browser. Pixflow verificherà automaticamente la connessione.",
+  "settings.claudeSignedIn": "Accesso effettuato",
   "history.editorTransitionFailed": "Impossibile confermare il passaggio all’editor. Riapri questo pannello per riconnetterti. Nessuna modifica in sospeso è stata ripetuta.",
+  "settings.modelDiscoveryUnavailable": "Rilevamento modelli non disponibile — viene usato il predefinito di Claude",
+  "settings.modelSourceCliFallback": "Dal CLI in tempo reale (rilevamento Desktop non disponibile)",
   "bridge.connectedDirect": "Connesso direttamente",
   "bridge.connectedExtension": "Connesso tramite l’estensione Chrome",
   "ui.pixflowFrameworkDesignSystemBuilder.saveToBricks": "Salva in Bricks",
@@ -557,6 +564,8 @@ export const it: Dict = {
   'settings.themeDark': 'Scuro',
   'settings.agentModelHead': 'Modello per:',
   'settings.modelPicker': 'Modello',
+  'settings.modelSourceDesktop': "In tempo reale dall’app desktop",
+  'settings.modelPickerDesktopHint': "I modelli provengono dal runtime gestito dall’app desktop. Predefinito usa la sua configurazione.",
   'settings.modelSourceLive': 'Live dalla CLI',
   'settings.modelSourceFallback': 'Elenco integrato',
   'settings.reasoningPicker': 'Sforzo di ragionamento',

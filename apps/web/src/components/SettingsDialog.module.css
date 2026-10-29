@@ -253,7 +253,7 @@
 @media(prefers-reduced-motion:reduce) { .dialog:global(.modal-settings) :global(.settings-nav-item) { transition:none; } }
 
 /* Group related settings into one quiet surface, rather than a stack of tiles. */
-.dialog:global(.modal-settings) :is(:global(.agent-grid-installed), :global(.media-provider-list), :global(.skills-rows), :global(.settings-resource-packs__rows), :global(.pixflow-framework-setup--settings .onboarding-view__alternatives)) {
+.dialog:global(.modal-settings) :is(:global(.media-provider-list), :global(.skills-rows), :global(.settings-resource-packs__rows), :global(.pixflow-framework-setup--settings .onboarding-view__alternatives)) {
   gap:0; border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); overflow:hidden;
 }
 .dialog:global(.modal-settings) :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-resource-packs__rows .settings-pixflow-download), :global(.pixflow-framework-setup--settings .onboarding-view__card)) {
@@ -262,9 +262,41 @@
 .dialog:global(.modal-settings) :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-resource-packs__rows .settings-pixflow-download), :global(.pixflow-framework-setup--settings .onboarding-view__card)) + :is(:global(.agent-card), :global(.media-provider-row), :global(.skills-row), :global(.settings-pixflow-download), :global(.onboarding-view__card)) { border-top:1px solid var(--border); }
 .dialog:global(.modal-settings) :is(:global(.agent-card), :global(.skills-row), :global(.settings-pixflow-download))::before { display:none; }
 .dialog:global(.modal-settings) :is(:global(.skills-row-expanded), :global(.agent-card.active), :global(.pixflow-framework-setup--settings .pixflow-framework-card.is-selected)) { border-color:var(--border); background:transparent; box-shadow:none; }
-.dialog:global(.modal-settings) :global(.agent-card-installed.active .agent-card-main) { background:transparent; }
-.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-select) { min-height:64px; padding:12px 16px; }
-.dialog:global(.modal-settings) :global(.agent-card-test-btn) { align-self:center; min-height:30px; margin-right:12px; border:1px solid var(--border); border-radius:8px; }
+/* Execution providers have distinct boundaries; selection and Test share one row. */
+.dialog:global(.modal-settings) :global(.agent-grid-installed) {
+  display:grid; gap:12px; border:0; border-radius:0; background:transparent; overflow:visible;
+}
+.dialog:global(.modal-settings) :global(.agent-grid-installed > .agent-card-installed) {
+  border:1px solid var(--border); border-radius:var(--settings-radius); background:var(--settings-surface); cursor:default; overflow:hidden;
+}
+.dialog:global(.modal-settings) :global(.agent-grid-installed > .agent-card-installed.active) { border-color:var(--border-strong); }
+.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-main) {
+  background:transparent; transition:background 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.dialog:global(.modal-settings) :global(.agent-card-installed.active .agent-card-main),
+.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-main:hover) { background:var(--settings-hover); }
+.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-select),
+.dialog:global(.modal-settings) :global(.agent-card-installed .agent-card-select:hover) {
+  min-height:76px; padding:16px; background:transparent; border-radius:0; box-shadow:none;
+}
+.dialog:global(.modal-settings) :global(.agent-card-select:focus-visible) { outline:2px solid var(--accent); outline-offset:-3px; }
+.dialog:global(.modal-settings) :global(.agent-card-installed.active .agent-icon) { box-shadow:none; }
+.dialog:global(.modal-settings) :global(.agent-card-test-btn) {
+  align-self:center; min-height:32px; min-width:56px; margin:0 16px 0 0; padding:6px 12px;
+  border:1px solid var(--border-strong); border-radius:8px; background:transparent; color:var(--text);
+}
+.dialog:global(.modal-settings) :global(.agent-card-test-btn:hover:not(:disabled)) { background:var(--bg-panel); color:var(--text); }
+.dialog:global(.modal-settings) :global(.agent-card-config) { padding:18px; display:grid; gap:16px; }
+.dialog:global(.modal-settings) :global(.agent-card-meta) { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; white-space:normal; }
+.dialog:global(.modal-settings) :global(.agent-runtime-source) { color:var(--text); }
+.dialog:global(.modal-settings) :global(.agent-card-model-summary) { margin-top:5px; }
+@media (max-width: 520px) {
+  .dialog:global(.modal-settings) :global(.agent-card-name) { flex-wrap:wrap; gap:2px; white-space:normal; }
+  .dialog:global(.modal-settings) :global(.agent-card-title) { flex:0 0 100%; overflow:visible; }
+  .dialog:global(.modal-settings) :global(.agent-card-name-divider) { display:none; }
+  .dialog:global(.modal-settings) :global(.agent-card-tagline) { flex-basis:100%; white-space:normal; }
+  .dialog:global(.modal-settings) :global(.agent-card-test-btn) { min-width:44px; margin-right:12px; padding:6px 8px; }
+}
 .dialog:global(.modal-settings) :global(.onboarding-view__check) { background:transparent; color:var(--text); border:0; box-shadow:none; }
 .dialog:global(.modal-settings) :global(.skills-row-chevron) { border:0; box-shadow:none; color:var(--text-muted); background:transparent; }
 .dialog:global(.modal-settings) :global(.media-provider-row) { padding:0 16px; }
@@ -323,3 +355,6 @@
 }
 /* Skill updates share the catalogue with the content pane; no separate polling. */
 .dialog .skillUpdateCount { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 10px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+.dialog:global(.modal-settings) .claudeAuthMain { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+@media (max-width: 480px) { .dialog:global(.modal-settings) .claudeAuthMain { grid-template-columns: minmax(0, 1fr); } }

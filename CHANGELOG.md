@@ -5,6 +5,13 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Use Claude Desktop’s managed runtime first, with the installed Claude CLI as fallback; no separate CLI installation is needed when Desktop supplies it.
+- Sign in with Claude from Execution settings and detect completed browser sign-in automatically.
+- Discover Claude models and supported reasoning effort from the installed runtime instead of an outdated built-in list; label live CLI fallback clearly.
+- Show Desktop runtime sources and separate Execution provider cards with consistent selection and hover styling.
+
 ## [2.1.1] - Unreleased
 
 - Show a notification dot in Settings when the active language pack needs updating; keep the update available after a failed download and clear it after a successful retry.

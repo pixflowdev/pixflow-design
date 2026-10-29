@@ -5,6 +5,10 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Allow the existing provider connection test through the optional Chrome extension route without enabling unrelated test endpoints. Requires an updated Bridge; the approved extension package is unchanged.
+
 ## [2.1.1] - Unreleased
 
 - Show a notification dot in Settings when the active language pack needs updating; keep the update available after a failed download and clear it after a successful retry.

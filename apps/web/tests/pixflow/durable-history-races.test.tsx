@@ -182,12 +182,27 @@ describe('Durable history independent migration and recovery checks', () => {
     const { result } = renderHook(() => useHarness([]));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(resolveChatHistory).toHaveBeenCalledWith({ sessionKey: 'history-race-test', create: false });
+    expect(result.current.ready).toBe(true);
     expect(importChatHistory).not.toHaveBeenCalled();
     expect(readChatHistory).not.toHaveBeenCalled();
     act(() => result.current.setMessages([message(1)]));
     await waitFor(() => expect(resolveChatHistory).toHaveBeenCalledWith({ sessionKey: 'history-race-test' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(importChatHistory).toHaveBeenCalledWith({ projectId: 'created-on-send', conversationId: 'conversation' }, [message(1)]);
+  });
+  it('adopts an empty chat without discarding messages that arrive during its lookup', async () => {
+    const lookup = deferred<{ projectId: string; conversationId: string }>();
+    vi.mocked(resolveChatHistory).mockReturnValueOnce(lookup.promise);
+    const hydrate = vi.fn();
+    const { result, rerender } = renderHook(({ messages }) => useDurableChatHistory({
+      sessionKey: 'new-empty-chat', messages, onHydrate: hydrate,
+    }), { initialProps: { messages: [] as Message[] } });
+    expect(result.current.ready).toBe(false);
+    rerender({ messages: [message(1)] });
+    await act(async () => lookup.resolve({ projectId: null, conversationId: null } as unknown as { projectId: string; conversationId: string }));
+    expect(hydrate).toHaveBeenCalledWith([message(1)]);
+    expect(hydrate).not.toHaveBeenCalledWith([]);
+    await waitFor(() => expect(result.current.ready).toBe(true));
   });
   it('does not migrate the old account transcript after account changes during resolution', async () => {
     const pending = deferred<{ projectId: string; conversationId: string }>();

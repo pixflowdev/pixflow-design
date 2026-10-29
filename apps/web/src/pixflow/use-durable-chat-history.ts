@@ -178,7 +178,15 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         const hasMessages = initial.length > 0 || initialLegacy.length > 0 || pending.current.size > 0;
         const target = hasMessages ? await resolveChatHistory({ sessionKey }) : await resolveChatHistory({ sessionKey, create: false });
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
-        if (!target.projectId || !target.conversationId) { setEmptyLookup(true); return; }
+        if (!target.projectId || !target.conversationId) {
+          // A confirmed empty lookup is ready for its first message. Adopt the
+          // current transcript without creating a server chat or losing input
+          // that arrived while the lookup was pending.
+          setEmptyLookup(true);
+          hydrate.current?.(latest.current);
+          setReadyKey(sessionKey); setError(null);
+          return;
+        }
         setEmptyLookup(false);
         // Import only missing identities. A restored interrupted browser snapshot
         // must never downgrade a completed message already held by WordPress.

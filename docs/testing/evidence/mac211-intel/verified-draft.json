@@ -1,0 +1,93 @@
+{
+  "id": 427088978,
+  "tag_name": "bridge-v2.1.1",
+  "target_commitish": "72d4dee346fab1a564703c84a47c3d9ecd7825a6",
+  "draft": true,
+  "prerelease": false,
+  "html_url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-de92e86d207b30604c14",
+  "verifiedAt": "2026-10-29T00:44:24.163760+00:00",
+  "preservedInitialAssets": [
+    {
+      "id": 686268883,
+      "name": "mac-2.1.1-build-acceptance.json",
+      "size": 3553,
+      "digest": "sha256:a2c195368f1c25941e5a17d5aec057e76d63e841aa424e789d4205961c01d634"
+    },
+    {
+      "id": 686256446,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg",
+      "size": 209950752,
+      "digest": "sha256:857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe"
+    },
+    {
+      "id": 686244706,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64.dmg",
+      "size": 209953793,
+      "digest": "sha256:ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6"
+    },
+    {
+      "id": 686268715,
+      "name": "SHA256SUMS-mac-2.1.1.txt",
+      "size": 231,
+      "digest": "sha256:6b750b884b823ef75dfcdff653f58b5d2a683a5970e3653f126b8f7f0fe6f6ba"
+    }
+  ],
+  "assets": [
+    {
+      "id": 686244706,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64.dmg",
+      "size": 209953793,
+      "digest": "sha256:ad45372f28b618d5bc2d411714676711f44b35aa8cbb711894d1f7ff1f85f6a6",
+      "state": "uploaded"
+    },
+    {
+      "id": 686256446,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64-browser-native.dmg",
+      "size": 209950752,
+      "digest": "sha256:857d9687fb118fd7d5d8791ee2c239c791392e26f04fd00004140667bd5eccbe",
+      "state": "uploaded"
+    },
+    {
+      "id": 686268715,
+      "name": "SHA256SUMS-mac-2.1.1.txt",
+      "size": 231,
+      "digest": "sha256:6b750b884b823ef75dfcdff653f58b5d2a683a5970e3653f126b8f7f0fe6f6ba",
+      "state": "uploaded"
+    },
+    {
+      "id": 686268883,
+      "name": "mac-2.1.1-build-acceptance.json",
+      "size": 3553,
+      "digest": "sha256:a2c195368f1c25941e5a17d5aec057e76d63e841aa424e789d4205961c01d634",
+      "state": "uploaded"
+    },
+    {
+      "id": 686838822,
+      "name": "pixflow-design-bridge-2.1.1-mac-arm64-037a867b-extension-ready.dmg",
+      "size": 209966857,
+      "digest": "sha256:6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f",
+      "state": "uploaded"
+    },
+    {
+      "id": 686840916,
+      "name": "pixflow-design-bridge-2.1.1-mac-x64-037a867b-extension-ready.dmg",
+      "size": 221084602,
+      "digest": "sha256:d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf",
+      "state": "uploaded"
+    },
+    {
+      "id": 686841908,
+      "name": "SHA256SUMS-mac-extension-ready-2.1.1.txt",
+      "size": 264,
+      "digest": "sha256:2709f8d6d5935221604e782c3800c2e495da23c061202c5a3f87ae388d082a4d",
+      "state": "uploaded"
+    },
+    {
+      "id": 686841977,
+      "name": "mac-extension-ready-2.1.1-build.json",
+      "size": 12445,
+      "digest": "sha256:e0f50d7db996baada055ad739c9a468c9de02a50ac99a2651fb659c82eb8b805",
+      "state": "uploaded"
+    }
+  ]
+}

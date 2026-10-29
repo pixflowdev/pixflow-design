@@ -1,3 +1,7 @@
+> **29 October release policy:** one extension-ready installer per architecture, direct connection retained; Mac is BUILD-ONLY per maintainer. The linked 29 October handoff overrides historical ordinary/optional build and acceptance instructions below.
+
+> Intel v2.1.1 continuation: use [the 29 October Intel handoff](2026-10-29-mac211-intel-handoff.md) and its exact source pins. The earlier pair below is historical evidence, not the new Intel build target.
+
 # v2.1.1 combined Mac and unified-chat candidate
 
 Updated 28 October 2026. This is the authoritative continuation of the Mac reboot handoff. Read this document from the branch tip, but build the immutable source revisions below. Earlier receipts remain evidence for their own revisions only.

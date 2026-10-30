@@ -7,6 +7,15 @@ on:
       - 'tools/pixflow-design-bridge/native-messaging/**'
       - 'tools/pixflow-design-bridge/tests/native-*.test.ts'
       - 'apps/web/src/providers/daemon.ts'
+      - 'apps/daemon/src/runtimes/claude-sign-in.ts'
+      - 'apps/daemon/src/routes/claude-sign-in.ts'
+      - 'apps/daemon/src/cli.ts'
+      - 'apps/daemon/tests/runtimes/claude-sign-in.test.ts'
+      - 'apps/daemon/tests/routes/claude-sign-in.test.ts'
+      - 'apps/daemon/tests/claude-sign-in-cli.test.ts'
+      - 'apps/web/src/components/ClaudeSignIn*'
+      - 'apps/web/tests/components/ClaudeSignIn.test.tsx'
+      - 'packages/contracts/src/api/claude-sign-in.ts'
       - 'apps/web/tests/providers/daemon-workspace-handoff.test.ts'
       - 'e2e/ui/native-popup.test.ts'
       - 'e2e/ui/native-direct.test.ts'
@@ -43,6 +52,10 @@ jobs:
           pnpm typecheck
       - name: Native transport permission and disconnect regressions
         run: node --import tsx --test tools/pixflow-design-bridge/tests/native-messaging.test.ts tools/pixflow-design-bridge/tests/native-permissions.test.ts tools/pixflow-design-bridge/tests/native-content.test.ts tools/pixflow-design-bridge/tests/native-status.test.ts tools/pixflow-design-bridge/tests/native-installation.test.ts tools/pixflow-design-bridge/tests/native-load.test.ts tools/pixflow-design-bridge/tests/native-enrollment.test.ts
+      - name: Claude sign-in recovery
+        run: |
+          pnpm --filter @open-design/daemon exec vitest run tests/runtimes/claude-sign-in.test.ts tests/routes/claude-sign-in.test.ts tests/claude-sign-in-cli.test.ts
+          pnpm --filter @open-design/web exec vitest run tests/components/ClaudeSignIn.test.tsx tests/components/SettingsDialog.provider-sync.test.tsx tests/pixflow/bridge-request-connectivity.test.ts
       - name: Installer payload and production authorization boundary
         run: |
           pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts tests/resources.test.ts -t 'native|Windows|copyBundled'

@@ -30,6 +30,18 @@ final class DirectCanvasRelay
         wp_cache_delete('notoptions', 'options');
     }
 
+    /** Mailbox coordination must observe SQL reservations, never a stale option cache.
+     * A concurrent absent get_option() may repopulate notoptions after reserve()
+     * invalidates it. Positive cache entries can likewise outlive CAS completion.
+     */
+    private function readSlot(string $key): mixed
+    {
+        global $wpdb;
+        $value = $wpdb->get_var($wpdb->prepare("SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $key));
+        if ($value === null && !empty($wpdb->last_error)) throw new \RuntimeException('The live builder mailbox could not be read.');
+        return $value === null ? false : maybe_unserialize($value);
+    }
+
     private function claimedKey(string $id, string $commandId): string
     {
         return $this->key($id) . '_command_claimed_' . $commandId;
@@ -71,8 +83,8 @@ final class DirectCanvasRelay
             delete_option($this->key($resumeId) . '_departed');
             update_option($this->key($resumeId), $canvas, false);
             delete_option($this->key($resumeId) . '_context');
-            $command = get_option($this->key($resumeId) . '_command');
-            if (!$hasCompletion && is_array($command) && (get_option($this->claimedKey($resumeId, $command['id'])) || get_option($this->key($resumeId) . '_command_claimed') === $command['id'])) {
+            $command = $this->readSlot($this->key($resumeId) . '_command');
+            if (!$hasCompletion && is_array($command) && ($this->readSlot($this->claimedKey($resumeId, $command['id'])) || $this->readSlot($this->key($resumeId) . '_command_claimed') === $command['id'])) {
                 $this->complete($resumeId, $command['id'], ['ok' => false, 'error' => 'The builder reloaded before delivering the result. Inspect the current state before retrying; the operation may have happened.']);
             }
             return ['canvasId' => $resumeId, 'postId' => $postId];
@@ -187,14 +199,14 @@ final class DirectCanvasRelay
         $metadata = ['frameworkRouteId' => ($route = \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'frameworkRoute')) ? $route() : null,
             'presentationScopes' => array_keys($canvas['presentationSessions'])];
         $key = $this->key($id) . '_command';
-        $command = get_option($key);
+        $command = $this->readSlot($key);
         if (!is_array($command)) return ['command' => null] + $metadata;
         if (!get_transient($command['sessionKey']) || $command['expiresAt'] < time()) {
             $this->complete($id, $command['id'], ['ok' => false, 'error' => 'The live command expired or its session ended; inspect the canvas before retrying.']);
             return ['command' => null] + $metadata;
         }
         // Already dispatched work retains its real outcome if access expires mid-flight.
-        if (get_option($key . '_claimed') === $command['id'] || get_option($this->claimedKey($id, $command['id']))) return ['command' => null] + $metadata;
+        if ($this->readSlot($key . '_claimed') === $command['id'] || $this->readSlot($this->claimedKey($id, $command['id']))) return ['command' => null] + $metadata;
         if ($this->builder === 'gutenberg') {
             try { Gutenberg\GutenbergExtensions::assert_command($command['tool'], $command['arguments'], (int) $canvas['postId'], $canvas['entity'] ?? null); }
             catch (\RuntimeException $error) {
@@ -209,7 +221,7 @@ final class DirectCanvasRelay
         }
         // A lost poll response never replays a mutation. The caller will see a
         // timeout with an explicit uncertain outcome instead of a duplicate edit.
-        if (get_option($key . '_claimed') === $command['id'] || !$this->reserve($this->claimedKey($id, $command['id']), $command['id'])) return ['command' => null] + $metadata;
+        if ($this->readSlot($key . '_claimed') === $command['id'] || !$this->reserve($this->claimedKey($id, $command['id']), $command['id'])) return ['command' => null] + $metadata;
         $enrich = \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'prepareCommand');
         if ($enrich) $command = $enrich($command);
         $scope = hash('sha256', $command['sessionKey']);
@@ -237,7 +249,7 @@ final class DirectCanvasRelay
     {
         $this->canvas($id);
         $key = $this->key($id) . '_command';
-        $command = get_option($key);
+        $command = $this->readSlot($key);
         if (!is_array($command) || !hash_equals($command['id'], $commandId)) return ['accepted' => false];
         // A delayed duplicate completion must never remove a newer command.
         global $wpdb;
@@ -249,7 +261,7 @@ final class DirectCanvasRelay
         // Retain the per-command claim until this canvas closes. A poll that
         // read the old mailbox immediately before completion must not reclaim
         // and execute that already completed command after the slot is freed.
-        if (get_option($key . '_claimed') === $commandId) delete_option($key . '_claimed');
+        if ($this->readSlot($key . '_claimed') === $commandId) delete_option($key . '_claimed');
         return ['accepted' => true];
     }
 
@@ -289,11 +301,11 @@ final class DirectCanvasRelay
         }
         update_option($this->key($id) . '_departed', true, false);
         delete_option($this->key($id) . '_context');
-        $command = get_option($this->key($id) . '_command');
+        $command = $this->readSlot($this->key($id) . '_command');
         if (is_array($command)) {
             // Compete for exactly the same claim as poll. A concurrent poll can
             // either own execution or lose to departure; it cannot replay work.
-            $claimed = get_option($this->key($id) . '_command_claimed') === $command['id']
+            $claimed = $this->readSlot($this->key($id) . '_command_claimed') === $command['id']
                 || !$this->reserve($this->claimedKey($id, $command['id']), 'navigation');
             $readOnly = !empty($command['readOnly']);
             $result = $this->navigationResult($claimed, $readOnly);
@@ -317,14 +329,14 @@ final class DirectCanvasRelay
         if (!is_array($destination)) return $source;
         $origin = $this->canvas($id);
         if ((int) $origin['postId'] !== (int) $source['postId'] || (int) $destination['postId'] !== (int) $source['postId']) throw new \RuntimeException('The editor handoff no longer targets the same page.');
-        if (is_array(get_option($this->key($id) . '_command'))) throw new \RuntimeException('A previous builder command has no confirmed result. Resolve it before continuing in another editor.');
+        if (is_array($this->readSlot($this->key($id) . '_command'))) throw new \RuntimeException('A previous builder command has no confirmed result. Resolve it before continuing in another editor.');
         return (new self('gutenberg'))->target($destination['canvasId'], (int) $destination['postId'], $destination['entity'] ?? null);
     }
 
     public function close(string $id): array
     {
         $this->canvas($id);
-        $command = get_option($this->key($id) . '_command');
+        $command = $this->readSlot($this->key($id) . '_command');
         if (is_array($command)) $this->complete($id, $command['id'], ['ok' => false, 'error' => 'The builder disconnected. Inspect the canvas before retrying.']);
         delete_option($this->key($id));
         delete_option($this->key($id) . '_context');

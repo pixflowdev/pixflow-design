@@ -12,6 +12,8 @@ Core/Pro CI green. Guard, typechecks, 22 usage backend tests, 31 combined UI tes
 
 Local WordPress upgraded using both final ZIPs. Content/chat table hashes and saved preferences stayed unchanged. The entitlement cache refreshed during follow-up validation. ZIP identities/versions and foreign-catalogue/secret-path exclusions pass. Windows NSIS archive integrity passes; generated packaged configuration is version 2.1.3 with relative runtime paths. Pro build receipt records the exact clean Core pin.
 
-Remaining gates: Mac usage acceptance and both architecture DMGs; installed Windows launch/usage smoke; review/merge Core #55 and Pro #30; reconcile all source/build receipts and platform hashes before selecting the staged updater metadata. No physical Linux acceptance is claimed. Linux install script and cross-platform runtime are prepared.
+Remaining gates: Mac usage acceptance and both architecture DMGs; review/merge Core #55 and Pro #30; reconcile all source/build receipts and platform hashes before selecting the staged updater metadata. No physical Linux acceptance is claimed. Linux install script and cross-platform runtime are prepared.
 
 Mac instructions are in docs/testing/2026-10-30-mac213-usage-handoff.md on codex/mac213-usage-handoff. The starting pair has been updated to include the licence, chat-loading and minimise fixes, preventing a second build solely to add those changes. Any Mac fix changes the frozen pair and must be reconciled before promotion.
+
+Windows installed-payload acceptance now passes: see [redacted receipt](evidence/windows213-smoke.json). All 11,418 files match, upgrade/reinstall preserve 40 test files, direct/native usage reads and graceful restart recovery pass. Shared native registration restored; temporary test pairing revoked and QA Bridge stopped.

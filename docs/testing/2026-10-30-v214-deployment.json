@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "version": "2.1.4",
+  "state": "deployed-and-verified",
+  "deploymentAuthorized": true,
+  "authorization": "Human explicitly requested website deployment using verified artifacts; GitHub release publication was not requested.",
+  "verifiedAt": "2026-10-30T19:20:36.886Z",
+  "initialDeploymentAt": "2026-10-30T19:02:56.678759+00:00",
+  "websiteCorrectionAt": "2026-10-30T19:19:01.503797+00:00",
+  "releasePointer": {
+    "schemaVersion": 1,
+    "release_id": "release-2.1.4-521a2258-240bc29e",
+    "sha256": "a24a14b84548f78d220f850a8d071db3a163363dbe6ed682af63bf467e90ddf0"
+  },
+  "finalWebsiteImage": "sha256:fb9c0b4c8cf0d170f1192e0a1c34b9f0f9ea20fe157810b5ad4ad90067a6044e",
+  "operatorSha256": "78e5cc5705e348201709c287168bc027847387a68244977a3fc2e984d354fbed",
+  "website": {
+    "repository": "pixflowdev/pixflow-website",
+    "branch": "codex/release-2.1.4-website",
+    "initialDeploymentCommit": "0b1a580c43d358a641ffa74de32621df5f7c4946",
+    "cachedFreeFixCommit": "4f08d9e0d419d3cd9983a4c52825c1a1ea377ccd",
+    "finalReceiptCommit": "7660ed86822bed724b23f12ced8e6ca5c3374235",
+    "productionResolverSha256": "c995c5010f0076b6a66b2982d34042234fe282428549fbbdb9b455bd892cf09e"
+  },
+  "buildInputs": {
+    "proPlugin": "5d3ee3aaee55692112832fc53409f9f2df6c4395",
+    "bridgeCore": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+    "corePlugin": "d271206ab4e7a45d77d856529643c8ea7f3a1d77",
+    "proCorePin": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+    "bridgePro": "32a7946801d30e37f30bf35dda622f15335f3ec5"
+  },
+  "artifacts": [
+    {
+      "role": "core-plugin",
+      "file": "pixflow-design-2.1.4.zip",
+      "bytes": 2396868,
+      "sha256": "521a22580b92317cb7ec3e9dbae57c83487ff4ec9165c075bfb7e6044d50a7e4"
+    },
+    {
+      "role": "pro-plugin",
+      "file": "pixflow-design-pro-2.1.4.zip",
+      "bytes": 6089564,
+      "sha256": "240bc29e9c0f0c6d72519c920facdecf3a73c67d35de40b4da14d67f931acef6"
+    },
+    {
+      "role": "macosArm64",
+      "file": "pixflow-design-bridge-2.1.4-mac-arm64.dmg",
+      "bytes": 209983271,
+      "sha256": "44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22"
+    },
+    {
+      "role": "macosX64",
+      "file": "pixflow-design-bridge-2.1.4-mac-x64.dmg",
+      "bytes": 221115840,
+      "sha256": "b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4"
+    },
+    {
+      "role": "windows",
+      "file": "pixflow-design-bridge-2.1.4-win-x64-setup.exe",
+      "bytes": 248243269,
+      "sha256": "3f5dfa7e2ed847957a123c7c4aeefa215b3c8df3806c860b4c9c00380a45fed1"
+    },
+    {
+      "role": "bridge-runtime",
+      "file": "pixflow-design-bridge-2.1.4.zip",
+      "bytes": 4692215,
+      "sha256": "f8ce66bd6f0914f276762123ca4776cfdd06bae6c53d8138be3e6050aef06e3b"
+    }
+  ],
+  "languagePinsSha256": "3bf5656047bb2ee53ffb0d87abe9d2c66db4e559185804735060c6d8a57acb09",
+  "verification": {
+    "independentPublicChecks": 34,
+    "exactPublicDownloads": [
+      "Free ZIP",
+      "Windows installer",
+      "Mac ARM64 DMG",
+      "Mac Intel DMG",
+      "Bridge runtime ZIP",
+      "historical Free 2.1.3 ZIP"
+    ],
+    "newLanguages": 18,
+    "retainedLanguages": 144,
+    "operatorLanguageObjects": 162,
+    "allLanguageObjectsVerifiedByWebsiteOwner": true,
+    "publicUpdaterVersion": "2.1.4",
+    "updaterInstalledInputs": [
+      "1.1.5",
+      "2.0.3",
+      "2.0.4",
+      "2.0.7",
+      "2.0.8",
+      "2.1.0",
+      "2.1.1",
+      "2.1.2",
+      "2.1.3",
+      "2.1.4"
+    ],
+    "authenticatedDelivery": "Positive protected delivery covered by the isolated website fixture; public Pro denials checked independently. No customer licence or live signed-in account used.",
+    "websiteIsolatedAssertions": 1180,
+    "cachedFreeHistory": "Red 404 reproduced; narrow website-only fix; all nine retained stable Free releases passed origin GET/HEAD exact hashes; independent 2.1.3 continuity passed.",
+    "changelogScope": "Core shared fixes; Pro compatibility only; exact approved UTF-8 notes verified by website owner."
+  },
+  "preservation": {
+    "customerDataAndSettingsChanged": false,
+    "teamChanged": false,
+    "extensionChanged": false,
+    "artifactBytesRebuiltOrModifiedDuringDeployment": false,
+    "githubReleasesPublished": false,
+    "githubReleaseIdsRemainingDrafts": [
+      429366804,
+      429366886,
+      429347161
+    ]
+  },
+  "limits": [
+    "Mac DMGs are ad-hoc signed and not notarized; disclosure is visible.",
+    "Intel acceptance used Rosetta, not physical Intel.",
+    "No new native Linux hardware acceptance or production-identity Windows installer rerun is claimed."
+  ],
+  "supersedesDeploymentHoldIn": "2026-10-30-v214-final-readiness.md",
+  "publicReceipt": "2026-10-30-v214-public-verification.json"
+}

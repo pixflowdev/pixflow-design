@@ -1,0 +1,256 @@
+{
+  "version": "2.1.4",
+  "verifiedAt": "2026-10-30T19:20:36.886Z",
+  "scope": "independent public HTTP; protected positive delivery verified separately by website owner",
+  "expectedPluginSource": "d271206ab4e7a45d77d856529643c8ea7f3a1d77",
+  "expectedProSource": "5d3ee3aaee55692112832fc53409f9f2df6c4395",
+  "freeVersion": "2.1.4",
+  "bridgeVersion": "2.1.4",
+  "checks": [
+    {
+      "role": "core-plugin",
+      "url": "https://pixflow.dev/api/plugins/v1/free/download/plugin-2.1.4-521a22580b92317c",
+      "bytes": 2396868,
+      "sha256": "521a22580b92317cb7ec3e9dbae57c83487ff4ec9165c075bfb7e6044d50a7e4",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "macosX64",
+      "url": "https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-2.1.4-mac-x64.dmg",
+      "bytes": 221115840,
+      "sha256": "b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "windows",
+      "url": "https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-2.1.4-win-x64-setup.exe",
+      "bytes": 248243269,
+      "sha256": "3f5dfa7e2ed847957a123c7c4aeefa215b3c8df3806c860b4c9c00380a45fed1",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "bridge-runtime",
+      "url": "https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-2.1.4-f8ce66bd6f09.zip",
+      "bytes": 4692215,
+      "sha256": "f8ce66bd6f0914f276762123ca4776cfdd06bae6c53d8138be3e6050aef06e3b",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "macosArm64",
+      "url": "https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-2.1.4-mac-arm64.dmg",
+      "bytes": 209983271,
+      "sha256": "44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "linux-install-script",
+      "url": "https://pixflow.dev/downloads/pixflow-design-bridge/releases/2.1.4-f8ce66bd6f09/install.sh",
+      "status": 200
+    },
+    {
+      "role": "bridge-download-page-disclosure",
+      "status": 200,
+      "extensionIdUnchanged": true
+    },
+    {
+      "role": "language",
+      "locale": "de",
+      "sha256": "138f0b8f63768db3b9a7907e1a66bcea82bdb3bac5d3a454332fd55bb7eeefb9",
+      "bytes": 551767,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "id",
+      "sha256": "75f1794e8d2c29ebb63474fc68490d2706f84b2d6fef4c75355c836901a8badc",
+      "bytes": 592284,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "zh-CN",
+      "sha256": "3e1dd533b413f02f3ea462808090f8b69fc837824b752a82c861a6fa22d607f4",
+      "bytes": 561387,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "zh-TW",
+      "sha256": "2eab131a7d20fbbbb5e6b0447190c62f9008f01242439bde8a853df1f504714f",
+      "bytes": 564813,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "pt-BR",
+      "sha256": "d1ea7131f3efdb4d423064f071ddf415f0fbdf11497c81c8c84323e39e7ac07b",
+      "bytes": 628764,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "es-ES",
+      "sha256": "6bca0d2da59a1d41dff16c95e02e543952a788c00eea09edbc9b9e7e05a52674",
+      "bytes": 640471,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "ru",
+      "sha256": "446ed30a49293af73166d7ade16621b695cc290aa5e70cad87b656299274cc26",
+      "bytes": 747846,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "fa",
+      "sha256": "26e9d0b3d543518a94bff3e16c7a348d8e3df2366d7197e026f7dd3d5e6cd775",
+      "bytes": 808066,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "ar",
+      "sha256": "f1953c22381228f26ed89895f525e35a9f52c86799ba7201f7faf31bea955d23",
+      "bytes": 758241,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "ja",
+      "sha256": "54c99e4a0eeb24b0adb4d75cf47be1df0d28088d4915a4060d49809ef5af1bd5",
+      "bytes": 734387,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "ko",
+      "sha256": "3ab6df6759c98696a6ce073d29e55426c87dd6e09aec5e8748458c00310560b6",
+      "bytes": 659442,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "pl",
+      "sha256": "ccd648d1f5ac5021b3ba4bde4bd73794068bd0a2ae3900981290526dbf201f49",
+      "bytes": 631175,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "hu",
+      "sha256": "8ca951777fc0de6aed1df87f132fad17562f189c874c93647a50674e126081c4",
+      "bytes": 657189,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "fr",
+      "sha256": "8db9338a57e39905d87f0ee27387287cb0bcdbf4ad6835fe4ceeb625cbc4ca65",
+      "bytes": 567845,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "uk",
+      "sha256": "2cd6f8a42c8df26f4ed5a9bfc8974ac7b658f5b9dde6dcbff5a5303b496f7278",
+      "bytes": 880923,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "tr",
+      "sha256": "ee40f793ab072555055059b2cce6d30efc5160a8320b1fc2b3ab87bab3a68f93",
+      "bytes": 630155,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "th",
+      "sha256": "2276ed1577a641940e0a85b194d86d3e458d1e382b514cfd89d536c194a15bd4",
+      "bytes": 1046464,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "language",
+      "locale": "it",
+      "sha256": "1a91d1aee3b9b7c34fd85a5067761758649729fa1c428797879270c3c5378de8",
+      "bytes": 627098,
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "historical-language-id",
+      "url": "https://pixflow.dev/api/languages/v1/id-ca1d4d298c7713ee1525151e04e342c5a35fb76369398e470fcf237403e617c8.json",
+      "bytes": 591890,
+      "sha256": "ca1d4d298c7713ee1525151e04e342c5a35fb76369398e470fcf237403e617c8",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "historical-core-2.1.3",
+      "url": "https://pixflow.dev/api/plugins/v1/free/download/plugin-2.1.3-490a0be3ec5d2ac0",
+      "bytes": 2395119,
+      "sha256": "490a0be3ec5d2ac057d97758f80639f37b480903f9bad4757f5f3d06d0ca5a6a",
+      "get": 200,
+      "head": 200
+    },
+    {
+      "role": "invalid-language-denied",
+      "status": 404
+    },
+    {
+      "role": "invalid-language-denied",
+      "status": 404
+    },
+    {
+      "role": "changelog",
+      "url": "https://pixflow.dev/changelog",
+      "status": 200
+    },
+    {
+      "role": "core-notes",
+      "url": "https://pixflow.dev/changelog/pixflow-design-v2-1-4",
+      "status": 200
+    },
+    {
+      "role": "pro-notes",
+      "url": "https://pixflow.dev/changelog/pixflow-design-pro-v2-1-4",
+      "status": 200
+    },
+    {
+      "role": "anonymous-pro-denied",
+      "path": "/api/account/download/artifact-plugin-pro-2.1.4-240bc29e9c0f0c6d",
+      "status": 401
+    },
+    {
+      "role": "anonymous-pro-denied",
+      "path": "/api/plugins/v1/free/download/plugin-pro-2.1.4-240bc29e9c0f0c6d",
+      "status": 404
+    }
+  ],
+  "mutations": false,
+  "customerDatabaseAccessed": false
+}

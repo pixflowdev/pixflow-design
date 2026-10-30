@@ -1,5 +1,7 @@
 # v2.1.4 deployment readiness
 
+**Subsequent deployment:** the owner later authorized website deployment. The [deployment and public verification report](2026-10-30-v214-deployment.md) supersedes the hold below. This document retains the preparation-time evidence and authorization state.
+
 Preparation authorized on 30 October 2026. Publication, live download/updater selection and customer data changes remain on hold. This record supersedes earlier queued-CI and missing-Mac observations in the preparation/review documents.
 
 ## Source integration and ownership

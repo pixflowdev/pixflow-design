@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { Button } from '@open-design/components';
 import type { CodexUsage as Usage } from '@open-design/contracts';
 import { codexUsageRequest } from '../providers/daemon';
@@ -7,44 +7,76 @@ import styles from './CodexUsage.module.css';
 
 const USAGE_REFRESH_MS = 60_000;
 
-/** Keep mounted usage surfaces current without overlapping reads or polling hidden tabs. */
-export function useCodexUsage(provider: 'codex' | 'claude' = 'codex', model = '') {
-  const [data, setData] = useState<Usage | null>(null);
-  const [busy, setBusy] = useState(false);
-  const request = useRef<AbortController>();
-  const pending = useRef(false);
-  const lastAttempt = useRef(0);
-  const refresh = useCallback(() => {
-    if (pending.current) return;
-    request.current?.abort();
-    const controller = new AbortController(); request.current = controller;
-    pending.current = true;
-    lastAttempt.current = Date.now();
-    setBusy(true);
+type UsageProvider = 'codex' | 'claude';
+type UsageSnapshot = { data: Usage | null; busy: boolean };
+
+/** One poller per provider/model, even when floating chat and Workspace stay mounted together. */
+function createUsageStore(provider: UsageProvider, model: string) {
+  const initialSnapshot: UsageSnapshot = { data: null, busy: false };
+  let snapshot = initialSnapshot;
+  let request: AbortController | undefined;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let lastAttempt = 0;
+  const listeners = new Set<() => void>();
+  const publish = (next: UsageSnapshot) => {
+    snapshot = next;
+    listeners.forEach(listener => listener());
+  };
+  const refresh = () => {
+    if (snapshot.busy) return;
+    const controller = new AbortController(); request = controller;
+    lastAttempt = Date.now();
+    publish({ ...snapshot, busy: true });
     void codexUsageRequest(controller.signal, provider, model).then(value => {
-      if (!controller.signal.aborted) setData(value);
+      if (!controller.signal.aborted) publish({ data: value, busy: true });
     }).catch(() => {
-      if (!controller.signal.aborted) setData({ status: 'unavailable', source: null, checkedAt: '', windows: [] });
+      if (!controller.signal.aborted) publish({ data: { status: 'unavailable', source: null, checkedAt: '', windows: [] }, busy: true });
     }).finally(() => {
-      if (!controller.signal.aborted && request.current === controller) { pending.current = false; setBusy(false); }
+      if (!controller.signal.aborted && request === controller) publish({ ...snapshot, busy: false });
     });
-  }, [provider, model]);
-  useEffect(() => {
-    setData(null);
-    refresh();
-    const refreshIfDue = () => {
-      if (document.visibilityState !== 'hidden' && Date.now() - lastAttempt.current >= USAGE_REFRESH_MS) refresh();
-    };
-    const timer = window.setInterval(refreshIfDue, USAGE_REFRESH_MS);
-    document.addEventListener('visibilitychange', refreshIfDue);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', refreshIfDue);
-      request.current?.abort();
-      pending.current = false;
-    };
-  }, [refresh]);
-  return { data, busy, refresh, provider };
+  };
+  const refreshIfDue = () => {
+    if (document.visibilityState !== 'hidden' && Date.now() - lastAttempt >= USAGE_REFRESH_MS) refresh();
+  };
+  return {
+    getSnapshot: () => snapshot,
+    getServerSnapshot: () => initialSnapshot,
+    refresh,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      if (listeners.size === 1) {
+        refresh();
+        timer = setInterval(refreshIfDue, USAGE_REFRESH_MS);
+        document.addEventListener('visibilitychange', refreshIfDue);
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size) return;
+        clearInterval(timer);
+        document.removeEventListener('visibilitychange', refreshIfDue);
+        request?.abort();
+        request = undefined;
+        // Retain the store identity for concurrent mounts, but never retain an account reading after unmount.
+        snapshot = { data: null, busy: false };
+        lastAttempt = 0;
+      };
+    },
+  };
+}
+
+const usageStores = new Map<string, ReturnType<typeof createUsageStore>>();
+function usageStore(provider: UsageProvider, model: string) {
+  if (typeof window === 'undefined') return createUsageStore(provider, model);
+  const key = JSON.stringify([provider, model]);
+  let store = usageStores.get(key);
+  if (!store) { store = createUsageStore(provider, model); usageStores.set(key, store); }
+  return store;
+}
+
+export function useCodexUsage(provider: UsageProvider = 'codex', model = '') {
+  const store = useMemo(() => usageStore(provider, model), [provider, model]);
+  const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  return { ...snapshot, refresh: store.refresh, provider };
 }
 
 export function CodexUsage({ provider = 'codex', model = '' }: { provider?: 'codex' | 'claude'; model?: string }) {

@@ -96,3 +96,39 @@ test('model changes cancel old work and poll only the newly selected model', asy
   expect(codexUsageRequest).toHaveBeenCalledTimes(3);
   expect(vi.mocked(codexUsageRequest).mock.calls[2]!.slice(1)).toEqual(['claude', 'sonnet']);
 });
+
+test('floating and Workspace consumers share one read and never overlap minute polls', async () => {
+  vi.useFakeTimers();
+  let finish: (value: ReturnType<typeof usage>) => void = () => {};
+  vi.mocked(codexUsageRequest).mockResolvedValueOnce(usage(80)).mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  render(<><CodexUsageIndicator /><CodexUsageIndicator /></>);
+  await tick(0);
+  expect(codexUsageRequest).toHaveBeenCalledTimes(1);
+  await tick(60000);
+  expect(codexUsageRequest).toHaveBeenCalledTimes(2);
+  await tick(60000);
+  expect(codexUsageRequest).toHaveBeenCalledTimes(2);
+  await act(async () => finish(usage(60)));
+  expect(screen.getAllByRole('button', { name: /60% remaining/ })).toHaveLength(2);
+});
+
+test('one consumer changing model does not cancel another consumer or leak its result', async () => {
+  vi.useFakeTimers();
+  let finishOpus: (value: ReturnType<typeof usage>) => void = () => {};
+  vi.mocked(codexUsageRequest).mockImplementation((_signal, _provider, model) => model === 'opus'
+    ? new Promise(resolve => { finishOpus = resolve; }) : Promise.resolve(usage(55)));
+  const view = render(<><CodexUsageIndicator provider="claude" model="opus" /><CodexUsageIndicator provider="claude" model="opus" /></>);
+  await tick(0);
+  expect(codexUsageRequest).toHaveBeenCalledTimes(1);
+  const opusSignal = vi.mocked(codexUsageRequest).mock.calls[0]![0];
+  view.rerender(<><CodexUsageIndicator provider="claude" model="sonnet" /><CodexUsageIndicator provider="claude" model="opus" /></>);
+  await tick(0);
+  expect(opusSignal?.aborted).toBe(false);
+  expect(codexUsageRequest).toHaveBeenCalledTimes(2);
+  view.rerender(<><CodexUsageIndicator provider="claude" model="sonnet" /><CodexUsageIndicator provider="claude" model="sonnet" /></>);
+  await tick(0);
+  expect(opusSignal?.aborted).toBe(true);
+  await act(async () => finishOpus(usage(80)));
+  expect(screen.getAllByRole('button', { name: /55% remaining/ })).toHaveLength(2);
+  expect(screen.queryByRole('button', { name: /80% remaining/ })).toBeNull();
+});

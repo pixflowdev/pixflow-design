@@ -12,6 +12,7 @@ test.describe('installed composer tooltip overflow', () => {
         await page.getByRole('button', { name: /^(Open Pixflow Agent panel|Pixflow Design)$/ }).click();
       }
       await expect(panel).toBeVisible({ timeout: T.long });
+      await expect(panel.locator('.pixflow-bricks-agent-react__bridge-loading')).toHaveCount(0, { timeout: T.xlong });
       const dimensions = () => page.evaluate(() => ({
         width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
         bodyWidth: document.body.scrollWidth, bodyHeight: document.body.scrollHeight,

@@ -1,0 +1,48 @@
+{
+  "releaseId": 428584804,
+  "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-f4d836cdad855d89c7a3",
+  "tag": "bridge-v2.1.3",
+  "target": "c9d1481944e5020c2b82e48b54754b5c811b8a24",
+  "draft": true,
+  "prerelease": false,
+  "assets": [
+    {
+      "id": 690628845,
+      "name": "pixflow-design-bridge-2.1.3-mac-arm64.dmg",
+      "size": 209996027,
+      "digest": "sha256:f9bf8b3e016dbb8a5b54c5e247d2fd4de8818177a2bbae6699d362b43db31884",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-f4d836cdad855d89c7a3/pixflow-design-bridge-2.1.3-mac-arm64.dmg",
+      "independentDownload": {
+        "bytes": 209996027,
+        "sha256": "f9bf8b3e016dbb8a5b54c5e247d2fd4de8818177a2bbae6699d362b43db31884",
+        "verifiedAt": "2026-10-30T02:18:22.255457+00:00"
+      }
+    },
+    {
+      "id": 690636455,
+      "name": "pixflow-design-bridge-2.1.3-mac-x64.dmg",
+      "size": 221105005,
+      "digest": "sha256:cb3a98f7a188f382bc405308b5c55d76c1b35a0c27dc2e626187c16005745f5b",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-f4d836cdad855d89c7a3/pixflow-design-bridge-2.1.3-mac-x64.dmg",
+      "independentDownload": {
+        "bytes": 221105005,
+        "sha256": "cb3a98f7a188f382bc405308b5c55d76c1b35a0c27dc2e626187c16005745f5b",
+        "verifiedAt": "2026-10-30T02:20:44.983063+00:00"
+      }
+    },
+    {
+      "id": 690636472,
+      "name": "SHA256SUMS-mac-2.1.3.txt",
+      "size": 214,
+      "digest": "sha256:057c66159134a5890f01b9081e06d99da5ed20ceb3380b518bd927ef39af516d",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-f4d836cdad855d89c7a3/SHA256SUMS-mac-2.1.3.txt"
+    },
+    {
+      "id": 690636525,
+      "name": "mac-2.1.3-build-receipt.json",
+      "size": 11332,
+      "digest": "sha256:8969520c7d695beb3b64b0cd4f500787ad8fe7f6b139f2dc9b9d6a8eeb0e9319",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-f4d836cdad855d89c7a3/mac-2.1.3-build-receipt.json"
+    }
+  ]
+}

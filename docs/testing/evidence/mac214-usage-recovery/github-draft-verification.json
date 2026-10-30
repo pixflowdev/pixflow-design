@@ -13,7 +13,7 @@
       "name": "SHA256SUMS-mac-2.1.4.txt",
       "size": 214,
       "digest": "sha256:e796dd46c56ab83fad6be09a80201cfc244fd203b1b86c611d752d8c54c405ae",
-      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-d66a98dc168ab91ec769/SHA256SUMS-mac-2.1.4.txt",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-bfb5e35396db08e0c733/SHA256SUMS-mac-2.1.4.txt",
       "independentDownload": {
         "bytes": 214,
         "sha256": "e796dd46c56ab83fad6be09a80201cfc244fd203b1b86c611d752d8c54c405ae",
@@ -25,7 +25,7 @@
       "name": "mac-2.1.4-build-receipt.json",
       "size": 14236,
       "digest": "sha256:31a9a2c8dd6e79e86f4c9d2b4cb94bec6f51257cdfc846f9f2b14990122f9f86",
-      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-d66a98dc168ab91ec769/mac-2.1.4-build-receipt.json",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-bfb5e35396db08e0c733/mac-2.1.4-build-receipt.json",
       "independentDownload": {
         "bytes": 14236,
         "sha256": "31a9a2c8dd6e79e86f4c9d2b4cb94bec6f51257cdfc846f9f2b14990122f9f86",
@@ -37,7 +37,7 @@
       "name": "pixflow-design-bridge-2.1.4-mac-arm64.dmg",
       "size": 209983271,
       "digest": "sha256:44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22",
-      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-d66a98dc168ab91ec769/pixflow-design-bridge-2.1.4-mac-arm64.dmg",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-bfb5e35396db08e0c733/pixflow-design-bridge-2.1.4-mac-arm64.dmg",
       "independentDownload": {
         "bytes": 209983271,
         "sha256": "44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22",
@@ -49,7 +49,7 @@
       "name": "pixflow-design-bridge-2.1.4-mac-x64.dmg",
       "size": 221115840,
       "digest": "sha256:b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4",
-      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-d66a98dc168ab91ec769/pixflow-design-bridge-2.1.4-mac-x64.dmg",
+      "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-bfb5e35396db08e0c733/pixflow-design-bridge-2.1.4-mac-x64.dmg",
       "independentDownload": {
         "bytes": 221115840,
         "sha256": "b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4",

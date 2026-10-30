@@ -5,7 +5,7 @@ Owner authorization, 30 October 2026: test the new Codex and Claude usage indica
 ## Exact starting pair
 
 - Core repository: `pixflowdev/pixflow-design`, branch `codex/release-v213`, commit `e6ec0e0a7ee15c70fbe06ad7974d2fb0b6d11cd7`.
-- Pro repository: `pixflowdev/pixflow-design-pro`, branch `codex/release-v213`, commit `a4747a209ebe74ba42f7ce2d8beed82abc580c80`.
+- Pro repository: `pixflowdev/pixflow-design-pro`, branch `codex/release-v213`, commit `e3b7b86d6ea1e1129200a0a5cc2cfe849f1d6e5f`.
 - Pro `pixflow-pro.json` pins that exact Core commit; module API remains 14.
 - This document is on Core branch `codex/mac213-usage-handoff`; its documentation commit does not change the runtime pair.
 - Source review: Core [#52](https://github.com/pixflowdev/pixflow-design/pull/52) (usage), [#53](https://github.com/pixflowdev/pixflow-design/pull/53) (inline slash commands), Pro [#29](https://github.com/pixflowdev/pixflow-design-pro/pull/29) (pin/changelogs). Merge order is 52, 53, 29; do not merge or publish on this handoff's authority.

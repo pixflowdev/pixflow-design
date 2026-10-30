@@ -39,6 +39,30 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('saves a revision-backed appended reply on reopen when its browser outbox is absent', async () => {
+    const event = { kind: 'text', text: 'Early reply. ' };
+    const canonical = { ...saved(message(1)), content: 'Early reply. ', status: 'streaming', runStatus: 'running', events: [event] };
+    const complete = { ...canonical, content: 'Early reply. Complete final explanation.', status: 'error', runStatus: 'interrupted', endedAt: 100, events: [event, { kind: 'text', text: 'Complete final explanation.' }] };
+    vi.mocked(importChatHistory).mockResolvedValue({ messages: [canonical], deletedMessageIds: [] });
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [canonical], nextCursor: null, hasMore: false });
+    const owner = renderHook(() => useHarness([complete]));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    await waitFor(() => expect(saveChatHistoryMessage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ content: complete.content, historyRevision: 1 })));
+    expect(owner.result.current.messages[0]?.content).toBe(complete.content);
+  });
+
+  it.each(['newer-server', 'legacy-cache', 'divergent-activity'])('does not promote an unsafe reopened snapshot: %s', async scenario => {
+    const canonical = { ...saved(message(1)), content: 'Early reply. ', status: 'streaming', runStatus: 'running', events: [{ kind: 'text', text: 'Early reply. ' }] };
+    const local = { ...canonical, content: 'Early reply. More local text.', status: 'complete', runStatus: 'succeeded', events: [...canonical.events, { kind: 'text', text: 'More local text.' }], ...(scenario === 'legacy-cache' ? { provenance: 'session_restore_v2' } : {}) };
+    if (scenario === 'newer-server') canonical.historyRevision = 2;
+    if (scenario === 'divergent-activity') local.events[0] = { kind: 'text', text: 'Different earlier text' };
+    vi.mocked(importChatHistory).mockResolvedValue({ messages: [canonical], deletedMessageIds: [] });
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [canonical], nextCursor: null, hasMore: false });
+    const owner = renderHook(() => useHarness([local]));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages[0]?.content).toBe(canonical.content);
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
   it('reads a selected empty-local chat directly without resolving its known address again', async () => {
     const address = 'pixflow:conversation:v1:11111111-1111-1111-1111-111111111111:conversation';
     vi.mocked(readChatHistory).mockResolvedValue({ messages: [saved(message(1))], nextCursor: null, hasMore: false });

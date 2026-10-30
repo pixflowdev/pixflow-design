@@ -68,7 +68,8 @@
     "installerExecution": "Existing broad installer evidence retained; exact new payload extracted and hashed",
     "normalDataChanged": false,
     "registryChanged": false,
-    "permissionsChanged": false
+    "permissionsChanged": false,
+    "smokeNamespaceStopped": true
   },
   "canonicalBridgeDraft": 429347161,
   "pending": [
@@ -171,5 +172,14 @@
     "windowsRuntime": "2.1.4 running",
     "windowsPayloadFiles": 11485,
     "publicSelectionChanged": false
+  },
+  "websiteReadiness": {
+    "repository": "pixflowdev/pixflow-website",
+    "branch": "codex/release-2.1.4-website",
+    "revision": "dc2c4a3a9d3d5f50513843f83493d2799a91505d",
+    "report": "docs/releases/2.1.4-website-readiness-2026-10-30.md",
+    "privateAcceptance": "pass",
+    "publicSelection": "2.1.3 unchanged",
+    "publicationClearance": false
   }
 }

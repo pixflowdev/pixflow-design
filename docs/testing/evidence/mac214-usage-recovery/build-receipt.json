@@ -1,0 +1,378 @@
+{
+  "version": "2.1.4",
+  "production": true,
+  "releaseTag": "bridge-v2.1.4",
+  "releaseState": "draft only",
+  "core": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+  "pro": "32a7946801d30e37f30bf35dda622f15335f3ec5",
+  "proCorePin": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+  "moduleApi": 14,
+  "worktreeOverride": false,
+  "testCore": "5e088f7669258b1c8c45912402c5988aaa7c106f",
+  "testPro": "68995f19d42a005ca327e41186bba7c2a086c12b",
+  "testVersion": "2.1.3",
+  "PRs": {
+    "pollingFix": "https://github.com/pixflowdev/pixflow-design/pull/68",
+    "coreRelease": "https://github.com/pixflowdev/pixflow-design/pull/69",
+    "proRelease": "https://github.com/pixflowdev/pixflow-design-pro/pull/33",
+    "claudeRecovery": "https://github.com/pixflowdev/pixflow-design/pull/63",
+    "usageRefresh": "https://github.com/pixflowdev/pixflow-design/pull/65",
+    "tooltips": "https://github.com/pixflowdev/pixflow-design/pull/67"
+  },
+  "host": {
+    "os": "macOS 26.5.1",
+    "architecture": "arm64",
+    "ClaudeDesktop": "4.29.0 (closed during owner sign-in)",
+    "ClaudeCLI": "2.1.309 Desktop-managed",
+    "CodexCLI": "0.165.0-alpha.1.2"
+  },
+  "validation": {
+    "focusedTestsPassed": 102,
+    "proRepositoryContractTestsPassed": 3,
+    "CoreGuard": "pass",
+    "CoreTypecheck": "pass",
+    "ProExactPinGuard": "pass",
+    "ProTypecheck": "pass",
+    "bricksTooltipSmoke": "pass; document/body 1220x646 and scroll 0,0 unchanged on Add context/Send/away; themed and viewport-contained",
+    "pollingFix": "shared per provider/model; red regressions on original input and main, green on final source; installed Codex and Sonnet minute reads without overlap",
+    "visibility": "pass after disabling debugger focus emulation; 68.692 seconds confirmed hidden without reads; overdue read successful on return",
+    "unavailableRecovery": "test-response regression passed; no credential deletion or permission revocation",
+    "ClaudeRecovery": "owner completed official sign-in; waiting automatically returned to authenticated control without Rescan; Open sign-in page exercised; Desktop closed",
+    "manualCode": "Mac controls tested; live code exchange not observed on Mac; Windows live-tested per handoff",
+    "routes": [
+      "direct HTTP health/usage",
+      "Chrome native extension health reconnect and fresh Claude usage with browser HTTP loopback fallback blocked temporarily; block cleared"
+    ],
+    "extension": "existing 1.0.3, exact permanent ID; no extension update or permission matrix; owner re-enabled existing extension",
+    "artifactRuntimeHealth": {
+      "arm64": {
+        "ok": true,
+        "product": "pixflow-design-bridge",
+        "transport": "tray-gateway",
+        "state": "running",
+        "version": "2.1.4"
+      },
+      "x64": {
+        "ok": true,
+        "product": "pixflow-design-bridge",
+        "transport": "tray-gateway",
+        "state": "running",
+        "version": "2.1.4"
+      }
+    },
+    "IntelLimit": "x64 runtime exercised under Rosetta on arm64 host; no physical Intel test",
+    "signing": "ad-hoc; strict deep signature verification passed; not notarized"
+  },
+  "preservation": {
+    "postsChatsCommentsTaxonomies": "snapshot hashes unchanged",
+    "postmeta": "same 9 rows but aggregate hash changed after builder open; no per-row baseline, so exact postmeta preservation is not claimed",
+    "preferences": "original Codex GPT-6.1-Sol Medium and Claude Sonnet 5.5 Low restored",
+    "BricksSettings": "temporary page-type enablement restored from exact checkpoint",
+    "credentials": "owner-authorized Claude refresh only; no logout or deletion",
+    "permissions": "site grants unchanged; existing extension re-enabled by owner"
+  },
+  "artifacts": [
+    {
+      "architecture": "arm64",
+      "execution": "native arm64 Node 24.19.0",
+      "name": "pixflow-design-bridge-2.1.4-mac-arm64.dmg",
+      "bytes": 209983271,
+      "sha256": "44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22",
+      "core": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+      "pro": "32a7946801d30e37f30bf35dda622f15335f3ec5",
+      "identity": {
+        "CFBundleIdentifier": "dev.pixflow.bridge",
+        "CFBundleName": "Pixflow Design Bridge",
+        "CFBundleShortVersionString": "2.1.4",
+        "CFBundleVersion": "2.1.4"
+      },
+      "config": {
+        "appVersion": "2.1.4",
+        "bridgeTrayMode": true,
+        "daemonCliEntryRelative": "app/prebundled/daemon/daemon-cli.mjs",
+        "daemonSidecarEntryRelative": "app/prebundled/daemon/daemon-sidecar.mjs",
+        "namespace": "release-stable-pixflow-bridge-mac-arm64",
+        "webSidecarEntryRelative": "app/prebundled/web-sidecar.mjs",
+        "webOutputMode": "standalone"
+      },
+      "nativeConfig": {
+        "hostName": "dev.pixflow.bridge",
+        "bridge": "http://127.0.0.1:7456",
+        "sites": [],
+        "discoverPairedSite": true,
+        "extensionOrigin": "chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/"
+      },
+      "nativePayloadHashes": {
+        "config.json": "9e43de61915fc597e1b1cc2d73e747b785d02a4252292512555993f77184d478",
+        "host.mjs": "e5734affe5454b61ec785d1e82e53b75c519ed725914cb313bc82e2281fdebb6",
+        "install.mjs": "dff8e0609e40cb79466390554f7c029a83124182ffd3b853d3b1f591af1e5625"
+      },
+      "machOBinaries": [
+        {
+          "path": "Contents/MacOS/Pixflow Design Bridge",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/prebuilds/darwin-arm64.node",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/vela",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/opencode/opencode",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/whisper/whisper-cli",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (GPU).app/Contents/MacOS/Pixflow Design Bridge Helper (GPU)",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper.app/Contents/MacOS/Pixflow Design Bridge Helper",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Renderer).app/Contents/MacOS/Pixflow Design Bridge Helper (Renderer)",
+          "architectures": [
+            "arm64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Plugin).app/Contents/MacOS/Pixflow Design Bridge Helper (Plugin)",
+          "architectures": [
+            "arm64"
+          ]
+        }
+      ],
+      "signature": "ad-hoc",
+      "notarized": false,
+      "strictSignatureVerification": "pass",
+      "dmgVerification": "pass",
+      "newInstalledAcceptance": "targeted Mac 2.1.4 acceptance on test Core 5e088f7669258b1c8c45912402c5988aaa7c106f / Pro 68995f19d42a005ca327e41186bba7c2a086c12b; production runtime health checked separately; broad 2.1.3 evidence reused"
+    },
+    {
+      "architecture": "x64",
+      "execution": "x64 Node 24.19.0 under existing Rosetta on arm64 host",
+      "name": "pixflow-design-bridge-2.1.4-mac-x64.dmg",
+      "bytes": 221115840,
+      "sha256": "b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4",
+      "core": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+      "pro": "32a7946801d30e37f30bf35dda622f15335f3ec5",
+      "identity": {
+        "CFBundleIdentifier": "dev.pixflow.bridge",
+        "CFBundleName": "Pixflow Design Bridge",
+        "CFBundleShortVersionString": "2.1.4",
+        "CFBundleVersion": "2.1.4"
+      },
+      "config": {
+        "appVersion": "2.1.4",
+        "bridgeTrayMode": true,
+        "daemonCliEntryRelative": "app/prebundled/daemon/daemon-cli.mjs",
+        "daemonSidecarEntryRelative": "app/prebundled/daemon/daemon-sidecar.mjs",
+        "namespace": "release-stable-pixflow-bridge-mac-x64",
+        "webSidecarEntryRelative": "app/prebundled/web-sidecar.mjs",
+        "webOutputMode": "standalone"
+      },
+      "nativeConfig": {
+        "hostName": "dev.pixflow.bridge",
+        "bridge": "http://127.0.0.1:7456",
+        "sites": [],
+        "discoverPairedSite": true,
+        "extensionOrigin": "chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/"
+      },
+      "nativePayloadHashes": {
+        "config.json": "9e43de61915fc597e1b1cc2d73e747b785d02a4252292512555993f77184d478",
+        "host.mjs": "e5734affe5454b61ec785d1e82e53b75c519ed725914cb313bc82e2281fdebb6",
+        "install.mjs": "dff8e0609e40cb79466390554f7c029a83124182ffd3b853d3b1f591af1e5625"
+      },
+      "machOBinaries": [
+        {
+          "path": "Contents/MacOS/Pixflow Design Bridge",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/app/node_modules/better-sqlite3/prebuilds/darwin-x64.node",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/vela",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/opencode/opencode",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Resources/open-design/bin/libexec/whisper/whisper-cli",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (GPU).app/Contents/MacOS/Pixflow Design Bridge Helper (GPU)",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper.app/Contents/MacOS/Pixflow Design Bridge Helper",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Renderer).app/Contents/MacOS/Pixflow Design Bridge Helper (Renderer)",
+          "architectures": [
+            "x86_64"
+          ]
+        },
+        {
+          "path": "Contents/Frameworks/Pixflow Design Bridge Helper (Plugin).app/Contents/MacOS/Pixflow Design Bridge Helper (Plugin)",
+          "architectures": [
+            "x86_64"
+          ]
+        }
+      ],
+      "signature": "ad-hoc",
+      "notarized": false,
+      "strictSignatureVerification": "pass",
+      "dmgVerification": "pass",
+      "newInstalledAcceptance": "targeted Mac 2.1.4 acceptance on test Core 5e088f7669258b1c8c45912402c5988aaa7c106f / Pro 68995f19d42a005ca327e41186bba7c2a086c12b; production runtime health checked separately; broad 2.1.3 evidence reused"
+    }
+  ]
+}

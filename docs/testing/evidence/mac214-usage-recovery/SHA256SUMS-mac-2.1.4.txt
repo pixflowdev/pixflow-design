@@ -1,0 +1,2 @@
+44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22  pixflow-design-bridge-2.1.4-mac-arm64.dmg
+b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4  pixflow-design-bridge-2.1.4-mac-x64.dmg

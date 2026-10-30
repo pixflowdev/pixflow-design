@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); vi.useRealTimers(); vi.restoreAllMocks(); });
 function setup(fetch: ReturnType<typeof vi.fn>) {
   const dispatchEvent = vi.fn();
   vi.stubGlobal('window', {
@@ -9,6 +9,34 @@ function setup(fetch: ReturnType<typeof vi.fn>) {
   });
   return dispatchEvent;
 }
+
+it.each(['busy','endpoint-network'])('does not disconnect a healthy Bridge when Claude sign-in encounters %s', async kind => {
+  const fetch = vi.fn(async (url: string) => {
+    if (url.endsWith('/health')) return Response.json({ ok:true, version:'2.1.3', runtimeState:'ready' });
+    if (kind==='busy') throw new Error('Native transport is busy; wait for an active request to finish');
+    throw new TypeError('Failed to fetch');
+  });
+  const dispatch=setup(fetch); vi.stubGlobal('fetch',fetch);
+  const {claudeSignInRequest}=await import('../../src/providers/daemon');
+  await expect(claudeSignInRequest('start')).rejects.toThrow();
+  expect(dispatch.mock.calls.some(([event])=>event.type==='pixflow-design:optional-bridge-disconnected')).toBe(false);
+  expect(fetch).toHaveBeenCalledTimes(kind==='busy'?1:2);
+});
+
+it('bounds a lost sign-in reply without retrying the mutation or announcing Bridge offline', async () => {
+  // Replace the platform timeout with a controlled signal, retaining real fetch abort behavior.
+  const timeout = new AbortController(); vi.spyOn(AbortSignal, 'timeout').mockReturnValueOnce(timeout.signal);
+  const fetch=vi.fn((_url:string, init:RequestInit)=>new Promise<Response>((_resolve,reject)=>{
+    init.signal?.addEventListener('abort',()=>reject(init.signal!.reason),{once:true});
+  }));
+  const dispatch=setup(fetch); vi.stubGlobal('fetch',fetch);
+  const {claudeSignInRequest}=await import('../../src/providers/daemon');
+  const pending=claudeSignInRequest('start');
+  timeout.abort(new DOMException('Timed out','TimeoutError'));
+  await expect(pending).rejects.toThrow('Timed out');
+  expect(fetch).toHaveBeenCalledTimes(1); expect(dispatch).not.toHaveBeenCalled();
+  vi.restoreAllMocks();
+});
 
 it('sends one JSON content type when callers already specify it', async () => {
   const fetch=vi.fn(async (_url:string, init:RequestInit) => {

@@ -5,6 +5,13 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
+- Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.
+- Reopen the official Claude authorization page and submit a returned code from Execution settings, with cancellation and automatic status recovery. Codes are sent only to the active login process on the user's computer.
+- Discover Claude's sign-in address from the selected runtime so path changes keep working, while retaining checks for official domains and valid authorization requests.
+
 ## [2.1.3] - Unreleased
 - Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
 - Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.

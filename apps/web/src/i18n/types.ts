@@ -39,6 +39,12 @@ export interface Dict {
   "settings.extensionHint": string;
 
   "settings.claudeSignIn": string;
+  "settings.claudeSignInAgain": string;
+  "settings.claudeOpenSignIn": string;
+  "settings.claudeCodeLabel": string;
+  "settings.claudeCodeHint": string;
+  "settings.claudeCompleteSignIn": string;
+  "settings.claudeConnectionRecovery": string;
   "settings.claudeWaiting": string;
   "settings.claudeSignInFailed": string;
   "settings.claudeBrowserHint": string;

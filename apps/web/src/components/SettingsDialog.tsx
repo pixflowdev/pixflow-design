@@ -3782,6 +3782,31 @@ export function SettingsDialog({
                             hoveredAgentCardId === a.id &&
                             amrCardStatus?.loggedIn !== true &&
                             amrCardStatus?.loginInFlight === true;
+                          const testButton = active && !isAmrAgent ? (
+                                  <button
+                                    type="button"
+                                    className={
+                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
+                                      (running ? ' loading' : '')
+                                    }
+                                    onClick={() => void handleTestAgent()}
+                                    disabled={running}
+                                    title={t('settings.testTitle')}
+                                  >
+                                    {running ? (
+                                      <>
+                                        <Icon
+                                          name="spinner"
+                                          size={13}
+                                          className="icon-spin"
+                                        />
+                                        <span>{t('settings.test')}</span>
+                                      </>
+                                    ) : (
+                                      t('settings.test')
+                                    )}
+                                  </button>
+                          ) : null;
                           const cardEl = (
                             <div
                               key={a.id}
@@ -3801,7 +3826,7 @@ export function SettingsDialog({
                                 setHoveredAgentCardId(null);
                               }}
                             >
-                              <div className={`agent-card-main${a.id === 'claude' && a.authStatus !== 'ok' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
+                              <div className={`agent-card-main${a.id === 'claude' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
                                 <button
                                   type="button"
                                   className="agent-card-select"
@@ -3939,33 +3964,9 @@ export function SettingsDialog({
                                     />
                                   )
                                 ) : null}
-                                {a.id === 'claude' && a.authStatus !== 'ok' ? (
-                                  <ClaudeSignIn onConnected={() => { void handleRefreshAgents(); }} />
-                                ) : active && !isAmrAgent ? (
-                                  <button
-                                    type="button"
-                                    className={
-                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
-                                      (running ? ' loading' : '')
-                                    }
-                                    onClick={() => void handleTestAgent()}
-                                    disabled={running}
-                                    title={t('settings.testTitle')}
-                                  >
-                                    {running ? (
-                                      <>
-                                        <Icon
-                                          name="spinner"
-                                          size={13}
-                                          className="icon-spin"
-                                        />
-                                        <span>{t('settings.test')}</span>
-                                      </>
-                                    ) : (
-                                      t('settings.test')
-                                    )}
-                                  </button>
-                                ) : null}
+                                {a.id === 'claude' ? (
+                                  <ClaudeSignIn authenticated={a.authStatus === 'ok'} testAction={a.authStatus === 'ok' ? testButton : undefined} onConnected={() => { void handleRefreshAgents(); }} />
+                                ) : testButton}
                               </div>
 
                               {(a.diagnostics ?? []).filter(diagnostic => !(a.id === 'claude' && diagnostic.reason === 'auth-missing')).map((diagnostic, i) => (

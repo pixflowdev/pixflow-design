@@ -33,6 +33,9 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, and refresh overdue usage when returning to the tab.
+
 = 2.1.3 =
 * Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
 * Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.

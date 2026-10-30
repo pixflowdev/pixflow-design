@@ -43,10 +43,12 @@ jobs:
       - name: Provider usage regression
         run: |
           pnpm --filter @open-design/daemon exec vitest run tests/runtimes/codex-usage.test.ts tests/runtimes/claude-usage.test.ts tests/runtimes/claude-usage-protocol.test.ts tests/routes/codex-usage.test.ts tests/routes/claude-usage.test.ts
-          pnpm --filter @open-design/web test tests/components/CodexUsage.test.tsx tests/components/CodexUsageIndicator.test.tsx
+          pnpm --filter @open-design/web test tests/components/CodexUsage.test.tsx tests/components/CodexUsageIndicator.test.tsx tests/components/usage-refresh.test.tsx
           node --import tsx --test tools/pixflow-design-bridge/tests/native-reconnect.test.ts
       - name: Inline slash command regression
         run: pnpm --filter @open-design/web test tests/components/ChatComposer.design-settings.test.tsx
+      - name: Tooltip portal regression
+        run: pnpm --filter @open-design/web test tests/components/TooltipLayer.test.tsx
       - name: Translation consistency
         run: pnpm i18n:check
       - name: Directory packaging regression

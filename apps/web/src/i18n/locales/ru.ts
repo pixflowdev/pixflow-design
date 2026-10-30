@@ -1,6 +1,12 @@
 import type { Dict } from '../types';
 
 export const ru: Dict = {
+  "settings.codexUsage": "Использование аккаунта Codex",
+  "settings.usageRemaining": "Осталось {value}",
+  "settings.usageResets": "Сброс: {value}",
+  "settings.usageChecked": "Проверено: {value} · Общий лимит Codex",
+  "settings.usageRefresh": "Обновить",
+
   "settings.extensionInstall": "Установить расширение Pixflow Design Bridge для Chrome",
   "settings.extensionHint": "Необязательный помощник для подключения WordPress к Pixflow Design Bridge через Chrome. Bridge по-прежнему должен быть установлен и запущен на вашем компьютере.",
 

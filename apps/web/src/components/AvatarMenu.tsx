@@ -1,3 +1,4 @@
+import { CodexUsageIndicator } from './CodexUsageIndicator';
 import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { useBridgeConnectionRoute } from '../pixflow/bridge-connection-route';
@@ -263,6 +264,7 @@ export function AvatarMenu({
   );
 
   return (
+    <>
     <div className={`avatar-menu avatar-menu--${placement}`} ref={wrapRef}>
       <button
         ref={triggerRef}
@@ -625,6 +627,8 @@ export function AvatarMenu({
         portalTarget,
       ) : null}
     </div>
+    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
+    </>
   );
 }
 
@@ -635,3 +639,6 @@ function safeHost(url: string): string {
     return url;
   }
 }
+
+
+

@@ -384,6 +384,12 @@ function sessionHeader(value: PixflowDirectSiteSession): string {
     '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
+export async function codexUsageRequest(signal?: AbortSignal, provider: 'codex' | 'claude' = 'codex', model = ''): Promise<import('@open-design/contracts').CodexUsage> {
+  const response = await daemonFetch(`/api/agents/${provider}/usage?model=${encodeURIComponent(model)}`, { signal, cache: 'no-store' });
+  if (!response.ok) throw new Error('Usage unavailable');
+  return response.json();
+}
+
 export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel', signal?: AbortSignal): Promise<import('@open-design/contracts').ClaudeSignInStatus> {
   const response = await daemonFetch(`/api/agents/claude/sign-in${action === 'cancel' ? '/cancel' : ''}`, {
     method: action === 'status' ? 'GET' : 'POST', signal, cache: 'no-store',
@@ -1906,3 +1912,4 @@ export async function saveArtifact(
     return null;
   }
 }
+

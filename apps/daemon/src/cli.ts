@@ -337,7 +337,7 @@ if (first && SUBCOMMAND_MAP[first]) {
   // These HTTP clients own undici fetch responses. Let Node drain their
   // socket before exiting on Windows; an immediate process.exit can trip
   // libuv's closing-handle assertion even after a successful response.
-  if (first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
+  if (first !== 'agents' && first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
 }
 
 if (!handledSubcommand && argv[0] === 'tools' && argv[1] === 'live-artifacts') {
@@ -5053,6 +5053,7 @@ async function runAgents(args) {
   od agents list [--force] [--json]
   od agents readiness <agentId> [--model <id>] [--force] [--json]
   od agents sign-in claude [--status | --cancel] [--json]
+  od agents usage <codex|claude> [--model <model>] [--json]
 
 Checks are non-generating and do not consume provider usage.
 
@@ -5079,6 +5080,17 @@ Common options:
     if (!resp.ok) return structuredHttpFailure(resp);
     const data = await resp.json();
     process.stdout.write(flags.json ? JSON.stringify(data, null, 2) + '\n' : `${data.state}\n`);
+    return;
+  }
+  if (sub === 'usage') {
+    const [agentId] = collectCliPositionals(rest, stringFlags);
+    if (agentId !== 'codex' && agentId !== 'claude') throw new Error('Usage supports codex or claude.');
+    const resp = await fetch(`${base}/api/agents/${agentId}/usage?model=${encodeURIComponent(String(flags.model || ''))}`);
+    if (!resp.ok) return structuredHttpFailure(resp);
+    const data = await resp.json();
+    if (flags.json) return process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+    console.log(data.status);
+    for (const window of data.windows ?? []) console.log(`${window.bucket}\t${window.durationMinutes} minutes\t${window.remainingPercent}% remaining\t${window.resetsAt ? new Date(window.resetsAt * 1000).toISOString() : 'reset unavailable'}`);
     return;
   }
   if (sub === 'list') {
@@ -8019,3 +8031,4 @@ async function runAutomation(args) {
       process.exit(2);
   }
 }
+

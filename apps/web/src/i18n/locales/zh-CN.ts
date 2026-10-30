@@ -1,6 +1,12 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "settings.codexUsage": "Codex 账户用量",
+  "settings.usageRemaining": "剩余 {value}",
+  "settings.usageResets": "重置时间：{value}",
+  "settings.usageChecked": "检查时间：{value} · Codex 共享额度",
+  "settings.usageRefresh": "刷新",
+
   "settings.extensionInstall": "安装 Pixflow Design Bridge Chrome 扩展程序",
   "settings.extensionHint": "可选的辅助工具，通过 Chrome 将 WordPress 连接到 Pixflow Design Bridge。您的电脑仍须安装并运行 Bridge。",
 

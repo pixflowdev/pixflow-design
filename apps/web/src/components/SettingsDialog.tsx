@@ -1,6 +1,7 @@
 import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { ClaudeSignIn } from './ClaudeSignIn';
+import { CodexUsage } from './CodexUsage';
 import { BridgeConnectorSection } from './BridgeConnectorSection';
 export { deriveComposioCredentialState } from './composio-credential-state';
 import { composioAvailable } from '../pixflow/composio-contribution';
@@ -3975,6 +3976,7 @@ export function SettingsDialog({
                                 />
                               ))}
                               {active ? renderAgentModelConfig(a) : null}
+                              {active && (a.id === 'codex' || a.id === 'claude') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
                             </div>
                           );
                           if (active && agentTestState.status !== 'idle') {
@@ -7820,3 +7822,5 @@ function testNotificationStatusText(
   if (result === 'unsupported') return 'settings.notifyDesktopUnsupported';
   return 'settings.notifyTestFailed';
 }
+
+

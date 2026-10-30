@@ -40,6 +40,11 @@ jobs:
         run: pnpm typecheck
       - name: Bridge diagnostics regression
         run: pnpm --filter @open-design/web test tests/providers/registry.test.ts tests/providers/registry-site-connect.test.ts tests/pixflow/bridge-request-connectivity.test.ts tests/pixflow/bricksAgentFailureBanner.test.tsx tests/pixflow/provider-discovery-state.test.ts tests/components/AvatarMenu.test.tsx tests/pixflow/bridge-site-startup.test.ts tests/pixflow/automatic-bridge-pairing.test.ts tests/pixflow/bridge-update-gate.test.ts tests/pixflow/bridge-url.test.ts
+      - name: Provider usage regression
+        run: |
+          pnpm --filter @open-design/daemon exec vitest run tests/runtimes/codex-usage.test.ts tests/runtimes/claude-usage.test.ts tests/runtimes/claude-usage-protocol.test.ts tests/routes/codex-usage.test.ts tests/routes/claude-usage.test.ts
+          pnpm --filter @open-design/web test tests/components/CodexUsage.test.tsx tests/components/CodexUsageIndicator.test.tsx
+          node --import tsx --test tools/pixflow-design-bridge/tests/native-reconnect.test.ts
       - name: Translation consistency
         run: pnpm i18n:check
       - name: Directory packaging regression
@@ -50,3 +55,4 @@ jobs:
         run: php wordpress/tests/workspace-legacy-message.test.php
       - name: Build Free browser assets
         run: pnpm wordpress:web
+

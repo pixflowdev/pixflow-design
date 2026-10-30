@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -33,7 +33,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
-= Unreleased =
+= 2.1.3 =
 * Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
 * Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
 * Prevent failed protected-resource requests, including local or staging identity mismatches, from incorrectly disabling a saved licence. Licence expiry and revocation checks remain enforced.
@@ -672,6 +672,7 @@ Fixed
 * Added the optional Pixflow Design Bridge with packaged installers, system-tray runtime, health/update handling, rich Bricks/Pixflow MCP skills, and multi-agent Local CLI support.
 * Added native WordPress plugin updates and backward-compatible migration from existing Pixflow AI installations.
 * Fixed bridge startup and reconnection, Bricks 2.4 toolbar compatibility, duplicate or truncated agent replies, provider error messaging, custom token mapping, template image delivery, Code element normalization, and release-build preflight.
+
 
 
 

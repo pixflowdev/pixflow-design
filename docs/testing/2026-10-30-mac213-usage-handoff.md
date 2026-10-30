@@ -4,8 +4,8 @@ Owner authorization, 30 October 2026: test the new Codex and Claude usage indica
 
 ## Exact starting pair
 
-- Core repository: `pixflowdev/pixflow-design`, branch `codex/inline-slash-commands`, commit `2568c45cdb5a2263f3bb0784b9b4b11342475143`.
-- Pro repository: `pixflowdev/pixflow-design-pro`, branch `codex/provider-usage-core-pin`, commit `0f0e73e03d90b8518817a45db7dd285a39af3ec5`.
+- Core repository: `pixflowdev/pixflow-design`, branch `codex/release-v213`, commit `e6ec0e0a7ee15c70fbe06ad7974d2fb0b6d11cd7`.
+- Pro repository: `pixflowdev/pixflow-design-pro`, branch `codex/release-v213`, commit `a4747a209ebe74ba42f7ce2d8beed82abc580c80`.
 - Pro `pixflow-pro.json` pins that exact Core commit; module API remains 14.
 - This document is on Core branch `codex/mac213-usage-handoff`; its documentation commit does not change the runtime pair.
 - Source review: Core [#52](https://github.com/pixflowdev/pixflow-design/pull/52) (usage), [#53](https://github.com/pixflowdev/pixflow-design/pull/53) (inline slash commands), Pro [#29](https://github.com/pixflowdev/pixflow-design-pro/pull/29) (pin/changelogs). Merge order is 52, 53, 29; do not merge or publish on this handoff's authority.
@@ -33,9 +33,7 @@ pnpm --filter @open-design/web exec vitest run tests/components/CodexUsage.test.
 
 ## Production build authorization after usage passes
 
-The starting pair is still versioned 2.1.2. Make a focused **2.1.3 release-preparation commit** before packaging: align the Core plugin version, declared Bridge version, Bridge runtime VERSION and release metadata/readme, and the paired Pro package/plugin metadata and Core pin. Preserve the WordPress directory submission version and stable installed identities. Update relevant version assertions rather than relabelling old artifacts. Record the final source pair. Do not change live updater pointers or upload plugin ZIPs to customer endpoints.
-
-Other independent fixes remain Core #50 (licence), Core #51 (chat loading), Pro #28 (minimising). They are not part of this starting pair. Do not silently incorporate moving branch tips or claim these DMGs include them. The coordinator must reconcile any additional release source changes before promotion; if they change Bridge payload bytes, identify that before the final build rather than publishing mismatched artifacts.
+The starting pair is now versioned **2.1.3** and includes Core #50/#51 and Pro #28 as well as usage/slash changes. No further version bump or integration is needed. The coordinator is building Windows/runtime/plugin artifacts from this same pair. Keep the WordPress directory submission unchanged. If Mac testing requires code fixes, push them and record the new source pair before packaging; notify the coordinator so the other platform artifacts can be reconciled. This paragraph supersedes the original 2.1.2 starting pair and exclusions.
 
 Build **one extension-ready production DMG per architecture**, arm64 and x64, retaining direct Bridge support. Do not produce separate direct-only and extension variants. Use the existing native host recipe with permanent extension ID `hbnbiboohlelmngadeolikeejamjlbkh` and the already-published extension; no extension rebuild/submission is requested.
 
@@ -55,3 +53,4 @@ Only minimal artifact checks are required after the targeted usage tests: versio
 Use Core repository `pixflowdev/pixflow-design`, draft tag `bridge-v2.1.3`. If absent, create a **draft** targeted at the final recorded build commit; if present, verify draft status and target before uploads. Do not alter a published release. Upload both DMGs, `SHA256SUMS-mac-2.1.3.txt` and a redacted build receipt. Verify byte counts and SHA256 against uploaded assets. Do not clobber different existing bytes; use source-qualified names and identify the intended pair.
 
 Commit the redacted acceptance/build/upload report under `docs/testing/evidence/mac213-usage/` on a dedicated branch and open a PR. Return exact Core/Pro SHAs, test results, artifact architectures, signing status, draft URL, asset IDs/names, sizes and SHA256 hashes. Keep private logs, user data and DMG bytes out of Git. Preserve published packages, customer data and Team separation. Production build/upload is authorized; public publication and deployment are not.
+

@@ -42,9 +42,11 @@ Private full-page screenshots, plugin backups and database snapshots remain loca
 
 Both production 2.1.3 DMGs passed `hdiutil verify`, identity/version, portable configuration and native-helper inclusion checks. All 18 Mach-O binaries per bundle have the expected architecture; strict/deep ad-hoc signature verification passed. Neither bundle is notarized. Intel was built under Rosetta on Apple Silicon. The normal extension and its permissions were unchanged; no extension ZIP is included in this release.
 
-[GitHub draft bridge-v2.1.3](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-f4d836cdad855d89c7a3), release ID `428584804`. See the [source/build receipt](mac-2.1.3-build-receipt.json) and [SHA256SUMS](SHA256SUMS-mac-2.1.3.txt). Final asset IDs and upload/download verification will be recorded in the upload receipt. No published assets, customer endpoints or updater pointers were changed.
+[GitHub draft bridge-v2.1.3](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-7055a47f459b18bbe9e9), release ID `428584804`. See the [source/build receipt](mac-2.1.3-build-receipt.json) and [SHA256SUMS](SHA256SUMS-mac-2.1.3.txt). Final asset IDs and upload/download verification will be recorded in the upload receipt. No published assets, customer endpoints or updater pointers were changed.
 
 
 ## Completed upload return
 
 All four requested assets are uploaded and server-digest verified. Both DMGs were independently downloaded with matching byte counts and SHA256 hashes. See [asset IDs and receipts](mac-2.1.3-upload-receipts.json). Final draft state: `draft=true`, `prerelease=false`, exact target Core `c9d1481944e5020c2b82e48b54754b5c811b8a24`. [Return PR #57](https://github.com/pixflowdev/pixflow-design/pull/57).
+
+GitHub regenerated the draft URL when its tag metadata was restored. The current link above and release ID `428584804` identify the same verified assets; the upload receipt retains the URL observed at upload time.

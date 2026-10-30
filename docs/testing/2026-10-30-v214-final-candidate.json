@@ -72,8 +72,104 @@
   },
   "canonicalBridgeDraft": 429347161,
   "pending": [
-    "post-merge-ci",
-    "canonical-bridge-draft",
-    "website-private-reconciliation"
-  ]
+    "explicit-deployment-and-publication-clearance"
+  ],
+  "preflightVerified": true,
+  "githubDrafts": [
+    {
+      "repo": "pixflow-design",
+      "tag": "v2.1.4",
+      "releaseId": 429366804,
+      "draft": true,
+      "target": "d271206ab4e7a45d77d856529643c8ea7f3a1d77",
+      "artifacts": [
+        {
+          "id": 693040782,
+          "name": "pixflow-design-2.1.4.zip",
+          "bytes": 2396868,
+          "sha256": "521a22580b92317cb7ec3e9dbae57c83487ff4ec9165c075bfb7e6044d50a7e4",
+          "downloadVerified": true
+        },
+        {
+          "id": 693040934,
+          "name": "SHA256SUMS-free-2.1.4.txt",
+          "bytes": 91,
+          "sha256": "983262fed1c95f9d67540a41d9288102e5f6f982bd697634b4a3694ddab52a04",
+          "downloadVerified": true
+        }
+      ]
+    },
+    {
+      "repo": "pixflow-design-pro",
+      "tag": "v2.1.4",
+      "releaseId": 429366886,
+      "draft": true,
+      "target": "5d3ee3aaee55692112832fc53409f9f2df6c4395",
+      "artifacts": [
+        {
+          "id": 693041038,
+          "name": "pixflow-design-pro-2.1.4.zip",
+          "bytes": 6089564,
+          "sha256": "240bc29e9c0f0c6d72519c920facdecf3a73c67d35de40b4da14d67f931acef6",
+          "downloadVerified": true
+        },
+        {
+          "id": 693041457,
+          "name": "SHA256SUMS-pro-2.1.4.txt",
+          "bytes": 95,
+          "sha256": "e118ace345b3cf34751ae1e0fd69c205333157072cd056155342b8c97e7fbce9",
+          "downloadVerified": true
+        }
+      ]
+    },
+    {
+      "repo": "pixflow-design",
+      "tag": "bridge-v2.1.4",
+      "releaseId": 429347161,
+      "draft": true,
+      "target": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+      "artifacts": [
+        {
+          "id": 693063432,
+          "name": "pixflow-design-bridge-2.1.4-win-x64-setup.exe",
+          "bytes": 248243269,
+          "sha256": "3f5dfa7e2ed847957a123c7c4aeefa215b3c8df3806c860b4c9c00380a45fed1",
+          "downloadVerified": true
+        },
+        {
+          "id": 693077224,
+          "name": "pixflow-design-bridge-2.1.4.zip",
+          "bytes": 4692215,
+          "sha256": "f8ce66bd6f0914f276762123ca4776cfdd06bae6c53d8138be3e6050aef06e3b",
+          "downloadVerified": true
+        },
+        {
+          "id": 693077345,
+          "name": "SHA256SUMS-windows-runtime-2.1.4.txt",
+          "bytes": 210,
+          "sha256": "99bda841df8d20b7e14eb4cc78e2c325b4360d7edf399b1148f93ac41fd59687",
+          "downloadVerified": true
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "corePostMergeRun": 41109243659,
+    "proPostMergeRuns": [
+      41110023431,
+      41110020232
+    ],
+    "allPostMergeCI": "success",
+    "packageTests": 26,
+    "conditionalPackageSkips": 3,
+    "languageTests": 8,
+    "languageObjectsNew": 18,
+    "languageObjectsRetained": 144,
+    "privateWebsiteAssertions": 1173,
+    "canonicalBridgeDraft": 429347161,
+    "duplicateDraftRemoved": 429367048,
+    "windowsRuntime": "2.1.4 running",
+    "windowsPayloadFiles": 11485,
+    "publicSelectionChanged": false
+  }
 }

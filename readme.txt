@@ -34,6 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = Unreleased =
+* Open slash commands after a space or on a new line while composing, preserving surrounding text and avoiding commands inside URLs or file paths.
 * Show a compact Codex and Claude usage ring beside the composer account menu, with hover summaries, reset times and refreshable details in Workspace and floating panels.
 * Read remaining allowances from the selected Desktop-managed or installed CLI runtime; display only reported limits and show unavailable when usage cannot be confirmed.
 * Refresh Claude usage when the selected model changes, including applicable model-specific limits without retaining the allowance of the previous model.
@@ -668,4 +669,5 @@ Fixed
 * Added the optional Pixflow Design Bridge with packaged installers, system-tray runtime, health/update handling, rich Bricks/Pixflow MCP skills, and multi-agent Local CLI support.
 * Added native WordPress plugin updates and backward-compatible migration from existing Pixflow AI installations.
 * Fixed bridge startup and reconnection, Bricks 2.4 toolbar compatibility, duplicate or truncated agent replies, provider error messaging, custom token mapping, template image delivery, Code element normalization, and release-build preflight.
+
 

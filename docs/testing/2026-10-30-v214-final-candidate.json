@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "version": "2.1.4",
+  "published": false,
+  "deploymentAuthorized": false,
+  "mergedSources": {
+    "core": "4946184e251c727007bb70111a3dec2ced66ff3a",
+    "pro": "58c7e7971e8d5b6f02f5faf292c0c059793e244b",
+    "runtimeSourceParityVerified": true
+  },
+  "buildInputs": {
+    "proPlugin": "5d3ee3aaee55692112832fc53409f9f2df6c4395",
+    "bridgeCore": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+    "corePlugin": "d271206ab4e7a45d77d856529643c8ea7f3a1d77",
+    "proCorePin": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+    "bridgePro": "32a7946801d30e37f30bf35dda622f15335f3ec5"
+  },
+  "languagePinsSha256": "3bf5656047bb2ee53ffb0d87abe9d2c66db4e559185804735060c6d8a57acb09",
+  "artifacts": [
+    {
+      "role": "core-plugin",
+      "file": "pixflow-design-2.1.4.zip",
+      "bytes": 2396868,
+      "sha256": "521a22580b92317cb7ec3e9dbae57c83487ff4ec9165c075bfb7e6044d50a7e4"
+    },
+    {
+      "role": "pro-plugin",
+      "file": "pixflow-design-pro-2.1.4.zip",
+      "bytes": 6089564,
+      "sha256": "240bc29e9c0f0c6d72519c920facdecf3a73c67d35de40b4da14d67f931acef6"
+    },
+    {
+      "role": "macosArm64",
+      "file": "pixflow-design-bridge-2.1.4-mac-arm64.dmg",
+      "bytes": 209983271,
+      "sha256": "44c4316f07fcbc38f24a4510c0e769e0778471daf2fb1a48acf0144ede5ccc22"
+    },
+    {
+      "role": "macosX64",
+      "file": "pixflow-design-bridge-2.1.4-mac-x64.dmg",
+      "bytes": 221115840,
+      "sha256": "b17bfd6775ccb83d06187d60964a092d4f86645c26e42e10ed2fb88997f052c4"
+    },
+    {
+      "role": "windows",
+      "file": "pixflow-design-bridge-2.1.4-win-x64-setup.exe",
+      "bytes": 248243269,
+      "sha256": "3f5dfa7e2ed847957a123c7c4aeefa215b3c8df3806c860b4c9c00380a45fed1"
+    },
+    {
+      "role": "bridge-runtime",
+      "file": "pixflow-design-bridge-2.1.4.zip",
+      "bytes": 4692215,
+      "sha256": "f8ce66bd6f0914f276762123ca4776cfdd06bae6c53d8138be3e6050aef06e3b"
+    }
+  ],
+  "windowsSmoke": {
+    "version": "2.1.4",
+    "health": "running",
+    "payloadFiles": 11485,
+    "node24": true,
+    "nativeIdentity": "permanent Store ID",
+    "unapprovedExtensionDenied": true,
+    "unapprovedSiteDenied": true,
+    "unpairedUsageHttp": 403,
+    "unpairedUsageCode": "PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED",
+    "pairedUsageEvidence": "Mac targeted acceptance; no unpaired Windows usage success claimed",
+    "installerExecution": "Existing broad installer evidence retained; exact new payload extracted and hashed",
+    "normalDataChanged": false,
+    "registryChanged": false,
+    "permissionsChanged": false
+  },
+  "canonicalBridgeDraft": 429347161,
+  "pending": [
+    "post-merge-ci",
+    "canonical-bridge-draft",
+    "website-private-reconciliation"
+  ]
+}

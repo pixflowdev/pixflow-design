@@ -55,6 +55,12 @@ jobs:
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
       - name: Legacy chat compatibility
         run: php wordpress/tests/workspace-legacy-message.test.php
+      - name: Live canvas mailbox and handoff regression
+        run: |
+          php wordpress/tests/direct-canvas-mailbox-cache.test.php
+          php wordpress/tests/direct-canvas-navigation.test.php
+          php wordpress/tests/direct-canvas-reconnect.test.php
+          php wordpress/tests/builder-handoffs.test.php
       - name: Artifact authorization and licence recovery
         run: |
           php wordpress/tests/central-artifact-license-preservation.test.php

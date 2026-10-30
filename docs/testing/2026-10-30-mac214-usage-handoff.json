@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-30",
+  "version": "2.1.4",
+  "coreTestCommit": "1800792b87b6f6dd8c57f113353c98f0f59fe2e8",
+  "coreTestBranch": "codex/usage-auto-refresh",
+  "proTestCommit": "68995f19d42a005ca327e41186bba7c2a086c12b",
+  "proTestBranch": "codex/pro-repository-extraction",
+  "moduleApi": 14,
+  "corePullRequests": [63, 65],
+  "handoffBranch": "codex/mac214-usage-handoff",
+  "draftTag": "bridge-v2.1.4",
+  "buildArchitectures": ["arm64", "x64"],
+  "extensionId": "hbnbiboohlelmngadeolikeejamjlbkh",
+  "buildGate": "Targeted acceptance passes, then prepare clean 2.1.4 release-only commits and exact Pro Core pin; record full build pair before packaging",
+  "startingPairIsProductionVersioned": false,
+  "productionBuildAndDraftUploadAfterGate": true,
+  "publicPublicationAuthorized": false,
+  "teamChangesAllowed": false,
+  "extensionRebuildRequired": false
+}

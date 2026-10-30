@@ -15,6 +15,26 @@ function readOutbox<T extends HistoryMessage>(key: string): { messages: T[]; rea
     return { messages: messages as T[], migrationIds, readable: true };
   } catch { return { messages: [], readable: false }; }
 }
+
+/** A live reply retained across remount is not an insert-only legacy cache.
+ * Recover only an exact append against the revision this writer actually read;
+ * another writer's revision, display projection or divergent activity wins.
+ */
+function isRetainedLiveContinuation(next: HistoryMessage, prior?: HistoryMessage): boolean {
+  const local = next as HistoryMessage & Record<string, unknown>;
+  const saved = prior as (HistoryMessage & Record<string, unknown>) | undefined;
+  if (!saved || local.role !== 'assistant' || saved.role !== 'assistant' || local.id !== saved.id
+    || !Number.isInteger(local.historyRevision) || !(local.historyRevision! > 0) || local.historyRevision !== saved.historyRevision
+    || ['session_restore_v2', 'device_restore_v2', 'legacy_v1_display_only'].includes(String(local.provenance))
+    || !['running', 'queued'].includes(String(saved.runStatus))
+    || !['running', 'queued', 'succeeded', 'failed', 'canceled', 'interrupted'].includes(String(local.runStatus))
+    || !local.content?.startsWith(saved.content || '')
+    || !Array.isArray(saved.events) || !Array.isArray(local.events) || local.events.length < saved.events.length
+    || saved.events.some((event, index) => JSON.stringify(event) !== JSON.stringify((local.events as unknown[])[index]))) return false;
+  if (local.content.length <= (saved.content || '').length && local.events.length <= saved.events.length) return false;
+  const changing = new Set(['content', 'events', 'status', 'runStatus', 'endedAt', 'awaitingInput', 'historyRevision', 'historySequence']);
+  return Object.entries(saved).every(([key, value]) => changing.has(key) || JSON.stringify(local[key]) === JSON.stringify(value));
+}
 export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported }: {
   sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement>;
   legacyMessages?: T[]; onImported?: (ids: string[]) => void;
@@ -210,6 +230,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         removedOutbox.current = deleted;
         for (const id of deleted) pending.current.delete(id);
         for (const item of [...imported.messages, ...page.messages]) known.current.set(item.id!, item);
+        const retainedContinuations: T[] = [];
         for (const [id, snapshot] of pending.current) {
           const canonical = known.current.get(id);
           if (canonical && historyMessageFingerprint(canonical) === historyMessageFingerprint(snapshot)) {
@@ -217,6 +238,11 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
           }
           // An unchanged legacy cache was insert-only input, never an edit.
           else if (!recoveredIds.has(id) && migrationCopies.get(id) === snapshot) {
+            if (!migrationIds.has(id) && isRetainedLiveContinuation(snapshot, canonical)) {
+              migrationSnapshots.current.delete(id);
+              retainedContinuations.push(snapshot);
+              continue;
+            }
             acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot)); pending.current.delete(id);
           }
         }
@@ -228,7 +254,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         });
         const initialIds = new Set([...initial.map(item => item.id), ...recoveredIds]);
         const restored = mergeChatHistory(initial.filter(item => !deleted.has(item.id || '')), [...imported.messages.filter(item => initialIds.has(item.id)), ...page.messages]);
-        const combined = mergeChatHistory(restored, changed);
+        const combined = mergeChatHistory(restored, [...retainedContinuations, ...changed]);
         setHistory(combined); setCursor(page.nextCursor); setHasMore(page.hasMore);
         hydrate.current?.(combined);
         for (const item of changed) pending.current.set(item.id!, item);

@@ -35,6 +35,7 @@
     "report": "evidence/mac214-usage-recovery/README.md",
     "independentDownloadVerification": "all four assets passed",
     "signing": "ad-hoc, not notarized",
-    "publicPublicationPerformed": false
+    "publicPublicationPerformed": false,
+    "reportPr": 70
   }
 }

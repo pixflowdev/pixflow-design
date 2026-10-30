@@ -4,6 +4,8 @@ Mac targeted acceptance and production DMG preparation are complete. The release
 
 ## Review and immutable sources
 
+- Mac return and updated handoff: [Core #70](https://github.com/pixflowdev/pixflow-design/pull/70).
+
 - Polling fix: [Core #68](https://github.com/pixflowdev/pixflow-design/pull/68), `5e088f7669258b1c8c45912402c5988aaa7c106f`.
 - Production Core: [#69](https://github.com/pixflowdev/pixflow-design/pull/69), `e1443e228ef68bc921298f5678d38e1af51dff5b`.
 - Production Pro: [#33](https://github.com/pixflowdev/pixflow-design-pro/pull/33), `32a7946801d30e37f30bf35dda622f15335f3ec5`.
@@ -32,7 +34,7 @@ Broad v2.1.3 builder, steering, permissions, reboot and installer evidence is re
 
 ## Production draft
 
-[Draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-d66a98dc168ab91ec769), ID `429347161`, tag `bridge-v2.1.4`, target `e1443e228ef68bc921298f5678d38e1af51dff5b`, `draft=true`, `prerelease=false`.
+[Draft release](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-bfb5e35396db08e0c733), ID `429347161`, tag `bridge-v2.1.4`, target `e1443e228ef68bc921298f5678d38e1af51dff5b`, `draft=true`, `prerelease=false`.
 
 Canonical names: `pixflow-design-bridge-2.1.4-mac-arm64.dmg` and `pixflow-design-bridge-2.1.4-mac-x64.dmg`.
 

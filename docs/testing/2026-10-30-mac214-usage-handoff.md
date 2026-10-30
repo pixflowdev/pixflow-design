@@ -86,3 +86,5 @@ Keep DMG bytes, private sessions, site credentials and raw authorization logs ou
 Targeted acceptance, the added Bricks tooltip smoke, and both production 2.1.4 DMGs are complete. The new shared-polling fix is Core PR #68; final release preparation is Core PR #69 and Pro PR #33. Final Core is `e1443e228ef68bc921298f5678d38e1af51dff5b`; final Pro is `32a7946801d30e37f30bf35dda622f15335f3ec5`, pinning that Core at module API 14 without an override. All four draft assets passed independent download verification.
 
 See [the complete Mac return, PRs, artifact hashes, signing classification and limits](evidence/mac214-usage-recovery/README.md). The release remains draft; public publication/deployment was not performed.
+
+Review the Mac return in [Core PR #70](https://github.com/pixflowdev/pixflow-design/pull/70).

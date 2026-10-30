@@ -1,7 +1,7 @@
 {
   "draft": {
     "id": 429347161,
-    "html_url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-d66a98dc168ab91ec769",
+    "html_url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-bfb5e35396db08e0c733",
     "tag_name": "bridge-v2.1.4",
     "target_commitish": "e1443e228ef68bc921298f5678d38e1af51dff5b",
     "draft": true,
@@ -56,5 +56,10 @@
         "verifiedAt": "2026-10-30T18:16:05.093417+00:00"
       }
     }
-  ]
+  ],
+  "finalCheck": {
+    "verifiedAt": "2026-10-30T18:19:36.720950+00:00",
+    "allFourAssetIdsSizesDigestsUnchanged": true,
+    "draftTargetAndProductionVersionVerified": true
+  }
 }

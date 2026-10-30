@@ -1,0 +1,10 @@
+{
+  "focusEmulationDisabled": true,
+  "hiddenStartUnixMs": 1793383274248,
+  "confirmedHidden": true,
+  "lastReadBeforeHiddenUnixMs": 1793383210125,
+  "returnReadUnixMs": 1793383342940,
+  "noReadsDuringHidden": true,
+  "returnConfirmedVisible": true,
+  "hiddenDurationLowerBoundMs": 68692
+}

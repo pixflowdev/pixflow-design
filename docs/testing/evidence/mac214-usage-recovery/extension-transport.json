@@ -1,0 +1,16 @@
+{
+  "browserHttpBlocked": [
+    "http://127.0.0.1:7456/*"
+  ],
+  "usageBeforeChecked": "2026-10-30 18:03 UTC",
+  "usageAfterChecked": "2026-10-30 18:04 UTC",
+  "provider": "claude",
+  "model": "sonnet",
+  "remainingWindows": [
+    99,
+    100
+  ],
+  "healthReconnectResult": "Bridge connected via Chrome extension",
+  "permissionsChanged": false,
+  "extensionRebuilt": false
+}

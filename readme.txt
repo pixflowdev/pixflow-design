@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -33,7 +33,9 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
-= Unreleased =
+= 2.1.4 =
+* Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.
+* Share usage polling between mounted composers for the same provider and model to prevent overlapping reads.
 * Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, and refresh overdue usage when returning to the tab.
 * Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
 * Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.

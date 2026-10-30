@@ -16,10 +16,10 @@ export function CodexUsageIndicator({ zIndex = 1000, provider = 'codex', model =
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const id = useId();
-  const windows = !state.busy && state.data?.status === 'available' ? state.data.windows : [];
+  const windows = state.data?.status === 'available' ? state.data.windows : [];
   const remaining = windows.length ? Math.min(...windows.map(window => window.remainingPercent)) : null;
   const percent = (value: number) => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(value / 100);
-  const summary = state.busy ? t('common.loading') : remaining === null ? t('builderDestination.unavailable') : t('settings.usageRemaining', { value: percent(remaining) });
+  const summary = state.busy && !state.data ? t('common.loading') : remaining === null ? t('builderDestination.unavailable') : t('settings.usageRemaining', { value: percent(remaining) });
   const visible = open || hover;
 
   useEffect(() => {

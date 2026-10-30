@@ -16,6 +16,45 @@ function setup() {
   };
   return { login: new ClaudeSignIn(deps), deps, children, target };
 }
+
+function authorizationUrl(endpoint = 'https://claude.ai/oauth/authorize', redirect = 'http://localhost:54321/callback') {
+  const url = new URL(endpoint);
+  url.search = new URLSearchParams({response_type:'code',client_id:'official-test-client',redirect_uri:redirect,state:'synthetic-state',code_challenge:'A'.repeat(43),code_challenge_method:'S256'}).toString();
+  return url.href;
+}
+
+test('discovers a different authorization path from its owned runtime without binding a new domain', () => {
+  const {login,children,deps}=setup(); const status=login.start();
+  const url=authorizationUrl('https://claude.com/account/v3/consent');
+  children[0]!.stdout!.emit('data',url+'\nPaste code:');
+  expect(login.status().canOpenBrowser).toBe(true);
+  login.openLoginPage(status.attemptId); expect(deps.open).toHaveBeenCalledWith(url); login.cancel();
+});
+
+test.each([
+  authorizationUrl('https://claude.com.evil.test/account/v3/consent'),
+  authorizationUrl('https://unknown-provider.test/account/v3/consent'),
+  authorizationUrl('http://claude.com/account/v3/consent'),
+  authorizationUrl('https://claude.com/account/v3/consent','https://untrusted.test/callback'),
+  authorizationUrl('https://claude.com/account/v3/consent')+'&response_type=token',
+  authorizationUrl('https://user@claude.com/account/v3/consent'),
+  authorizationUrl('https://claude.com:8443/account/v3/consent'),
+  authorizationUrl('https://claude.com/account/v3/consent','http://localhost.evil.test:54321/callback'),
+  authorizationUrl('https://claude.com/account/v3/consent').replace('code_challenge_method=S256','code_challenge_method=plain'),
+  authorizationUrl('https://claude.com/account/v3/consent').replace('state=synthetic-state','state='),
+  'https://claude.com/help?state=synthetic',
+])('rejects invalid dynamically discovered authorization URLs', url => {
+  const {login,children,deps}=setup(); const status=login.start();
+  children[0]!.stdout!.emit('data',url+'\n');
+  expect(login.status().canOpenBrowser).toBe(false);
+  expect(()=>login.openLoginPage(status.attemptId)).toThrow(); expect(deps.open).not.toHaveBeenCalled(); login.cancel();
+});
+
+test.each(['http://[::1]:54321/callback','https://platform.claude.com/oauth/code/callback'])('allows provider-owned and local callback flows: %s', redirect => {
+  const {login,children}=setup(); login.start();
+  children[0]!.stdout!.emit('data',authorizationUrl('https://claude.com/future/consent',redirect)+'\n');
+  expect(login.status().canOpenBrowser).toBe(true); login.cancel();
+});
 test('duplicate start reuses one login and only verifies the selected target after exit', async () => {
   const { login, deps, children, target } = setup();
   expect(login.start()).toMatchObject({ state: 'waiting', source: 'desktop' });
@@ -27,12 +66,13 @@ test('duplicate start reuses one login and only verifies the selected target aft
 
 test('retains only an official sign-in URL privately and sends a manual code only to its owned attempt', () => {
   const {login,children,deps}=setup(); const first=login.start();
-  children[0]!.stdout!.emit('data','Open https://claude.ai/oauth/auth');
-  children[0]!.stdout!.emit('data','orize?state=private-state&client_id=official\nPaste code here if prompted:');
+  const url=authorizationUrl();
+  children[0]!.stdout!.emit('data','Open '+url.slice(0,31));
+  children[0]!.stdout!.emit('data',url.slice(31)+'\nPaste code here if prompted:');
   expect(login.status()).toMatchObject({state:'waiting',canOpenBrowser:true,acceptsCode:true,attemptId:expect.any(String)});
-  expect(JSON.stringify(login.status())).not.toContain('private-state');
+  expect(JSON.stringify(login.status())).not.toContain('synthetic-state');
   login.openLoginPage(first.attemptId!);
-  expect(deps.open).toHaveBeenCalledWith('https://claude.ai/oauth/authorize?state=private-state&client_id=official');
+  expect(deps.open).toHaveBeenCalledWith(url);
   const input=vi.spyOn(children[0]!.stdin!,'write');
   expect(()=>login.submitCode('stale-attempt','synthetic-code#state')).toThrow();
   expect(input).not.toHaveBeenCalled();
@@ -46,13 +86,31 @@ test('retains only an official sign-in URL privately and sends a manual code onl
 
 test('rejects non-provider URLs and control characters without sending anything to the process', () => {
   const {login,children,deps}=setup(); const status=login.start();
-  children[0]!.stderr!.emit('data','https://claude.ai.evil.test/oauth/authorize?state=private\nPaste code here if prompted:');
+  children[0]!.stderr!.emit('data',authorizationUrl('https://claude.ai.evil.test/oauth/authorize')+'\nPaste code here if prompted:');
   expect(login.status().canOpenBrowser).toBe(false);
   expect(()=>login.openLoginPage(status.attemptId!)).toThrow();
   expect(deps.open).not.toHaveBeenCalled();
   const input=vi.spyOn(children[0]!.stdin!,'write');
   expect(()=>login.submitCode(status.attemptId!,'code\nsecond-line')).toThrow();
   expect(input).not.toHaveBeenCalled(); login.cancel();
+});
+
+test('recognizes the current Desktop runtime authorization route without allowing unrelated routes', () => {
+  const {login,children,deps}=setup(); const status=login.start();
+  const url=authorizationUrl('https://claude.com/cai/oauth/authorize');
+  children[0]!.stdout!.emit('data',url+'\nPaste code here if prompted:');
+  expect(login.status().canOpenBrowser).toBe(true);
+  login.openLoginPage(status.attemptId);
+  expect(deps.open).toHaveBeenCalledWith(url);
+  login.cancel();
+});
+
+test.each(['https://claude.com/cai/oauth/authorize/extra','https://claude.com.evil.test/cai/oauth/authorize'])('does not accept an authorization-route lookalike: %s', url => {
+  const {login,children,deps}=setup(); const status=login.start();
+  children[0]!.stdout!.emit('data',url+'?state=synthetic\n');
+  expect(login.status().canOpenBrowser).toBe(false);
+  expect(()=>login.openLoginPage(status.attemptId)).toThrow();
+  expect(deps.open).not.toHaveBeenCalled(); login.cancel();
 });
 
 test('cancelled attempt output and codes cannot affect a new login', () => {

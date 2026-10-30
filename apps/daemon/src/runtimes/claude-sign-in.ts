@@ -10,6 +10,34 @@ import { openBrowser } from '../browser-open.js';
 import { spawnEnvForAgent } from './env.js';
 import { execAgentFile } from './invocation.js';
 
+const CLAUDE_AUTHORIZATION_ORIGINS = new Set([
+  'https://claude.ai',
+  'https://claude.com',
+  'https://console.anthropic.com',
+  'https://platform.claude.com',
+]);
+
+/** The owned runtime supplies the path; trusted origins and OAuth shape bound recovery. */
+function officialClaudeAuthorizationUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (url.href.length > 8192 || url.username || url.password || url.hash || !CLAUDE_AUTHORIZATION_ORIGINS.has(url.origin)) return null;
+    const parameter = (name: string) => {
+      const values = url.searchParams.getAll(name);
+      return values.length === 1 && values[0] && !/[\u0000-\u0020\u007f]/.test(values[0]) ? values[0] : null;
+    };
+    if (parameter('response_type') !== 'code' || !parameter('client_id') || !parameter('state')
+      || parameter('code_challenge_method') !== 'S256' || !/^[A-Za-z0-9_-]{43}$/.test(parameter('code_challenge') || '')) return null;
+    const redirectValue = parameter('redirect_uri');
+    if (!redirectValue) return null;
+    const redirect = new URL(redirectValue);
+    if (redirect.username || redirect.password || redirect.hash) return null;
+    const loopback = redirect.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(redirect.hostname);
+    if (!loopback && !CLAUDE_AUTHORIZATION_ORIGINS.has(redirect.origin)) return null;
+    return url.href;
+  } catch { return null; }
+}
+
 type Target = { executable: string; command: string; args: string[]; env: NodeJS.ProcessEnv; windowsVerbatimArguments?: boolean; source: 'desktop' | 'cli' };
 type Dependencies = {
   resolve: () => Target | null;
@@ -37,12 +65,8 @@ export class ClaudeSignIn {
     if (attempt !== this.attempt || this.value.state !== 'waiting') return;
     this.output = stripVTControlCharacters((this.output + String(chunk)).slice(-16384));
     for (const match of this.output.matchAll(/https:\/\/[^\s\x00-\x1f\x7f<>"'`]+(?=[\s\x00-\x1f\x7f<>"'`])/g)) {
-      try {
-        const url = new URL(match[0].replace(/[)\].,;]+$/g, ''));
-        if (url.href.length <= 8192 && !url.username && !url.password && !url.hash && (!url.port || url.port === '443')
-          && ['claude.ai', 'claude.com', 'console.anthropic.com', 'platform.claude.com'].includes(url.hostname)
-          && url.pathname === '/oauth/authorize') this.loginUrl = url.href;
-      } catch { /* Incomplete chunks are retried after the next output event. */ }
+      const url = officialClaudeAuthorizationUrl(match[0].replace(/[)\].,;]+$/g, ''));
+      if (url) this.loginUrl = url;
     }
     if (/\b(?:paste|enter)\b[^\r\n]{0,45}\bcode\b/i.test(this.output)) this.acceptsCode = true;
   }

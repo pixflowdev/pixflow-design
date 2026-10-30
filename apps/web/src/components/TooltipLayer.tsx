@@ -303,7 +303,7 @@ export function TooltipLayer() {
     // The scope enables WordPress's tooltip CSS. A viewport-sized paint boundary
     // keeps the tooltip out of host layout and escapes transformed editor roots.
     <div className="pixflow-design-portal-scope" style={{
-      ...workspacePortalThemeStyle(state.target), position: 'fixed', inset: 0,
+      position: 'fixed', inset: 0,
       pointerEvents: 'none', contain: 'layout paint', zIndex: state.style.zIndex,
     }}>
     <div
@@ -311,6 +311,7 @@ export function TooltipLayer() {
       className="od-tooltip-layer"
       role="tooltip"
       style={{
+        ...workspacePortalThemeStyle(state.target), color: 'var(--text-strong)',
         transform: `translate3d(${state.style.x}px, ${state.style.y}px, 0)`,
         visibility: state.style.visibility,
       }}

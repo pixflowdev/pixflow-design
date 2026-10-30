@@ -27,7 +27,7 @@ describe('TooltipLayer', () => {
       expect(layer.style.position).toBe('fixed');
       expect(layer.style.contain).toContain('paint');
       expect(Number(layer.style.zIndex)).toBeGreaterThan(100090);
-      expect(layer.style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+      expect(tooltip.style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
     } finally { editor.remove(); }
   });
 

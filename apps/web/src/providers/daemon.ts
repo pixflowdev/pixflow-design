@@ -63,7 +63,7 @@ import {
   isPixflowOptionalBridgeLoopbackAccessError,
   isPixflowIntentionalAbort,
   normalizePixflowOptionalBridgeError,
-  notifyPixflowOptionalBridgeDisconnected,
+  confirmPixflowOptionalBridgeConnectivity,
 } from '../pixflow/optional-bridge';
 import {
   summarizeArtifactsForTranscript,
@@ -390,12 +390,15 @@ export async function codexUsageRequest(signal?: AbortSignal, provider: 'codex' 
   return response.json();
 }
 
-export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel', signal?: AbortSignal): Promise<import('@open-design/contracts').ClaudeSignInStatus> {
-  const response = await daemonFetch(`/api/agents/claude/sign-in${action === 'cancel' ? '/cancel' : ''}`, {
-    method: action === 'status' ? 'GET' : 'POST', signal, cache: 'no-store',
-    ...(action === 'status' ? {} : { headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel' | 'open-browser' | 'code', signal?: AbortSignal, input?: {attemptId: string; code?: string}): Promise<import('@open-design/contracts').ClaudeSignInStatus> {
+  // A lost reply must hand control back to status recovery, never strand the action.
+  const timeout = AbortSignal.timeout(10000);
+  const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const response = await daemonFetch(`/api/agents/claude/sign-in${['cancel','open-browser','code'].includes(action) ? `/${action}` : ''}`, {
+    method: action === 'status' ? 'GET' : 'POST', signal: requestSignal, cache: 'no-store',
+    ...(action === 'status' ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input || {}) }),
   });
-  if (!response.ok) throw new Error('Claude sign-in is unavailable. Check Bridge and try again.');
+  if (!response.ok) throw Object.assign(new Error('Claude sign-in could not continue. Check its current status and try again.'), {status:response.status});
   return response.json();
 }
 
@@ -408,13 +411,13 @@ function daemonFetch(path: string, init: RequestInit = {}): Promise<Response> {
     ...init,
     headers,
     targetAddressSpace: 'loopback',
-  } as RequestInit & { targetAddressSpace: 'loopback' }).catch((error) => {
+  } as RequestInit & { targetAddressSpace: 'loopback' }).catch(async (error) => {
     if (isPixflowIntentionalAbort(error, init.signal)) throw error;
     if (!/^https?:\/\/(?:127(?:\.\d{1,3}){3}|localhost|\[?::1\]?)(?::\d+)?(?:\/|$)/i.test(url)) {
       throw error;
     }
     const normalized = normalizePixflowOptionalBridgeError(error);
-    notifyPixflowOptionalBridgeDisconnected(normalized);
+    await confirmPixflowOptionalBridgeConnectivity(error);
     throw normalized;
   });
 }

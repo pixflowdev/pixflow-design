@@ -11,6 +11,10 @@ it.each(['codex', 'claude'])('labels the actual %s desktop runtime without chang
  const props = { initial: {...initial, agentId: id}, daemonLive: true, appVersionInfo: null, initialSection: 'execution' as const, onPersist: persist, onPersistComposioKey: vi.fn(), onClose: vi.fn(), onRefreshAgents: vi.fn() };
  const view=render(<SettingsDialog {...props} agents={[agent]} />);
  expect(screen.getAllByText('Live from Desktop app').length).toBeGreaterThan(0);
+ if (id === 'claude') {
+   expect(screen.getByRole('button',{name:'Sign in again'})).toBeTruthy();
+   expect(screen.getByRole('button',{name:'Test'})).toBeTruthy();
+ }
  expect(screen.queryByText('Live from CLI')).toBeNull();
  view.rerender(<SettingsDialog {...props} agents={[{...agent,runtimeSource:'cli'}]} />);
  expect(screen.getByText('Live from CLI')).toBeTruthy();

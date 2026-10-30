@@ -304,6 +304,13 @@ export function notifyPixflowOptionalBridgeDisconnected(error?: unknown): void {
 
 let connectivityCheck: Promise<PixflowOptionalBridgeHealth> | null = null;
 
+/** Endpoint failure is not a connection-state verdict; health owns that state. */
+export async function confirmPixflowOptionalBridgeConnectivity(error: unknown): Promise<void> {
+  if (!(normalizePixflowOptionalBridgeError(error) instanceof PixflowOptionalBridgeUnavailableError)) return;
+  connectivityCheck ??= probePixflowOptionalBridge({ force: true }).finally(() => { connectivityCheck = null; });
+  await connectivityCheck;
+}
+
 export function pixflowOptionalBridgeSiteHeaders(initial: HeadersInit = {}): Headers {
   const headers = new Headers(initial);
   const siteKey = String(readBridgeConfig()?.siteHash || '').trim();
@@ -340,9 +347,7 @@ function requestWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 3_5
       } else {
         // A slow endpoint or endpoint-specific CORS failure is not proof that
         // the Bridge is offline. Health owns the shared connection state.
-        connectivityCheck ??= probePixflowOptionalBridge({ force: true })
-          .finally(() => { connectivityCheck = null; });
-        await connectivityCheck;
+        await confirmPixflowOptionalBridgeConnectivity(error);
       }
     }
     throw normalized;

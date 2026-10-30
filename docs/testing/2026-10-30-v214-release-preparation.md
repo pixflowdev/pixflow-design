@@ -10,7 +10,8 @@ Core owns the following user-facing changes. Their focused PRs already update `C
 | --- | --- | --- | --- |
 | Reliable Claude sign-in and recovery | [#63](https://github.com/pixflowdev/pixflow-design/pull/63) | `3047e0cdfeb1860434ff077a846610de705536e1` | Three executed workflows passed; Windows direct and real manual-code native authorization passed |
 | Minute usage refresh | [#65](https://github.com/pixflowdev/pixflow-design/pull/65) | `ca87cb5e33877bffc987725921b4e32644289c57` | Free and Unified chat workflows passed, including all 16 usage tests; both installed composers passed |
-| Composer tooltip overflow | [#67](https://github.com/pixflowdev/pixflow-design/pull/67) | `c058d90e3582b74c4444b6e772aa252450c4aea8` | 30 final focused tests and five installed builder/viewport checks passed; final Free/Unified CI still queued at handoff. Implementation Free CI passed at `d8dbaf67` |
+| Composer tooltip overflow | [#67](https://github.com/pixflowdev/pixflow-design/pull/67) | `c058d90e3582b74c4444b6e772aa252450c4aea8` | Final Free and Unified CI both passed; marked ready for review without merging. Installed builder/viewport evidence remains applicable |
+| Shared minute polling follow-up | [#68](https://github.com/pixflowdev/pixflow-design/pull/68) | `5e088f7669258b1c8c45912402c5988aaa7c106f` | Mac found duplicate reads with both composers mounted. Unified CI passed; independent 21 usage/tooltip tests, guard and full typecheck passed. Manually dispatched Free CI and Mac installed retest remain pending |
 
 Proposed website Core copy, to reconcile against final plugin files:
 
@@ -23,7 +24,9 @@ Proposed website Core copy, to reconcile against final plugin files:
 
 Do not claim that every customer-specific network/authentication failure is resolved. Non-Bricks fixtures used existing native title tooltips in the tested state: their page dimensions stayed unchanged, but this is not a new custom-tooltip feature there. No extension update, publication or approval is part of this release scope.
 
-No additional Pro-owned user-facing implementation has been approved in these three PRs. The planned Pro source pin/version is release metadata, not a new premium feature. The website owner must derive any Pro note from actual accepted Pro changes since the live baseline. If a Pro package is released solely as a paired build, describe that fact plainly rather than copying Core bullets or inventing fixes.
+No additional Pro-owned user-facing implementation has been approved in these four PRs. The planned Pro source pin/version is release metadata, not a new premium feature. The website owner must derive any Pro note from actual accepted Pro changes since the live baseline. If a Pro package is released solely as a paired build, describe that fact plainly rather than copying Core bullets or inventing fixes. Include #68 within the existing usage-refresh changelog group; it is a correction to the unreleased behavior, not another premium feature.
+
+The [final CI and release PR review](2026-10-30-v214-pr-review.md) records exact runs, the stacked PR #68 integration caveat and the separate, unfinished history fixes. It supersedes earlier queued-CI observations in this preparation record.
 
 ## Website coordination
 
@@ -38,6 +41,8 @@ The [Mac handoff](2026-10-30-mac214-usage-handoff.md), documentation commit `125
 - Core `601ab8f1d7d307b6211dc3e6ca4e9d64ab1b0ff0`, branch `codex/tooltip-integrated-check`; later `c2d8ad64` changes test readiness only.
 - Released Pro baseline `68995f19d42a005ca327e41186bba7c2a086c12b`, module API 14.
 
+Mac's focused polling correction is `5e088f7669258b1c8c45912402c5988aaa7c106f`, based on that combined Core runtime. The original test input is no longer sufficient evidence for the corrected polling behavior. Final builds must include this correction after its installed retest; retain the earlier targeted evidence rather than restarting the broad acceptance matrix.
+
 These inputs still identify as v2.1.3. They are not final v2.1.4 production pins or artifacts. Mac preparation must retain all three fixes, produce clean release-only v2.1.4 source commits, record the exact Core SHA in Pro's manifest and validate without the development pin override before packaging. Keep one extension-ready DMG per architecture, retaining the direct route. Reuse prior broad installer acceptance; add only the targeted tests and the tooltip hover smoke described in the handoff. Report Rosetta and signing/notarization status accurately.
 
 ## Deployment clearance gates
@@ -50,4 +55,4 @@ These inputs still identify as v2.1.3. They are not final v2.1.4 production pins
 6. The website owner reconciles exact size/SHA256 for every final artifact, updater/download manifests, language objects and Core/Pro changelog copy in staging/private preparation. Preserve existing checkout/licensing logic and customer data; keep rollback and old public artifacts available.
 7. Obtain final deployment clearance. Then publish only the reconciled bytes through the normal process and verify public downloads, updater, language packs and changelogs. Public deployment, package replacement, GitHub release publication and extension submission remain on hold under the current request.
 
-The remaining CI, release-version/pin, build and artifact gates are deliberately open. No final release manifest or checksum is fabricated while the Mac build is in progress.
+PR #67's exact-head CI gate is closed successfully. PR #68's remaining Free CI, installed retest, release-version/pin, build and artifact gates remain open. No final release manifest or checksum is fabricated while the Mac build is in progress.

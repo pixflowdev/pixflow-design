@@ -36,3 +36,10 @@ test('existing native relay supports Claude sign-in, status and cancellation wit
   assert.doesNotThrow(()=>validateRequest({id:'sign-in',origin:config.sites[0],url:config.bridge+path,method},config));
  }
 });
+
+test('existing native relay permits read-only Codex usage through the same site gate',()=>{
+ const config={extensionOrigin:'chrome-extension://'+'a'.repeat(32)+'/',bridge:'http://127.0.0.1:7456',sites:['https://customer.example']};
+ const request={id:'usage',origin:config.sites[0],url:config.bridge+'/api/agents/codex/usage',method:'GET'};
+ assert.doesNotThrow(()=>validateRequest(request,config));
+ assert.throws(()=>validateRequest({...request,origin:'https://other.example'},config));
+});

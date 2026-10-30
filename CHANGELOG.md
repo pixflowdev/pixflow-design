@@ -5,7 +5,20 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.2] - Unreleased
+## [2.1.3] - Unreleased
+- Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
+- Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
+
+- Prevent failed protected-resource requests, including local or staging identity mismatches, from incorrectly disabling a saved licence. Licence expiry and revocation checks remain enforced.
+
+- Open slash commands after a space or on a new line while composing, preserving surrounding text and avoiding commands inside URLs or file paths.
+
+- Show a compact Codex and Claude usage ring beside the composer account menu, with hover summaries, reset times and refreshable details in Workspace and floating panels.
+- Read remaining allowances from the selected Desktop-managed or installed CLI runtime; display only reported limits and show unavailable when usage cannot be confirmed.
+- Refresh Claude usage when the selected model changes, including applicable model-specific limits without retaining the allowance of the previous model.
+- Keep usage popovers aligned with their buttons and preserve Pixflow styling in WordPress and builder panels.
+
+## [2.1.2]
 
 - Find the optional Chrome extension in Execution > Local CLI settings; hide the install banner when the extension is detected on the current site.
 
@@ -227,3 +240,8 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.
 - Prevent unrelated settings saves from reapplying unchanged Bricks extension metadata to other content.
+
+
+
+
+

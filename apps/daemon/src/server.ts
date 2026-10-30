@@ -423,6 +423,8 @@ import {
 } from './mcp-tokens.js';
 import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKnobs, writeAppConfig } from './app-config.js';
 import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
+import { registerClaudeUsageRoute } from './routes/claude-usage.js';
+import { registerCodexUsageRoute } from './routes/codex-usage.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
@@ -7637,6 +7639,10 @@ export async function startServer({
   const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
   const stopClaudeSignIn = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
+  registerClaudeUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
+  registerCodexUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   app.post('/api/pixflow/bricks-agent/run-stream', async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
@@ -20909,3 +20915,4 @@ export function rewriteSkillAssetUrls(html: string, skillId: string): string {
     },
   );
 }
+

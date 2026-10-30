@@ -39,6 +39,23 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('reads a selected empty-local chat directly without resolving its known address again', async () => {
+    const address = 'pixflow:conversation:v1:11111111-1111-1111-1111-111111111111:conversation';
+    vi.mocked(readChatHistory).mockResolvedValue({ messages: [saved(message(1))], nextCursor: null, hasMore: false });
+    const owner = renderHook(() => useHarness([], address));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(resolveChatHistory).not.toHaveBeenCalled();
+    expect(readChatHistory).toHaveBeenCalledWith({ projectId: '11111111-1111-1111-1111-111111111111', conversationId: 'conversation' });
+    expect(owner.result.current.messages[0]?.content).toBe('Message 1');
+  });
+  it('does not adopt a known address when its permission-checked read fails', async () => {
+    vi.mocked(readChatHistory).mockRejectedValue(new Error('Forbidden'));
+    const owner = renderHook(() => useHarness([], 'pixflow:conversation:v1:11111111-1111-1111-1111-111111111111:conversation'));
+    await waitFor(() => expect(owner.result.current.error).toBe('load'));
+    expect(owner.result.current.ready).toBe(false);
+    expect(owner.result.current.messages).toEqual([]);
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
   it('recovers a completed Workspace CLI reply when only the floating panel is mounted', async () => {
     const partial = { ...saved(message(1)), content: 'Partial', runId: 'workspace-run', runStatus: 'running' };
     vi.mocked(readChatHistory).mockResolvedValue({ messages: [partial], nextCursor: null, hasMore: false });
@@ -182,12 +199,27 @@ describe('Durable history independent migration and recovery checks', () => {
     const { result } = renderHook(() => useHarness([]));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(resolveChatHistory).toHaveBeenCalledWith({ sessionKey: 'history-race-test', create: false });
+    expect(result.current.ready).toBe(true);
     expect(importChatHistory).not.toHaveBeenCalled();
     expect(readChatHistory).not.toHaveBeenCalled();
     act(() => result.current.setMessages([message(1)]));
     await waitFor(() => expect(resolveChatHistory).toHaveBeenCalledWith({ sessionKey: 'history-race-test' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(importChatHistory).toHaveBeenCalledWith({ projectId: 'created-on-send', conversationId: 'conversation' }, [message(1)]);
+  });
+  it('adopts an empty chat without discarding messages that arrive during its lookup', async () => {
+    const lookup = deferred<{ projectId: string; conversationId: string }>();
+    vi.mocked(resolveChatHistory).mockReturnValueOnce(lookup.promise);
+    const hydrate = vi.fn();
+    const { result, rerender } = renderHook(({ messages }) => useDurableChatHistory({
+      sessionKey: 'new-empty-chat', messages, onHydrate: hydrate,
+    }), { initialProps: { messages: [] as Message[] } });
+    expect(result.current.ready).toBe(false);
+    rerender({ messages: [message(1)] });
+    await act(async () => lookup.resolve({ projectId: null, conversationId: null } as unknown as { projectId: string; conversationId: string }));
+    expect(hydrate).toHaveBeenCalledWith([message(1)]);
+    expect(hydrate).not.toHaveBeenCalledWith([]);
+    await waitFor(() => expect(result.current.ready).toBe(true));
   });
   it('does not migrate the old account transcript after account changes during resolution', async () => {
     const pending = deferred<{ projectId: string; conversationId: string }>();

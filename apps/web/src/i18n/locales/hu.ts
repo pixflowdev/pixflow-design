@@ -1,6 +1,12 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "settings.codexUsage": "Codex-fiók használata",
+  "settings.usageRemaining": "{value} maradt",
+  "settings.usageResets": "Visszaállítás: {value}",
+  "settings.usageChecked": "Ellenőrizve: {value} · Közös Codex-keret",
+  "settings.usageRefresh": "Frissítés",
+
   "settings.extensionInstall": "A Pixflow Design Bridge Chrome-bővítmény telepítése",
   "settings.extensionHint": "Opcionális segédeszköz, amely a Chrome-on keresztül kapcsolja össze a WordPress és a Pixflow Design Bridge alkalmazást. A Bridge alkalmazásnak továbbra is telepítve kell lennie és futnia kell a számítógépén.",
 

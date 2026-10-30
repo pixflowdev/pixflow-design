@@ -2,7 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ChatComposer } from '../../src/components/ChatComposer';
-import { composerText, typeAndSettle, pressEnter } from '../helpers/lexical-composer';
+import { composerText, typeAndSettle, pressEnter, getComposerEditor } from '../helpers/lexical-composer';
+import { $getRoot } from 'lexical';
 vi.mock('../../src/pixflow/feature-runtime',async importOriginal=>({...await importOriginal<typeof import('../../src/pixflow/feature-runtime')>(),pixflowFeatureConfiguration:()=>({operations:['audit','critique','polish','typeset','layout','colorize','clarify','harden','adapt','optimize']}), usePixflowFeatureAsset:()=>({}),pixflowFeatureEnabled:()=>true}));
 vi.mock('../../src/pixflow/planning-availability',()=>({planningAvailable:()=>true}));
 vi.mock('../../src/pixflow/composer-guidance-references',()=>({loadComposerGuidanceReferences:async()=>[
@@ -11,6 +12,18 @@ vi.mock('../../src/pixflow/composer-guidance-references',()=>({loadComposerGuida
  {id:'pixflow-design-system:brand',kind:'design-system',label:'Brand system',content:'Saved tokens'},
 ]}));
 afterEach(()=>{cleanup();history.replaceState(null,'','/');sessionStorage.clear();});
+it.each(['Please help me ', 'Please help me\n', '  '])('opens an inline slash menu after %j and preserves surrounding text',async prefix=>{
+ const open=vi.fn(),send=vi.fn();
+ render(<ChatComposer projectId="p" projectFiles={[]} streaming={false} onEnsureProject={async()=> 'p'} onSend={send} onStop={()=>{}} onOpenSettings={open}/>);
+ await typeAndSettle(prefix+'/design-settings');
+ fireEvent.click(await screen.findByRole('option',{name:/\/design-settings/}));
+ expect(open).toHaveBeenCalledWith('designSystems');expect(send).not.toHaveBeenCalled();
+ expect(getComposerEditor().getEditorState().read(()=>$getRoot().getTextContent())).toBe(prefix);
+});
+it.each(['https://example.com/design','folder/design','word/design'])('does not open slash commands inside %s',async text=>{
+ render(<ChatComposer projectId="p" projectFiles={[]} streaming={false} onEnsureProject={async()=> 'p'} onSend={vi.fn()} onStop={()=>{}} onOpenSettings={vi.fn()}/>);
+ await typeAndSettle(text);expect(screen.queryByRole('listbox',{name:/slash/i})).toBeNull();expect(screen.queryByRole('option',{name:/\/design-settings/})).toBeNull();
+});
 for (const selectMenu of [true,false]) it(`opens design settings without sending (${selectMenu?'menu':'typed'})`,async()=>{
  const open=vi.fn(),send=vi.fn();
  render(<ChatComposer projectId="p" projectFiles={[]} streaming={false} onEnsureProject={async()=> 'p'} onSend={send} onStop={()=>{}} onOpenSettings={open}/>);

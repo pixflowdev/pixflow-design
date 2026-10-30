@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,11 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= 2.1.3 =
+* Show live Codex and Claude account usage allowances beside the composer.
+* Keep usage tied to the selected runtime and model, with explicit unavailable states.
+* Improve inline slash-command discovery after whitespace.
 
 = Unreleased =
 * Open slash commands after a space or on a new line while composing, preserving surrounding text and avoiding commands inside URLs or file paths.

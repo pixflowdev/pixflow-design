@@ -55,6 +55,14 @@ jobs:
         run: node --import tsx --test scripts/wordpress-directory-notices.test.ts
       - name: Legacy chat compatibility
         run: php wordpress/tests/workspace-legacy-message.test.php
+      - name: Artifact authorization and licence recovery
+        run: |
+          php wordpress/tests/central-artifact-license-preservation.test.php
+          php wordpress/tests/central-artifact-download.test.php
+          php wordpress/tests/central-artifact-selection.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/central-entitlements-cache-recovery.test.php
+          php wordpress/tests/central-entitlements-atomic.test.php
       - name: Build Free browser assets
         run: pnpm wordpress:web
 

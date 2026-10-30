@@ -55,3 +55,10 @@ Only minimal artifact checks are required after the targeted usage tests: versio
 Use Core repository `pixflowdev/pixflow-design`, draft tag `bridge-v2.1.3`. If absent, create a **draft** targeted at the final recorded build commit; if present, verify draft status and target before uploads. Do not alter a published release. Upload both DMGs, `SHA256SUMS-mac-2.1.3.txt` and a redacted build receipt. Verify byte counts and SHA256 against uploaded assets. Do not clobber different existing bytes; use source-qualified names and identify the intended pair.
 
 Commit the redacted acceptance/build/upload report under `docs/testing/evidence/mac213-usage/` on a dedicated branch and open a PR. Return exact Core/Pro SHAs, test results, artifact architectures, signing status, draft URL, asset IDs/names, sizes and SHA256 hashes. Keep private logs, user data and DMG bytes out of Git. Preserve published packages, customer data and Team separation. Production build/upload is authorized; public publication and deployment are not.
+
+
+## Mac return — completed 30 October 2026
+
+Targeted usage acceptance passed; no implementation fixes were required. Production 2.1.3 DMGs were built from Core `c9d1481944e5020c2b82e48b54754b5c811b8a24` and Pro `fc7c469f7d765a78077181bc4ec958508d63b310`. Both passed the required artifact checks and independent uploaded-download SHA256 verification. Intel evidence uses Rosetta on Apple Silicon; signatures are ad-hoc, not notarized.
+
+[Return report #57](https://github.com/pixflowdev/pixflow-design/pull/57), [Core #56](https://github.com/pixflowdev/pixflow-design/pull/56), [Pro #31](https://github.com/pixflowdev/pixflow-design-pro/pull/31). [Draft bridge-v2.1.3](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-f4d836cdad855d89c7a3). [Asset IDs, sizes and hashes](evidence/mac213-usage/mac-2.1.3-upload-receipts.json). Public promotion/additional source reconciliation remain with the coordinator.

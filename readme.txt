@@ -33,6 +33,9 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Prevent hovering composer buttons from adding page scrollbars in the Bricks floating panel, while retaining tooltip placement and theme.
+
 = 2.1.3 =
 * Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
 * Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, with automatic recovery when returning to an overdue tab.
 - Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
 - Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.
 - Reopen the official Claude authorization page and submit a returned code from Execution settings, with cancellation and automatic status recovery. Codes are sent only to the active login process on the user's computer.

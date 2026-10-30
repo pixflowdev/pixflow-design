@@ -8,7 +8,7 @@ vi.mock('../../src/i18n', () => ({ useI18n: () => ({ locale: 'en', t: (key: keyo
 import { codexUsageRequest } from '../../src/providers/daemon';
 import { CodexUsageIndicator } from '../../src/components/CodexUsageIndicator';
 
-const usage = (remainingPercent: number) => ({ status: 'available' as const, source: 'desktop' as const, checkedAt: new Date().toISOString(), windows: [{ bucket: 'codex', durationMinutes: 10080, remainingPercent }] });
+const usage = (remainingPercent: number) => ({ status: 'available' as const, source: 'desktop' as const, checkedAt: new Date().toISOString(), windows: [{ bucket: 'codex', durationMinutes: 10080, remainingPercent, resetsAt: null }] });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.resetAllMocks(); });
 const tick = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 

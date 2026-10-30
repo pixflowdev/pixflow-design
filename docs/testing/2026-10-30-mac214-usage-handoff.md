@@ -1,6 +1,6 @@
 # Mac usage refresh, Claude recovery and next Bridge DMGs
 
-Owner request, 30 October 2026: verify the usage auto-refresh fix, then prepare new Mac DMGs. Keep customer data, sign-ins, settings and Chrome permissions. Keep Team separate and published files unchanged. No public deployment, Store submission or updater changes are authorized.
+Owner request, 30 October 2026: verify the usage auto-refresh fix, then prepare new Mac DMGs. **Follow-up: include the composer tooltip overflow fix before final packaging.** Keep customer data, sign-ins, settings and Chrome permissions. Keep Team separate and published files unchanged. No public deployment, Store submission or updater changes are authorized.
 
 ## Starting source and scope
 
@@ -8,10 +8,12 @@ Fetch these immutable inputs, rather than a moving branch tip:
 
 | Input | Repository / branch | Commit |
 | --- | --- | --- |
-| Combined Core test candidate | `pixflowdev/pixflow-design`, `codex/usage-auto-refresh` | `1800792b87b6f6dd8c57f113353c98f0f59fe2e8` |
+| Combined Core test candidate | `pixflowdev/pixflow-design`, `codex/tooltip-integrated-check` | `601ab8f1d7d307b6211dc3e6ca4e9d64ab1b0ff0` |
 | Released Pro baseline | `pixflowdev/pixflow-design-pro`, `codex/pro-repository-extraction` | `68995f19d42a005ca327e41186bba7c2a086c12b` |
 
-Core includes the separate Claude sign-in recovery [PR #63](https://github.com/pixflowdev/pixflow-design/pull/63), plus the usage fix. The focused usage [PR #65](https://github.com/pixflowdev/pixflow-design/pull/65) targets main independently at `ca87cb5e33877bffc987725921b4e32644289c57`. Its two usage source files and both usage regression files are byte-identical to this combined candidate. It also adds explicit timer-test CI coverage and evidence. Do not drop either fix when preparing final release sources.
+Core includes the separate Claude sign-in recovery [PR #63](https://github.com/pixflowdev/pixflow-design/pull/63), the usage fix, and the tooltip layout fix [PR #67](https://github.com/pixflowdev/pixflow-design/pull/67). The focused usage [PR #65](https://github.com/pixflowdev/pixflow-design/pull/65) targets main independently at `ca87cb5e33877bffc987725921b4e32644289c57`. Its two usage source files and both usage regression files are byte-identical to this combined candidate. It also adds explicit timer-test CI coverage and evidence. Do not drop any of these fixes when preparing final release sources.
+
+The new Core pin supersedes the earlier `1800792b` input. If usage/auth acceptance has already passed, do not restart that matrix: add the tooltip regression and one Bricks hover smoke, then use the new combined input for version/pin preparation. If DMGs were already built from the old input, retain their evidence but do not designate them as the final corrected artifacts.
 
 This handoff is on `codex/mac214-usage-handoff`; its document commit is not the test/runtime pin above. Pro's default branch is `codex/pro-repository-extraction`, not `main`. Module API stays 14. No personal credentials or site access details belong in Git; use the existing authorized QA site and private local configuration.
 
@@ -34,11 +36,13 @@ Read both AGENTS.md files and `tools/pack/AGENTS.md`. Use Node 24 and pnpm 10.33
 4. **Visibility and recovery:** hide the tab for over a minute, then return. Hidden tabs should not poll; overdue usage refreshes on return. Verify one unavailable/recovery case with test responses or the isolated candidate only, without revoking Chrome permissions or deleting authentication. Polls must not overlap and no unavailable response may become a fabricated 100% reading. Check the existing hover/click styling once at a narrow width.
 5. **Claude sign-in recovery:** with Desktop closed and its runtime still discoverable, verify Sign in again remains available. Complete one owner-authorized official sign-in through the real WordPress button, including waiting and automatic connection without Rescan. Check Open sign-in page; if a manual code is returned, enter it only in WordPress and complete sign-in. Otherwise record that manual exchange is Windows live-tested and Mac control-tested. Do not force logout to manufacture a fresh account state. Never paste codes, tokens or full authorization URLs into logs/chat/Git. Keep only one current authorization attempt; close cancelled test-created authorization tabs so an obsolete localhost callback cannot be mistaken for the active attempt.
 6. Check direct and existing published-extension routes once for health and one usage read each. For the sign-in scenario use the extension route if available; do not repeat a broad permission matrix or rebuild/submit the extension. Record the actual route, not only a green connected badge. Existing permissions must be restored unchanged.
+7. **Composer tooltip follow-up:** in the Bricks floating panel hover + and Send, then move away. Host document/body width, height and scroll position must not change. The custom tooltip must stay inside the viewport with the panel theme. Windows reproduced the original 1000px-to-1707px page growth and verified the fix in Bricks, Gutenberg, Etch, Elementor and a 640px Bricks viewport. The Mac addition is one Bricks smoke plus the focused TooltipLayer test; no new builder matrix is requested.
 
 Run the focused tests, then guard/typecheck and Pro's normal paired checks:
 
 ```sh
 pnpm --filter @open-design/web exec vitest run tests/components/usage-refresh.test.tsx tests/components/CodexUsage.test.tsx tests/components/CodexUsageIndicator.test.tsx
+pnpm --filter @open-design/web exec vitest run tests/components/TooltipLayer.test.tsx
 pnpm --filter @open-design/daemon exec vitest run tests/runtimes/codex-usage.test.ts tests/runtimes/claude-usage.test.ts tests/runtimes/claude-usage-protocol.test.ts tests/routes/codex-usage.test.ts tests/routes/claude-usage.test.ts tests/runtimes/claude-sign-in.test.ts tests/routes/claude-sign-in.test.ts tests/claude-sign-in-cli.test.ts
 pnpm --filter @open-design/web exec vitest run tests/components/ClaudeSignIn.test.tsx tests/pixflow/bridge-request-connectivity.test.ts
 ```
@@ -52,7 +56,7 @@ The next candidate version is **2.1.4**, because v2.1.3 is already published. St
 After targeted acceptance passes:
 
 1. Prepare separate release-only Core/Pro commits for 2.1.4, retaining both reviewed fixes and excluding Team. Use the existing release-version pattern, not a repository-wide text replacement. Align the Core plugin header/constants, Bridge requirement and compatibility wrapper version, plugin readme version and new changelog heading; align Pro's plugin header/constants/readme version. Preserve historical changelogs and avoid duplicating the shared Core usage entry in Pro. Do not change generic workspace package versions or the extension's version.
-2. Push the clean final Core revision. Pin that full SHA in Pro's `pixflow-pro.json`, commit/push Pro and record the resulting exact pair. Run Pro's exact-pin checks **without** the worktree override. If either source changes afterwards, update the receipt and pin before rebuilding. Check #63/#65 CI and ensure no later accepted fix has been omitted. This authorizes build preparation, not merging PRs or publishing.
+2. Push the clean final Core revision. Pin that full SHA in Pro's `pixflow-pro.json`, commit/push Pro and record the resulting exact pair. Run Pro's exact-pin checks **without** the worktree override. If either source changes afterwards, update the receipt and pin before rebuilding. Check #63/#65/#67 CI and ensure no later accepted fix has been omitted. This authorizes build preparation, not merging PRs or publishing.
 3. Build one **extension-ready** production DMG for Apple Silicon and one for Intel, retaining direct access. No direct-only variant. Keep permanent extension ID `hbnbiboohlelmngadeolikeejamjlbkh`; do not rebuild the browser extension.
 
 ```sh

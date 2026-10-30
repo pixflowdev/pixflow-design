@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { T } from '../lib/timeouts.js';
 
-const fixtures = JSON.parse(process.env.PIXFLOW_TOOLTIP_FIXTURES || '[]') as Array<{ name: string; url: string }>;
+const fixtures = JSON.parse(process.env.PIXFLOW_TOOLTIP_FIXTURES || '[]') as Array<{ name: string; url: string; viewport?: { width: number; height: number } }>;
 test.describe('installed composer tooltip overflow', () => {
   for (const fixture of fixtures) {
     test(`${fixture.name} composer hover does not expand the host page`, async ({ page }, testInfo) => {
+      if (fixture.viewport) await page.setViewportSize(fixture.viewport);
       await page.goto(fixture.url);
       const panel = page.locator('.pixflow-bricks-agent-panel');
       if (!await panel.isVisible()) {

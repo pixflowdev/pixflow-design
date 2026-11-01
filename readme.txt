@@ -34,6 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = Unreleased =
+* Protect unsaved Workspace changes when navigating or closing a tool page, and retain Bridge HTTP error details so compatible features can distinguish unavailable endpoints from connection failures. Extend shared translation contracts and CLI operations for the separately installed Pro module; Pro owns its translation features and release notes.
 * Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
 * Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state.
 * Add shared Bridge and CLI interfaces for the separately installed Pro translations preview; translation management and publishing remain Pro-only.

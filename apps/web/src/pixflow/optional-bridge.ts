@@ -480,7 +480,8 @@ export async function pixflowOptionalBridgeJson<T>(
     const detail = await response.json().catch(() => null) as {message?:unknown;error?:unknown} | null;
     const nested = detail?.error && typeof detail.error === 'object' ? (detail.error as {message?:unknown}).message : detail?.error;
     const message = typeof detail?.message === 'string' ? detail.message : typeof nested === 'string' ? nested : '';
-    throw new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`);
+    // Callers can distinguish an unsupported endpoint from transport or authorization failures.
+    throw Object.assign(new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`), { status: response.status });
   }
   return response.json() as Promise<T>;
 }

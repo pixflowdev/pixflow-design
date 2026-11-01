@@ -3,6 +3,7 @@ import { type DragEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../i18n';
 import { navigate, type EntryHomeView, type Route } from '../router';
+import { requestWorkspaceNavigation } from '../pixflow/workspace-navigation';
 import type { Project } from '../types';
 import { Icon, type IconName } from './Icon';
 import { WorkspaceBridgeStatus } from './WorkspaceBridgeStatus';
@@ -463,6 +464,9 @@ export function WorkspaceTabsBar({
   }
 
   function closeWorkspace() {
+    requestWorkspaceNavigation(closeWorkspaceAfterSave);
+  }
+  function closeWorkspaceAfterSave() {
     dismissHoverPreview();
     window.postMessage({
       source: 'pixflow-design',

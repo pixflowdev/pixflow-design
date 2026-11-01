@@ -10,12 +10,12 @@ export async function runSiteTranslationsCli(args: string[]): Promise<void> {
     'job-id':{type:'string'},
   }});
   if(values.help || !positionals.length) {
-    console.log('AI jobs: job-status|job-start|job-step|job-claim|job-complete|job-pause|job-resume|job-retry|job-cancel [--job-id ID] [--prompt-file JSON_PATH|-] [--json]. API uses job-step. Bridge uses job-claim, od agent-text, then job-complete with the returned lease and output. Inspect job-status before retrying any unconfirmed request; results remain drafts.');
-    console.log('od site-translations updates|list|read|configure|capture|save|url|publish|prepare --site-url URL --headers-file PRIVATE_JSON [--post-id ID --locale CODE] [--prompt-file JSON_PATH|-] [--json]\nprepare --scope site|selected|updates --locales es,nl [--post-ids 12,34] reads anonymous public source once per page for all selected languages. Use --scope updates to select pending pages and active languages automatically. It does not generate or publish translations; use job-start with its returned page IDs/locales, then job-step or job-claim/job-complete.\nUses WordPress permissions. Mutations accept the same JSON body as the workspace. Capture supplies anonymous source HTML; no arbitrary remote URL is fetched by WordPress.'); return;
+    console.log('AI jobs: job-status|job-start|job-step|job-claim|job-complete|job-pause|job-resume|job-retry|job-cancel [--job-id ID] [--prompt-file JSON_PATH|-] [--json]. API uses job-step. Bridge uses job-claim, od agent-text, then job-complete with the returned lease and output. Inspect job-status before retrying any unconfirmed request; publication follows the job autoPublish setting.');
+    console.log('od site-translations updates|list|read|configure|capture|save|url|publish|prepare|preview --site-url URL --headers-file PRIVATE_JSON [--post-id ID --locale CODE] [--prompt-file JSON_PATH|-] [--json]\nprepare --scope site|selected|updates --locales es,nl [--post-ids 12,34] reads anonymous public source once per page for all selected languages. Use --scope updates to select pending pages and active languages automatically. It does not generate or publish translations; use job-start with its returned page IDs/locales, then job-step or job-claim/job-complete. New jobs publish each completed page/language automatically. Set autoPublish:false in job-start JSON to keep drafts. Existing jobs retain their original publication choice.\nUses WordPress permissions. Mutations accept the same JSON body as the workspace. Capture supplies anonymous source HTML; no arbitrary remote URL is fetched by WordPress.'); return;
   }
   const action=positionals[0];
   const jobAction=action?.startsWith('job-')?action.slice(4):null;
-  if(positionals.length!==1 || !(['updates','list','read','configure','capture','save','publish','prepare','url'].includes(action!)||['status','start','step','claim','complete','pause','resume','retry','cancel'].includes(jobAction??''))) throw new Error('Choose a supported site-translations operation.');
+  if(positionals.length!==1 || !(['updates','list','read','configure','capture','save','publish','prepare','url','preview'].includes(action!)||['status','start','step','claim','complete','pause','resume','retry','cancel'].includes(jobAction??''))) throw new Error('Choose a supported site-translations operation.');
   if(!values['site-url']||!values['headers-file']) throw new Error('Provide --site-url and --headers-file.');
   const site=new URL(values['site-url']);
   if(site.username||site.password||site.search||site.hash||(site.protocol!=='https:'&&!(site.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(site.hostname)))) throw new Error('Use HTTPS, or HTTP on loopback only.');
@@ -73,7 +73,7 @@ export async function runSiteTranslationsCli(args: string[]): Promise<void> {
     if(!input||typeof input!=='object'||Array.isArray(input)||('action' in input&&input.action!==(jobAction??action))) throw new Error('Mutation action does not match the command.');
     body={...input,action:jobAction??action} as SiteTranslationMutation;
   }
-  const response=await fetch(endpoint,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(jobAction==='step'?135000:30000),headers:{...headers as Record<string,string>,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+  const response=await fetch(endpoint,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(jobAction==='step'||action==='preview'?135000:30000),headers:{...headers as Record<string,string>,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
   const result=await response.json() as {message?:string};
   if(!response.ok) throw new Error(result.message||`WordPress returned ${response.status}.`);
   process.stdout.write(JSON.stringify(result,null,values.json?undefined:2)+'\n');

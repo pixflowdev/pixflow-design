@@ -5,6 +5,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runSiteTranslationsCli } from '../src/pixflow/site-translations-cli.js';
 
+test('preview exposes the same non-persistent operation to headless clients',async()=>{
+  const directory=await mkdtemp(join(tmpdir(),'pixflow-guidance-preview-'));
+  const headersFile=join(directory,'headers.json'),inputFile=join(directory,'input.json');
+  await writeFile(headersFile,JSON.stringify({Authorization:'test-only'}));
+  const input={mode:'prepare',locale:'es',sample:'Hello',revision:1,rules:{brandVoice:{tone:'Warm'}}};
+  await writeFile(inputFile,JSON.stringify(input));
+  vi.spyOn(process.stdout,'write').mockImplementation(()=>true);
+  const request=vi.spyOn(globalThis,'fetch').mockImplementation(async(url,init)=>{
+    assert.equal(new URL(String(url)).searchParams.get('rest_route'),'/pixflow-design/v1/site-translations');
+    assert.deepEqual(JSON.parse(String(init?.body)),{...input,action:'preview'});
+    return Response.json({prompt:'Prepared sample'});
+  });
+  try {await runSiteTranslationsCli(['preview','--site-url','https://example.test','--headers-file',headersFile,'--prompt-file',inputFile,'--json']);assert.equal(request.mock.calls.length,1);}
+  finally {vi.restoreAllMocks();await rm(directory,{recursive:true,force:true});}
+});
+
 test('multi-language preparation paginates, reads source once, and never forwards credentials to source', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'pixflow-translations-'));
   const headersFile = join(directory, 'headers.json');

@@ -17,6 +17,8 @@ export interface WorkspaceSidebarProps {
   activeView?: EntryHomeView;
   helpControl?: ReactNode;
   connectionControl?: ReactNode;
+  /** Optional premium destinations. Core does not discover private modules. */
+  additionalDestinations?: ReactNode;
   onClose?: () => void;
   organization: WorkspaceOrganization;
   loading: boolean;
@@ -34,7 +36,7 @@ type MenuTarget = { kind: 'chat'; item: Project } | { kind: 'project'; item: Wor
 type Editor = { kind: 'create' } | { kind: 'rename' | 'remove'; target: MenuTarget };
 
 /** The sidebar changes organization only. Existing chat IDs, files and conversation routes stay intact. */
-export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, activeView, helpControl, connectionControl, onClose, organization, loading, error, onRetry, onMutate, onOpenChat, onRenameChat, onNewChat, onNavigate, onSettings, children }: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, activeView, helpControl, connectionControl, additionalDestinations, onClose, organization, loading, error, onRetry, onMutate, onOpenChat, onRenameChat, onNewChat, onNavigate, onSettings, children }: WorkspaceSidebarProps) {
   const t = useT();
   const [query, setQuery] = useState('');
   const [menu, setMenu] = useState<{ target: MenuTarget; top: number; left: number } | null>(null);
@@ -55,6 +57,11 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
   const trigger = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const collapsed = organization.sidebarCollapsed;
+  // Tool pages use the navigation rail, but do not own chat organization controls.
+  const chatPanelVisible = !['media', 'sitemap', 'design-systems', 'translations'].includes(activeView ?? '');
+  useEffect(() => {
+    if (!chatPanelVisible) { setMenu(null); setEditor(null); clearDrag(); }
+  }, [chatPanelVisible]);
   const sorted = useMemo(() => chats.filter(chat => chat.metadata?.pixflowInternalProject !== true
     && (chat.metadata as { purpose?: string } | undefined)?.purpose !== 'direct-attachments')
     .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id)), [chats]);
@@ -186,19 +193,20 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       <div className={styles.disclosure} data-open={!closed} {...(closed ? { inert: '' } as Record<string, string> : {})} aria-hidden={closed || undefined}><div className={styles.disclosureInner}>{content}</div></div>
     </section>;
   }
-  return <div className={styles.layout} data-collapsed={collapsed}>
+  return <div className={styles.layout} data-collapsed={collapsed} data-chat-panel={chatPanelVisible}>
     <header className={styles.toolbar}>
-      <Button variant="ghost" size="icon" className={styles.collapse} title={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')} aria-label={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')} aria-expanded={!collapsed} onClick={() => void perform({ type: 'collapse-sidebar', collapsed: !collapsed })}><IconLayoutSidebar size={19} stroke={1.6} /></Button>
+      {chatPanelVisible && <Button variant="ghost" size="icon" className={styles.collapse} title={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')} aria-label={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')} aria-expanded={!collapsed} onClick={() => void perform({ type: 'collapse-sidebar', collapsed: !collapsed })}><IconLayoutSidebar size={19} stroke={1.6} /></Button>}
       <div className={styles.toolbarActions}>{connectionControl}{onClose && <Button variant="ghost" size="icon" aria-label={t('ui.workspaceTabsBar.closeWorkspace')} title={t('ui.workspaceTabsBar.closeWorkspace')} onClick={onClose}><IconX size={18} stroke={1.6} /></Button>}</div>
     </header>
     <nav className={styles.rail} aria-label={t('workspaceSidebar.title')}>
       <Button variant="ghost" className={styles.destination} title={t('entry.navHome')} aria-label={t('entry.navHome')} aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => onNavigate('home')}><IconHome size={19} stroke={1.6} /></Button>
       <Button variant="ghost" className={styles.destination} title={t('workspaceSidebar.newChat')} aria-label={t('workspaceSidebar.newChat')} onClick={() => onNewChat(null)}><IconPencilPlus size={19} stroke={1.6} /></Button>
       {([{ view: 'media', label: 'entry.navMedia', Icon: IconPhoto }, { view: 'sitemap', label: 'entry.navSitemap', Icon: IconSitemap }, { view: 'design-systems', label: 'entry.navDesignSystems', Icon: IconPalette }] as const).map(item => <Button variant="ghost" className={styles.destination} key={item.view} title={t(item.label)} aria-label={t(item.label)} aria-current={activeView === item.view ? 'page' : undefined} onClick={() => onNavigate(item.view)}><item.Icon size={19} stroke={1.6} /></Button>)}
+      {additionalDestinations}
       <Button variant="ghost" className={`${styles.destination} ${styles.settings}`} title={t('entry.openSettingsAria')} aria-label={t('entry.openSettingsAria')} onClick={onSettings}><LanguageUpdateIcon><IconSettings size={19} stroke={1.6} /></LanguageUpdateIcon></Button>
       {helpControl}
     </nav>
-    <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} {...(collapsed ? { inert: '' } as Record<string, string> : {})}>
+    {chatPanelVisible && <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} {...(collapsed ? { inert: '' } as Record<string, string> : {})}>
       <div className={styles.sidebarInner}>
       <label className={styles.search}><IconSearch size={16} stroke={1.6} /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder={t('workspaceSidebar.search')} aria-label={t('workspaceSidebar.search')} /></label>
       <div className={styles.scroll}>
@@ -210,10 +218,10 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
         </>}
       </div>
       </div>
-    </aside>
+    </aside>}
     {dragPosition && draggedChat && <div className={styles.dragPreview} aria-hidden="true" style={{ left: dragPosition.x, top: dragPosition.y }}>{sorted.find(chat => chat.id === draggedChat)?.name}</div>}
     <div className={styles.content}>
-      {pendingProjectId && groups.some(group => group.id === pendingProjectId) && <div className={styles.projectContext}><IconFolder size={15} stroke={1.6} /><span>{t('workspaceSidebar.newChatIn', { name: groups.find(group => group.id === pendingProjectId)!.name })}</span></div>}
+      {chatPanelVisible && pendingProjectId && groups.some(group => group.id === pendingProjectId) && <div className={styles.projectContext}><IconFolder size={15} stroke={1.6} /><span>{t('workspaceSidebar.newChatIn', { name: groups.find(group => group.id === pendingProjectId)!.name })}</span></div>}
       <div className={styles.page}>{children}</div>
     </div>
     {menu && <div ref={menuRef} className={styles.menu} role="menu" style={{ top: menu.top, left: menu.left, maxHeight: `min(340px, calc(100dvh - ${menu.top + 8}px))` }} onKeyDown={event => {

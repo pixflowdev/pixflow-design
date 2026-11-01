@@ -5,6 +5,12 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
+- Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state.
+- Add authenticated, isolated text generation in Bridge and matching `od agent-text` and `od site-translations` commands for the separately installed Pro translations preview. Translation management, publication and permissions remain Pro-owned.
+
 ## [2.1.4] - Unreleased
 
 - Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.

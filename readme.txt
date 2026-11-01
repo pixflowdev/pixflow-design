@@ -33,6 +33,12 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
+* Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state.
+* Add shared Bridge and CLI interfaces for the separately installed Pro translations preview; translation management and publishing remain Pro-only.
+
+
 = 2.1.4 =
 * Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.
 * Share usage polling between mounted composers for the same provider and model to prevent overlapping reads.

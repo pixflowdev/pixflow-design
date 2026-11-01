@@ -81,6 +81,11 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 == Changelog ==
 
+= Unreleased =
+* Keep API and Local CLI choices synchronized across settings and panels, including agent discovery after switching without reloading.
+* Keep Workspace tool pages focused by hiding chat organization controls while preserving saved chat state.
+
+
 = 2.0.6 =
 
 * Let WordPress and builders manage native saving without Pixflow rejecting saves with an additional HTTP 409 guard.

@@ -27,6 +27,8 @@ import { runDictationCli } from './pixflow/dictation-cli.js';
 import { runBridgePairingCli } from './bridge-pairing-cli.js';
 import { runBridgeSitesCli } from './bridge-sites-cli.js';
 import { runBuilderDestinationsCli } from './pixflow/builder-destinations-cli.js';
+import { runSiteTranslationsCli } from './pixflow/site-translations-cli.js';
+import { runAgentTextCli } from './pixflow/agent-text-cli.js';
 import { readFile } from 'node:fs/promises';
 import { createCommandInvocation } from '@open-design/platform';
 import { resolveOnPath } from './runtimes/executables.js';
@@ -314,6 +316,8 @@ const SUBCOMMAND_MAP = {
   'bridge-pair': runBridgePairingCli,
   'bridge-sites': runBridgeSitesCli,
   builder: runBuilderDestinationsCli,
+  'site-translations': runSiteTranslationsCli,
+  'agent-text': runAgentTextCli,
 };
 
 if (argv[0] === 'mcp' && argv[1] === 'live-artifacts') {

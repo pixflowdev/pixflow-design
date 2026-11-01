@@ -1,7 +1,8 @@
 .layout { --chat-sidebar-width:244px; --navigation-surface:color-mix(in srgb,var(--bg) 97%,var(--text) 3%); --navigation-hover:color-mix(in srgb,var(--text) 7%,transparent); display:grid; grid-template-columns:52px var(--chat-sidebar-width) minmax(0,1fr); grid-template-rows:40px minmax(0,1fr); height:100%; min-height:0; overflow:hidden; transition:grid-template-columns 200ms cubic-bezier(.23,1,.32,1); }
 .layout[data-collapsed=true] { grid-template-columns:52px 0 minmax(0,1fr); }
+.layout[data-chat-panel=false] { grid-template-columns:52px minmax(0,1fr); }
 .toolbar { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; padding:4px 8px; background:var(--navigation-surface); border-bottom:1px solid var(--border-soft); }
-.toolbarActions { display:flex; align-items:center; gap:8px; }
+.toolbarActions { display:flex; align-items:center; gap:8px; margin-inline-start:auto; }
 .layout .toolbar button { box-shadow:none; border:0; background:transparent; color:var(--text-muted); }
 .layout .toolbar button:hover,.layout .toolbar button:focus-visible { background:var(--navigation-hover); color:var(--text); }
 .toolbarActions > button { width:30px; height:30px; border-radius:8px; }

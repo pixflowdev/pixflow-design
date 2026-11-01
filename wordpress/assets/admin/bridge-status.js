@@ -2,6 +2,7 @@
   'use strict';
 
   var config = window.pixflowDesignAdminBridge || {};
+  var bridgeEnabled = config.executionMode !== 'api';
   var currentState = '';
   var currentTitle = '';
   var currentVersion = '';
@@ -423,7 +424,7 @@
     if (bridgeHeartbeatTimer) return;
 
     function heartbeat() {
-      if (document.visibilityState === 'hidden') return;
+      if (!bridgeEnabled || document.visibilityState === 'hidden') return;
       // Health checks keep the dot honest, but a heartbeat never claims a
       // bridge currently owned by another site. Only an explicit request or
       // status click selects a different site.
@@ -431,6 +432,7 @@
     }
 
     function onVisibilityChange() {
+      if (!bridgeEnabled) return;
       if (document.visibilityState === 'hidden') {
         tabWasHidden = true;
         return;
@@ -446,6 +448,7 @@
     bridgeHeartbeatTimer = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', function () {
+      if (!bridgeEnabled) return;
       tabWasHidden = false;
       probe({ force: true, allowSwitch: false });
     });
@@ -460,9 +463,21 @@
       setState('missing', 'Pixflow Bridge', 'Pixflow Design Bridge is offline. Click to retry. Local CLI and local files are unavailable until it reconnects.');
     }
     window.addEventListener('pixflow-design:bridge-reconnect-request', requestReconnect);
+    function onExecutionMode(event) {
+      var mode = event && event.detail && event.detail.mode;
+      if (mode !== 'api' && mode !== 'daemon') return;
+      var wasEnabled = bridgeEnabled;
+      bridgeEnabled = mode === 'daemon';
+      if (bridgeEnabled && !wasEnabled) {
+        probe({ force: true, allowSwitch: false, showPending: true });
+      }
+    }
+    window.addEventListener('pixflow-design:app-config-changed', onExecutionMode);
+    window.addEventListener('open-design:app-config-changed', onExecutionMode);
     bindBridgeHeartbeat();
-    if (cached && (currentState === 'connected' || currentState === 'update')) {
+    if (bridgeEnabled && cached && (currentState === 'connected' || currentState === 'update')) {
       window.setTimeout(function () {
+        if (!bridgeEnabled) return;
         probe({ force: true, allowSwitch: false });
       }, 150);
     }

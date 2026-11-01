@@ -1172,6 +1172,7 @@ function displayTabFor(
     projects: t('entry.navProjects'),
     media: t('entry.navMedia'),
     sitemap: t('entry.navSitemap'),
+    translations: 'Translations',
     plugins: t('entry.navPlugins'),
     'design-systems': t('entry.navDesignSystems'),
   };
@@ -1181,6 +1182,7 @@ function displayTabFor(
     projects: 'folder',
     media: 'image',
     sitemap: 'fork',
+    translations: 'grid',
     plugins: 'grid',
     'design-systems': 'blocks',
   };

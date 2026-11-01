@@ -425,6 +425,7 @@ import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKno
 import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
 import { registerClaudeUsageRoute } from './routes/claude-usage.js';
 import { registerCodexUsageRoute } from './routes/codex-usage.js';
+import { registerAgentTextRoute } from './routes/agent-text.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
@@ -7644,6 +7645,8 @@ export async function startServer({
   registerCodexUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
+  registerAgentTextRoute(app, requireLocalDaemonRequest, RUNTIME_DATA_DIR,
+    agent => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, agent));
   app.post('/api/pixflow/bricks-agent/run-stream', async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const requestedMode = String(body.mode || '').trim().toLowerCase();

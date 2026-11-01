@@ -312,6 +312,11 @@ describe('Pixflow bridge HTTP gateway', () => {
     expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/website-clone-source'))).toBeGreaterThanOrEqual(5 * 60_000);
   });
 
+  it('lets bounded translation generation finish without extending ordinary API deadlines', () => {
+    expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/agents/text'))).toBeGreaterThan(120_000);
+    expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/projects'))).toBe(25_000);
+  });
+
   it('replaces a verified legacy Pixflow daemon that still owns the gateway port', async () => {
     const legacy = await listenLegacyBridgeServer();
 

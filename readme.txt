@@ -38,6 +38,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
 * Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state. Keep added navigation buttons consistent in size, spacing and interaction states.
 * Add shared Bridge and CLI interfaces for the separately installed Pro translations module; translation management and publishing remain Pro-only.
+* Allow bounded AI translation requests to finish through the packaged Bridge without the shorter general-purpose connection timeout.
 
 
 = 2.1.4 =

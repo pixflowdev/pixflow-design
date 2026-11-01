@@ -49,6 +49,8 @@ const DEFAULT_PROXY_TIMEOUT_MS = 25_000;
 const AGENTS_PROXY_TIMEOUT_MS = 15_000;
 const STREAM_PROXY_TIMEOUT_MS = 10 * 60_000;
 const VISUAL_CAPTURE_PROXY_TIMEOUT_MS = 5 * 60_000;
+// Leave room for the bounded 120-second generator to return its result or error.
+const TEXT_GENERATION_PROXY_TIMEOUT_MS = 130_000;
 const LEGACY_DAEMON_SHUTDOWN_TIMEOUT_MS = 10_000;
 
 export async function startPixflowBridgeHttpGateway(options: PixflowBridgeGatewayOptions): Promise<PixflowBridgeGatewayHandle> {
@@ -290,6 +292,7 @@ async function readDaemonStatus(options: PixflowBridgeGatewayOptions): Promise<{
 
 export function proxyTimeoutForPath(requestUrl: URL): number {
   const pathname = requestUrl.pathname;
+  if (pathname === "/api/agents/text") return TEXT_GENERATION_PROXY_TIMEOUT_MS;
   // Native guidance waits for a text boundary; match the browser continuation budget.
   if (pathname === "/api/pixflow/direct-site/steer" || /^\/api\/runs\/[^/]+\/steer$/.test(pathname)) return 240_000;
   if (pathname === "/api/agents" && requestUrl.searchParams.get("stream") === "1") {

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
 - Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state. Keep added navigation buttons consistent in size, spacing and interaction states.
 - Add authenticated, isolated text generation in Bridge and matching `od agent-text` and `od site-translations` commands for the separately installed Pro translations module. Translation management, publication and permissions remain Pro-owned.
+- Allow bounded AI translation requests to finish through the packaged Bridge without the shorter general-purpose connection timeout.
 
 ## [2.1.4] - Unreleased
 

@@ -25,6 +25,8 @@
 .controls { display:flex; align-items:center; justify-content:center; align-self:center; flex:none; gap:4px; padding:4px; border-radius:999px; background:var(--bg-elevated); }
 .status { margin:0; font-size:12px; text-align:center; color:var(--text-muted); }
 .pending { position:relative; isolation:isolate; width:min(100%,400px); aspect-ratio:1; overflow:hidden; margin-block:16px; border-radius:16px; background:var(--bg-muted); color:var(--text-muted); }
+.estimate { position:absolute; z-index:1; inset-inline-end:12px; bottom:12px; padding:4px 8px; border-radius:999px; background:var(--bg-elevated); color:var(--text); font-size:12px; font-variant-numeric:tabular-nums; }
+.pending:has(.estimate) > span { text-align:start; inset-inline-end:76px; }
 .pending > span { position:absolute; bottom:20px; inset-inline:20px; text-align:center; font-size:12px; }
 .dots { position:absolute; inset:0; background-image:radial-gradient(circle,currentColor 1px,transparent 1.4px); background-size:12px 12px; opacity:.55; mask-image:radial-gradient(ellipse at 30% 35%,#000 5%,transparent 58%),radial-gradient(ellipse at 70% 65%,#000 5%,transparent 58%); mask-size:180% 180%; animation:drift 7s cubic-bezier(.23,1,.32,1) infinite alternate; }
 @keyframes drift { from { mask-position:0% 10%; opacity:.35; } to { mask-position:100% 90%; opacity:.65; } }

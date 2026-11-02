@@ -1329,3 +1329,13 @@ test('codex json stream does not downgrade non-reconnect errors that mention rec
     },
   ]);
 });
+
+test('Codex image generation pairs one placeholder with its result without forwarding image bytes', () => {
+  const {events, handler} = collectEvents('codex');
+  for (const type of ['item.started', 'item.started', 'item.completed']) {
+    handler.feed(JSON.stringify({type, item:{id:'img-1',type:'image_generation',status:type==='item.completed'?'completed':'in_progress',result:'private-image-bytes'}})+'\n');
+  }
+  assert.deepEqual(events.map(e => e.type), ['tool_use','tool_result']);
+  assert.equal(events[0]?.name,'codex.imagegen');
+  assert.ok(!JSON.stringify(events).includes('private-image-bytes'));
+});

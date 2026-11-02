@@ -1,4 +1,5 @@
 import { accessSync, constants, existsSync, statSync, readdirSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { delimiter } from 'node:path';
 import path from 'node:path';
 import { homedir } from 'node:os';
@@ -125,11 +126,14 @@ export function agentBinEnvKey(agentId: string | undefined): string | null {
   return AGENT_BIN_ENV_KEYS.get(agentId) ?? null;
 }
 
+function pathExtensions(): string[] {
+  return process.platform === 'win32'
+    ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
+    : [''];
+}
+
 export function resolveOnPath(bin: string): string | null {
-  const exts =
-    process.platform === 'win32'
-      ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
-      : [''];
+  const exts = pathExtensions();
   const dirs = resolvePathDirs();
   for (const dir of dirs) {
     for (const ext of exts) {
@@ -138,6 +142,41 @@ export function resolveOnPath(bin: string): string | null {
     }
   }
   return null;
+}
+
+/** Probe one directory at a time, preserving PATH and PATHEXT precedence without
+ * blocking the site's HTTP server on filesystem or antivirus latency. */
+export async function resolveOnPathAsync(bin: string): Promise<string | null> {
+  const extensions = pathExtensions();
+  for (const dir of resolvePathDirs()) {
+    const candidates = extensions.map(ext => path.join(dir, bin + ext));
+    const hits = await Promise.all(candidates.map(file => access(file).then(() => file, () => null)));
+    const found = hits.find(file => file !== null);
+    if (found) return found;
+  }
+  return null;
+}
+
+export async function discoveryPathLookup(def: RuntimeAgentDef, configuredEnv: Record<string, string>) {
+  const paths = new Map<string, string>();
+  for (const bin of [def.bin, ...(def.fallbackBins ?? [])]) {
+    const resolved = await resolveOnPathAsync(bin);
+    if (resolved && !isAntigravityIdeShim(def, resolved)) {
+      paths.set(bin, resolved);
+      break;
+    }
+  }
+  if (def.id === 'amr' && process.env.OD_RESOURCE_ROOT &&
+      !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }, () => null)) {
+    for (const bin of ['opencode-cli', 'opencode']) {
+      const resolved = await resolveOnPathAsync(bin);
+      if (resolved) {
+        paths.set(bin, resolved);
+        break;
+      }
+    }
+  }
+  return (bin: string) => paths.get(bin) ?? null;
 }
 
 function looksExecutableOnWindows(filePath: string): boolean {
@@ -183,6 +222,7 @@ function configuredExecutableOverride(
 
 export function resolveAmrOpenCodeExecutable(
   env: Record<string, string | undefined> = process.env,
+  lookup = resolveOnPath,
 ): string | null {
   const configured = executableFilePath(env.VELA_OPENCODE_BIN);
   if (configured) return configured;
@@ -205,7 +245,7 @@ export function resolveAmrOpenCodeExecutable(
       if (bundled) return bundled;
     }
   }
-  return resolveOnPath('opencode-cli') ?? resolveOnPath('opencode');
+  return lookup('opencode-cli') ?? lookup('opencode');
 }
 
 // `tools/pack/tests/resources.test.ts` ships the AMR OpenCode companion as a
@@ -237,12 +277,13 @@ function packagedVelaOpenCodeCompanionTree(resourceRoot: string): string | null 
 function packagedBuiltInExecutable(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup = resolveOnPath,
 ): string | null {
   if (def.id !== 'amr') return null;
   const resourceRoot = process.env.OD_RESOURCE_ROOT?.trim();
   if (!resourceRoot) return null;
   if (
-    !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }) &&
+    !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }, lookup) &&
     !packagedVelaOpenCodeCompanionTree(resourceRoot)
   ) {
     return null;
@@ -400,6 +441,7 @@ function isAntigravityIdeShim(def: RuntimeAgentDef, executablePath: string): boo
 export function inspectAgentExecutableResolution(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup = resolveOnPath,
 ): {
   configuredOverridePath: string | null;
   appBundlePath: string | null;
@@ -421,7 +463,7 @@ export function inspectAgentExecutableResolution(
   ];
   let pathResolvedPath: string | null = null;
   for (const bin of candidates) {
-    const resolved = resolveOnPath(bin);
+    const resolved = lookup(bin);
     if (resolved && !isAntigravityIdeShim(def, resolved)) {
       pathResolvedPath = resolved;
       break;
@@ -432,7 +474,7 @@ export function inspectAgentExecutableResolution(
     standaloneCliPath = executableFilePath(candidate);
     if (standaloneCliPath) break;
   }
-  const builtInPath = packagedBuiltInExecutable(def, configuredEnv);
+  const builtInPath = packagedBuiltInExecutable(def, configuredEnv, lookup);
   const appBundlePath = appBundleExecutable(def);
   return {
     configuredOverridePath,

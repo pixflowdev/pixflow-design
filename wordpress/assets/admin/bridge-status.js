@@ -17,6 +17,7 @@
   var PROBE_COOLDOWN_MS = 120000;
   var PRECONNECT_TTL_MS = 24 * 60 * 60 * 1000;
   var HEARTBEAT_INTERVAL_MS = 4000;
+  var SITE_HEALTH_TIMEOUT_MS = 5500;
   var BRIDGE_HELP_TITLE = 'Pixflow Bridge connects Local CLI and local files. Click to check the connection.';
 
   function normalizeBaseUrl(value) {
@@ -213,7 +214,7 @@
     var stableTargetResponses = 0;
 
     function poll() {
-      return bridgeJson('health', { timeoutMs: 1600 }).then(function (payload) {
+      return bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS }).then(function (payload) {
         var key = String(payload && payload.site && payload.site.key || '');
         var instanceId = String(payload && payload.instanceId || '');
         if (key !== String(config.siteHash || '') || (previousInstanceId && instanceId && instanceId !== previousInstanceId)) {
@@ -296,7 +297,7 @@
         throw new Error('Pixflow Design Bridge rejected the site switch.');
       }
       if (payload.status === 'claimed') {
-        return bridgeJson('health', { timeoutMs: 2200 });
+        return bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS });
       }
       return waitForSiteContext(previousPayload);
     }).then(function (payload) {
@@ -323,7 +324,7 @@
     if (!hasResolvedOnce || opts.showPending) {
       setState('checking', 'Pixflow Bridge', BRIDGE_HELP_TITLE);
     }
-    bridgeJson('health', { timeoutMs: 1800 }).then(function (payload) {
+    bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS }).then(function (payload) {
       if (!payload || payload.ok === false) {
         throw new Error('Pixflow Design Bridge is not running.');
       }

@@ -1597,7 +1597,7 @@ export function SettingsDialog({
     };
     applyPublishedStatus(readPixflowBridgeStatus());
     const unsubscribe = subscribePixflowBridgeStatus(applyPublishedStatus);
-    void probePixflowOptionalBridge({ force: true, timeoutMs: 2_500 }).then((health) => {
+    void probePixflowOptionalBridge({ force: true }).then((health) => {
       if (cancelled) return;
       const version = health.available ? String(health.version || '').trim() : '';
       setProbedBridgeVersion(version || null);

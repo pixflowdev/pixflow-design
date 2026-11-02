@@ -5,6 +5,10 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Keep Bridge connected to the selected WordPress site while Local CLI scans for providers. Concurrent scans share the same work, and a stopped site runtime is reported as unavailable.
+
 ## [2.1.4] - Unreleased
 
 - Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.

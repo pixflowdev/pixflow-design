@@ -81,6 +81,10 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 == Changelog ==
 
+= Unreleased =
+
+* Keep the Bridge status connected while Local CLI scans on a slow site. Report an unavailable site when its Bridge runtime stops responding.
+
 = 2.0.6 =
 
 * Let WordPress and builders manage native saving without Pixflow rejecting saves with an additional HTTP 409 guard.

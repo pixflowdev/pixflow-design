@@ -42,6 +42,18 @@
       "bytes": 4717840,
       "sha256": "d9c44377a94564d41e80d38f505c45ca0f672225337192d01b888e0910557386",
       "githubAssetId": 701896760
+    },
+    {
+      "file": "bridge/pixflow-design-bridge-2.2.0-mac-arm64.dmg",
+      "bytes": 210535988,
+      "sha256": "d63f60e7f85e04fd08fe62e518ab368781cd66a76593ebe4408eda8a21e3dbd9",
+      "githubAssetId": 702136010
+    },
+    {
+      "file": "bridge/pixflow-design-bridge-2.2.0-mac-x64.dmg",
+      "bytes": 221711933,
+      "sha256": "e1b433b1471dec95ffe2ebd79015a8e3d2b2c532b76de9d559345b031fa2bc23",
+      "githubAssetId": 702137799
     }
   ],
   "languagePacks": [
@@ -173,8 +185,19 @@
     }
   ],
   "mac": {
-    "arm64": "pending",
-    "x64": "pending"
+    "arm64": {
+      "file": "bridge/pixflow-design-bridge-2.2.0-mac-arm64.dmg",
+      "bytes": 210535988,
+      "sha256": "d63f60e7f85e04fd08fe62e518ab368781cd66a76593ebe4408eda8a21e3dbd9",
+      "githubAssetId": 702136010
+    },
+    "x64": {
+      "file": "bridge/pixflow-design-bridge-2.2.0-mac-x64.dmg",
+      "bytes": 221711933,
+      "sha256": "e1b433b1471dec95ffe2ebd79015a8e3d2b2c532b76de9d559345b031fa2bc23",
+      "githubAssetId": 702137799
+    },
+    "receipt": "../mac220-production/build-receipt.json"
   },
   "languagePackDownload": {
     "id": 701889007,

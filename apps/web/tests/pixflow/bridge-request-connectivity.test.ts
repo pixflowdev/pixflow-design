@@ -17,6 +17,12 @@ it('retains endpoint status without marking a healthy Bridge disconnected', asyn
   expect(dispatch).not.toHaveBeenCalled();
 });
 
+it.each([{ ok: false }, { ok: true, site: null, code: 'PIXFLOW_SITE_NOT_CONNECTED' }])('requires site health as well as an HTTP 200', async body => {
+  setup(vi.fn(async () => Response.json(body)));
+  const {probePixflowOptionalBridge} = await import('../../src/pixflow/optional-bridge');
+  expect(await probePixflowOptionalBridge({force:true})).toMatchObject({available:false});
+});
+
 it.each(['busy','endpoint-network'])('does not disconnect a healthy Bridge when Claude sign-in encounters %s', async kind => {
   const fetch = vi.fn(async (url: string) => {
     if (url.endsWith('/health')) return Response.json({ ok:true, version:'2.1.3', runtimeState:'ready' });

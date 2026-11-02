@@ -1,5 +1,5 @@
 import { execAgentFile } from './invocation.js';
-import { refreshCodexAppDiscovery } from './executables.js';
+import { discoveryPathLookup, refreshCodexAppDiscovery } from './executables.js';
 import { resolveSystemProxyEnvAsync } from '@open-design/platform';
 import { AGENT_DEFS } from './registry.js';
 import {
@@ -305,7 +305,7 @@ async function probe(
   // If detection probes the shim but chat/run spawns the native binary, the
   // UI incorrectly reports "not installed" until the user pins CODEX_BIN by
   // hand even though the real launch path is healthy.
-  const launch = resolveAgentLaunch(def, configuredEnv);
+  const launch = resolveAgentLaunch(def, configuredEnv, await discoveryPathLookup(def, configuredEnv));
   if (!launch.selectedPath || !launch.launchPath) {
     return unavailableAgent(def, [buildExecutableDiagnostic(def, configuredEnv)]);
   }
@@ -403,7 +403,22 @@ function stripFns(
   return rest;
 }
 
-async function safeProbe(
+const activeProbes = new Map<string, Promise<DetectedAgent>>();
+
+function safeProbe(
+  def: RuntimeAgentDef,
+  configuredEnv: Record<string, string>,
+  systemProxyEnv: NodeJS.ProcessEnv,
+): Promise<DetectedAgent> {
+  const key = stableAgentEnvKey({ [def.id]: configuredEnv });
+  const active = activeProbes.get(key);
+  if (active) return active;
+  const pending = runProbe(def, configuredEnv, systemProxyEnv).finally(() => activeProbes.delete(key));
+  activeProbes.set(key, pending);
+  return pending;
+}
+
+async function runProbe(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
   systemProxyEnv: NodeJS.ProcessEnv = {},

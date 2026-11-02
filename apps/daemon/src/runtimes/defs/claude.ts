@@ -1,7 +1,7 @@
 import { agentCapabilities } from '../capabilities.js';
 import { DEFAULT_MODEL_OPTION } from './shared.js';
 import { discoverClaudeCatalogue, rememberClaudeModels, claudeSupportsEffort } from '../claude-models.js';
-import { resolveOnPath } from '../executables.js';
+import { resolveOnPathAsync } from '../executables.js';
 import { loadMmdRouteModels } from '../mmd-routes.js';
 import type { RuntimeAgentDef } from '../types.js';
 
@@ -38,7 +38,7 @@ export const claudeAgentDef = {
     fetchModels: async (resolvedBin, env) => {
       const routes = await loadMmdRouteModels(env, []);
       if (routes) { rememberClaudeModels(null); return routes; }
-      const catalogue = await discoverClaudeCatalogue(resolvedBin, resolveOnPath('claude'), env);
+      const catalogue = await discoverClaudeCatalogue(resolvedBin, await resolveOnPathAsync('claude'), env);
       // A fallback catalogue cannot authorize flags on a different selected executable.
       rememberClaudeModels(catalogue?.source === 'live' ? catalogue.models : null);
       return catalogue;

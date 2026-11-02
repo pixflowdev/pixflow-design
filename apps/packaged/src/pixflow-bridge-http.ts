@@ -281,7 +281,8 @@ async function waitForLegacyDaemonPortRelease(server: Server, port: number): Pro
 async function readDaemonStatus(options: PixflowBridgeGatewayOptions): Promise<{ site: unknown } | null> {
   const daemonUrl = options.getDaemonUrl();
   if (daemonUrl == null || options.getState() !== "running") return null;
-  const response = await requestJson(new URL("/api/pixflow/site-context", `${daemonUrl.replace(/\/+$/, "")}/`), 1_500);
+  // The browser and native host both need time to receive the actual site verdict.
+  const response = await requestJson(new URL("/api/pixflow/site-context", `${daemonUrl.replace(/\/+$/, "")}/`), 4_000);
   // A tray lifecycle flag alone does not prove the sidecar is responding. Also
   // discard a response from a runtime replaced while this probe was in flight.
   return isRecord(response) && response.ok === true

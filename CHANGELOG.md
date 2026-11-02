@@ -7,25 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.0] - Release candidate
 
-- Unify messages, reasoning and tool activity in Workspace and floating panels with compact expandable traces. Show only activity supplied by the API or CLI, retain saved chat history and copy actions, and keep long tool output collapsed until opened.
-- Keep Claude tool calls from appearing twice when the runtime repeats stream frames, and prevent an open Workspace tab from incorrectly marking a floating-panel Direct run as failed.
-- Preview linked sources after a sentence in web-search replies by hovering or activating a domain badge in Workspace or the floating panel.
-- Expand Sources below a web-search reply to see each cited page once. Long code blocks show visible Expand and Collapse actions in their headers.
-- New prompts settle near the top of Workspace and floating chats. Live activity opens into a timeline of reported steps, with source badges where available. The timeline folds as the answer arrives and remembers a manual toggle.
-- See reasoning summaries as they arrive and follow streamed answers into formatted code blocks. A new prompt slides into place, with reduced-motion support.
-- Stream short text updates immediately in both chat panels and catch up quickly when a provider sends a larger chunk.
-- Let Workspace agents read the connected WordPress site title and discover available builder tools without asking for a second site pairing.
-- Protect unsaved Workspace changes when navigating or closing a tool page, and retain Bridge HTTP error details so compatible features can distinguish unavailable endpoints from connection failures. Extend shared translation contracts and CLI operations for the separately installed Pro module; Pro owns its translation features and release notes.
-- Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
-- Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state. Keep added navigation buttons consistent in size, spacing and interaction states.
-- Add authenticated, isolated text generation in Bridge and matching `od agent-text` and `od site-translations` commands for the separately installed Pro translations module. Translation management, publication and permissions remain Pro-owned.
-- Allow bounded AI translation requests to finish through the packaged Bridge without the shorter general-purpose connection timeout.
-## Unreleased
+- Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.
+- Choose Continue without AI during setup to use the library and design tools without connecting a provider.
+- Follow replies as they stream in Workspace and floating panels. New prompts stay in view, scrolling back preserves your place, and animations respect reduced-motion preferences.
+- Expand a compact timeline of reported steps, reasoning summaries and tool results. Repeated Claude stream events no longer duplicate tool activity, and opening Workspace no longer marks a running floating-panel conversation as failed.
+- Preview inline citations and expand Sources to see each cited page once. Long code blocks have visible Expand and Collapse controls.
+- Switch between API and Local CLI across Workspace, floating panels and Execution settings without reloading. Tool pages keep their navigation rail, hide chat controls and warn before leaving unsaved changes.
+- Export recent Pixflow licence, builder and tooling failures from Settings → About. Private site history retains up to 128 events for seven days, including when WordPress debugging is off.
 
-- Recover Pro access with the saved licence after a temporary verification failure. A different site URL during cron or CLI requests, or an interrupted template token refresh, no longer erases the installed key.
-- License settings show **Unavailable** and **Retry** when WordPress cannot return a licence decision. The upgrade offer stays hidden while a saved licence awaits verification.
-- Choose **Continue without AI** on the setup or connection screen to finish onboarding without entering provider credentials.
-- Export recent Pixflow licence, builder and tooling failures from a private site file, even with WordPress debugging off. Optionally include device details and Claude sign-in milestones from the paired Bridge.
+### Pixflow Design Bridge
+
+- Keep Bridge responsive while Local CLI scans for providers. Onboarding, settings and composer checks share overlapping discovery work, allow slow sites time to answer and still report stopped sites as unavailable.
+- Run Pro translation jobs using local Codex or Claude. The od agent-text and od site-translations commands support authenticated workflows, and longer translation requests have a dedicated timeout.
+- Let Workspace agents read the connected site title and discover builder tools using their existing authorised session.
+- Optionally include device characteristics, the selected Claude runtime and recent sign-in stages in a diagnostic export from the paired Bridge.
 
 ## [2.1.4] - Unreleased
 

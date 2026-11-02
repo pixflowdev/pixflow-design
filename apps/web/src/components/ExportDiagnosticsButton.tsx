@@ -5,6 +5,7 @@ import { pixflowWordPressRestFetch } from '../pixflow/runtime-fetch';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { pixflowClientDiagnosticsSnapshot } from '../pixflow/client-diagnostics';
 import { collectBridgeSupport } from '../pixflow/support-diagnostics';
+import styles from './ExportDiagnosticsButton.module.css';
 
 // Mirrors what apps/desktop preload exposes via contextBridge. Kept inline
 // so the web bundle does not import the desktop package.
@@ -256,9 +257,9 @@ export function ExportDiagnosticsRow() {
   const busy = status.kind === 'busy';
   return (
     <div className="diagnostics-export-row">
-      {hasPixflowWordPressContext() && <label>
-        <input type="checkbox" checked={includeDevice} disabled={busy} onChange={event => setIncludeDevice(event.target.checked)} />{' '}
-        {t('diagnostics.includeBridge')}
+      {hasPixflowWordPressContext() && <label className={styles.deviceOption}>
+        <input type="checkbox" checked={includeDevice} disabled={busy} onChange={event => setIncludeDevice(event.target.checked)} />
+        <span>{t('diagnostics.includeBridge')}</span>
       </label>}
       <button
         type="button"

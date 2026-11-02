@@ -1,3 +1,7 @@
+import { Message, MessageContent, MessageHeader, MessageFooter } from './chat/Message';
+import { Sources } from './chat/Sources';
+import { citationSource } from './chat/InlineCitation';
+import { Trace, TraceLine, TraceIcon, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
 import { GeneratedMedia, MediaGenerationPlaceholder } from './chat/GeneratedMedia';
 import { hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { isInlineMedia, pendingMediaGenerations } from './chat/media-generation';
@@ -9,7 +13,7 @@ import { Fragment, memo, type ReactNode, useCallback, useEffect, useMemo, useRef
 import { ToolCard } from "./ToolCard";
 import { FileOpsSummary } from "./FileOpsSummary";
 import {
-  renderMarkdown,
+  collectMarkdownSources,
   type MarkdownLinkClickHandler,
 } from "../runtime/markdown";
 import { isPathLikeChatHref, resolveChatFileLink } from "../runtime/in-project-link";
@@ -42,7 +46,7 @@ import {
 } from "../artifacts/question-form";
 import { parseSubmittedAnswers } from "./QuestionForm";
 import { splitRichAnswer } from '../artifacts/rich-answer';
-import { useLiveProseReveal } from './chat/useLiveProseReveal';
+import { StreamingMarkdown } from './chat/StreamingMarkdown';
 import { ActivityDisclosure, groupActivity } from './chat/ActivityDisclosure';
 import { splitStreamingArtifact, stripArtifact, stripRecoveredHtmlFallbackForDisplay } from "../artifacts/strip";
 import {
@@ -557,7 +561,29 @@ function AssistantMessageImpl({
     | Extract<AgentEvent, { kind: "usage" }>
     | undefined;
   const roleName = assistantRoleName(message, t);
+  const searchedWeb = events.some(event =>
+    event.kind === 'activity' && event.phase === 'researching'
+    || event.kind === 'tool_use' && toolFamily(event.name) === 'search');
   const roleIconId = assistantRoleIconId(message);
+  const sources = useMemo(() => {
+    if (streaming) return [];
+    const links = new Map<string, { title: string; url: URL }>();
+    for (const event of events) {
+      if (event.kind !== 'activity') continue;
+      for (const source of event.sources ?? []) {
+        const url = citationSource(source.url);
+        if (url && !links.has(url.href)) links.set(url.href, { title: source.title || url.hostname, url });
+      }
+    }
+    const prose = searchedWeb ? blocks.flatMap(block => block.kind === 'text'
+      ? splitRichAnswer(stripArtifact(block.text), false).flatMap(segment => segment.kind === 'text'
+        ? splitSystemReminders(segment.text).filter(part => part.kind === 'text').map(part => part.text) : [])
+      : []) : [];
+    for (const source of collectMarkdownSources(prose)) {
+      if (!links.has(source.url.href)) links.set(source.url.href, source);
+    }
+    return [...links.values()];
+  }, [blocks, events, searchedWeb, streaming]);
   const hasEmptyResponse = events.some(
     (e) => e.kind === "status" && e.label === "empty_response"
   );
@@ -643,12 +669,12 @@ function AssistantMessageImpl({
   }
 
   return (
-    <div className="msg assistant">
-      <div className="role">
+    <Message className="msg assistant">
+      <MessageHeader className="role">
         {isVoiceMessage ? <VoiceOrb small shared phase={streaming ? voiceStatus?.kind === 'status' && voiceStatus.label === 'connecting' ? 'connecting' : voiceStatus?.kind === 'status' && voiceStatus.label === 'ending' ? 'ending' : 'connected' : 'idle'}/> : <AgentIcon id={roleIconId} size={20} className="role-agent-icon" />}
         <span className="role-name">{isVoiceMessage ? translateUi("ui.assistantMessage.codexVoice") : roleName}</span>
-      </div>
-      <div className="assistant-flow">
+      </MessageHeader>
+      <MessageContent className="assistant-flow">
         {fileOps.length > 0 ? (
           <FileOpsSummary
             entries={fileOps}
@@ -665,11 +691,12 @@ function AssistantMessageImpl({
               <ProseBlock
                 key={i}
                 text={b.text}
+                searchedWeb={searchedWeb}
                 hideRecoveredHtmlFallback={message.agentId === "grok-build" && !streaming}
                 assistantMessageId={message.id}
                 isLastAssistant={!!isLast}
                 streaming={streaming}
-                showStreamCursor={streaming && i === lastTextBlockIndex}
+                showStreamCursor={streaming && i === lastTextBlockIndex && i === blocks.length - 1}
                 nextUserContent={nextUserContent}
                 suppressDirectionForms={suppressDirectionForms}
                 onOpenQuestions={onOpenQuestions}
@@ -738,13 +765,17 @@ function AssistantMessageImpl({
           });
           if (!section.grouped) return <Fragment key={section.start}>{renderSection()}</Fragment>;
           const pending = section.blocks.slice().reverse().find(isPendingActivity);
-          const active = streaming && (pending != null || section.start + section.blocks.length === blocks.length);
           const current = pending ?? section.blocks[section.blocks.length - 1]!;
+          const live = streaming && section.start + section.blocks.length === blocks.length;
+          const active = live && (Boolean(pending) || current.kind === 'thinking');
           const label = activityGroupLabel(section.blocks, current, active, t);
           const errors = section.blocks.reduce((count, block) => count + (block.kind === 'tool-group'
             ? block.items.filter(item => item.result?.isError).length
             : block.kind === 'activity' && block.activity.status === 'failed' ? 1 : 0), 0);
-          return <ActivityDisclosure key={section.start} label={label} icon={activityGroupIcon(section.blocks, current, active)} active={active}
+          const steps = section.blocks.reduce((count, block) => count + (block.kind === 'tool-group' ? block.items.length : 1), 0);
+          return <ActivityDisclosure key={section.start} label={label} icon={activityGroupIcon(section.blocks, current, active)} active={active} live={live}
+            soloReasoning={section.blocks.length === 1 && current.kind === 'thinking'}
+            stepLabel={steps > 1 ? t('activity.steps', { count: steps }) : undefined}
             issueLabel={errors ? `${t('tool.error')} · ${errors}` : undefined}>{renderSection}</ActivityDisclosure>;
         })}
         {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} />)}
@@ -789,8 +820,9 @@ function AssistantMessageImpl({
                 </div>
               ))
           : null}
+        {sources.length > 0 && <Sources sources={sources} />}
         {showCompletionRow ? (
-          <div className="assistant-completion-row">
+          <MessageFooter className="assistant-completion-row">
             {showFeedback ? (
               <AssistantFeedback
                 feedback={message.feedback}
@@ -846,7 +878,7 @@ function AssistantMessageImpl({
                 isLast={!!isLast || !!footerAction}
               />
             )}
-          </div>
+          </MessageFooter>
         ) : null}
         {showNextStepActions ? (
           <NextStepActions
@@ -859,8 +891,8 @@ function AssistantMessageImpl({
             toolboxSkillNames={isLast ? toolboxSkillNames : undefined}
           />
         ) : null}
-      </div>
-    </div>
+      </MessageContent>
+    </Message>
   );
 }
 
@@ -2096,6 +2128,7 @@ function chatFileLinkClickHandler(
 
 function ProseBlock({
   text,
+  searchedWeb,
   hideRecoveredHtmlFallback,
   assistantMessageId,
   isLastAssistant,
@@ -2110,6 +2143,7 @@ function ProseBlock({
   onRequestOpenFile,
 }: {
   text: string;
+  searchedWeb: boolean;
   hideRecoveredHtmlFallback?: boolean;
   assistantMessageId: string;
   isLastAssistant: boolean;
@@ -2125,8 +2159,6 @@ function ProseBlock({
 }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
-  const proseRef=useRef<HTMLDivElement>(null);
-  useLiveProseReveal(proseRef,streaming,text);
   const cleaned = useMemo(() => {
     const stripped = stripArtifact(text);
     return hideRecoveredHtmlFallback ? stripRecoveredHtmlFallbackForDisplay(stripped, text) : stripped;
@@ -2189,7 +2221,7 @@ function ProseBlock({
   );
   if (renderable.length === 0 && !live) return null;
   return (
-    <div ref={proseRef} className="prose-block" data-stream-cursor={showStreamCursor && !live ? "true" : undefined}>
+    <div className="prose-block" data-stream-cursor={showStreamCursor && !live ? "true" : undefined}>
       {renderable.map((seg) => {
         if (seg.kind === "reminder") {
           return <SystemReminderBlock key={seg.key} text={seg.text} variant="injection" />;
@@ -2197,7 +2229,7 @@ function ProseBlock({
         if (seg.kind === "text") {
           return (
             <div className="stream-prose" key={seg.key}>
-              {renderMarkdown(seg.text, { onLinkClick })}
+              <StreamingMarkdown text={seg.text} onLinkClick={onLinkClick} searchedWeb={searchedWeb} live={Boolean(showStreamCursor && !live)} />
             </div>
           );
         }
@@ -2365,9 +2397,10 @@ function ThinkingBlock({
   onLinkClick?: MarkdownLinkClickHandler;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [override, setOverride] = useState<boolean>();
   const [hasOpened, setHasOpened] = useState(false);
   const isThinking = streaming === true;
+  const open = override ?? isThinking;
   // Thinking events carry no server timestamps, so the "用时 X 秒" duration is
   // measured client-side: stamp the start when streaming begins and freeze the
   // elapsed once it ends. Blocks restored from history never stream, so they
@@ -2390,39 +2423,23 @@ function ThinkingBlock({
       : t("assistant.thought");
   // Collapsed previews never need to parse the full tool transcript. Treat the
   // bounded prefix as partial so a protocol tag cut at the boundary stays hidden.
-  const decoded = useMemo(() => splitRichAnswer(stripArtifact(hasOpened ? text : text.slice(0, 2000)), isThinking || !hasOpened), [text, isThinking, hasOpened]);
+  const showDetail = open || hasOpened;
+  const decoded = useMemo(() => splitRichAnswer(stripArtifact(showDetail ? text : text.slice(0, 2000)), isThinking || !showDetail), [text, isThinking, showDetail]);
   const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').slice(0, 500).replace(/\s+/g, ' ').trim();
   return (
-    <div className="thinking-block">
-      <button className="thinking-toggle" onClick={() => { setHasOpened(true); setOpen((o) => !o); }}>
-        <span className={`thinking-status${isThinking ? ' op-status-running' : open ? ' thinking-status-active' : ''}`} aria-hidden>
-          {isThinking
-            ? <Icon name="spinner" size={14} />
-            : <Icon name="sparkles" size={14} />
-          }
-        </span>
-        <span className="thinking-copy">
-          <span className={`thinking-label${isThinking ? ' shimmer-text' : ''}`}>
-            {label}
-          </span>
-          {preview ? (
-            <span className="thinking-preview">
-              {preview}
-            </span>
-          ) : null}
-        </span>
-        <span className="thinking-chev">
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          {/* Retain expanded content for the exit transition, but avoid parsing
-              large tool responses that the user has never opened. */}
-          <div className="thinking-body">{hasOpened ? decoded.map((segment, index) => <Fragment key={index}>{segment.kind === 'text' ? renderMarkdown(segment.text, { onLinkClick }) : <div className="status-pill">{segment.form.title}</div>}</Fragment>) : null}</div>
-        </div>
-      </div>
-    </div>
+    <TraceCollapsible className="thinking-block" data-trace-kind="reasoning" open={open}
+      onOpenChange={value => { if (value) setHasOpened(true); setOverride(value); }}>
+      <TraceCollapsibleTrigger className="thinking-toggle">
+        <TraceLine status={isThinking ? 'running' : undefined}>
+          <TraceIcon><Icon name={isThinking ? 'spinner' : 'sparkles'} size={14} /></TraceIcon>
+          <TraceTitle>{label}</TraceTitle>
+          {!open && preview ? <TraceDescription className="thinking-preview">{preview}</TraceDescription> : null}
+        </TraceLine>
+      </TraceCollapsibleTrigger>
+      <TraceCollapsibleContent>
+        <div className="thinking-body">{showDetail ? decoded.map((segment, index) => <Fragment key={index}>{segment.kind === 'text' ? <StreamingMarkdown text={segment.text} live={open && isThinking} onLinkClick={onLinkClick} /> : <div className="status-pill">{segment.form.title}</div>}</Fragment>) : null}</div>
+      </TraceCollapsibleContent>
+    </TraceCollapsible>
   );
 }
 
@@ -2698,96 +2715,12 @@ function ToolGroupCard({
   projectFileNames?: Set<string>;
   onRequestOpenFile?: (name: string) => void;
 }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-
-  // Snapshot-style tools (TodoWrite and friends) replace their whole state on
-  // each call, so a turn that wrote the list several times would otherwise
-  // render a stack of superseded cards. Collapse those retries to the latest
-  // snapshot; every other tool passes through untouched.
   items = dedupeSnapshotToolRetries(items);
-
-  // A run of one tool collapses to that tool's card directly so we don't
-  // wrap a single child in a redundant disclosure.
-  if (items.length === 1) {
-    return (
-      <ToolCard
-        use={items[0]!.use}
-        result={items[0]!.result}
-        runStreaming={runStreaming}
-        runSucceeded={runSucceeded}
-        projectFileNames={projectFileNames}
-        onRequestOpenFile={onRequestOpenFile}
-      />
-    );
-  }
-
-  const summary = summarizeGroup(items, t, runStreaming, runSucceeded);
-  const running = runStreaming && items.some((it) => !it.result);
-  const hasError = items.some((it) => it.result?.isError);
-  return (
-    <div className="action-card">
-      <button
-        type="button"
-        className={`action-card-toggle ${running ? "running" : ""}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      >
-        <span className={`action-card-status ${running ? 'op-status-running' : hasError ? 'op-status-error' : 'op-status-ok'}`} aria-hidden>
-          {running
-            ? <Icon name="spinner" size={14} />
-            : hasError
-            ? <Icon name="close" size={14} />
-            : <Icon name="check" size={14} />
-          }
-        </span>
-        <span className={`summary${running ? ' shimmer-text' : ''}`}>
-          {summary.label}
-        </span>
-        <span className="chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="action-card-body">
-            {items.map((it, i) => (
-              <ToolCard
-                key={i}
-                use={it.use}
-                result={it.result}
-                runStreaming={runStreaming}
-                runSucceeded={runSucceeded}
-                projectFileNames={projectFileNames}
-                onRequestOpenFile={onRequestOpenFile}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function summarizeGroup(
-  items: ToolItem[],
-  t: (k: keyof Dict, vars?: Record<string, string | number>) => string,
-  runStreaming: boolean,
-  runSucceeded: boolean
-): { label: string; icon: string } {
-  // All items share a tool family because the grouper only merges by name.
-  const name = items[0]?.use.name ?? "";
-  const family = toolFamily(name);
-  const icon = familyIcon(family);
-  const verbs = items.map((it) =>
-    verbForState(it, t, runStreaming, runSucceeded)
-  );
-  // Roll the verbs into a comma-list with deduplicated last-state. So three
-  // edits whose results are all 'Done' render as "Editing ×3, Done"; mixed
-  // states render as "Editing, Reading, Done".
-  const head = countLabel(family, items.length, t);
-  const tail = lastStateLabel(verbs, t);
-  return { label: tail ? `${head}, ${tail}` : head, icon };
+  return <Trace data-trace-kind="tools">
+    {items.map(item => <ToolCard key={item.use.id} use={item.use} result={item.result}
+      runStreaming={runStreaming} runSucceeded={runSucceeded}
+      projectFileNames={projectFileNames} onRequestOpenFile={onRequestOpenFile} />)}
+  </Trace>;
 }
 
 function toolFamily(name: string): string {
@@ -2801,62 +2734,6 @@ function toolFamily(name: string): string {
   if (name === "WebFetch" || name === "web_fetch" || name === "webfetch") return "fetch";
   if (name === "WebSearch" || name === "web_search" || name === "websearch") return "search";
   return name.toLowerCase();
-}
-
-function familyIcon(family: string): string {
-  if (family === "edit") return "✎";
-  if (family === "write") return "+";
-  if (family === "read") return "↗";
-  if (family === "glob" || family === "grep" || family === "search") return "⌕";
-  if (family === "bash") return "$";
-  if (family === "todo") return "☐";
-  if (family === "fetch") return "↬";
-  return "·";
-}
-
-function countLabel(
-  family: string,
-  n: number,
-  t: (k: keyof Dict) => string
-): string {
-  const verb =
-    family === "edit"
-      ? t("assistant.verbEditing")
-      : family === "write"
-      ? t("assistant.verbWriting")
-      : family === "read"
-      ? t("assistant.verbReading")
-      : family === "glob" || family === "grep" || family === "search"
-      ? t("assistant.verbSearching")
-      : family === "bash"
-      ? t("assistant.verbRunning")
-      : family === "todo"
-      ? t("assistant.verbTodos")
-      : family === "fetch"
-      ? t("assistant.verbFetching")
-      : t("assistant.verbCalling");
-  return n > 1 ? `${verb} ×${n}` : verb;
-}
-
-function verbForState(
-  it: ToolItem,
-  t: (k: keyof Dict) => string,
-  runStreaming = false,
-  runSucceeded = false
-): string {
-  if (!it.result && runStreaming) return t("assistant.verbRunning");
-  if (!it.result && !runSucceeded) return t("tool.error");
-  if (it.result?.isError) return t("tool.error");
-  return t("tool.done");
-}
-
-function lastStateLabel(verbs: string[], t: (k: keyof Dict) => string): string {
-  const set = new Set(verbs);
-  if (set.size === 1) return verbs[verbs.length - 1] ?? "";
-  // Mixed states: surface error first, else running, else any.
-  if (set.has(t("tool.error"))) return t("tool.error");
-  if (set.has(t("assistant.verbRunning"))) return t("assistant.verbRunning");
-  return verbs[verbs.length - 1] ?? "";
 }
 
 type Block =
@@ -3002,6 +2879,7 @@ function suppressDuplicateQuestionForms(blocks: Block[]): Block[] {
 
 function buildBlocks(events: AgentEvent[]): Block[] {
   const out: Block[] = [];
+  const toolItemById = new Map<string, ToolItem>();
   const activityBlockById = new Map<string, number>();
   const hasProviderThinking = events.some((ev) =>
     ev.kind === "thinking" && typeof ev.text === "string" && ev.text.trim().length > 0
@@ -3051,8 +2929,17 @@ function buildBlocks(events: AgentEvent[]): Block[] {
       continue;
     }
     if (ev.kind === "tool_use") {
+      // Older Claude transcripts can repeat a completed call in multiple
+      // wrappers. Collapse its identity for display, not the saved transcript;
+      // calls with different IDs remain separate, even with identical input.
+      const existing = toolItemById.get(ev.id);
+      if (existing) {
+        if (ev.input && (typeof ev.input !== 'object' || Object.keys(ev.input).length > 0)) existing.use = ev;
+        continue;
+      }
       const result = resultByToolId.get(ev.id);
       const item: ToolItem = result ? { use: ev, result } : { use: ev };
+      toolItemById.set(ev.id, item);
       const last = out[out.length - 1];
       const fam = toolFamily(ev.name);
       if (

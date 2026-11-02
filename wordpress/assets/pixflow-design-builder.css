@@ -720,6 +720,24 @@ li#pixflow-design-library-toolbar-entry {
   display: none;
 }
 
+.pixflow-design-toolbar-menu__translation-update:not([hidden]) {
+  display: block;
+  flex: 0 0 6px;
+  height: 6px;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background-color: var(--accent, #3b82f6);
+}
+
+.pixflow-design-toolbar-menu__translation-update .screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .pixflow-design-toolbar-menu .inline-switcher__agent {
   appearance: none;
   width: 100%;

@@ -62,6 +62,19 @@ afterEach(() => {
   vi.resetModules();
 });
 
+it('does not cache an HTTP 200 security page as a licence result, and retries normally', async () => {
+  const { win, sessionStorage } = installWordPressWindow();
+  const transport = vi.fn()
+    .mockResolvedValueOnce(new Response('<html>Security check</html>', { status: 200 }))
+    .mockResolvedValueOnce(Response.json(licenseStatus(false)));
+  vi.stubGlobal('fetch', transport);
+  const { fetchPixflowLicenseStatus } = await import('../../src/pixflow/license');
+  await expect(fetchPixflowLicenseStatus()).rejects.toThrow('Could not read Pixflow license status.');
+  expect(win.__PIXFLOW_DESIGN_LICENSE_STATUS_CACHE__).toBeUndefined();
+  expect(sessionStorage.getItem(CACHE_KEY)).toBeNull();
+  expect((await fetchPixflowLicenseStatus()).license.status).toBe('missing');
+});
+
 it('pairs through a browser one-time code without transferring a credential or grant', async () => {
   const { win } = installWordPressWindow();
   Object.assign(win.__PIXFLOW_DESIGN_WORDPRESS__!, { bridgeBaseUrl: 'http://127.0.0.1:17457' });

@@ -5,6 +5,23 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - Release candidate
+
+- Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.
+- Choose Continue without AI during setup to use the library and design tools without connecting a provider.
+- Follow replies as they stream in Workspace and floating panels. New prompts stay in view, scrolling back preserves your place, and animations respect reduced-motion preferences.
+- Expand a compact timeline of reported steps, reasoning summaries and tool results. Repeated Claude stream events no longer duplicate tool activity, and opening Workspace no longer marks a running floating-panel conversation as failed.
+- Preview inline citations and expand Sources to see each cited page once. Long code blocks have visible Expand and Collapse controls.
+- Switch between API and Local CLI across Workspace, floating panels and Execution settings without reloading. Tool pages keep their navigation rail, hide chat controls and warn before leaving unsaved changes.
+- Export recent Pixflow licence, builder and tooling failures from Settings → About. Private site history retains up to 128 events for seven days, including when WordPress debugging is off.
+
+### Pixflow Design Bridge
+
+- Keep Bridge responsive while Local CLI scans for providers. Onboarding, settings and composer checks share overlapping discovery work, allow slow sites time to answer and still report stopped sites as unavailable.
+- Run Pro translation jobs using local Codex or Claude. The od agent-text and od site-translations commands support authenticated workflows, and longer translation requests have a dedicated timeout.
+- Let Workspace agents read the connected site title and discover builder tools using their existing authorised session.
+- Optionally include device characteristics, the selected Claude runtime and recent sign-in stages in a diagnostic export from the paired Bridge.
+
 ## [2.1.4] - Unreleased
 
 - Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.

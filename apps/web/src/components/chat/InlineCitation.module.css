@@ -1,0 +1,38 @@
+.chip.chip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 7px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--bg-fill-tertiary);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: .82em;
+  line-height: 1.5;
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.chip:hover, .chip:focus-visible, .chip[data-popup-open] {
+  background: var(--bg-fill-secondary);
+  color: var(--text-strong);
+}
+.positioner { z-index: 2147483646; }
+.card {
+  display: grid;
+  gap: 6px;
+  width: max-content;
+  max-width: min(270px, var(--available-width), calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated, var(--bg-panel));
+  color: var(--text);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.card a { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); }
+.card a:hover { color: var(--text-strong); }

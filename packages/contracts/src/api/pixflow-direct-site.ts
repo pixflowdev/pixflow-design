@@ -3,6 +3,8 @@ export interface PixflowSiteIntegrations { bricks?: boolean }
 /** Source bound by WordPress when the Workspace opens a tool session. */
 export interface PixflowWorkspaceSource { projectId: string; conversationId: string; requestId: string }
 export interface PixflowDirectSiteAuthorization {
+  /** WordPress's public site title at the time this Workspace session was checked. */
+  siteTitle?: string;
   /** Current server-owned contributions, never taken from request JSON. */
   features?: { composio?: boolean; audio?: boolean; 'external-mcp'?: boolean; 'image-generation'?: boolean };
   editorTarget?: PixflowEditorTarget | null;
@@ -32,6 +34,7 @@ export interface PixflowRunDesignGuidance {
   extension?: { instructions: string; commands: Record<string, string> };
 }
 export interface PixflowDirectSiteSession {
+  siteTitle?: string;
   designGuidance?: PixflowRunDesignGuidance | null;
   editorTarget?: PixflowEditorTarget;
   workspaceSource?: PixflowWorkspaceSource;

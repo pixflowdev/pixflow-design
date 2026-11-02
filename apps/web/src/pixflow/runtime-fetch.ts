@@ -1,4 +1,5 @@
 import { toPixflowRuntimeUrl } from './bridge-url';
+import { observeLicenceRequest, responseFormat } from './support-timeline';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
 
 type PixflowDesignWordPressConfig = {
@@ -103,5 +104,5 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
   const url = useQueryRoute
     ? queryRouteUrl(queryTransportBaseUrl, cleanPath)
     : `${restBaseUrl}${cleanPath}`;
-  return fetch(url, withWordPressNonce(init, url));
+  return observeLicenceRequest(cleanPath, () => fetch(url, withWordPressNonce(init, url)), responseFormat);
 }

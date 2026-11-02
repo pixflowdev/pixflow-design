@@ -104,6 +104,7 @@ function print(payload: unknown, json: boolean): void {
 }
 
 function help(): void {
+  process.stdout.write('Connected Workspace runs: context --json returns the verified site metadata. site-tool --tool help --json lists the run-scoped builder helper and its operations. Other standalone WP Admin commands require a separately paired site.\n\n');
   process.stdout.write('Installation recovery:\n  od wp-admin installation-recovery --action prepare --json\n  od wp-admin installation-recovery --action complete --prompt-file <path|-> --json\n  Complete accepts JSON {installation_id} after the owner approves the public request in their Pixflow account.\n\n');
   process.stdout.write('Visual inspection:\n  od wp-admin capture --daemon-url http://127.0.0.1:7456 --arguments-file capture.json --output-dir . --json\n  capture.json: {"url":"https://example.com","viewports":[{"id":"mobile","width":390,"height":844}],"captureMode":"live-reference"}\n  Returns local PNG paths; no WordPress credentials are sent to the capture service. Each viewport may include actions:[{type:"click",selector:".menu-toggle"}] or type:"hover" to capture a chosen interaction state.\n\n');
   process.stdout.write('Live Bricks tools:\n  od wp-admin site-tool --tool bricks.canvases --mode ask --json\n  od wp-admin site-tool --tool bricks.context --canvas-id <tab-id> --mode ask --json\n  od wp-admin site-tool --tool bricks.mutate --canvas-id <tab-id> --arguments-file edits.json --json\n  od wp-admin site-tool --tool bricks.run --canvas-id <tab-id> --arguments-file javascript.json --json\n  Also available: bricks.read, bricks.select, bricks.refresh, bricks.undo, bricks.redo, bricks.save.\n\n');
@@ -125,6 +126,22 @@ export async function runWpAdminCli(args: string[]): Promise<{ exitCode: number 
       const result = await captureAgentPage(`${daemon}/api/pixflow/visual-capture`, await readJsonInput(flags), stringFlag(flags, 'output-dir', process.cwd()));
       print(result, json);
       return { exitCode: result.ok ? 0 : 1 };
+    }
+    // Only discovery has a Workspace equivalent. Never reuse a builder
+    // session as a pairing token or borrow a daemon-wide site credential.
+    const discovery = process.env.PIXFLOW_WORKSPACE_DISCOVERY;
+    if (discovery && flags['site-url'] === undefined && flags.token === undefined) {
+      const context = JSON.parse(discovery);
+      const keys = Object.keys(flags);
+      if (context.scope !== 'workspace' || typeof context.helper !== 'string') throw new Error('Invalid Workspace discovery context.');
+      if (command === 'context' && keys.every(key => key === 'json')) {
+        print({ ok: true, scope: 'workspace', siteTitle: context.siteTitle, siteOrigin: context.siteOrigin }, json);
+      } else if (command === 'site-tool' && stringFlag(flags, 'tool', 'help') === 'help' && keys.every(key => ['tool','json'].includes(key))) {
+        print({ ok: true, scope: 'workspace', helper: context.helper, tools: context.tools }, json);
+      } else {
+        throw new Error('This Workspace run supports site context and tool discovery. Use the listed builder helper for allowed operations or explicitly pair a standalone WP Admin site.');
+      }
+      return { exitCode: 0 };
     }
     const site = requireSite(flags);
     const token = requireToken(flags);

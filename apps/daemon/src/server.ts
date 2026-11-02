@@ -425,6 +425,7 @@ import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKno
 import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
 import { registerClaudeUsageRoute } from './routes/claude-usage.js';
 import { registerCodexUsageRoute } from './routes/codex-usage.js';
+import { registerAgentTextRoute } from './routes/agent-text.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
@@ -7637,13 +7638,16 @@ export async function startServer({
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
   const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
-  const stopClaudeSignIn = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
-    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
+  const claudeLogin = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'), () => pixflowBridgeSiteInfo()?.key ?? '', RUNTIME_DATA_DIR,
+    () => pixflowBridgeSiteInfo()?.origin ?? '');
   registerClaudeUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
   registerCodexUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
+  registerAgentTextRoute(app, requireLocalDaemonRequest, RUNTIME_DATA_DIR,
+    agent => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, agent));
   app.post('/api/pixflow/bricks-agent/run-stream', async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const requestedMode = String(body.mode || '').trim().toLowerCase();
@@ -10496,6 +10500,7 @@ export async function startServer({
         runsDir: path.join(RUNTIME_DATA_DIR, 'runs'),
         dataDir: RUNTIME_DATA_DIR,
         profile: 'pixflow',
+        bridgeSupport: claudeLogin.support,
       })(req, res, next);
     },
   );
@@ -16450,12 +16455,14 @@ export async function startServer({
       ? String(chatBody.projectMetadata.toolPolicy || '')
       : '';
     let workspaceBuilderPrompt = '';
+    let workspaceDiscovery = '';
     if (run.workspaceBuilderSession) {
       const staged = await stageWorkspaceBuilderHelper(RUNTIME_DATA_DIR, run.workspaceBuilderSession);
       if (run.cancelRequested || ['succeeded', 'failed', 'canceled'].includes(run.status)) { await staged.cleanup(); throw new Error('Workspace run was cancelled before handoff tools were ready.'); }
       const previousFinalize = run.onFinalize;
       run.onFinalize = () => { previousFinalize?.(); void staged.cleanup().catch(() => undefined); };
       workspaceBuilderPrompt = staged.prompt;
+      workspaceDiscovery = staged.discovery;
     }
     const runtimeToolPrompt = [createAgentRuntimeToolPrompt(daemonUrl, toolTokenGrant, runtimeToolPolicy || null), composioSkillPrompt(), workspaceBuilderPrompt].filter(Boolean).join('\n\n');
     const commentHint = renderCommentAttachmentHint(safeCommentAttachments);
@@ -17830,6 +17837,8 @@ export async function startServer({
       undefined,
       { resolvedBin: agentLaunch.selectedPath },
     );
+    if (workspaceDiscovery) agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY = workspaceDiscovery;
+    else delete agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY;
     if (def.id === 'amr') {
       const loginStatus = readVelaLoginStatus(agentSpawnEnv, configuredAgentSpawnEnv);
       if (!loginStatus.loggedIn) {
@@ -20783,7 +20792,7 @@ export async function startServer({
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
       stopDirectHistoryRetention();
-      stopClaudeSignIn();
+      claudeLogin.stop();
       composioConnectorProvider.stopCatalogRefreshLoop();
       orbitService.stop();
       routineService?.stop();

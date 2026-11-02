@@ -1,7 +1,8 @@
 .layout { --chat-sidebar-width:244px; --navigation-surface:color-mix(in srgb,var(--bg) 97%,var(--text) 3%); --navigation-hover:color-mix(in srgb,var(--text) 7%,transparent); display:grid; grid-template-columns:52px var(--chat-sidebar-width) minmax(0,1fr); grid-template-rows:40px minmax(0,1fr); height:100%; min-height:0; overflow:hidden; transition:grid-template-columns 200ms cubic-bezier(.23,1,.32,1); }
 .layout[data-collapsed=true] { grid-template-columns:52px 0 minmax(0,1fr); }
+.layout[data-chat-panel=false] { grid-template-columns:52px minmax(0,1fr); }
 .toolbar { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; padding:4px 8px; background:var(--navigation-surface); border-bottom:1px solid var(--border-soft); }
-.toolbarActions { display:flex; align-items:center; gap:8px; }
+.toolbarActions { display:flex; align-items:center; gap:8px; margin-inline-start:auto; }
 .layout .toolbar button { box-shadow:none; border:0; background:transparent; color:var(--text-muted); }
 .layout .toolbar button:hover,.layout .toolbar button:focus-visible { background:var(--navigation-hover); color:var(--text); }
 .toolbarActions > button { width:30px; height:30px; border-radius:8px; }
@@ -51,8 +52,9 @@
 .disclosure[data-open=true] { grid-template-rows:1fr; opacity:1; transition-duration:200ms; }
 .disclosureInner { overflow:hidden; min-height:0; }
 .empty { padding:4px 8px 6px; margin:0; font-size:15px; line-height:1.5; color:var(--text-muted); }
-.destination { display:grid; place-items:center; border-radius:9px; padding:8px; width:36px; height:36px; flex:none; }
-.destination svg { flex:none; }
+/* The rail owns destination geometry, including optional Pro contributions. */
+.destination, .rail > button { display:grid; place-items:center; border-radius:9px; padding:8px; width:36px; height:36px; flex:none; }
+.destination svg, .rail > button svg { flex:none; }
 .rail :global(.entry-help-menu__trigger) { width:36px; height:36px; min-width:36px; padding:8px; border-radius:9px; }
 .settings { margin-top:auto; }
 .layout .rail button[aria-current=page] { background:var(--navigation-hover); color:var(--text); }
@@ -84,7 +86,7 @@
 @media (hover:none) { .layout .sidebar .actions,.sectionAdd,.sectionToggle .chevron { opacity:1; } .folderIcon > svg:first-child { opacity:0; } .folderIcon .chevron { opacity:1; } }
 @media (max-width:900px) { .layout { --chat-sidebar-width:218px; } }
 @media (max-width:640px) { .layout { --chat-sidebar-width:min(218px,40vw); } }
-@media (max-height:500px) { .rail { gap:2px; padding-block:6px; } .destination,.rail :global(.entry-help-menu__trigger) { height:30px; } }
+@media (max-height:500px) { .rail { gap:2px; padding-block:6px; } .destination,.rail > button,.rail :global(.entry-help-menu__trigger) { height:30px; } }
 @media (prefers-reduced-motion:reduce) { .layout,.disclosure,.chevron { transition:none; } .menu,.dialog[open] { animation:none; } }
 
 /* The new-chat surface fills the same viewport as an existing conversation. */

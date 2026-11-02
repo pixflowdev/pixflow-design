@@ -28,6 +28,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect completed-workspace-run
       - run: pnpm --filter @open-design/web test bridge-connection-route AvatarMenu WorkspaceBridgeStatus
+      - run: pnpm --filter @open-design/web test agent-trace live-prose-reveal inline-citation floating-chat-scroll activity-disclosure assistant-message-tool-status assistant-message-thinking-volume ChatPane.streaming run-reattach
+      - run: pnpm --filter @open-design/daemon test claude-stream-tools
+      - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
+      - run: pnpm --filter @open-design/web test EntryShell.onboarding
       - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts
       - run: pnpm i18n:check
       - run: pnpm wordpress:web

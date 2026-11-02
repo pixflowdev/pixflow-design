@@ -74,6 +74,7 @@ let cachedHealth: {
 } | null = null;
 
 const HEALTH_CACHE_MS = 30_000;
+const SITE_HEALTH_TIMEOUT_MS = 5_500;
 const HEALTH_FAILURE_CACHE_MS = 2_000;
 const AGENTS_CACHE_MS = 60_000;
 const PERSISTED_AGENTS_CACHE_TTL_MS = 24 * 60 * 60_000;
@@ -384,7 +385,7 @@ export async function ensurePixflowOptionalBridgeSiteContext(options?: {
     const isReady = (value: SiteReadiness) => String(value?.site?.key || '') === siteKey
       && value.ok !== false && (!value.state || value.state === 'running')
       && !['sleeping', 'waking', 'releasing', 'unavailable'].includes(value.runtimeState || '');
-    const health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: 3_500 });
+    const health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: Math.min(timeoutMs, SITE_HEALTH_TIMEOUT_MS) });
     const publishRuntime = (state: string) => window.dispatchEvent(new CustomEvent('pixflow-design:bridge-runtime-state', { detail: { state } }));
     publishRuntime(health.runtimeState || 'ready');
     if (isReady(health)) { refreshFailedProvidersAfterReconnect(); return; }
@@ -409,7 +410,10 @@ export async function ensurePixflowOptionalBridgeSiteContext(options?: {
     while (Date.now() - startedAt < timeoutMs) {
       await new Promise((resolve) => window.setTimeout(resolve, 300));
       try {
-        const next = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: 2_500 });
+        const remainingMs = Math.max(1, timeoutMs - (Date.now() - startedAt));
+        const next = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, {
+          timeoutMs: Math.min(SITE_HEALTH_TIMEOUT_MS, remainingMs),
+        });
         if (isReady(next)) {
           publishRuntime('ready');
           cachedHealth = null;
@@ -480,7 +484,8 @@ export async function pixflowOptionalBridgeJson<T>(
     const detail = await response.json().catch(() => null) as {message?:unknown;error?:unknown} | null;
     const nested = detail?.error && typeof detail.error === 'object' ? (detail.error as {message?:unknown}).message : detail?.error;
     const message = typeof detail?.message === 'string' ? detail.message : typeof nested === 'string' ? nested : '';
-    throw new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`);
+    // Callers can distinguish an unsupported endpoint from transport or authorization failures.
+    throw Object.assign(new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`), { status: response.status });
   }
   return response.json() as Promise<T>;
 }
@@ -507,10 +512,13 @@ export async function probePixflowOptionalBridge(options?: {
     const response = await requestWithTimeout(
       pixflowOptionalBridgeApiUrl('health'),
       {},
-      options?.timeoutMs ?? 2_500,
+      options?.timeoutMs ?? SITE_HEALTH_TIMEOUT_MS,
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const json = (await response.json()) as { version?: string; status?: string; runtimeState?: string };
+    const json = (await response.json()) as { ok?: boolean; code?: string; error?: string; version?: string; runtimeState?: string };
+    if (json.ok === false || json.code === 'PIXFLOW_SITE_NOT_CONNECTED') {
+      throw new Error(json.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
+    }
     if (json.runtimeState) window.dispatchEvent(new CustomEvent('pixflow-design:bridge-runtime-state', { detail: { state: json.runtimeState } }));
     const value: PixflowOptionalBridgeHealth = {
       available: true,
@@ -564,10 +572,7 @@ export async function fetchPixflowOptionalBridgeAgents(options?: {
     const finishDiscovery = beginProviderDiscovery(Boolean(cachedAgents?.value.length));
     try {
     const force = options?.force === true;
-    const health = await probePixflowOptionalBridge({
-      force,
-      timeoutMs: force ? 2_500 : 1_800,
-    });
+    const health = await probePixflowOptionalBridge({ force });
     if (['sleeping', 'releasing', 'waking'].includes(health.runtimeState || '')) {
       if (force) await ensurePixflowOptionalBridgeSiteContext();
       else { finishDiscovery('sleeping'); return cachedAgents?.value ?? []; }
@@ -663,10 +668,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
   const finishDiscovery = beginProviderDiscovery(Boolean(cachedAgents?.value.length));
   try {
   const force = args.force === true;
-  const health = await probePixflowOptionalBridge({
-    force,
-    timeoutMs: force ? 2_500 : 1_800,
-  });
+  const health = await probePixflowOptionalBridge({ force });
   if (['sleeping', 'releasing', 'waking'].includes(health.runtimeState || '')) {
     if (force) await ensurePixflowOptionalBridgeSiteContext();
     else {

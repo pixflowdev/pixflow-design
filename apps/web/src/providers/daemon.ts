@@ -10,6 +10,7 @@
  *                 non-zero (tail appended to the error message).
  */
 import type { AgentEvent, ChatCommentAttachment, ChatMessage } from '../types';
+import { observeSupport, responseFormat } from '../pixflow/support-timeline';
 import { expandSteeringMessages } from '../pixflow/steering-messages';
 import type { AmrEntryAttribution } from '../analytics/amr-attribution';
 import type {
@@ -397,7 +398,11 @@ export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel' 
   const response = await daemonFetch(`/api/agents/claude/sign-in${['cancel','open-browser','code'].includes(action) ? `/${action}` : ''}`, {
     method: action === 'status' ? 'GET' : 'POST', signal: requestSignal, cache: 'no-store',
     ...(action === 'status' ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input || {}) }),
+  }).catch(error => {
+    if (!signal?.aborted) observeSupport(`claude-${action}`, 'network-error');
+    throw error;
   });
+  observeSupport(`claude-${action}`, responseFormat(response), response.status);
   if (!response.ok) throw Object.assign(new Error('Claude sign-in could not continue. Check its current status and try again.'), {status:response.status});
   return response.json();
 }

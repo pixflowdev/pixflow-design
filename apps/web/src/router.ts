@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from 'react';
 import { decodeWorkspaceRouteHash, encodeWorkspaceRouteHash } from './pixflow/workspace-route-hash';
 import { hasPixflowWordPressContext } from './pixflow/wordpress-context';
+import { requestWorkspaceNavigation } from './pixflow/workspace-navigation';
 
 // Entry-shell sub-views. The home/project landing renders one of three
 // columns and each sub-view now owns a top-level path so the browser
@@ -17,6 +18,7 @@ export type EntryHomeView =
   | 'projects'
   | 'media'
   | 'sitemap'
+  | 'translations'
   | 'plugins'
   | 'design-systems';
 
@@ -95,6 +97,7 @@ export function parseRoute(pathname: string): Route {
   if (parts[0] === 'sitemap') {
     return { kind: 'home', view: 'sitemap' };
   }
+  if (parts[0] === 'translations') return { kind: 'home', view: 'translations' };
   if (parts[0] === 'plugins' && !parts[1]) {
     return { kind: 'home', view: 'plugins' };
   }
@@ -107,6 +110,7 @@ export function buildPath(route: Route): string {
     if (route.view === 'projects') return '/projects';
     if (route.view === 'media') return '/media';
     if (route.view === 'sitemap') return '/sitemap';
+    if (route.view === 'translations') return '/translations';
     if (route.view === 'plugins') return '/plugins';
     if (route.view === 'design-systems') return '/design-systems';
     return '/';
@@ -132,6 +136,50 @@ export function buildPath(route: Route): string {
 
 const EMBEDDED_ROUTE_CHANGE_EVENT = 'pixflow-design:embedded-route-change';
 let embeddedRoutePath: string | null = null;
+const ROUTE_HISTORY_INDEX = 'pixflowRouteIndex';
+let acceptedHistory: { href: string; path: string; index: number } | null = null;
+let restoringHistory = false;
+let afterHistoryRestore: (() => void) | null = null;
+const routeListeners = new Set<() => void>();
+
+function rememberHistory(): void {
+  const state = window.history.state;
+  const index = Number.isInteger(state?.[ROUTE_HISTORY_INDEX]) ? state[ROUTE_HISTORY_INDEX] as number : 0;
+  if (state?.[ROUTE_HISTORY_INDEX] !== index) window.history.replaceState({ ...state, [ROUTE_HISTORY_INDEX]: index }, '', window.location.href);
+  acceptedHistory = { href: window.location.href, path: readActiveRoutePath(), index };
+}
+
+function notifyRouteListeners(): void { for (const listener of routeListeners) listener(); }
+
+/** Restore a declined Back/Forward transition before allowing the editor to unmount. */
+function onBrowserRouteChange(): void {
+  const previous = acceptedHistory;
+  if (restoringHistory) {
+    if (window.location.href !== previous?.href) return;
+    restoringHistory = false;
+    const resume = afterHistoryRestore; afterHistoryRestore = null;
+    resume?.();
+    return;
+  }
+  if (!previous || previous.path === readActiveRoutePath()) { rememberHistory(); notifyRouteListeners(); return; }
+  const target = { href: window.location.href, state: window.history.state };
+  const nextIndex = target.state?.[ROUTE_HISTORY_INDEX];
+  const delta = Number.isInteger(nextIndex) ? nextIndex - previous.index : 0;
+  let deferred = false;
+  const accepted = requestWorkspaceNavigation(() => {
+    if (!deferred) { rememberHistory(); notifyRouteListeners(); return; }
+    const resume = () => {
+      if (delta) window.history.go(delta);
+      else { window.history.replaceState(target.state, '', target.href); rememberHistory(); notifyRouteListeners(); }
+    };
+    // The saved draft no longer blocks the retried traversal.
+    if (restoringHistory) afterHistoryRestore = resume; else resume();
+  });
+  if (accepted) return;
+  deferred = true;
+  if (delta) { restoringHistory = true; window.history.go(-delta); }
+  else window.history.replaceState({ ...target.state, [ROUTE_HISTORY_INDEX]: previous.index }, '', previous.href);
+}
 
 function isWordPressRouteRuntime(): boolean {
   try {
@@ -188,6 +236,11 @@ export function navigate(route: Route, opts: { replace?: boolean } = {}): void {
   const currentPath = readActiveRoutePath();
   if (targetPath === currentPath) return;
 
+  requestWorkspaceNavigation(() => commitNavigation(targetPath, opts));
+}
+
+function commitNavigation(targetPath: string, opts: { replace?: boolean }): void {
+
   // Bricks owns the top-level builder URL and reacts to hash/history changes
   // by remounting the entire builder. Keep Pixflow workspace navigation in
   // memory in this embedded runtime so switching tabs never reloads the canvas.
@@ -200,11 +253,14 @@ export function navigate(route: Route, opts: { replace?: boolean } = {}): void {
   }
 
   const target = buildBrowserTarget(targetPath);
+  if (!acceptedHistory || acceptedHistory.href !== window.location.href) rememberHistory();
+  const nextState = { ...window.history.state, [ROUTE_HISTORY_INDEX]: (acceptedHistory?.index ?? 0) + (opts.replace ? 0 : 1) };
   if (opts.replace) {
-    window.history.replaceState(null, '', target);
+    window.history.replaceState(nextState, '', target);
   } else {
-    window.history.pushState(null, '', target);
+    window.history.pushState(nextState, '', target);
   }
+  rememberHistory();
   queueMicrotask(() => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   });
@@ -214,7 +270,7 @@ let cachedPathname: string | null = null;
 let cachedRoute: Route | null = null;
 
 function getRouteSnapshot(): Route {
-  const pathname = readActiveRoutePath();
+  const pathname = restoringHistory && acceptedHistory ? acceptedHistory.path : readActiveRoutePath();
   if (cachedPathname !== pathname || cachedRoute === null) {
     cachedPathname = pathname;
     cachedRoute = parseRoute(pathname);
@@ -223,13 +279,21 @@ function getRouteSnapshot(): Route {
 }
 
 function subscribeToRouteChanges(onStoreChange: () => void): () => void {
-  window.addEventListener('popstate', onStoreChange);
-  window.addEventListener('hashchange', onStoreChange);
-  window.addEventListener(EMBEDDED_ROUTE_CHANGE_EVENT, onStoreChange);
+  if (!routeListeners.size) {
+    rememberHistory();
+    window.addEventListener('popstate', onBrowserRouteChange);
+    window.addEventListener('hashchange', onBrowserRouteChange);
+    window.addEventListener(EMBEDDED_ROUTE_CHANGE_EVENT, notifyRouteListeners);
+  }
+  routeListeners.add(onStoreChange);
   return () => {
-    window.removeEventListener('popstate', onStoreChange);
-    window.removeEventListener('hashchange', onStoreChange);
-    window.removeEventListener(EMBEDDED_ROUTE_CHANGE_EVENT, onStoreChange);
+    routeListeners.delete(onStoreChange);
+    if (!routeListeners.size) {
+      window.removeEventListener('popstate', onBrowserRouteChange);
+      window.removeEventListener('hashchange', onBrowserRouteChange);
+      window.removeEventListener(EMBEDDED_ROUTE_CHANGE_EVENT, notifyRouteListeners);
+      restoringHistory = false; afterHistoryRestore = null;
+    }
   };
 }
 

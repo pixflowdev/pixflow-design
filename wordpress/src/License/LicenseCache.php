@@ -159,7 +159,7 @@ final class LicenseCache
     {
         $cache = get_option(self::OPTION_KEY, []);
         if (is_array($cache) && $cache !== []) {
-            return $cache;
+            return $this->belongs_to_current_site($cache) ? $cache : [];
         }
 
         // Pixflow-owned: migrate the old Pixflow AI cache lazily so existing
@@ -171,7 +171,7 @@ final class LicenseCache
         }
 
         $legacy = get_option(self::LEGACY_OPTION_KEY, []);
-        if (is_array($legacy) && $legacy !== []) {
+        if (is_array($legacy) && $legacy !== [] && $this->belongs_to_current_site($legacy)) {
             update_option(self::OPTION_KEY, $legacy, false);
             delete_option(self::LEGACY_OPTION_KEY);
             update_option(self::LEGACY_MIGRATION_OPTION_KEY, gmdate('c'), false);
@@ -179,6 +179,12 @@ final class LicenseCache
         }
 
         return [];
+    }
+
+    private function belongs_to_current_site(array $cache): bool
+    {
+        $identity = new SiteIdentity();
+        return hash_equals($identity->fingerprint($identity->current_payload()), (string) ($cache['site_fingerprint'] ?? ''));
     }
 
     private function is_expired(array $cache): bool

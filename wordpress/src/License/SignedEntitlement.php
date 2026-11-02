@@ -9,14 +9,16 @@ if (!defined('ABSPATH')) exit;
 /** Verifies central grants; never derives permission from a cached validity flag. */
 final class SignedEntitlement
 {
-    public function verify(string $token, array $keys, array $identity, string $scope, int $now, bool $network_unavailable = false, bool $denied = false, int $minimum_revision = 0): ?array
+    public function verify(string $token, array $keys, array $identity, string $scope, int $now, bool $network_unavailable = false, bool $denied = false, int $minimum_revision = 0, ?string &$failure = null): ?array
     {
         try {
+            $failure = 'token_format';
             if ($denied || strlen($token) > 16384) return null;
             $parts = explode('.', $token);
             if (count($parts) !== 3) return null;
             [$header_part, $payload_part, $signature_part] = $parts;
             $header = json_decode(self::decode($header_part), true, 32, JSON_THROW_ON_ERROR);
+            $failure = 'signing_key';
             if (!is_array($header) || ($header['alg'] ?? '') !== 'RS256'
                 || ($header['typ'] ?? '') !== 'pixflow-entitlement+jwt'
                 || !is_string($header['kid'] ?? null) || array_key_exists('crit', $header)
@@ -25,17 +27,22 @@ final class SignedEntitlement
             if ($key === false) return null;
             $details = openssl_pkey_get_details($key);
             if (!is_array($details) || $details['type'] !== OPENSSL_KEYTYPE_RSA || $details['bits'] < 2048) return null;
+            $failure = 'signature';
             if (openssl_verify($header_part . '.' . $payload_part, self::decode($signature_part), $key, OPENSSL_ALGO_SHA256) !== 1) return null;
+            $failure = 'claims_format';
             $claims = json_decode(self::decode($payload_part), true, 32, JSON_THROW_ON_ERROR);
             if (!is_array($claims) || ($claims['ver'] ?? null) !== 2) return null;
             foreach (['iss', 'aud', 'installation_id', 'site_fingerprint', 'license_id'] as $field) {
+                $failure = 'claim_' . $field;
                 if (!is_string($identity[$field] ?? null) || $identity[$field] === '' || ($claims[$field] ?? null) !== $identity[$field]) return null;
             }
+            $failure = 'subject_key_or_scope';
             if (($claims['sub'] ?? null) !== $identity['license_id']
                 || empty($identity['key_thumbprint']) || ($claims['cnf']['jkt'] ?? null) !== $identity['key_thumbprint']
                 || !is_string($claims['jti'] ?? null) || $claims['jti'] === ''
                 || !is_array($claims['scopes'] ?? null) || !in_array($scope, $claims['scopes'], true)) return null;
             foreach ($claims['scopes'] as $value) if (!is_string($value)) return null;
+            $failure = 'grant_window_or_revision';
             foreach (['iat', 'nbf', 'exp', 'refresh_after', 'offline_until', 'access_until', 'revocation_version'] as $field) {
                 if (!is_int($claims[$field] ?? null) || $claims[$field] < 0) return null;
             }
@@ -46,6 +53,7 @@ final class SignedEntitlement
                 || $claims['offline_until'] < $claims['exp'] || $claims['offline_until'] > $claims['iat'] + 86400
                 || $claims['offline_until'] > $claims['access_until'] || $now >= $claims['access_until']) return null;
             if ($now >= $claims['exp'] && (!$network_unavailable || $now >= $claims['offline_until'])) return null;
+            $failure = null;
             return $claims;
         } catch (\Throwable) {
             return null;

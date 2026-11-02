@@ -13,12 +13,13 @@ import { PixflowLicensePanel } from './components/PixflowLicensePanel';
 import { SettingsDialog, switchApiProtocolConfig, updateCurrentApiProtocolConfig, type SettingsHighlight, type SettingsSection, } from './components/SettingsDialog';
 import { TooltipLayer } from './components/TooltipLayer';
 import { useModalWindowDragGuard } from './hooks/useModalWindowDragGuard';
+import { useLocalAgentHydration } from './hooks/useLocalAgentHydration';
 import { useI18n, useT as usePixflowUiTranslation } from './i18n';
 import { PixflowBridgeUpdateProvider, usePixflowBridgeUpdateState, } from './pixflow/bridge-update-gate';
-import { usePixflowFeatureRuntime } from './pixflow/feature-runtime';
+import { translationsShortcutLabel, usePixflowFeatureRuntime } from './pixflow/feature-runtime';
 import { isPixflowWordPressEmbed, requestWordPressRest, type PixflowLicenseStatus, } from './pixflow/license';
 import { applyPixflowOnboardingProfile, fetchPixflowOnboardingProfile, resetPixflowOnboardingProfile, syncPixflowOnboardingProfile, } from './pixflow/onboarding-profile';
-import { createPixflowSharedAppConfigNotification, subscribePixflowSharedAppConfigNotifications, } from './pixflow/shared-app-config-notification';
+import { createPixflowSharedAppConfigNotification, publishPixflowSharedAppConfigNotification, subscribePixflowSharedAppConfigNotifications, } from './pixflow/shared-app-config-notification';
 import { isTrustedPixflowParentMessage } from './pixflow/trusted-parent-message';
 import { usePixflowLicenseRefresh } from './pixflow/use-license-refresh';
 import { getPixflowBuilderPostId, getPixflowWordPressConfig, hasPixflowWordPressContext } from './pixflow/wordpress-context';
@@ -236,13 +237,12 @@ async function syncPixflowWordPressAppConfig(config: AppConfig): Promise<void> {
     throw new Error('Could not save WordPress app settings.');
   }
 
-  // The WordPress-hosted Bricks Agent is mounted beside this app, not below a
-  // daemon/Bridge iframe. Keep its in-memory execution settings current after
-  // the authoritative WordPress write succeeds. This same-window event may
-  // carry the browser-only API key; it is never posted to WordPress or another
-  // browsing context.
+  // Converge mounted workspaces and builder panels after the authoritative
+  // WordPress write. Only the sanitized preference patch crosses contexts;
+  // credentials remain in their existing store.
   if (typeof window !== 'undefined') {
     const notification = createPixflowSharedAppConfigNotification(config, 'wp_admin', 'workspace-save');
+    if (notification) publishPixflowSharedAppConfigNotification(notification);
     window.dispatchEvent(new CustomEvent('pixflow-design:app-config-changed', {
       detail: notification?.patch ?? {},
     }));
@@ -430,8 +430,6 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
 
   const agentStreamRequestSeqRef = useRef(0);
 
-  const pixflowWpAgentHydrationAttemptedRef = useRef(false);
-
   const cliConfigPersistTimerRef = useRef<number | null>(null);
 
   const cliConfigPersistInFlightRef = useRef(false);
@@ -474,7 +472,18 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
   // every tab waiting on the slowest endpoint (typically `/api/agents`,
   // which probes CLI versions and can take seconds on cold start). The entry
   // view picks the right flag for whichever tab the user is currently on.
-  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentsBootstrapLoading, setAgentsLoading] = useState(true);
+  const agentsHydrating = useLocalAgentHydration({
+    enabled: hasPixflowWordPressContext() && config.mode === 'daemon',
+    hasAgents: agents.length > 0,
+    bootstrapLoading: agentsBootstrapLoading,
+    load: (force) => fetchAgents({ useOptionalBridge: true, force }),
+    onAgents: (list) => {
+      setDaemonLive(true);
+      setAgents(mergeAmrModelsIntoAgents(orderAgentsByRegistry(list), amrModelsRef.current));
+    },
+  });
+  const agentsLoading = agentsBootstrapLoading || agentsHydrating;
 
   const [skillsLoading, setSkillsLoading] = useState(true);
 
@@ -877,43 +886,6 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
     config.agentId,
     config.onboardingCompleted,
   ]);
-
-
-  // Pixflow-owned: WP-first can receive app-config changes while the first
-  // Local CLI probe is still resolving. If that leaves the shared workspace
-  // agent state empty, hydrate it once from the optional bridge so settings,
-  // the home composer, and the floating panel all read the same canonical
-  // `agents` array.
-  useEffect(() => {
-    if (!hasPixflowWordPressContext()) return;
-    if (config.mode !== 'daemon') return;
-    if (agents.length > 0) return;
-    if (agentsLoading) return;
-    if (pixflowWpAgentHydrationAttemptedRef.current) return;
-    pixflowWpAgentHydrationAttemptedRef.current = true;
-    let cancelled = false;
-    setAgentsLoading(true);
-    void (async () => {
-      const first = await fetchAgents({ useOptionalBridge: true });
-      if (first.length > 0) return first;
-      // Pixflow-owned: the optional bridge can be briefly busy during Bricks
-      // startup. Do one forced retry so a transient health timeout does not
-      // leave Local CLI surfaces stuck on "no CLI detected" until reload.
-      return fetchAgents({ useOptionalBridge: true, force: true });
-    })()
-      .then((list) => {
-        if (cancelled || list.length === 0) return;
-        const ordered = orderAgentsByRegistry(list);
-        setDaemonLive(true);
-        setAgents(mergeAmrModelsIntoAgents(ordered, amrModelsRef.current));
-      })
-      .finally(() => {
-        if (!cancelled) setAgentsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [agents.length, agentsLoading, config.mode]);
 
 
   // Auto-pick the default design system the same way — only after daemon
@@ -1429,7 +1401,8 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
     };
     window.addEventListener('message', handleParentConfigChanged);
     const unsubscribeSharedConfig = subscribePixflowSharedAppConfigNotifications((notification) => {
-      applyConfigPayload(notification.patch as unknown as Partial<AppConfig>);
+      // Host Bridge status and native builder execution also listen here.
+      window.dispatchEvent(new CustomEvent(APP_CONFIG_CHANGED_EVENT, { detail: notification.patch }));
     });
     return () => {
       window.removeEventListener(APP_CONFIG_CHANGED_EVENT, handleAppConfigChanged);
@@ -1500,11 +1473,11 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
           setSettingsInitialSection('designSystems');
           setPendingWorkspaceTool(null);
           setSettingsOpen(true);
-        } else if (data.tool === 'sitemap' || data.tool === 'design-systems') {
+        } else if (data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())) {
           setToolbarWorkspaceTool(null);
           setPendingWorkspaceTool(null);
           setSettingsOpen(false);
-          navigate({ kind: 'home', view: data.tool === 'sitemap' ? 'sitemap' : 'design-systems' });
+          navigate({ kind: 'home', view: data.tool });
         }
       }
       if (data.type === 'pixflow-design:close-workspace-tool') {

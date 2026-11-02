@@ -1,0 +1,15 @@
+.deviceOption {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.deviceOption input[type="checkbox"] {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin: 0;
+  accent-color: var(--accent);
+}

@@ -255,6 +255,7 @@ export const de: Dict = {
   voiceDisconnected: "Die Sprachverbindung wurde beendet. Starte einen neuen Anruf, um dich erneut zu verbinden.",
   voiceConnectTimeout: "Die Codex-Sprachverbindung konnte nicht hergestellt werden. Prüfe deinen Bridge und versuche es erneut.",
 
+  'activity.steps': 'Schritte: {count}',
   'activity.live.browser': "Browser verwenden",
   'activity.live.edit': "Dateien bearbeiten",
   'activity.live.read': "Dateien lesen",

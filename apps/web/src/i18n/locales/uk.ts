@@ -255,6 +255,7 @@ export const uk: Dict = {
   voiceDisconnected: "Голосове з’єднання завершено. Для повторного підключення почніть новий дзвінок.",
   voiceConnectTimeout: "Голосовий зв’язок Codex не встановлено. Перевірте Bridge та спробуйте ще раз.",
 
+  'activity.steps': 'Кроків: {count}',
   'activity.live.browser': "Робота з браузером",
   'activity.live.edit': "Редагування файлів",
   'activity.live.read': "Читання файлів",

@@ -1530,6 +1530,7 @@ export const en: Dict = {
   voiceDisconnected: "The voice connection ended. Start a new call to reconnect.",
   voiceConnectTimeout: "Codex voice did not connect. Check your Bridge and try again.",
 
+  'activity.steps': 'Steps: {count}',
   'activity.live.browser': 'Using the browser',
   'activity.live.edit': 'Editing files',
   'activity.live.read': 'Reading files',

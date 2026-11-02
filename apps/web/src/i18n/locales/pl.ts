@@ -255,6 +255,7 @@ export const pl: Dict = {
   voiceDisconnected: "Połączenie głosowe zakończyło się. Rozpocznij nową rozmowę, aby połączyć się ponownie.",
   voiceConnectTimeout: "Nie udało się połączyć głosowo z Codex. Sprawdź Bridge i spróbuj ponownie.",
 
+  'activity.steps': 'Kroki: {count}',
   'activity.live.browser': "Korzystanie z przeglądarki",
   'activity.live.edit': "Edytowanie plików",
   'activity.live.read': "Czytanie plików",

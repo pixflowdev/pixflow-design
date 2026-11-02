@@ -255,6 +255,7 @@ export const esES: Dict = {
   voiceDisconnected: "La conexión de voz ha terminado. Inicia otra llamada para volver a conectar.",
   voiceConnectTimeout: "La voz de Codex no se ha conectado. Comprueba tu Bridge e inténtalo de nuevo.",
 
+  'activity.steps': 'Pasos: {count}',
   'activity.live.browser': "Usando el navegador",
   'activity.live.edit': "Editando archivos",
   'activity.live.read': "Leyendo archivos",

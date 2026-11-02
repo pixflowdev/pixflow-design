@@ -3177,6 +3177,7 @@ export interface Dict {
   voiceDisconnected: string;
   voiceConnectTimeout: string;
 
+  'activity.steps': string;
   'activity.live.browser': string;
   'activity.live.edit': string;
   'activity.live.read': string;

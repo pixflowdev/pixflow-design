@@ -255,6 +255,7 @@ export const ko: Dict = {
   voiceDisconnected: "음성 연결이 종료되었습니다. 다시 연결하려면 새 통화를 시작하세요.",
   voiceConnectTimeout: "Codex 음성이 연결되지 않았습니다. Bridge를 확인하고 다시 시도하세요.",
 
+  'activity.steps': '단계: {count}',
   'activity.live.browser': "브라우저 사용 중",
   'activity.live.edit': "파일 편집 중",
   'activity.live.read': "파일 읽는 중",

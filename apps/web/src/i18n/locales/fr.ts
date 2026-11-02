@@ -255,6 +255,7 @@ export const fr: Dict = {
   voiceDisconnected: "La connexion vocale a été interrompue. Démarrez un nouvel appel pour vous reconnecter.",
   voiceConnectTimeout: "La connexion vocale Codex a échoué. Vérifiez votre Bridge et réessayez.",
 
+  'activity.steps': 'Étapes : {count}',
   'activity.live.browser': "Utilisation du navigateur",
   'activity.live.edit': "Modification de fichiers",
   'activity.live.read': "Lecture de fichiers",

@@ -82,6 +82,12 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 == Changelog ==
 
 = Unreleased =
+* Unify messages, reasoning and tool activity in Workspace and floating panels with compact expandable traces, showing only activity supplied by the API or CLI and preserving saved chats and copy actions.
+* Avoid duplicate Claude tool activity and prevent an open Workspace tab from incorrectly marking a floating-panel Direct run as failed.
+* Preview linked sources in web-search replies from a domain badge in Workspace and the floating panel.
+* Expand Sources to see the distinct pages cited in a web-search reply. Long code blocks show Expand and Collapse labels in their headers.
+* Follow live agent steps in a compact timeline. New prompts anchor near the top, and readers can scroll back while the reply streams.
+* See short text updates immediately in both chats and catch up quickly when a provider sends a larger chunk.
 * Keep API and Local CLI choices synchronized across settings and panels, including agent discovery after switching without reloading.
 * Keep Workspace tool pages focused by hiding chat organization controls while preserving saved chat state.
 

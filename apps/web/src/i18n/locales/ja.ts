@@ -255,6 +255,7 @@ export const ja: Dict = {
   voiceDisconnected: "音声接続が終了しました。再接続するには新しい通話を開始してください。",
   voiceConnectTimeout: "Codex の音声に接続できませんでした。Bridge を確認して、もう一度お試しください。",
 
+  'activity.steps': 'ステップ数：{count}',
   'activity.live.browser': "ブラウザーを使用中",
   'activity.live.edit': "ファイルを編集中",
   'activity.live.read': "ファイルを読み取り中",

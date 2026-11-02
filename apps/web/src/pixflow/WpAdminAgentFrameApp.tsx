@@ -61,6 +61,7 @@ import {
 import { SharedComposerDock } from '../components/shared-chat/SharedComposerDock';
 import { SharedChatRows, type SharedChatAgentIdentity, type SharedChatInputMessage } from '../components/shared-chat/SharedChatRows';
 import { SharedMessageStream } from '../components/shared-chat/SharedMessageStream';
+import { useFloatingChatScroll } from '../components/shared-chat/use-floating-chat-scroll';
 import { QuestionRequestCard, latestQuestionRequest } from '../components/QuestionRequestCard';
 import type { QuestionFormOpenRequest } from '../components/AssistantMessage';
 import { loadConfig, saveConfig, syncComposioConfigToDaemon } from '../state/config';
@@ -3195,8 +3196,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   directSessionKeyRef.current = sessionKey;
   const reattachedDirectRunRef = useRef('');
   const lastHydratedSessionKeyRef = useRef<string | null>(null);
-  const [scrolledFromBottom, setScrolledFromBottom] = useState(false);
-  const [chatLogScrollable, setChatLogScrollable] = useState(false);
+  const chatScroll = useFloatingChatScroll(logRef, tailSpacerRef, sessionKey, durableHistory.messages, streaming);
   const contextUrl = runtime.contextUrl || '';
   const abortRef = useRef<AbortController | null>(null);
   const stopRunRef = useRef<(() => void) | null>(null);
@@ -3338,8 +3338,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   useEffect(() => {
     if (hydratedSessionKey !== sessionKey) return;
     persistMessages(sessionKey, messages, config.mode, durableHistory.acknowledged);
-    if (!logRef.current || scrolledFromBottom) return;
-    logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [hydratedSessionKey, messages, sessionKey, config.mode, durableHistory.acknowledged]);
 
   useEffect(() => onToolHistoryCleared(() => setMessages(clearCompletedToolEvents)), []);
@@ -3545,20 +3543,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     });
   }, [config.agentModels, persistExecutionConfig]);
 
-  const updateScrollState = useCallback(() => {
-    const node = logRef.current;
-    if (!node) return;
-    setChatLogScrollable(node.scrollHeight > node.clientHeight + 2);
-    setScrolledFromBottom(node.scrollHeight - node.scrollTop - node.clientHeight > 80);
-  }, []);
-
-  useEffect(() => {
-    const node = logRef.current;
-    if (!node) return;
-    node.addEventListener('scroll', updateScrollState, { passive: true });
-    updateScrollState();
-    return () => node.removeEventListener('scroll', updateScrollState);
-  }, [updateScrollState, durableHistory.messages.length]);
 
   const runWpAdminModel = useCallback(async (
     history: ChatMessage[],
@@ -4635,8 +4619,8 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       <SharedMessageStream
         logRef={logRef as MutableRefObject<HTMLDivElement | null>}
         loading={streamLoading && !continuing && !navigationReconnecting}
-        chatLogScrollable={chatLogScrollable}
-        chatLogScrolling={false}
+        chatLogScrollable={chatScroll.scrollable}
+        chatLogScrolling={chatScroll.scrolling}
         emptyState={null}
         rows={(
           <>
@@ -4664,11 +4648,8 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           </>
         )}
         tailSpacerRef={tailSpacerRef as MutableRefObject<HTMLDivElement | null>}
-        scrolledFromBottom={scrolledFromBottom}
-        onJumpToBottom={() => {
-          if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-          updateScrollState();
-        }}
+        scrolledFromBottom={chatScroll.away}
+        onJumpToBottom={chatScroll.jump}
         scrollToLatestLabel={t('chat.scrollToLatest')}
         jumpToLatestLabel={t('chat.jumpToLatest')}
         loadingLabel="Thinking..."

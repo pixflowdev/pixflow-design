@@ -255,6 +255,7 @@ export const zhCN: Dict = {
   voiceDisconnected: "语音连接已结束。开始新通话以重新连接。",
   voiceConnectTimeout: "Codex 语音未连接。请检查 Bridge 后重试。",
 
+  'activity.steps': '步骤：{count}',
   'activity.live.browser': "正在使用浏览器",
   'activity.live.edit': "正在编辑文件",
   'activity.live.read': "正在读取文件",

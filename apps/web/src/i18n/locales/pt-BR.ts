@@ -255,6 +255,7 @@ export const ptBR: Dict = {
   voiceDisconnected: "A conexão de voz foi encerrada. Inicie uma nova chamada para reconectar.",
   voiceConnectTimeout: "A voz do Codex não conectou. Verifique seu Bridge e tente novamente.",
 
+  'activity.steps': 'Etapas: {count}',
   'activity.live.browser': "Usando o navegador",
   'activity.live.edit': "Editando arquivos",
   'activity.live.read': "Lendo arquivos",

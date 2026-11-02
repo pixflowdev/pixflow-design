@@ -255,6 +255,7 @@ export const th: Dict = {
   voiceDisconnected: "การเชื่อมต่อเสียงสิ้นสุดแล้ว เริ่มการโทรใหม่เพื่อเชื่อมต่ออีกครั้ง",
   voiceConnectTimeout: "เชื่อมต่อเสียง Codex ไม่สำเร็จ ตรวจสอบ Bridge แล้วลองอีกครั้ง",
 
+  'activity.steps': 'จำนวนขั้นตอน: {count}',
   'activity.live.browser': "กำลังใช้เบราว์เซอร์",
   'activity.live.edit': "กำลังแก้ไขไฟล์",
   'activity.live.read': "กำลังอ่านไฟล์",

@@ -80,6 +80,9 @@ test('retains only an official sign-in URL privately and sends a manual code onl
   expect(input).toHaveBeenCalledWith('synthetic-code#state\n');
   expect(login.status().acceptsCode).toBe(false);
   expect(JSON.stringify(login.status())).not.toContain('synthetic-code');
+  const evidence = login.diagnostics('');
+  expect(evidence.milestones.map(e => e.stage)).toEqual(expect.arrayContaining(['authorization-address-detected','manual-code-requested','browser-reopen-dispatched','manual-code-submitted']));
+  expect(JSON.stringify(evidence)).not.toMatch(/synthetic-code|synthetic-state|https:\/\/|attemptId/);
   expect(()=>login.submitCode(first.attemptId!,'duplicate')).toThrow();
   login.cancel();
 });

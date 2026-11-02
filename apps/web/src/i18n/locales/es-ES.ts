@@ -3210,6 +3210,7 @@ export const esES: Dict = {
   'settings.orbit.sourceMarkdown': 'Markdown fuente',
   'settings.memoryModelInlineHintByokNeutral': 'La memoria usa un modelo distinto al del chat. Por defecto, usa el modelo de tu chat.',
   'diagnostics.exportTitle': 'Exportar diagnósticos',
+  'diagnostics.includeBridge': 'Incluir detalles de Bridge, del dispositivo y del inicio de sesión en Claude',
   'diagnostics.exportButton': 'Exportar diagnósticos',
   'diagnostics.exportHint': 'Empaqueta los registros recientes y la información del equipo en un zip para enviar al soporte.',
   'diagnostics.exporting': 'Exportando…',

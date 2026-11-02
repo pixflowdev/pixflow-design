@@ -3211,6 +3211,7 @@ export const zhTW: Dict = {
   'settings.orbit.sourceMarkdown': '來源 Markdown',
   'settings.memoryModelInlineHintByokNeutral': '記憶使用與聊天不同的模型。預設為你的聊天模型。',
   'diagnostics.exportTitle': '匯出診斷日誌',
+  'diagnostics.includeBridge': '包含 Bridge、裝置及 Claude 登入的診斷資訊',
   'diagnostics.exportButton': '匯出診斷日誌',
   'diagnostics.exportHint': '將近期的應用日誌與機器資訊打包成 zip,方便傳給我們排查問題。',
   'diagnostics.exporting': '匯出中…',

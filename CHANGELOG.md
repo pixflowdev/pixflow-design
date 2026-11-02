@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recover Pro access with the saved licence after a temporary verification failure. A different site URL during cron or CLI requests, or an interrupted template token refresh, no longer erases the installed key.
 - License settings show **Unavailable** and **Retry** when WordPress cannot return a licence decision. The upgrade offer stays hidden while a saved licence awaits verification.
 - Choose **Continue without AI** on the setup or connection screen to finish onboarding without entering provider credentials.
+- Export recent Pixflow licence, builder and tooling failures from a private site file, even with WordPress debugging off. Optionally include device details and Claude sign-in milestones from the paired Bridge.
 
 ## [2.1.4] - Unreleased
 

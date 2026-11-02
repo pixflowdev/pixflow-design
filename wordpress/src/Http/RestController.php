@@ -137,6 +137,22 @@ class RestController
             'callback' => [$this, 'handle_diagnostics_snapshot'],
             'permission_callback' => [$this, 'can_manage_site_settings'],
         ]);
+        $this->register_site_route('/diagnostics/event', [
+            'methods' => 'POST',
+            'permission_callback' => static fn() => current_user_can('edit_posts'),
+            'callback' => static function ($request) {
+                $data = $request->get_json_params();
+                if (!is_array($data) || !in_array($data['area'] ?? null, ['licence','bridge','claude','browser'], true)
+                    || !in_array($data['event'] ?? null, ['request-failed','status-html','status-other','site-mismatch','disconnected','update-required','error','warning','recovered'], true)
+                    || !is_int($data['http'] ?? null) || $data['http'] < 0 || $data['http'] > 599) {
+                    return new \WP_Error('invalid_diagnostic_event', 'Invalid diagnostic event.', ['status'=>400]);
+                }
+                \PixflowDesign\WordPress\Diagnostics\SupportJournal::record($data['area'], $data['event'], $data['http'], '',
+                    is_string($data['operation'] ?? null) ? $data['operation'] : '',
+                    is_string($data['file'] ?? null) ? $data['file'] : '', is_int($data['line'] ?? null) ? $data['line'] : 0);
+                return new \WP_REST_Response(null, 204);
+            },
+        ]);
 
         $this->register_site_route( '/diagnostics/prepare', [
             'methods' => 'POST',
@@ -305,6 +321,7 @@ class RestController
         $prepared = $this->diagnostics_archive->prepare(
             is_array($body['client'] ?? null) ? $body['client'] : [],
             is_array($body['context'] ?? null) ? $body['context'] : [],
+            is_array($body['bridge'] ?? null) ? $body['bridge'] : [],
         );
         if ($prepared instanceof \WP_Error) {
             return $this->json_response([

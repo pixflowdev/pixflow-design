@@ -24,10 +24,23 @@ describe('Pixflow client diagnostic privacy', () => {
     const diagnostics = await import('../../src/pixflow/client-diagnostics');
     diagnostics.installPixflowClientDiagnostics();
     const event = new Event(type);
-    Object.assign(event, { message: 'fetch PRIVATE_BODY_941', error: new Error('fetch PRIVATE_BODY_941'), reason: new Error('fetch PRIVATE_BODY_941') });
+    const error = new Error('fetch PRIVATE_BODY_941');
+    error.stack = 'Error: secret\n at run (https://example.test/wp-content/plugins/pixflow-ai/assets/app/runtime.js:1:1)';
+    Object.assign(event, { filename: 'https://example.test/wp-content/plugins/pixflow-ai/assets/app/runtime.js', message: 'fetch PRIVATE_BODY_941', error, reason: error });
     target.dispatchEvent(event);
     const snapshot = JSON.stringify(diagnostics.pixflowClientDiagnosticsSnapshot());
     expect(snapshot).not.toContain('PRIVATE_BODY_941');
     expect(snapshot).toContain('fetch');
+  });
+  it.each(['error','unhandledrejection'])('ignores unrelated %s even if its message names Pixflow', async type => {
+    vi.resetModules();
+    const target = Object.assign(new EventTarget(), { location: { origin:'https://example.test', pathname:'/wp-admin/' } });
+    vi.stubGlobal('window', target);
+    const diagnostics = await import('../../src/pixflow/client-diagnostics');
+    diagnostics.installPixflowClientDiagnostics();
+    const error = new Error('Pixflow fetch');
+    error.stack = 'Error: Pixflow fetch\n at other (https://example.test/wp-content/plugins/other/runtime.js:1:1)\n at caller (https://example.test/wp-content/plugins/pixflow-ai/assets/runtime.js:1:1)';
+    target.dispatchEvent(Object.assign(new Event(type), { filename:'https://example.test/wp-content/plugins/other/runtime.js', error, reason:error }));
+    expect(diagnostics.pixflowClientDiagnosticsSnapshot().entries).toEqual([]);
   });
 });

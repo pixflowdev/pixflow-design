@@ -26,7 +26,7 @@ assert_diagnostics_boundary(
 );
 assert_diagnostics_boundary(
     str_contains($service, 'ERROR_LOG_TAIL_BYTES')
-        && str_contains($service, "stripos(\$line, 'pixflow')"),
+        && str_contains($service, 'SupportJournal::owned_file'),
     'PHP error evidence must be bounded and filtered to Pixflow lines.'
 );
 assert_diagnostics_boundary(

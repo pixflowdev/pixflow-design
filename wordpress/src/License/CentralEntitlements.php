@@ -278,6 +278,7 @@ final class CentralEntitlements
         $state['tokens'] = [];
         $state['network_unavailable'] = false;
         update_option(self::OPTION, $state, false);
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'access-denied', 0, '', $code);
         if (class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
     }
 
@@ -409,6 +410,9 @@ final class CentralEntitlements
         $claims = $this->verified($state, 'wordpress', 'wordpress:mutate');
         $state['revision'] = $claims['revocation_version'];
         if (!$this->commit_exchange($state)) return ['ok' => false, 'code' => 'entitlement_state_changed'];
+        if (!empty($before_exchange['denial_code']) || !empty($before_exchange['network_unavailable'])) {
+            \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'recovered');
+        }
         $this->schedule_refresh(max(time() + 1, $claims['refresh_after']));
         return ['ok' => true];
     }
@@ -430,14 +434,16 @@ final class CentralEntitlements
         $rejected['network_unavailable'] = false;
         $rejected['epoch'] = (int) ($expected['epoch'] ?? 0) + 1;
         if (!$this->replace_state($expected, $rejected)) return ['ok' => false, 'code' => 'entitlement_state_changed'];
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'verification-failed', 0, $check);
         if (class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
         return ['ok' => false, 'code' => 'invalid_central_entitlement'];
     }
 
-    private function transport_failure(array $state): array
+    private function transport_failure(array $state, int $http = 0): array
     {
         // An explicit denial is never erased by a later network outage.
         $state['network_unavailable'] = true;
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'transport-failed', $http);
         $this->commit_exchange($state);
         $this->schedule_refresh(time() + 60);
         return ['ok' => false, 'code' => 'network_unavailable'];
@@ -447,7 +453,7 @@ final class CentralEntitlements
     {
         $status = (int) ($response['status'] ?? 0);
         // Temporary service failures retain only the authority's already-signed offline window.
-        if ($status === 408 || $status === 429 || ($status >= 500 && $status <= 599)) return $this->transport_failure($state);
+        if ($status === 408 || $status === 429 || ($status >= 500 && $status <= 599)) return $this->transport_failure($state, $status);
         $body = json_decode((string) ($response['body'] ?? ''), true);
         $code = is_array($body) ? ($body['code'] ?? $body['error']['code'] ?? null) : null;
         if (!is_string($code) || $code === '') return $this->reject_unverified($state, 'authority:unreadable_response');

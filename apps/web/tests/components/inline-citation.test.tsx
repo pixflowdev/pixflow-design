@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { AssistantMessage } from '../../src/components/AssistantMessage';
 import { collectMarkdownSources } from '../../src/runtime/markdown';
 import type { AgentEvent } from '../../src/types';
@@ -80,4 +80,28 @@ it('uses real sources from activity steps even without a linked citation in the 
   expect(badges).toHaveLength(1);
   expect(badges[0]?.textContent).toBe('docs.example.org');
   expect(badges[0]?.getAttribute('href')).toBe('https://docs.example.org/start');
+});
+it.each([
+  '[Read the full audit](<C:/Pixflow Design Bridge/direct-site-runs/run-R6JbBa/SEO-AUDIT.md>)',
+  String.raw`[Read the full audit]\(\<C:/Pixflow Design Bridge/direct-site-runs/run-R6JbBa/SEO-AUDIT.md\>\)`,
+])('recognises a saved Bridge report in an assistant response', prose => {
+  const view = reply([], prose);
+  expect(view.getByRole('button', {name:'Read the full audit'})).toBeTruthy();
+});
+
+it('opens the report inline and collapses it without another Bridge request', async () => {
+  const fetch = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({token:'fixture'})))
+    .mockResolvedValueOnce(new Response(JSON.stringify({text:'# Premier Panels SEO audit'})));
+  vi.stubGlobal('fetch', fetch);
+  try {
+    const view = reply([], '[Read the audit](<C:/Pixflow/direct-site-runs/run-R6JbBa/SEO-AUDIT.md>)');
+    const trigger = view.getByRole('button', {name:'Read the audit'});
+    fireEvent.click(trigger);
+    expect(await view.findByText('# Premier Panels SEO audit')).toBeTruthy();
+    expect(JSON.parse(fetch.mock.calls[1]![1].body)).toEqual({directory:'run-R6JbBa',filename:'SEO-AUDIT.md',session:{token:'fixture'}});
+    fireEvent.click(trigger);
+    expect(view.queryByText('# Premier Panels SEO audit')).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  } finally { vi.unstubAllGlobals(); }
 });

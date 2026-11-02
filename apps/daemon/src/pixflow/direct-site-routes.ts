@@ -78,6 +78,35 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
   const retentionTimer = setInterval(() => { try { pruneHistory(); } catch { /* Retry next hour if the store is temporarily unavailable. */ } }, 60 * 60_000);
   retentionTimer.unref();
 
+  const reportRoute = '/api/pixflow/direct-site/report';
+  app.options(reportRoute, permission, (_req, res) => { res.sendStatus(204); });
+  app.post(reportRoute, permission, async (req, res) => {
+    const { session, directory, filename } = req.body ?? {};
+    let authorized = false;
+    try {
+      const owner = await authenticateDirectOwner(session, true);
+      authorized = true;
+      if (typeof directory !== 'string' || !/^run-[a-zA-Z0-9]{6}$/.test(directory)
+        || typeof filename !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9 _.-]{0,120}\.md$/i.test(filename)
+        || filename.toLowerCase() === 'agents.md') throw new Error();
+      const workspace = path.join(parent, directory);
+      const file = path.join(workspace, filename);
+      if (!store.ownsWorkspace(owner, workspace) || await fs.realpath(file) !== path.join(await fs.realpath(parent), directory, filename)) throw new Error();
+      const handle = await fs.open(file, 'r');
+      try {
+        const stat = await handle.stat();
+        const current = await fs.lstat(file);
+        if (!stat.isFile() || !current.isFile() || stat.ino !== current.ino || stat.dev !== current.dev
+          || stat.nlink !== 1 || stat.size > 512 * 1024) throw new Error();
+        const buffer = Buffer.alloc(stat.size);
+        const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+        if (bytesRead !== stat.size) throw new Error();
+        res.set('Cache-Control', 'no-store').json({ text: buffer.toString('utf8') });
+      } finally { await handle.close(); }
+    } catch { res.sendStatus(authorized ? 404 : 403); }
+    finally { if (authorized) await revokeDirectSession(session); }
+  });
+
   app.options('/api/pixflow/direct-site/history-clear',permission,(_req,res)=>{res.status(204).end();});
   app.post('/api/pixflow/direct-site/history-clear',permission,async(req,res)=>{
     const {session} = (req.body || {}) as PixflowDirectToolHistoryRequest;

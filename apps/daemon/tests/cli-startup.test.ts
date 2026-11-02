@@ -12,6 +12,14 @@ const daemonRoot = fileURLToPath(new URL('..', import.meta.url));
 const cliEntry = fileURLToPath(new URL('../src/cli.ts', import.meta.url));
 
 describe('CLI startup boundaries', () => {
+  it('lists tool groups and Workspace discovery commands without a running daemon', async () => {
+    const { stdout } = await execFileAsync(process.execPath, ['--import', 'tsx', cliEntry, 'tools', '--help'], {
+      cwd: daemonRoot, timeout: 30000, windowsHide: true,
+    });
+    expect(stdout).toContain('live-artifacts|connectors|design-systems');
+    expect(stdout).toContain('od wp-admin context --json');
+    expect(stdout).toContain('od wp-admin site-tool --tool help --json');
+  }, 40000);
   it('reports rejected configuration without claiming the daemon is offline or forcing socket shutdown', async () => {
     const server = http.createServer((req, res) => {
       req.resume();

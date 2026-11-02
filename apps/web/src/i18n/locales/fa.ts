@@ -3210,6 +3210,7 @@ export const fa: Dict = {
   'settings.orbit.sourceMarkdown': 'Markdown منبع',
   'settings.memoryModelInlineHintByokNeutral': 'حافظه از مدلی جدا از چت استفاده می‌کند. به‌طور پیش‌فرض از مدل چت شما استفاده می‌کند.',
   'diagnostics.exportTitle': 'صادر کردن تشخیص',
+  'diagnostics.includeBridge': 'افزودن جزئیات Bridge، دستگاه و ورود به Claude',
   'diagnostics.exportButton': 'صادر کردن تشخیص',
   'diagnostics.exportHint': 'گزارش‌های اخیر برنامه و اطلاعات دستگاه را در یک فایل zip بسته‌بندی می‌کند تا برای تیم ارسال شود.',
   'diagnostics.exporting': 'در حال صادر کردن…',

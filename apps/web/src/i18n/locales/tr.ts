@@ -3210,6 +3210,7 @@ export const tr: Dict = {
   'settings.orbit.sourceMarkdown': 'Kaynak Markdown',
   'settings.memoryModelInlineHintByokNeutral': 'Bellek, sohbetten ayrı bir model kullanır. Varsayılan olarak sohbet modelinizi kullanır.',
   'diagnostics.exportTitle': 'Tanılama dışa aktar',
+  'diagnostics.includeBridge': 'Bridge, cihaz ve Claude oturum açma tanılama bilgilerini dahil et',
   'diagnostics.exportButton': 'Tanılama dışa aktar',
   'diagnostics.exportHint': 'Son uygulama günlüklerini ve makine bilgilerini ekibe gönderebileceğiniz bir zip dosyasında paketler.',
   'diagnostics.exporting': 'Dışa aktarılıyor…',

@@ -1,4 +1,5 @@
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
+import { observeLicenceRequest } from './support-timeline';
 import { pixflowWordPressRestFetch } from './runtime-fetch';
 import { PIXFLOW_LICENSE_CHANGED, refreshPixflowFeatureRuntime } from './feature-runtime';
 import { ensurePixflowOptionalBridgeSiteContext, pixflowOptionalBridgeSiteHeaders } from './optional-bridge';
@@ -326,7 +327,7 @@ export async function requestWordPressRest<T>(
       },
       { requestId },
     ), '*');
-    return promise as Promise<WordPressRestResponse<T>>;
+    return observeLicenceRequest(path, () => promise as Promise<WordPressRestResponse<T>>, () => 'proxied');
   }
 
   // Pixflow-owned: all license calls go through the parent Bricks/WP shell so
@@ -341,7 +342,7 @@ export async function requestWordPressRest<T>(
     keepalive: options.keepalive === true,
   }, '*');
 
-  return promise as Promise<WordPressRestResponse<T>>;
+  return observeLicenceRequest(path, () => promise as Promise<WordPressRestResponse<T>>, () => 'proxied');
 }
 
 export async function requestWordPressAjax<T>(

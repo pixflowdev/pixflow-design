@@ -81,6 +81,7 @@ final class Plugin
         // Native editor saves remain owned by WordPress and each builder.
         (new \PixflowDesign\WordPress\Media\UnsplashMediaLibrary())->register();
         (new \PixflowDesign\WordPress\License\CentralEntitlements())->register();
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::register();
         (new \PixflowDesign\WordPress\License\ProInstallation())->register();
         // Pixflow-owned: shared project library tables are versioned separately
         // from OD so future upstream updates do not control WP persistence.

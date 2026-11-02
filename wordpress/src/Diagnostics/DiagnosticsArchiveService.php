@@ -24,7 +24,7 @@ final class DiagnosticsArchiveService
     }
 
     /** @return array<string, string>|\WP_Error */
-    public function prepare(array $client = [], array $context = []): array|\WP_Error
+    public function prepare(array $client = [], array $context = [], array $bridge = []): array|\WP_Error
     {
         try {
             $token = bin2hex(random_bytes(32));
@@ -38,9 +38,11 @@ final class DiagnosticsArchiveService
             'wordpress' => $this->snapshots->snapshot(),
             'client' => $this->bounded_attachment($client, 'client diagnostics'),
             'context' => $this->bounded_attachment($context, 'surface context'),
+            'bridge' => $this->bounded_attachment($bridge ?: ['collection' => 'not-requested'], 'Bridge report'),
         ];
         if ($payload['client'] instanceof \WP_Error) return $payload['client'];
         if ($payload['context'] instanceof \WP_Error) return $payload['context'];
+        if ($payload['bridge'] instanceof \WP_Error) return $payload['bridge'];
 
         if (!set_transient(self::TRANSIENT_PREFIX . $token, $payload, self::TICKET_TTL_SECONDS)) {
             return new \WP_Error('pixflow_diagnostics_ticket_store_failed', 'Pixflow could not store the diagnostics download ticket.');
@@ -72,6 +74,7 @@ final class DiagnosticsArchiveService
             'wordpress/environment.json' => $this->json($payload['wordpress'] ?? []),
             'browser/client-errors.json' => $this->json($payload['client'] ?? []),
             'browser/surface-context.json' => $this->json($payload['context'] ?? []),
+            'bridge/support.json' => $this->json($payload['bridge'] ?? ['collection' => 'not-requested']),
         ];
         $manifest_files = [];
         foreach ($files as $name => $content) {
@@ -91,7 +94,7 @@ final class DiagnosticsArchiveService
                 'source' => 'pixflow-wordpress',
                 'createdAt' => (string) ($payload['createdAt'] ?? gmdate('c')),
                 'files' => $manifest_files,
-                'bridgeEvidence' => 'optional-not-required',
+                'bridgeEvidence' => $payload['bridge']['collection'] ?? 'not-requested',
                 'privacy' => [
                     'postContentIncluded' => false,
                     'promptsIncluded' => false,

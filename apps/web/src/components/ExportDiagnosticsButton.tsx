@@ -3,7 +3,8 @@ import { useT } from '../i18n';
 import { Icon } from './Icon';
 import { pixflowWordPressRestFetch } from '../pixflow/runtime-fetch';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from '../pixflow/wordpress-context';
-import { pixflowClientDiagnosticsSnapshot, recordPixflowClientDiagnostic } from '../pixflow/client-diagnostics';
+import { pixflowClientDiagnosticsSnapshot } from '../pixflow/client-diagnostics';
+import { collectBridgeSupport } from '../pixflow/support-diagnostics';
 
 // Mirrors what apps/desktop preload exposes via contextBridge. Kept inline
 // so the web bundle does not import the desktop package.
@@ -120,26 +121,10 @@ export function triggerDiagnosticsHttpDownload(downloadUrl: string, filename: st
   window.setTimeout(() => link.remove(), DOWNLOAD_OBJECT_URL_LIFETIME_MS);
 }
 
-async function pixflowDiagnosticsPacket(): Promise<Record<string, unknown>> {
+async function pixflowDiagnosticsPacket(includeDevice: boolean) {
   const config = getPixflowWordPressConfig();
-  let wordpress: Record<string, unknown> = {};
-  try {
-    const response = await pixflowWordPressRestFetch('/diagnostics/snapshot', { cache: 'no-store' });
-    if (!response.ok) throw new Error(`WordPress diagnostics returned HTTP ${response.status}`);
-    const payload = await response.json() as { snapshot?: unknown };
-    if (payload.snapshot && typeof payload.snapshot === 'object' && !Array.isArray(payload.snapshot)) {
-      wordpress = payload.snapshot as Record<string, unknown>;
-    }
-  } catch (error) {
-    recordPixflowClientDiagnostic('warning', 'WordPress diagnostics snapshot could not be collected.', error);
-    wordpress = {
-      schema: 'pixflow.wordpress-diagnostics-unavailable.v1',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
   return {
-    pluginVersion: config?.version,
-    wordpress,
+    bridge: await collectBridgeSupport(includeDevice),
     client: pixflowClientDiagnosticsSnapshot(),
     context: {
       schema: 'pixflow.diagnostics-surface-context.v1',
@@ -158,14 +143,14 @@ async function pixflowDiagnosticsPacket(): Promise<Record<string, unknown>> {
   };
 }
 
-async function exportViaHttp(): Promise<{ filename: string }> {
+async function exportViaHttp(includeDevice: boolean): Promise<{ filename: string }> {
   const pixflow = hasPixflowWordPressContext();
   if (pixflow) {
-    const packet = await pixflowDiagnosticsPacket();
+    const packet = await pixflowDiagnosticsPacket(includeDevice);
     const res = await pixflowWordPressRestFetch('/diagnostics/prepare', {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client: packet.client, context: packet.context }),
+      body: JSON.stringify(packet),
     });
     if (!res.ok) {
       let message = `${res.status} ${res.statusText}`;
@@ -227,6 +212,7 @@ async function exportViaHttp(): Promise<{ filename: string }> {
 export function ExportDiagnosticsRow() {
   const t = useT();
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  const [includeDevice, setIncludeDevice] = useState(false);
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -257,7 +243,7 @@ export function ExportDiagnosticsRow() {
         scheduleClear();
         return;
       }
-      const { filename } = await exportViaHttp();
+      const { filename } = await exportViaHttp(includeDevice);
       setStatus({ kind: 'success', message: t('diagnostics.exportSuccess', { path: filename }) });
       scheduleClear();
     } catch (error) {
@@ -270,6 +256,10 @@ export function ExportDiagnosticsRow() {
   const busy = status.kind === 'busy';
   return (
     <div className="diagnostics-export-row">
+      {hasPixflowWordPressContext() && <label>
+        <input type="checkbox" checked={includeDevice} disabled={busy} onChange={event => setIncludeDevice(event.target.checked)} />{' '}
+        {t('diagnostics.includeBridge')}
+      </label>}
       <button
         type="button"
         className="ghost diagnostics-export-button"

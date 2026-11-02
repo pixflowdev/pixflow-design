@@ -3210,6 +3210,7 @@ export const id: Dict = {
   'settings.memoryModelInlineFlashSaved': 'Tersimpan',
   'settings.memoryModelInlineFlashCleared': "Dikosongkan",
   'diagnostics.exportTitle': 'Ekspor diagnostik',
+  'diagnostics.includeBridge': 'Sertakan detail Bridge, perangkat, dan proses masuk Claude',
   'diagnostics.exportButton': 'Ekspor diagnostik',
   'diagnostics.exportHint': 'Mengemas log aplikasi terbaru dan info perangkat ke dalam zip untuk dibagikan ke tim.',
   'diagnostics.exporting': 'Mengekspor…',

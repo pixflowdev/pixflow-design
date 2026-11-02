@@ -3210,6 +3210,7 @@ export const ru: Dict = {
   'settings.orbit.sourceMarkdown': 'Исходный Markdown',
   'settings.memoryModelInlineHintByokNeutral': 'Память использует отдельную от чата модель. По умолчанию — ваша модель чата.',
   'diagnostics.exportTitle': 'Экспорт диагностики',
+  'diagnostics.includeBridge': 'Включить сведения о Bridge, устройстве и входе в Claude',
   'diagnostics.exportButton': 'Экспорт диагностики',
   'diagnostics.exportHint': 'Упаковывает недавние журналы приложения и сведения о машине в zip для отправки команде.',
   'diagnostics.exporting': 'Экспортирование…',

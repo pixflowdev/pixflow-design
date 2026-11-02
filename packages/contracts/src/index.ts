@@ -98,4 +98,5 @@ export * from './api/pixflow-chat-history.js';
 export * from './api/pixflow-feature-runtime.js';
 export * from './api/pixflow-bricks-session.js';
 export * from './api/claude-sign-in.js';
+export * from './api/pixflow-support.js';
 export * from './api/codex-usage.js';

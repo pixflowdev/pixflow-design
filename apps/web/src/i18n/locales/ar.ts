@@ -3210,6 +3210,7 @@ export const ar: Dict = {
   'settings.orbit.sourceMarkdown': 'Markdown المصدر',
   'settings.memoryModelInlineHintByokNeutral': 'تستخدم الذاكرة نموذجًا منفصلاً عن المحادثة. يكون الافتراضي هو نموذج المحادثة لديك.',
   'diagnostics.exportTitle': 'تصدير التشخيص',
+  'diagnostics.includeBridge': 'تضمين تفاصيل Bridge والجهاز وتسجيل الدخول إلى Claude',
   'diagnostics.exportButton': 'تصدير التشخيص',
   'diagnostics.exportHint': 'يحزم سجلات التطبيق الأخيرة ومعلومات الجهاز في ملف zip لمشاركته مع الفريق.',
   'diagnostics.exporting': 'جارٍ التصدير…',

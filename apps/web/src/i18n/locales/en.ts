@@ -4490,6 +4490,7 @@ export const en: Dict = {
   'settings.memoryModelInlineFlashSaved': 'Saved',
   'settings.memoryModelInlineFlashCleared': 'Cleared',
   'diagnostics.exportTitle': 'Export diagnostics',
+  'diagnostics.includeBridge': 'Include Bridge, device and Claude sign-in details',
   'diagnostics.exportButton': 'Export diagnostics',
   'diagnostics.exportHint': 'Creates a privacy-redacted support ZIP with bounded WordPress, Pixflow, action and error diagnostics. Bridge and local-provider evidence is optional.',
   'diagnostics.exporting': 'Exporting…',

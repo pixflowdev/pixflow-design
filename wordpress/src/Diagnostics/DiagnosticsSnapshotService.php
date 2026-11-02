@@ -62,11 +62,18 @@ final class DiagnosticsSnapshotService
                 'serverSoftware' => sanitize_text_field((string) ($_SERVER['SERVER_SOFTWARE'] ?? 'unknown')),
             ],
             'pixflow' => [
+                'supportHistory' => SupportJournal::snapshot(),
                 'licensing' => [
                     'savedLicense' => (new LicenseCache())->summary()['present'],
                     'verified' => $entitlement['valid'],
                     'verificationFailed' => $entitlement['code'] === 'invalid_central_entitlement',
                     'verificationCheck' => $entitlement['verification_check'],
+                    'offline' => $entitlement['offline'],
+                    'expiresAt' => $entitlement['expires_at'],
+                    'offlineUntil' => $entitlement['offline_until'],
+                    'nextRefreshAt' => wp_next_scheduled(CentralEntitlements::REFRESH_HOOK) ?: null,
+                    'wpCronDisabled' => defined('DISABLE_WP_CRON') && DISABLE_WP_CRON,
+                    'externalObjectCache' => wp_using_ext_object_cache(),
                 ],
                 'pluginVersion' => defined('PIXFLOW_DESIGN_VERSION') ? PIXFLOW_DESIGN_VERSION : 'unknown',
                 'requiredBridgeVersion' => defined('PIXFLOW_DESIGN_BRIDGE_VERSION') ? PIXFLOW_DESIGN_BRIDGE_VERSION : 'unknown',
@@ -212,15 +219,15 @@ final class DiagnosticsSnapshotService
         }
         if (!is_string($tail)) return [];
         $lines = preg_split('/\R/', $tail) ?: [];
-        $matching = array_values(array_filter($lines, static fn(string $line): bool => stripos($line, 'pixflow') !== false));
+        $matching = array_values(array_filter($lines, static fn(string $line): bool =>
+            preg_match('~^.*\sin (.+?)(?: on line |:)(\d+)\s*$~i', $line, $m) && SupportJournal::owned_file($m[1])));
         return array_map([$this, 'redact_error_line'], array_slice($matching, -self::MAX_ERROR_LINES));
     }
 
     private function error_log_path(): string
     {
-        if (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG) && WP_DEBUG_LOG !== '') return WP_DEBUG_LOG;
-        $configured = (string) ini_get('error_log');
-        if ($configured !== '' && $configured !== 'syslog') return $configured;
+        if (!defined('WP_DEBUG') || !WP_DEBUG || !defined('WP_DEBUG_LOG') || !WP_DEBUG_LOG) return '';
+        if (is_string(WP_DEBUG_LOG) && WP_DEBUG_LOG !== '1') return WP_DEBUG_LOG;
         $default = (defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : '') . '/debug.log';
         return is_file($default) ? $default : '';
     }
@@ -242,7 +249,8 @@ final class DiagnosticsSnapshotService
         $result = [];
         foreach ($keys as $key) {
             if (!array_key_exists($key, $source) || !is_scalar($source[$key])) continue;
-            $result[$key] = is_bool($source[$key]) ? $source[$key] : sanitize_text_field((string) $source[$key]);
+            $result[$key] = in_array($key, ['reason','error'], true) ? $this->redact_error_line((string) $source[$key])
+                : (is_bool($source[$key]) ? $source[$key] : sanitize_text_field((string) $source[$key]));
         }
         return $result;
     }

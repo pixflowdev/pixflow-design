@@ -200,7 +200,7 @@ function OpenInTabButton({ filePath, ctx }: { filePath: string; ctx: FileToolCtx
   if (!ctx.onRequestOpenFile) return null;
   if (!filePath || filePath === '(unnamed)') return null;
   // The agent uses absolute paths; the project-file API keys on basename.
-  const baseName = filePath.split('/').pop() ?? filePath;
+  const baseName = filePath.split(/[\\/]/).pop() ?? filePath;
   if (!baseName) return null;
   if (ctx.projectFileNames && !ctx.projectFileNames.has(baseName)) return null;
   const open = ctx.onRequestOpenFile;
@@ -321,7 +321,7 @@ function FileWriteCard({
   const t = useT();
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; content?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
+  const baseName = file.split(/[\\/]/).pop() ?? file;
   const lines = typeof obj.content === 'string' ? obj.content.split('\n').length : null;
   return <ToolTrace title={t('tool.write')} description={<>{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</>} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
@@ -349,11 +349,26 @@ function FileEditCard({
     new_string?: string;
     edits?: { old_string?: string; new_string?: string }[];
   };
-  const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
-  const editCount = Array.isArray(obj.edits) ? obj.edits.length : 1;
-  return <ToolTrace title={t('tool.edit')} description={<>{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</>} result={result}
-    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
+  const parsed = useMemo(() => {
+    const content = result?.content;
+    if (!content || result.isError || content.length > 262144 || !content.trimStart().startsWith('[')) return [];
+    try { return fileChanges(JSON.parse(content)); } catch { return []; }
+  }, [result]);
+  const changes = parsed.length ? parsed : fileChanges((input as { changes?: unknown } | null)?.changes);
+  const first = changes[0]?.path ?? [obj.file_path, obj.filePath, obj.path].find(path => typeof path === 'string' && path.trim());
+  const count = changes.length || obj.edits?.length || (first ? 1 : 0);
+  return <ToolTrace title={t('tool.edit')} description={first ? <>{first.split(/[\\/]/).pop()} · {count} {t(count === 1 ? 'tool.changeSingular' : 'tool.changePlural')}</> : null}
+    result={result} hideOutput={parsed.length > 0} runStreaming={runStreaming} runSucceeded={runSucceeded}
+    detail={first ? () => changes.length ? changes.map((row, index) => <div key={index}>
+      <code className="op-path">{row.path}</code>{typeof row.kind?.type === 'string' && <> · {row.kind.type}</>}<OpenInTabButton filePath={row.path} ctx={ctx} />
+      {row.diff && <pre className="op-output">{truncate(row.diff, 4000)}</pre>}
+    </div>) : <><code className="op-path">{first}</code><OpenInTabButton filePath={first} ctx={ctx} /></> : undefined} />;
+}
+
+function fileChanges(value: unknown): { path: string; diff?: string; kind?: { type?: string } }[] {
+  if (!Array.isArray(value) || !value.every(row => row && typeof row.path === 'string' && row.path.trim()
+    && (row.diff === undefined || typeof row.diff === 'string'))) return [];
+  return value;
 }
 
 function FileReadCard({
@@ -372,7 +387,7 @@ function FileReadCard({
   const t = useT();
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
+  const baseName = file.split(/[\\/]/).pop() ?? file;
   return <ToolTrace title={t('tool.read')} description={baseName} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
@@ -382,7 +397,7 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const obj = (input ?? {}) as { command?: string; description?: string };
   const command = obj.command ?? '';
   const desc = obj.description;
-  return <ToolTrace title={t('tool.bash')} description={desc} result={result}
+  return <ToolTrace title={desc || t('chat.designToolbox.context.terminal')} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<pre className="op-command">{truncate(command, 400)}</pre>)} />;
 }
 
@@ -436,9 +451,9 @@ function GenericCard({
 
 /** A tool only expands when there is real input detail or output to inspect.
  * Keep large output unmounted until requested; source events remain untouched. */
-function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail }: {
+function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail, hideOutput }: {
   title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
-  runSucceeded: boolean; detail?: () => ReactNode;
+  runSucceeded: boolean; detail?: (() => ReactNode) | undefined; hideOutput?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [visited, setVisited] = useState(false);
@@ -455,7 +470,7 @@ function ToolTrace({ title, description, result, runStreaming, runSucceeded, det
     <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
     <TraceCollapsibleContent className={styles.detail}>{visited ? <>
       {detail ? <div className={styles.input}>{detail()}</div> : null}
-      {result?.content ? <ToolOutput content={result.content} /> : null}
+      {result?.content && !hideOutput ? <ToolOutput content={result.content} /> : null}
     </> : null}</TraceCollapsibleContent>
   </TraceCollapsible>;
 }

@@ -149,3 +149,28 @@ it('does not expose empty reasoning or add tools for a text-only saved response'
   expect(view.container.querySelector('[data-activity-group]')).toBeNull();
   expect(view.getByText('Just text')).toBeTruthy();
 });
+
+it('shows the Codex edit filename and actual diff from a saved result', () => {
+  const diff = '{"paths":["pixflow/design-engine/SKILL.md"]}';
+  const changes = [{ path: 'C:\\Bridge\\run-example\\image-skills.json', kind: { type: 'add' }, diff }];
+  const view = render(<ToolCard use={{ kind: 'tool_use', id: 'edit', name: 'Edit', input: { changes: [] } }}
+    result={{ kind: 'tool_result', toolUseId: 'edit', content: JSON.stringify(changes), isError: false }} />);
+  expect(view.getByRole('button').textContent).toContain('image-skills.json');
+  fireEvent.click(view.getByRole('button'));
+  expect(view.getByText(diff)).toBeTruthy();
+  expect(view.container.textContent).not.toContain('(unnamed)');
+});
+
+it('folds consecutive successful commands while leaving the failed command visible', () => {
+  const events: AgentEvent[] = ['first','second','failed'].flatMap((id): AgentEvent[] => [
+    {kind:'tool_use',id,name:'Bash',input:{command:id}},
+    {kind:'tool_result',toolUseId:id,content:id,isError:id==='failed'},
+  ]);
+  const view = render(<AssistantMessage projectId={null} streaming={false} message={{id:'commands',role:'assistant',events,content:'',runStatus:'succeeded'}} />);
+  fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
+  const batch = view.getByRole('button', { name:/Ran commands.*2/ });
+  expect(batch.getAttribute('aria-expanded')).toBe('false');
+  expect(view.getAllByRole('button', {name:/Terminal/})).toHaveLength(1);
+  fireEvent.click(batch);
+  expect(view.getAllByRole('button', {name:/Terminal/})).toHaveLength(3);
+});

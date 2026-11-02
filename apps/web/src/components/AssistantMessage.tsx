@@ -2715,12 +2715,29 @@ function ToolGroupCard({
   projectFileNames?: Set<string>;
   onRequestOpenFile?: (name: string) => void;
 }) {
-  items = dedupeSnapshotToolRetries(items);
-  return <Trace data-trace-kind="tools">
-    {items.map(item => <ToolCard key={item.use.id} use={item.use} result={item.result}
-      runStreaming={runStreaming} runSucceeded={runSucceeded}
-      projectFileNames={projectFileNames} onRequestOpenFile={onRequestOpenFile} />)}
-  </Trace>;
+  const t = useT();
+  const rows: React.ReactNode[] = [];
+  const completed: ToolItem[] = [];
+  function card(item: ToolItem) {
+    return <ToolCard key={item.use.id} use={item.use} result={item.result} runStreaming={runStreaming}
+      runSucceeded={runSucceeded} projectFileNames={projectFileNames} onRequestOpenFile={onRequestOpenFile} />;
+  }
+  function flushCommands() {
+    if (!completed.length) return;
+    const batch = completed.splice(0);
+    if (batch.length === 1) { rows.push(card(batch[0]!)); return; }
+    rows.push(<TraceCollapsible key={batch[0]!.use.id} data-trace-kind="commands">
+      <TraceCollapsibleTrigger><TraceLine><TraceTitle>{t('activity.completed.command')}</TraceTitle>
+        <TraceDescription>{batch.length}</TraceDescription></TraceLine></TraceCollapsibleTrigger>
+      <TraceCollapsibleContent>{batch.map(card)}</TraceCollapsibleContent>
+    </TraceCollapsible>);
+  }
+  for (const item of dedupeSnapshotToolRetries(items)) {
+    if (activityAction(item.use.name) === 'command' && item.result && !item.result.isError) completed.push(item);
+    else { flushCommands(); rows.push(card(item)); }
+  }
+  flushCommands();
+  return <Trace data-trace-kind="tools">{rows}</Trace>;
 }
 
 function toolFamily(name: string): string {

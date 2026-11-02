@@ -44,6 +44,8 @@
       path('M6 14h7a3 3 0 0 0 3-3');
       path('M16 12v4');
       path('M13 16h6');
+    } else if (name === 'translations') {
+      path('M4 5h10M9 3v2M6 8c1 3 3 5 6 7M13 5c0 4-3 8-8 11M13 20l4-9 4 9M15 17h4');
     } else if (name === 'settings') {
       path('M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z');
       path('M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.04.08H10l-.04-.08a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1L3.92 14v-4L4 9.96a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.86-2.86.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.04-.08h4L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0 0 19.4 9c.08.4.3.75.6 1l.08.04v4L20 14a1.7 1.7 0 0 0-.6 1z');
@@ -162,6 +164,7 @@
       var button = document.createElement('button');
       button.type = 'button';
       button.className = 'inline-switcher__agent';
+      button.dataset.tool = tool;
       button.setAttribute('role', 'menuitem');
       appendIcon(button, icon);
       var name = document.createElement('span');
@@ -183,6 +186,9 @@
     sitemapTool.hidden = options.planningAvailable === false;
     var designSystemTool = addTool(options.designSystemLabel || 'Design Your System', 'palette', 'design-system');
     designSystemTool.hidden = !Boolean(options.initialDesignSystemVisible);
+    var translationsTool = addTool('', 'translations', 'translations');
+    translationsTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'siteTranslations.title');
+    translationsTool.hidden = true;
     tools.appendChild(toolGrid);
     menu.appendChild(tools);
 
@@ -229,6 +235,10 @@
     }
 
     function refreshWorkspaceState() {
+      var app = window.PixflowDesignApp;
+      var translationsLabel = app && app.translationsShortcutLabel && app.translationsShortcutLabel();
+      translationsTool.hidden = !translationsLabel;
+      translationsTool.querySelector('.inline-switcher__agent-name').textContent = translationsLabel || '';
       var runtime = window.__PIXFLOW_FEATURE_RUNTIME__;
       if (runtime && Array.isArray(runtime.features)) {
         var planning = runtime.features.indexOf('planning') !== -1;

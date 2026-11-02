@@ -5,6 +5,7 @@ import { installPixflowClientDiagnostics } from './client-diagnostics';
 import { App } from '../App';
 import { navigate } from '../router';
 import { I18nProvider } from '../i18n';
+import { translationsShortcutLabel } from './feature-runtime';
 import { WpAdminOnboardingHost } from './WpAdminOnboardingHost';
 import { persistPixflowWordPressConfig } from './wordpress-context';
 import { applyAppearanceToDocument } from '../state/appearance';
@@ -50,6 +51,7 @@ type PixflowDesignMountHandle = {
 declare global {
   interface Window {
     PixflowDesignApp?: {
+      translationsShortcutLabel?: typeof translationsShortcutLabel;
       mount(container: HTMLElement, config?: PixflowDesignWordPressConfig): PixflowDesignMountHandle;
     };
     __PIXFLOW_DESIGN_NATIVE_FETCH__?: typeof window.fetch;
@@ -475,4 +477,4 @@ function mount(container: HTMLElement, config: PixflowDesignWordPressConfig = {}
   };
 }
 
-window.PixflowDesignApp = { mount };
+window.PixflowDesignApp = { mount, translationsShortcutLabel };

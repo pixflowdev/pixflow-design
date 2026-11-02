@@ -16,7 +16,7 @@ import { useModalWindowDragGuard } from './hooks/useModalWindowDragGuard';
 import { useLocalAgentHydration } from './hooks/useLocalAgentHydration';
 import { useI18n, useT as usePixflowUiTranslation } from './i18n';
 import { PixflowBridgeUpdateProvider, usePixflowBridgeUpdateState, } from './pixflow/bridge-update-gate';
-import { usePixflowFeatureRuntime } from './pixflow/feature-runtime';
+import { translationsShortcutLabel, usePixflowFeatureRuntime } from './pixflow/feature-runtime';
 import { isPixflowWordPressEmbed, requestWordPressRest, type PixflowLicenseStatus, } from './pixflow/license';
 import { applyPixflowOnboardingProfile, fetchPixflowOnboardingProfile, resetPixflowOnboardingProfile, syncPixflowOnboardingProfile, } from './pixflow/onboarding-profile';
 import { createPixflowSharedAppConfigNotification, publishPixflowSharedAppConfigNotification, subscribePixflowSharedAppConfigNotifications, } from './pixflow/shared-app-config-notification';
@@ -1473,11 +1473,11 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
           setSettingsInitialSection('designSystems');
           setPendingWorkspaceTool(null);
           setSettingsOpen(true);
-        } else if (data.tool === 'sitemap' || data.tool === 'design-systems') {
+        } else if (data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())) {
           setToolbarWorkspaceTool(null);
           setPendingWorkspaceTool(null);
           setSettingsOpen(false);
-          navigate({ kind: 'home', view: data.tool === 'sitemap' ? 'sitemap' : 'design-systems' });
+          navigate({ kind: 'home', view: data.tool });
         }
       }
       if (data.type === 'pixflow-design:close-workspace-tool') {

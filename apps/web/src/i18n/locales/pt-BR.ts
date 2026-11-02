@@ -3241,6 +3241,7 @@ export const ptBR: Dict = {
   'settings.orbit.sourceMarkdown': 'Markdown de origem',
   'settings.memoryModelInlineHintByokNeutral': 'A memória usa um modelo separado do chat. O padrão é o seu modelo de chat.',
   'diagnostics.exportTitle': 'Exportar diagnósticos',
+  'diagnostics.includeBridge': 'Incluir detalhes do Bridge, do dispositivo e do login no Claude',
   'diagnostics.exportButton': 'Exportar diagnósticos',
   'diagnostics.exportHint': 'Empacota logs recentes do app e informações do dispositivo em um zip para enviar à equipe.',
   'diagnostics.exporting': 'Exportando…',

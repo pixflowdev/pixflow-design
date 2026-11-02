@@ -3241,6 +3241,7 @@ export const fr: Dict = {
   'settings.memoryModelInlineFlashSaved': 'Enregistré',
   'settings.memoryModelInlineFlashCleared': 'Effacé',
   'diagnostics.exportTitle': 'Exporter le diagnostic',
+  'diagnostics.includeBridge': 'Inclure les informations sur Bridge, l’appareil et la connexion à Claude',
   'diagnostics.exportButton': 'Exporter le diagnostic',
   'diagnostics.exportHint': 'Compresse les journaux récents et les informations machine dans un zip à partager avec l\'équipe.',
   'diagnostics.exporting': 'Exportation…',

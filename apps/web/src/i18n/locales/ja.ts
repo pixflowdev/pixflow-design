@@ -3241,6 +3241,7 @@ export const ja: Dict = {
   'settings.orbit.sourceMarkdown': 'ソース Markdown',
   'settings.memoryModelInlineHintByokNeutral': 'メモリはチャットとは別のモデルを使用します。デフォルトはチャットモデルです。',
   'diagnostics.exportTitle': '診断情報をエクスポート',
+  'diagnostics.includeBridge': 'Bridge、デバイス、Claude のサインインに関する診断情報を含める',
   'diagnostics.exportButton': '診断情報をエクスポート',
   'diagnostics.exportHint': '最近のアプリログとマシン情報を zip にまとめて、チームに共有できるようにします。',
   'diagnostics.exporting': 'エクスポート中…',

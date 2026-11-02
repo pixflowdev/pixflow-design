@@ -166,7 +166,8 @@ final class CentralEntitlements
     public function recover_saved_license(): void
     {
         $state = $this->state();
-        if (!empty($state['denial_code']) || $this->verified($state, 'wordpress', 'wordpress:mutate') !== null) return;
+        $unverified = $this->is_verification_failure($state);
+        if ((!empty($state['denial_code']) && !$unverified) || $this->verified($state, 'wordpress', 'wordpress:mutate') !== null) return;
         $cache = new LicenseCache();
         $payload = $cache->private_payload();
         $identity = new SiteIdentity();
@@ -176,7 +177,7 @@ final class CentralEntitlements
             || !hash_equals($identity->fingerprint($identity->current_payload()), (string) ($payload['site_fingerprint'] ?? ''))) return;
         // Unknown denied states are not migration candidates. An interrupted
         // first enrollment has an installation but no tokens or license ID.
-        if (!empty($state['denied']) && (empty($state['installation']['id']) || !empty($state['tokens']) || !empty($state['license_id']))) return;
+        if (!empty($state['denied']) && (empty($state['installation']['id']) || !empty($state['tokens']) || (!$unverified && !empty($state['license_id'])))) return;
         $lock_key = 'pixflow_design_saved_license_recovery_lock';
         $retry_key = 'pixflow_design_saved_license_recovery_' . hash('sha256', $target . '|' . $payload['site_fingerprint'] . '|' . $payload['license_key']);
         if (get_transient($retry_key) !== false) return;
@@ -202,6 +203,14 @@ final class CentralEntitlements
         $state = $this->state();
         if ($expected_state !== null && $state !== $expected_state) return ['ok' => false, 'code' => 'entitlement_state_changed'];
         if (empty($state['installation']['id'])) return ['ok' => false, 'code' => 'installation_missing'];
+        $installation = $state['installation'];
+        $payload = (new LicenseCache())->private_payload();
+        if (empty($payload['license_key']) || ($payload['validation_url'] ?? '') !== (new LicenseService())->validation_url()
+            || !self::validation_url_matches((string) $payload['validation_url'])
+            || ($installation['authority'] ?? '') !== self::authority()
+            || ($installation['site_url'] ?? '') !== SiteIdentity::normalize_url(site_url('/'))
+            || !hash_equals((string) ($installation['binding'] ?? ''), hash('sha256', self::authority() . '|' . $installation['site_url'] . '|' . $payload['license_key'])))
+            return ['ok' => false, 'code' => 'license_authority_mismatch'];
         // add_option is atomic across concurrent PHP requests. Recover a stale lock after its lease.
         $lock = (int) get_option(self::LOCK, 0);
         if ($lock && $lock < time() - 90) delete_option(self::LOCK);
@@ -209,17 +218,8 @@ final class CentralEntitlements
         try {
             // An interrupted first enrollment has no refreshable grant yet.
             // Both scheduled recovery and an explicit retry reuse its identity.
-            if (empty($state['tokens']) && empty($state['license_id']) && empty($state['denial_code'])) {
-                $payload = (new LicenseCache())->private_payload();
-                $identity = new SiteIdentity();
-                $installation = $state['installation'];
-                if (empty($payload['license_key']) || ($payload['validation_url'] ?? '') !== (new LicenseService())->validation_url()
-                    || !self::validation_url_matches((string) ($payload['validation_url'] ?? ''))
-                    || !hash_equals($identity->fingerprint($identity->current_payload()), (string) ($payload['site_fingerprint'] ?? ''))
-                    || ($installation['authority'] ?? '') !== self::authority()
-                    || ($installation['site_url'] ?? '') !== SiteIdentity::normalize_url(site_url('/'))
-                    || !hash_equals((string) ($installation['binding'] ?? ''), hash('sha256', self::authority() . '|' . $installation['site_url'] . '|' . $payload['license_key'])))
-                    return ['ok' => false, 'code' => 'license_authority_mismatch'];
+            if (empty($state['tokens']) && empty($state['license_id'])
+                && (empty($state['denial_code']) || $this->is_verification_failure($state))) {
                 return $this->exchange('enroll', $state, ['installation_id' => $installation['id'], 'license_key' => $payload['license_key'],
                     'site_url' => $installation['site_url'], 'public_key_pem' => $installation['public_key_pem']]);
             }
@@ -231,6 +231,10 @@ final class CentralEntitlements
     {
         if (!self::enabled()) return true;
         $state = $this->state();
+        if ($this->is_verification_failure($state) && function_exists('current_user_can') && current_user_can('edit_posts')) {
+            $this->recover_saved_license();
+            return $this->verified($this->state(), 'wordpress', $scope) !== null;
+        }
         $claims = $this->verified($state, 'wordpress', $scope);
         if ($claims !== null && time() >= $claims['refresh_after']) $this->schedule_refresh();
         if ($claims === null && empty($state['denied'])) $this->schedule_refresh();
@@ -274,6 +278,7 @@ final class CentralEntitlements
         $state['tokens'] = [];
         $state['network_unavailable'] = false;
         update_option(self::OPTION, $state, false);
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'access-denied', 0, '', $code);
         if (class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
     }
 
@@ -284,7 +289,8 @@ final class CentralEntitlements
         return ['enabled' => self::enabled(), 'valid' => $claims !== null,
             'offline' => $claims !== null && time() >= $claims['exp'],
             'expires_at' => $claims['exp'] ?? 0, 'offline_until' => $claims['offline_until'] ?? 0,
-            'code' => $state['denial_code'] ?? ''];
+            'code' => $state['denial_code'] ?? '',
+            'verification_check' => ($state['denial_code'] ?? '') === 'invalid_central_entitlement' ? ($state['verification_check'] ?? null) : null];
     }
 
     /** Server-side pairing export for protected bridge storage; never expose through a browser route. */
@@ -344,12 +350,14 @@ final class CentralEntitlements
         return is_array($state) ? $state : [];
     }
 
-    private function verified(array $state, string $audience, string $scope, ?array $recoveredLicense = null): ?array
+    private function verified(array $state, string $audience, string $scope, ?array $recoveredLicense = null, ?string &$failure = null): ?array
     {
         $installation = $state['installation'] ?? [];
+        $failure = 'installation_site';
         if (($installation['authority'] ?? '') !== self::authority()
             || ($installation['site_url'] ?? '') !== SiteIdentity::normalize_url(site_url('/'))) return null;
         $license = $recoveredLicense ?? (new LicenseCache())->private_payload();
+        $failure = 'saved_licence_binding';
         if (($license['license_id'] ?? '') !== ($state['license_id'] ?? '')
             || !self::validation_url_matches((string) ($license['validation_url'] ?? ''))
             || ($license['validation_url'] ?? '') !== (new LicenseService())->validation_url()) return null;
@@ -360,11 +368,12 @@ final class CentralEntitlements
             'iss' => self::authority(), 'aud' => $audience === 'wordpress' ? 'pixflow-design-wordpress-local' : 'pixflow-design-bridge',
             'installation_id' => $installation['id'] ?? '', 'site_fingerprint' => InstallationProof::site_fingerprint($installation['site_url']),
             'license_id' => $state['license_id'] ?? '', 'key_thumbprint' => $installation['thumbprint'] ?? '',
-        ], $scope, time(), !empty($state['network_unavailable']), !empty($state['denied']), (int) ($state['revision'] ?? 0));
+        ], $scope, time(), !empty($state['network_unavailable']), !empty($state['denied']), (int) ($state['revision'] ?? 0), $failure);
     }
 
     private function exchange(string $purpose, array $state, array $payload): array
     {
+        $before_exchange = $state;
         $base = self::delivery_origin() . '/api/licensing/v2';
         $http = new LicenseHttpClient();
         $challenge = $http->post_json($base . '/challenge', ['purpose' => $purpose, 'installation_id' => $state['installation']['id']]);
@@ -372,7 +381,7 @@ final class CentralEntitlements
         if ((int) ($challenge['status'] ?? 0) !== 200) return $this->rejected_response($challenge, $state);
         try {
             $envelope = (new InstallationProof())->envelope($state['installation'], $purpose, json_decode($challenge['body'], true, 32, JSON_THROW_ON_ERROR), $payload);
-        } catch (\Throwable) { $this->deny('invalid_challenge'); return ['ok' => false, 'code' => 'invalid_challenge']; }
+        } catch (\Throwable) { return $this->reject_unverified($state, 'challenge:unusable'); }
         $response = $http->post_json($base . '/' . $purpose, $envelope);
         if (is_wp_error($response)) return $this->transport_failure($state);
         if ((int) ($response['status'] ?? 0) !== 200) return $this->rejected_response($response, $state);
@@ -393,21 +402,48 @@ final class CentralEntitlements
         foreach (['wordpress' => 'wordpress:mutate', 'bridge' => 'bridge:mutate'] as $audience => $scope) {
             $token = (string) ($body['entitlements'][$audience]['token'] ?? '');
             $state['tokens'][$audience] = SecretBox::encrypt($token);
-            if (!SecretBox::is_encrypted($state['tokens'][$audience]) || $this->verified($state, $audience, $scope) === null) {
-                $this->deny('invalid_central_entitlement'); return ['ok' => false, 'code' => 'invalid_central_entitlement'];
+            $failure = $token === '' ? 'token_missing' : 'token_storage';
+            if (!SecretBox::is_encrypted($state['tokens'][$audience]) || $this->verified($state, $audience, $scope, null, $failure) === null) {
+                return $this->reject_unverified($before_exchange, $audience . ':' . $failure);
             }
         }
         $claims = $this->verified($state, 'wordpress', 'wordpress:mutate');
         $state['revision'] = $claims['revocation_version'];
         if (!$this->commit_exchange($state)) return ['ok' => false, 'code' => 'entitlement_state_changed'];
+        if (!empty($before_exchange['denial_code']) || !empty($before_exchange['network_unavailable'])) {
+            \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'recovered');
+        }
         $this->schedule_refresh(max(time() + 1, $claims['refresh_after']));
         return ['ok' => true];
     }
 
-    private function transport_failure(array $state): array
+    private function is_verification_failure(array $state): bool
+    {
+        // Older installations recorded unusable challenges separately.
+        return in_array($state['denial_code'] ?? '', ['invalid_central_entitlement', 'invalid_challenge'], true);
+    }
+
+    /** Reject the whole grant pair. A late response cannot replace a newer denial or grant. */
+    private function reject_unverified(array $expected, string $check): array
+    {
+        $rejected = $expected;
+        $rejected['tokens'] = [];
+        $rejected['denied'] = true;
+        $rejected['denial_code'] = 'invalid_central_entitlement';
+        $rejected['verification_check'] = $check;
+        $rejected['network_unavailable'] = false;
+        $rejected['epoch'] = (int) ($expected['epoch'] ?? 0) + 1;
+        if (!$this->replace_state($expected, $rejected)) return ['ok' => false, 'code' => 'entitlement_state_changed'];
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'verification-failed', 0, $check);
+        if (class_exists(\PixflowDesign\WordPress\Templates\TemplateContentCache::class)) \PixflowDesign\WordPress\Templates\TemplateContentCache::clear();
+        return ['ok' => false, 'code' => 'invalid_central_entitlement'];
+    }
+
+    private function transport_failure(array $state, int $http = 0): array
     {
         // An explicit denial is never erased by a later network outage.
         $state['network_unavailable'] = true;
+        \PixflowDesign\WordPress\Diagnostics\SupportJournal::record('licence', 'transport-failed', $http);
         $this->commit_exchange($state);
         $this->schedule_refresh(time() + 60);
         return ['ok' => false, 'code' => 'network_unavailable'];
@@ -417,9 +453,10 @@ final class CentralEntitlements
     {
         $status = (int) ($response['status'] ?? 0);
         // Temporary service failures retain only the authority's already-signed offline window.
-        if ($status === 408 || $status === 429 || ($status >= 500 && $status <= 599)) return $this->transport_failure($state);
+        if ($status === 408 || $status === 429 || ($status >= 500 && $status <= 599)) return $this->transport_failure($state, $status);
         $body = json_decode((string) ($response['body'] ?? ''), true);
-        $code = (string) ($body['code'] ?? $body['error']['code'] ?? 'central_entitlement_denied');
+        $code = is_array($body) ? ($body['code'] ?? $body['error']['code'] ?? null) : null;
+        if (!is_string($code) || $code === '') return $this->reject_unverified($state, 'authority:unreadable_response');
         $this->deny($code);
         return ['ok' => false, 'code' => $code];
     }

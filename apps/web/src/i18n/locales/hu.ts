@@ -3241,6 +3241,7 @@ export const hu: Dict = {
   'settings.orbit.sourceMarkdown': 'Forrás Markdown',
   'settings.memoryModelInlineHintByokNeutral': 'A memória a csevegéstől eltérő modellt használ. Alapértelmezés szerint a csevegési modellt használja.',
   'diagnostics.exportTitle': 'Diagnosztika exportálása',
+  'diagnostics.includeBridge': 'A Bridge, az eszköz és a Claude-bejelentkezés diagnosztikai adatainak hozzáadása',
   'diagnostics.exportButton': 'Diagnosztika exportálása',
   'diagnostics.exportHint': 'A legutóbbi alkalmazásnaplókat és gépinformációkat zip fájlba csomagolja a csapatnak való elküldéshez.',
   'diagnostics.exporting': 'Exportálás…',

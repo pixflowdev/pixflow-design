@@ -3241,6 +3241,7 @@ export const th: Dict = {
   'settings.memoryModelInlineFlashSaved': 'บันทึกแล้ว',
   'settings.memoryModelInlineFlashCleared': 'ล้างแล้ว',
   'diagnostics.exportTitle': 'ส่งออกข้อมูลวินิจฉัย',
+  'diagnostics.includeBridge': 'รวมข้อมูล Bridge อุปกรณ์ และการลงชื่อเข้าใช้ Claude',
   'diagnostics.exportButton': 'ส่งออกข้อมูลวินิจฉัย',
   'diagnostics.exportHint': 'รวบรวมบันทึกแอปล่าสุดและข้อมูลเครื่องไว้ในไฟล์ zip ที่คุณสามารถแชร์กับทีมได้',
   'diagnostics.exporting': 'กำลังส่งออก…',

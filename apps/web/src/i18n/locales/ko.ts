@@ -3241,6 +3241,7 @@ export const ko: Dict = {
   'settings.orbit.sourceMarkdown': '소스 Markdown',
   'settings.memoryModelInlineHintByokNeutral': '메모리는 채팅과 별도의 모델을 사용합니다. 기본값은 채팅 모델입니다.',
   'diagnostics.exportTitle': '진단 정보 내보내기',
+  'diagnostics.includeBridge': 'Bridge, 기기 및 Claude 로그인 진단 정보 포함',
   'diagnostics.exportButton': '진단 정보 내보내기',
   'diagnostics.exportHint': '최근 앱 로그와 기기 정보를 zip으로 묶어 팀에 공유할 수 있게 만듭니다.',
   'diagnostics.exporting': '내보내는 중…',

@@ -6417,6 +6417,7 @@ export interface Dict {
 
   // Diagnostics export
   'diagnostics.exportTitle': string;
+  'diagnostics.includeBridge': string;
   'diagnostics.exportButton': string;
   'diagnostics.exportHint': string;
   'diagnostics.exporting': string;

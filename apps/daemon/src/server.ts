@@ -7638,8 +7638,9 @@ export async function startServer({
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
   const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
-  const stopClaudeSignIn = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
-    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
+  const claudeLogin = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'), () => pixflowBridgeSiteInfo()?.key ?? '', RUNTIME_DATA_DIR,
+    () => pixflowBridgeSiteInfo()?.origin ?? '');
   registerClaudeUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
   registerCodexUsageRoute(app, requireLocalDaemonRequest,
@@ -10499,6 +10500,7 @@ export async function startServer({
         runsDir: path.join(RUNTIME_DATA_DIR, 'runs'),
         dataDir: RUNTIME_DATA_DIR,
         profile: 'pixflow',
+        bridgeSupport: claudeLogin.support,
       })(req, res, next);
     },
   );
@@ -20790,7 +20792,7 @@ export async function startServer({
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
       stopDirectHistoryRetention();
-      stopClaudeSignIn();
+      claudeLogin.stop();
       composioConnectorProvider.stopCatalogRefreshLoop();
       orbitService.stop();
       routineService?.stop();

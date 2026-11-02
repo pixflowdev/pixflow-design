@@ -1,7 +1,7 @@
 import express from 'express';
 import type { Server } from 'node:http';
 import { afterEach, expect, test, vi } from 'vitest';
-const login = vi.hoisted(() => ({ status: vi.fn(), start: vi.fn(), cancel: vi.fn(), openLoginPage: vi.fn(), submitCode: vi.fn() }));
+const login = vi.hoisted(() => ({ status: vi.fn(), start: vi.fn(), cancel: vi.fn(), openLoginPage: vi.fn(), submitCode: vi.fn(), diagnostics: vi.fn() }));
 vi.mock('../../src/runtimes/claude-sign-in.js', () => ({ createClaudeSignIn: () => login }));
 import { registerClaudeSignInRoutes } from '../../src/routes/claude-sign-in.js';
 const servers: Server[] = [];
@@ -13,7 +13,7 @@ async function fixture() {
   const app = express(); app.use(express.json({ limit: '16kb' }));
   registerClaudeSignInRoutes(app, (req, res, next) => {
     if (req.headers['x-test-auth'] !== 'allowed') res.sendStatus(403); else next();
-  }, () => ({}));
+  }, () => ({}), () => 'paired', undefined, () => 'https://paired.example');
   const server = await new Promise<Server>(resolve => { const server = app.listen(0, '127.0.0.1', () => resolve(server)); });
   servers.push(server);
   return `http://127.0.0.1:${(server.address() as { port: number }).port}/api/agents/claude/sign-in`;
@@ -26,6 +26,18 @@ test('every sign-in recovery action requires the existing Bridge authorization',
   }
   expect((await fetch(url)).status).toBe(403);
   for (const method of Object.values(login)) expect(method).not.toHaveBeenCalled();
+});
+test('support export requires Bridge authorization and the paired site', async () => {
+  const url = new URL('/api/pixflow/diagnostics/support', await fixture());
+  login.diagnostics.mockReturnValue({state:'not-observed',source:null,milestones:[],storage:'private-file'});
+  const denied: Record<string, string>[] = [{}, {'x-test-auth':'allowed'}, {'x-test-auth':'allowed','x-pixflow-site-key':'other'},
+    {'x-test-auth':'allowed','x-pixflow-site-key':'paired',origin:'https://other.example'}];
+  for (const headers of denied) {
+    expect((await fetch(url,{headers})).status).toBe(403);
+  }
+  const response=await fetch(url,{headers:{'x-test-auth':'allowed','x-pixflow-site-key':'paired',origin:'https://paired.example'}});
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({schema:'pixflow.bridge-support.v1',claude:{state:'not-observed'}});
 });
 test('submits only the active-attempt fields and returns status without reflecting the code', async () => {
   const url = await fixture();

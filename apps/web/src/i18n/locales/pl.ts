@@ -3241,6 +3241,7 @@ export const pl: Dict = {
   'settings.orbit.sourceMarkdown': 'Źródłowy Markdown',
   'settings.memoryModelInlineHintByokNeutral': 'Pamięć używa modelu innego niż czat. Domyślnie korzysta z modelu czatu.',
   'diagnostics.exportTitle': 'Eksportuj diagnostykę',
+  'diagnostics.includeBridge': 'Dołącz informacje o Bridge, urządzeniu i logowaniu do Claude',
   'diagnostics.exportButton': 'Eksportuj diagnostykę',
   'diagnostics.exportHint': 'Pakuje ostatnie logi aplikacji i informacje o urządzeniu w archiwum zip do wysłania zespołowi.',
   'diagnostics.exporting': 'Eksportowanie…',

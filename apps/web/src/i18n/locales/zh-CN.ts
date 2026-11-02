@@ -3242,6 +3242,7 @@ export const zhCN: Dict = {
   'settings.orbit.openArtifact': '打开 artifact',
   'settings.orbit.sourceMarkdown': '源 Markdown',
   'diagnostics.exportTitle': '导出诊断日志',
+  'diagnostics.includeBridge': '包含 Bridge、设备及 Claude 登录的诊断信息',
   'diagnostics.exportButton': '导出诊断日志',
   'diagnostics.exportHint': '将近期的应用日志和机器信息打包成 zip,方便发给我们排查问题。',
   'diagnostics.exporting': '导出中…',

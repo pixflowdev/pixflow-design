@@ -3241,6 +3241,7 @@ export const it: Dict = {
   'settings.orbit.sourceMarkdown': 'Markdown sorgente',
   'settings.memoryModelInlineHintByokNeutral': 'La memoria usa un modello separato da quello della chat. Per impostazione predefinita usa il modello della chat.',
   'diagnostics.exportTitle': 'Esporta diagnostica',
+  'diagnostics.includeBridge': 'Includi dettagli su Bridge, dispositivo e accesso a Claude',
   'diagnostics.exportButton': 'Esporta diagnostica',
   'diagnostics.exportHint': 'Raccoglie i log recenti dell\'app e le informazioni sulla macchina in un file zip che puoi condividere con il team.',
   'diagnostics.exporting': 'Esportazione…',

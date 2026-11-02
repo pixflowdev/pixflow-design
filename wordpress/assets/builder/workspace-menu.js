@@ -188,6 +188,16 @@
     designSystemTool.hidden = !Boolean(options.initialDesignSystemVisible);
     var translationsTool = addTool('', 'translations', 'translations');
     translationsTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'siteTranslations.title');
+    var updateBadge = document.createElement('span');
+    updateBadge.className = 'pixflow-design-toolbar-menu__translation-update';
+    updateBadge.hidden = true;
+    var updateText = document.createElement('span');
+    updateText.className = 'screen-reader-text';
+    updateText.setAttribute('data-pixflow-i18n-text', 'siteTranslations.updatesNeeded');
+    updateText.textContent = 'Translations need updating';
+    updateBadge.appendChild(updateText);
+    translationsTool.querySelector('button').appendChild(updateBadge);
+    var stopWatchingTranslations = null;
     translationsTool.hidden = true;
     tools.appendChild(toolGrid);
     menu.appendChild(tools);
@@ -257,6 +267,13 @@
       }
       workspaceButton.setAttribute('aria-label', workspaceLabel);
       tools.hidden = !onboardingCompleted || workspaceButton.hidden;
+      if (!menu.hidden && !tools.hidden && translationsLabel && app.watchTranslationUpdates) {
+        if (!stopWatchingTranslations) stopWatchingTranslations = app.watchTranslationUpdates(function (status) {
+          updateBadge.hidden = !(status && status.needsUpdate);
+        });
+      } else {
+        stopUpdates();
+      }
       divider.hidden = tools.hidden;
       // Settings is also the Free setup/recovery entry point. A legacy or
       // incomplete onboarding flag must never strand users in Appearance.
@@ -297,16 +314,23 @@
       }
     }
 
+    function stopUpdates() {
+      if (stopWatchingTranslations) stopWatchingTranslations();
+      stopWatchingTranslations = null;
+      updateBadge.hidden = true;
+    }
+
     function close() {
+      stopUpdates();
       menu.hidden = true;
       trigger.setAttribute('aria-expanded', 'false');
     }
 
     function open() {
       refreshTheme();
+      menu.hidden = false;
       refreshWorkspaceState();
       position();
-      menu.hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
       // Keep the server-rendered visibility for the first paint and refresh it
       // in the background. The menu must never wait on WordPress REST to lay out.
@@ -355,6 +379,7 @@
       refreshWorkspaceState: refreshWorkspaceState,
       refreshDesignSystemVisibility: refreshDesignSystemVisibility,
       destroy: function () {
+        stopUpdates();
         document.removeEventListener('pointerdown', onDocumentPointerDown);
         document.removeEventListener('keydown', onDocumentKeyDown);
         window.removeEventListener('resize', onViewportChange);

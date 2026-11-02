@@ -1,23 +1,23 @@
 {
   "version": "2.2.0",
   "deployment": "hold",
-  "core": "42bff0c448cb853d60c89279ea23ab01da42476c",
-  "pro": "63252bef23cce361b2aeb81b28fb266834f4ef65",
+  "core": "a8a920e780bb47ef0dcfd03e9ceff8e0ec44267b",
+  "pro": "dc6bbd9ccd9721008a3c15b9ad311c21c885ab88",
   "bridgeCore": "50744ab415c465f728b4e236fe65ffb6d81460f2",
   "bridgePro": "387c46e406d4b4f8e6a69521fc5650b98c3990c8",
   "moduleApi": 14,
   "packages": [
     {
       "file": "free/pixflow-design-2.2.0.zip",
-      "bytes": 2458053,
-      "sha256": "81a77bfe3250e972db4fd46527c5df9b58b38a716e82526ce42899d825c94d84",
-      "githubAssetId": 701942194
+      "bytes": 2458197,
+      "sha256": "5315b91747771b3845b4fe585e3c38a138c70c3f7cf3e3dc12e35a70a1d71c8a",
+      "githubAssetId": 702097461
     },
     {
       "file": "pro/pixflow-design-pro-2.2.0.zip",
-      "bytes": 7397206,
-      "sha256": "81f994b4035d3fc419235ef850a3d8bb95c9bc8caa97c0793e0a50b2c3918d01",
-      "githubAssetId": 701951375
+      "bytes": 7397339,
+      "sha256": "5068944abebe310afbb6322048cd5c723b3576091d44ecaf7cd9d3d2360855e0",
+      "githubAssetId": 702097915
     },
     {
       "file": "bridge/install-bridge-2.2.0.ps1",
@@ -187,23 +187,23 @@
     {
       "repo": "pixflow-design",
       "tag": "v2.2.0",
-      "rev": "42bff0c448cb853d60c89279ea23ab01da42476c",
+      "rev": "a8a920e780bb47ef0dcfd03e9ceff8e0ec44267b",
       "releaseId": 431501746,
-      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-1eb398b475e14e9a6ed9"
+      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-3da11c327e73213b4af6"
     },
     {
       "repo": "pixflow-design-pro",
       "tag": "v2.2.0",
-      "rev": "63252bef23cce361b2aeb81b28fb266834f4ef65",
+      "rev": "dc6bbd9ccd9721008a3c15b9ad311c21c885ab88",
       "releaseId": 431501814,
-      "url": "https://github.com/pixflowdev/pixflow-design-pro/releases/tag/untagged-f3340a3b143017d859c9"
+      "url": "https://github.com/pixflowdev/pixflow-design-pro/releases/tag/untagged-16f08eb491529468f737"
     },
     {
       "repo": "pixflow-design",
       "tag": "bridge-v2.2.0",
       "rev": "50744ab415c465f728b4e236fe65ffb6d81460f2",
       "releaseId": 431501883,
-      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-540fb9a9ef2f74ad5218"
+      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-1b0b14a61ebf62b72f69"
     }
   ],
   "windows": {

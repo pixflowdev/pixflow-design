@@ -2398,7 +2398,6 @@ function ThinkingBlock({
 }) {
   const t = useT();
   const [override, setOverride] = useState<boolean>();
-  const [hasOpened, setHasOpened] = useState(false);
   const isThinking = streaming === true;
   const open = override ?? isThinking;
   // Thinking events carry no server timestamps, so the "用时 X 秒" duration is
@@ -2423,12 +2422,12 @@ function ThinkingBlock({
       : t("assistant.thought");
   // Collapsed previews never need to parse the full tool transcript. Treat the
   // bounded prefix as partial so a protocol tag cut at the boundary stays hidden.
-  const showDetail = open || hasOpened;
+  const showDetail = open;
   const decoded = useMemo(() => splitRichAnswer(stripArtifact(showDetail ? text : text.slice(0, 2000)), isThinking || !showDetail), [text, isThinking, showDetail]);
   const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').slice(0, 500).replace(/\s+/g, ' ').trim();
   return (
     <TraceCollapsible className="thinking-block" data-trace-kind="reasoning" open={open}
-      onOpenChange={value => { if (value) setHasOpened(true); setOverride(value); }}>
+      onOpenChange={setOverride}>
       <TraceCollapsibleTrigger className="thinking-toggle">
         <TraceLine status={isThinking ? 'running' : undefined}>
           <TraceIcon><Icon name={isThinking ? 'spinner' : 'sparkles'} size={14} /></TraceIcon>
@@ -2729,7 +2728,7 @@ function ToolGroupCard({
     rows.push(<TraceCollapsible key={batch[0]!.use.id} data-trace-kind="commands">
       <TraceCollapsibleTrigger><TraceLine><TraceTitle>{t('activity.completed.command')}</TraceTitle>
         <TraceDescription>{batch.length}</TraceDescription></TraceLine></TraceCollapsibleTrigger>
-      <TraceCollapsibleContent>{batch.map(card)}</TraceCollapsibleContent>
+      <TraceCollapsibleContent keepMounted>{batch.map(card)}</TraceCollapsibleContent>
     </TraceCollapsible>);
   }
   for (const item of dedupeSnapshotToolRetries(items)) {

@@ -456,23 +456,27 @@ function ToolTrace({ title, description, result, runStreaming, runSucceeded, det
   runSucceeded: boolean; detail?: (() => ReactNode) | undefined; hideOutput?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [visited, setVisited] = useState(false);
-  const status = result?.isError ? 'error' : !result && runStreaming ? 'running'
-    : !result && !runSucceeded ? 'pending' : undefined;
+  const t = useT();
+  const status = result?.isError ? 'error' : !result && runStreaming ? 'running' : undefined;
+  const label = result?.isError ? `${title} · ${t('tool.error')}` : title;
   const line = <TraceLine status={status}>
     <ResultBadge className={styles.status} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-    <TraceTitle title={title}>{title}</TraceTitle>
+    <TraceTitle title={label}>{label}</TraceTitle>
     {description ? <TraceDescription>{description}</TraceDescription> : null}
   </TraceLine>;
   if (!detail && !result?.content) return <div data-trace-kind="tool">{line}</div>;
   return <TraceCollapsible data-trace-kind="tool" open={open}
-    onOpenChange={value => { if (value) setVisited(true); setOpen(value); }}>
+    onOpenChange={setOpen}>
     <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
-    <TraceCollapsibleContent className={styles.detail}>{visited ? <>
-      {detail ? <div className={styles.input}>{detail()}</div> : null}
+    <TraceCollapsibleContent className={styles.detail}>
+      {detail ? <ToolInput render={detail} /> : null}
       {result?.content && !hideOutput ? <ToolOutput content={result.content} /> : null}
-    </> : null}</TraceCollapsibleContent>
+    </TraceCollapsibleContent>
   </TraceCollapsible>;
+}
+
+function ToolInput({ render }: { render: () => ReactNode }) {
+  return <div className={styles.input}>{render()}</div>;
 }
 
 // Formatting is presentation-only: persisted provider output is never rewritten.

@@ -29,7 +29,7 @@ export function TraceCollapsible({ className = '', open: controlledOpen, default
   const open = controlledOpen ?? localOpen;
   return <TraceOpenContext.Provider value={open}>
     <Collapsible.Root data-slot="trace-collapsible" className={`${styles.root} ${className}`} {...props} open={open}
-      onOpenChange={(value, event) => { setLocalOpen(value); onOpenChange?.(value, event); }} />
+      onOpenChange={(value, event) => { onOpenChange?.(value, event); if (!event.isCanceled) setLocalOpen(value); }} />
   </TraceOpenContext.Provider>;
 }
 export function TraceCollapsibleTrigger({ className = '', children, ...props }: ComponentProps<typeof Collapsible.Trigger>) {
@@ -39,9 +39,9 @@ export function TraceCollapsibleTrigger({ className = '', children, ...props }: 
 }
 export function TraceCollapsibleContent({ className = '', children, ...props }: ComponentProps<typeof Collapsible.Panel>) {
   const open = useContext(TraceOpenContext);
-  return <Collapsible.Panel keepMounted data-slot="trace-collapsible-content" className={styles.panel} {...props}>
+  return <Collapsible.Panel data-slot="trace-collapsible-content" className={styles.panel} {...props}>
     <div className={styles.inner} aria-hidden={!open} ref={node => { node?.toggleAttribute('inert', !open); }}>
-      <div className={`${styles.content} ${className}`}>{children}</div>
+      <div data-slot="trace-collapsible-content-inner" className={`${styles.content} ${className}`}>{children}</div>
     </div>
   </Collapsible.Panel>;
 }

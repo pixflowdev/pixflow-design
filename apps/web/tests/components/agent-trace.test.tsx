@@ -6,6 +6,8 @@ import { SharedChatRows } from '../../src/components/shared-chat/SharedChatRows'
 import type { AgentEvent, ChatMessage } from '../../src/types';
 import { ToolCard } from '../../src/components/ToolCard';
 
+import { TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from '../../src/components/chat/Trace';
+
 afterEach(cleanup);
 
 it('keeps a manually opened tool detail when the outer timeline is folded and reopened', () => {
@@ -60,7 +62,7 @@ it('bounds large tool output and keeps closed details out of keyboard navigation
   fireEvent.click(view.getByRole('button'));
   expect(view.container.querySelector('pre')?.textContent).toBe(content.slice(0, 3999) + '…');
   fireEvent.click(view.getByRole('button'));
-  expect(view.container.querySelector('[inert][aria-hidden="true"]')).not.toBeNull();
+  expect(view.container.querySelector('pre')).toBeNull();
 });
 
 it.each([{}, []])('omits an empty generic tool input instead of displaying JSON punctuation', input => {
@@ -173,4 +175,11 @@ it('folds consecutive successful commands while leaving the failed command visib
   expect(view.getAllByRole('button', {name:/Terminal/})).toHaveLength(1);
   fireEvent.click(batch);
   expect(view.getAllByRole('button', {name:/Terminal/})).toHaveLength(3);
+});
+it('unmounts closed Trace details by default and mounts them when opened', () => {
+  const view = render(<TraceCollapsible><TraceCollapsibleTrigger>Details</TraceCollapsibleTrigger>
+    <TraceCollapsibleContent><a href="#report">Report</a></TraceCollapsibleContent></TraceCollapsible>);
+  expect(view.queryByText('Report')).toBeNull();
+  fireEvent.click(view.getByRole('button'));
+  expect(view.getByRole('link', {name:'Report'})).toBeTruthy();
 });

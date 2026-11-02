@@ -85,6 +85,7 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 * Recover Pro access using the saved licence after a temporary verification failure. Preserve the installed key across site URL mismatches and temporary template validation errors.
 * License settings distinguish an unavailable status from an inactive licence and offer Retry without asking for the key again.
+* Choose Continue without AI during setup to use Pixflow without connecting an AI subscription or entering an API key.
 
 = 2.0.6 =
 

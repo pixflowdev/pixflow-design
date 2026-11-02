@@ -600,6 +600,20 @@ function handleCodexEvent(obj: unknown, onEvent: StreamEventHandler, state: Pars
     return true;
   }
 
+  const image = obj.item;
+  if (isRecord(image) && (image.type === 'image_generation' || image.type === 'image_generation_call')
+    && typeof image.id === 'string' && (obj.type === 'item.started' || obj.type === 'item.completed')) {
+    if (!state.codexToolUses.has(image.id)) {
+      state.codexToolUses.add(image.id);
+      onEvent({ type: 'tool_use', name: 'codex.imagegen', id: image.id, input: { startedAtMs: Date.now() } });
+    }
+    if (obj.type === 'item.completed') {
+      onEvent({ type: 'tool_result', toolUseId: image.id, isError: image.status === 'failed',
+        content: typeof image.saved_path === 'string' ? image.saved_path : String(image.status ?? 'completed') });
+    }
+    return true;
+  }
+
   if (obj.type === 'error') {
     const message = extractErrorMessage(obj.message ?? obj.error, 'Codex error');
     // Reconnecting events are recoverable — treat as status warning, not fatal

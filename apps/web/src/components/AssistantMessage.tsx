@@ -778,7 +778,7 @@ function AssistantMessageImpl({
             stepLabel={steps > 1 ? t('activity.steps', { count: steps }) : undefined}
             issueLabel={errors ? `${t('tool.error')} · ${errors}` : undefined}>{renderSection}</ActivityDisclosure>;
         })}
-        {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} />)}
+        {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} startedAtMs={item.startedAtMs} />)}
         {projectId && displayedProduced.some(isInlineMedia) && <GeneratedMedia files={displayedProduced.filter(isInlineMedia)} projectId={projectId} onRequestOpenFile={onRequestOpenFile} />}
         {!streaming && displayedProduced.some(file => !isInlineMedia(file)) && projectId ? (
           <ProducedFiles

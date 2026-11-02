@@ -53,8 +53,8 @@ const LICENSE_STATUS_SESSION_CACHE_KEY = 'pixflow-design:license-status-cache';
 const LICENSE_STATUS_CACHE_MS = 30_000;
 
 function hasLicenseDecision(status: PixflowLicenseStatus | null | undefined): status is PixflowLicenseStatus {
-  return typeof status?.license?.valid === 'boolean' && typeof status.license.present === 'boolean'
-    && typeof status.license.status === 'string';
+  // Older sites can return a decision without the newer display metadata.
+  return typeof status?.license?.valid === 'boolean';
 }
 
 function readCachedPixflowLicenseStatus(): PixflowLicenseStatus | null {

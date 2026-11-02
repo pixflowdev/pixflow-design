@@ -81,6 +81,11 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 == Changelog ==
 
+= Unreleased =
+
+* Recover Pro access using the saved licence after a temporary verification failure. Preserve the installed key across site URL mismatches and temporary template validation errors.
+* License settings distinguish an unavailable status from an inactive licence and offer Retry without asking for the key again.
+
 = 2.0.6 =
 
 * Let WordPress and builders manage native saving without Pixflow rejecting saves with an additional HTTP 409 guard.

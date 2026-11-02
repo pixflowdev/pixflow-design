@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Recover Pro access with the saved licence after a temporary verification failure. A different site URL during cron or CLI requests, or an interrupted template token refresh, no longer erases the installed key.
+- License settings show **Unavailable** and **Retry** when WordPress cannot return a licence decision. The upgrade offer stays hidden while a saved licence awaits verification.
+
 ## [2.1.4] - Unreleased
 
 - Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.

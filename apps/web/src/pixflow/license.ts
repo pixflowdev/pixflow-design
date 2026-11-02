@@ -51,17 +51,22 @@ export type PixflowLicenseStatus = {
 const LICENSE_STATUS_SESSION_CACHE_KEY = 'pixflow-design:license-status-cache';
 const LICENSE_STATUS_CACHE_MS = 30_000;
 
+function hasLicenseDecision(status: PixflowLicenseStatus | null | undefined): status is PixflowLicenseStatus {
+  return typeof status?.license?.valid === 'boolean' && typeof status.license.present === 'boolean'
+    && typeof status.license.status === 'string';
+}
+
 function readCachedPixflowLicenseStatus(): PixflowLicenseStatus | null {
   if (typeof window === 'undefined') return null;
   const cached = window.__PIXFLOW_DESIGN_LICENSE_STATUS_CACHE__;
-  if (cached && Date.now() - cached.checkedAt < LICENSE_STATUS_CACHE_MS) {
+  if (cached && hasLicenseDecision(cached.value) && Date.now() - cached.checkedAt < LICENSE_STATUS_CACHE_MS) {
     return cached.value;
   }
   try {
     const raw = window.sessionStorage.getItem(LICENSE_STATUS_SESSION_CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { checkedAt?: number; value?: PixflowLicenseStatus };
-    if (!parsed.value || Date.now() - Number(parsed.checkedAt || 0) >= LICENSE_STATUS_CACHE_MS) return null;
+    if (!hasLicenseDecision(parsed.value) || Date.now() - Number(parsed.checkedAt || 0) >= LICENSE_STATUS_CACHE_MS) return null;
     window.__PIXFLOW_DESIGN_LICENSE_STATUS_CACHE__ = {
       value: parsed.value,
       checkedAt: Number(parsed.checkedAt || Date.now()),
@@ -541,6 +546,7 @@ export async function fetchPixflowLicenseStatus(
     }
   }
 
+  if (!hasLicenseDecision(response.body)) throw new Error('Could not read Pixflow license status.');
   writeCachedPixflowLicenseStatus(response.body);
   await syncBridgeEntitlement(response.body);
   await publishLicenseStatus(response.body, requestGeneration, options.force);
@@ -618,6 +624,7 @@ function mutatePixflowLicense(operation: 'validate' | 'reset' | 'recovery/comple
     if (generation !== licenseMutationGeneration && latestLicenseMutation) return latestLicenseMutation;
     if (!response.ok) throw new Error(response.body?.message ?? `Pixflow license ${operation} failed.`);
     const committedGeneration = ++licenseMutationGeneration;
+    if (!hasLicenseDecision(response.body)) throw new Error('Could not read Pixflow license status.');
     writeCachedPixflowLicenseStatus(response.body);
     if (operation === 'reset') {
       if (!response.body.central_entitlement?.enabled) await clearBridgeEntitlement();

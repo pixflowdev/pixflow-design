@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace PixflowDesign\WordPress\Diagnostics;
 
 use PixflowDesign\WordPress\Onboarding\UserOnboardingProfile;
+use PixflowDesign\WordPress\License\CentralEntitlements;
+use PixflowDesign\WordPress\License\LicenseCache;
 use PixflowDesign\WordPress\Providers\ProviderSettingsRepository;
 use PixflowDesign\WordPress\Resources\ResourcePackRepository;
 
@@ -31,6 +33,8 @@ final class DiagnosticsSnapshotService
     {
         $user_id = get_current_user_id();
         $theme = wp_get_theme();
+        // Read existing state only. Generating a support ZIP must not renew an entitlement.
+        $entitlement = (new CentralEntitlements())->status();
         $parent = $theme->parent();
         return [
             'schema' => 'pixflow.wordpress-diagnostics.v1',
@@ -58,6 +62,12 @@ final class DiagnosticsSnapshotService
                 'serverSoftware' => sanitize_text_field((string) ($_SERVER['SERVER_SOFTWARE'] ?? 'unknown')),
             ],
             'pixflow' => [
+                'licensing' => [
+                    'savedLicense' => (new LicenseCache())->summary()['present'],
+                    'verified' => $entitlement['valid'],
+                    'verificationFailed' => $entitlement['code'] === 'invalid_central_entitlement',
+                    'verificationCheck' => $entitlement['verification_check'],
+                ],
                 'pluginVersion' => defined('PIXFLOW_DESIGN_VERSION') ? PIXFLOW_DESIGN_VERSION : 'unknown',
                 'requiredBridgeVersion' => defined('PIXFLOW_DESIGN_BRIDGE_VERSION') ? PIXFLOW_DESIGN_BRIDGE_VERSION : 'unknown',
                 'provider' => $this->provider_summary($this->providers->get($user_id)),

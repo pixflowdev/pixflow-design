@@ -25,7 +25,9 @@ final class ProUpgradeNotice
         $screen = get_current_screen();
         // Keep immersive editors free of promotional chrome.
         if (!$screen || in_array($screen->base, ['post', 'site-editor', 'customize'], true)) return null;
-        $pro = (new LicenseService())->status()['pro'] ?? null;
+        $status = (new LicenseService())->status();
+        if (!empty($status['license']['present']) && ($status['central_entitlement']['code'] ?? '') === 'invalid_central_entitlement') return null;
+        $pro = $status['pro'] ?? null;
         if (!is_array($pro) || (!empty($pro['eligible']) && ($pro['installation'] ?? '') === 'active')) return null;
         if (!empty($pro['eligible'])) {
             $inactive = ($pro['installation'] ?? '') === 'inactive';

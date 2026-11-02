@@ -8,9 +8,9 @@ import type { AgentEvent } from '../../src/types';
 afterEach(cleanup);
 
 const content = 'Check the [dashboard](https://example.org/dashboard) first. The guide explains why. [Source guide](https://example.org/guide?hl=en)';
-function reply(events: AgentEvent[]) {
+function reply(events: AgentEvent[], prose = content) {
   return render(<AssistantMessage projectId={null} streaming={false} message={{
-    role: 'assistant', id: 'research', content, events: [...events, { kind: 'text', text: content }],
+    role: 'assistant', id: 'research', content: prose, events: [...events, { kind: 'text', text: prose }],
   }} />);
 }
 
@@ -21,6 +21,16 @@ it('opens a saved research citation while keeping the inline navigation link usa
   expect(trigger.textContent).toBe('example.org');
   fireEvent.click(trigger);
   expect((await view.findByRole('link', { name: /example.org/ })).getAttribute('href')).toBe('https://example.org/guide?hl=en');
+});
+
+it('shows an inline source embedded in a researched sentence', () => {
+  const view = reply([{ kind: 'activity', id: 'search', label: 'Searched', origin: 'provider',
+    phase: 'researching', status: 'succeeded' }],
+    'The official [Media Library documentation](https://wordpress.org/documentation/) explains how to view uploaded media.');
+  expect(view.getByRole('button', { name: /Media Library documentation/ })).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'Sources (1)' }));
+  expect(view.getByRole('link', { name: /Media Library documentation/ }).getAttribute('href'))
+    .toBe('https://wordpress.org/documentation/');
 });
 
 it('leaves ordinary response links alone when there is no research event', () => {

@@ -1,8 +1,6 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@open-design/components';
-import { Icon } from '../Icon';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIcon, type ActivityIconKind } from './ActivityIcon';
-import styles from './ActivityDisclosure.module.css';
+import { Trace, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent, TraceLine, TraceIcon, TraceTitle, TraceDescription } from './Trace';
 
 /** Presentation only: source events and their ordering stay untouched. */
 export function groupActivity<T>(blocks: T[], eligible: (block: T) => boolean) {
@@ -16,12 +14,12 @@ export function groupActivity<T>(blocks: T[], eligible: (block: T) => boolean) {
   return groups;
 }
 
-export function ActivityDisclosure({ label, icon = 'tools', active, issueLabel, children }: {
-  label: string; icon?: ActivityIconKind; active: boolean; issueLabel?: string; children: () => ReactNode;
+export function ActivityDisclosure({ label, icon = 'tools', active, live = active, soloReasoning = false, issueLabel, stepLabel, children }: {
+  label: string; icon?: ActivityIconKind; active: boolean; live?: boolean; soloReasoning?: boolean; issueLabel?: string; stepLabel?: string; children: () => ReactNode;
 }) {
-  const id = useId();
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [override, setOverride] = useState<boolean>();
+  const open = soloReasoning || (override ?? live);
+  const [visited, setVisited] = useState(open);
   const [displayed, setDisplayed] = useState({ label, icon });
   const changedAt = useRef(Date.now());
   useEffect(() => {
@@ -32,21 +30,18 @@ export function ActivityDisclosure({ label, icon = 'tools', active, issueLabel, 
     return () => clearTimeout(timer);
   }, [label, icon, displayed, active]);
   useEffect(() => {
-    if (open) return;
-    const timer = setTimeout(() => setMounted(false), 160);
-    return () => clearTimeout(timer);
+    if (open) setVisited(true);
   }, [open]);
-  return <div className={styles.root} data-activity-group data-active={active}>
-    <Button variant="ghost" className={styles.trigger} aria-expanded={open} aria-controls={id}
-      onClick={() => { setMounted(true); setOpen(value => !value); }}>
-      <ActivityIcon kind={!active ? icon : displayed.icon} />
-      <span className={`${styles.label} ${active ? styles.shimmer : ''}`}>{!active ? label : displayed.label}</span>
-      {issueLabel ? <span className={styles.issue}>{issueLabel}</span> : null}
-      <span className={`${styles.chevron} ${open ? styles.rotated : ''}`}><Icon name="chevron-right" size={12} /></span>
-    </Button>
-    <div id={id} className={`${styles.collapse} ${open ? styles.open : ''}`} aria-hidden={!open}
-      ref={node => { node?.toggleAttribute('inert', !open); }}>
-      <div className={styles.inner}><div className={styles.body}>{mounted ? children() : null}</div></div>
-    </div>
-  </div>;
+  return <TraceCollapsible data-activity-group data-active={active} data-solo-reasoning={soloReasoning || undefined} open={open}
+    onOpenChange={setOverride}>
+    {!soloReasoning && <TraceCollapsibleTrigger>
+      <TraceLine status={active ? 'running' : issueLabel ? 'error' : undefined}>
+        <TraceIcon><ActivityIcon kind={!active ? icon : displayed.icon} /></TraceIcon>
+        <TraceTitle>{!active ? label : displayed.label}</TraceTitle>
+        {stepLabel && <TraceDescription>{stepLabel}</TraceDescription>}
+        {issueLabel ? <TraceDescription>{issueLabel}</TraceDescription> : null}
+      </TraceLine>
+    </TraceCollapsibleTrigger>}
+    <TraceCollapsibleContent>{open || visited ? <Trace data-chain-of-thought="">{children()}</Trace> : null}</TraceCollapsibleContent>
+  </TraceCollapsible>;
 }

@@ -17,6 +17,7 @@ import { Fragment, useEffect, useRef, useState, type MouseEvent, type ReactNode 
 import { useT } from '../i18n';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { Icon } from '../components/Icon';
+import { InlineCitation, citationSource } from '../components/chat/InlineCitation';
 
 export type MarkdownLinkClickHandler = (
   href: string,
@@ -33,6 +34,8 @@ export interface RenderMarkdownOptions {
    * behavior for every link.
    */
   onLinkClick?: MarkdownLinkClickHandler;
+  /** The assistant's turn includes a provider web search. */
+  searchedWeb?: boolean;
 }
 
 export function renderMarkdown(input: string, options?: RenderMarkdownOptions): ReactNode {
@@ -457,13 +460,11 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
           {collapsible ? (
             <button
               type="button"
-              className="md-code-action md-code-action-icon"
+              className="md-code-action"
               onClick={() => setCollapsed((c) => !c)}
               aria-expanded={!collapsed}
-              aria-label={collapsed ? t('designFiles.expandGroup') : t('designFiles.collapseGroup')}
-              title={collapsed ? t('designFiles.expandGroup') : t('designFiles.collapseGroup')}
             >
-              <Icon name={collapsed ? 'chevron-right' : 'chevron-down'} size={13} />
+              {t(collapsed ? 'designFiles.expandGroup' : 'designFiles.collapseGroup')}
             </button>
           ) : null}
           <button
@@ -558,12 +559,7 @@ function renderColorToken(value: string, key: string): ReactNode {
 // and plain text. We walk the string with a regex that matches whichever
 // delimiter shows up next; everything between delimiters becomes a text
 // span (which itself still gets autolink scanning).
-function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode {
-  const out: ReactNode[] = [];
-  const onLinkClick = options?.onLinkClick;
-  const linkClickHandler = onLinkClick
-    ? (href: string) => (event: MouseEvent<HTMLAnchorElement>) => onLinkClick(href, event)
-    : undefined;
+function inlineTokenPattern(): RegExp {
   // Order matters:
   //  1. inline code first so its contents are not re-tokenized as bold/italic.
   //  2. image syntax `![alt](url)` BEFORE the link branch. Both share
@@ -585,8 +581,39 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
   //     `_conditions format: `...user_logged_in...``) can be misread as one
   //     long `_..._` emphasis span and consume the code-span delimiter.
   //  7. bold (**a** / __a__) before italic (*a* / _a_).
-  const re =
-    /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+}
+
+function linkedSource(text: string, match: RegExpExecArray): URL | null {
+  return match[4] && match[5] && /[.!?。！？]\s*[(（]?\s*$/.test(text.slice(0, match.index))
+    ? citationSource(match[5]) : null;
+}
+
+/** Collect the same labelled citations shown inline, in first-reference order. */
+export function collectMarkdownSources(prose: string[]): Array<{ title: string; url: URL }> {
+  const sources = new Map<string, { title: string; url: URL }>();
+  for (const text of prose) {
+    for (const block of parseBlocks(text)) {
+      const runs = 'text' in block ? [block.text] : 'items' in block ? block.items
+        : block.kind === 'table' ? [...block.headers, ...block.rows.flat()] : [];
+      for (const run of runs) {
+        for (const match of run.matchAll(inlineTokenPattern())) {
+          const url = linkedSource(run, match);
+          if (url && !sources.has(url.href)) sources.set(url.href, { title: match[4]!, url });
+        }
+      }
+    }
+  }
+  return Array.from(sources.values());
+}
+
+function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode {
+  const out: ReactNode[] = [];
+  const onLinkClick = options?.onLinkClick;
+  const linkClickHandler = onLinkClick
+    ? (href: string) => (event: MouseEvent<HTMLAnchorElement>) => onLinkClick(href, event)
+    : undefined;
+  const re = inlineTokenPattern();
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   let key = 0;
@@ -619,8 +646,9 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
       }
     } else if (m[4] && m[5]) {
       const href = m[5];
+      const source = options?.searchedWeb ? linkedSource(text, m) : null;
       out.push(
-        <a
+        source ? <InlineCitation key={key++} source={source} title={m[4]} /> : <a
           key={key++}
           className="md-link"
           href={href}

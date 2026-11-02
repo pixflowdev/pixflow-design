@@ -49,7 +49,7 @@ describe('AssistantMessage tool status', () => {
     expect(row).not.toBeNull();
     expect(row?.textContent).toContain('Researching current public sources');
     expect(row?.textContent).toContain('2 sources found');
-    expect(row?.querySelector('.shimmer-text')).not.toBeNull();
+    expect(row?.querySelector('[data-slot="trace-line"][data-status="running"] [data-slot="trace-title"]')).not.toBeNull();
   });
 
   it('settles research activity and renders bounded source links without a shimmer', () => {

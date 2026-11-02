@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { TraceLine, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -10,7 +12,8 @@ import { useT as usePixflowUiTranslation } from '../i18n';
  *      Edit / Read / Bash / Glob / Grep / WebFetch / WebSearch)
  *   3. generic command/output fallback
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import styles from './ToolCard.module.css';
 import { useT } from '../i18n';
 import { isTodoWriteToolName, parseTodoWriteInput } from '../runtime/todos';
 import { getToolRenderer, toRenderProps } from '../runtime/tool-renderers';
@@ -316,33 +319,12 @@ function FileWriteCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; content?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
   const baseName = file.split('/').pop() ?? file;
   const lines = typeof obj.content === 'string' ? obj.content.split('\n').length : null;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.write')}</span>
-        <span className="op-meta">{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  return <ToolTrace title={t('tool.write')} description={<>{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function FileEditCard({
@@ -359,7 +341,6 @@ function FileEditCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as {
     file_path?: string;
     filePath?: string;
@@ -371,28 +352,8 @@ function FileEditCard({
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
   const baseName = file.split('/').pop() ?? file;
   const editCount = Array.isArray(obj.edits) ? obj.edits.length : 1;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.edit')}</span>
-        <span className="op-meta">{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  return <ToolTrace title={t('tool.edit')} description={<>{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function FileReadCard({
@@ -409,32 +370,11 @@ function FileReadCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
   const baseName = file.split('/').pop() ?? file;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.read')}</span>
-        <span className="op-meta">{baseName}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  return <ToolTrace title={t('tool.read')} description={baseName} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
@@ -442,88 +382,38 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const obj = (input ?? {}) as { command?: string; description?: string };
   const command = obj.command ?? '';
   const desc = obj.description;
-  const [open, setOpen] = useState(false);
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-bash">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.bash')}</span>
-        {desc ? <span className="op-meta op-desc">{desc}</span> : null}
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <pre className="op-command">{truncate(command, 400)}</pre>
-            {result?.content ? (
-              <pre className="op-output">{truncate(result.content, 4000)}</pre>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.bash')} description={desc} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<pre className="op-command">{truncate(command, 400)}</pre>)} />;
 }
 
 function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string };
-  return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.glob')}</span>
-        <span className="op-meta">{obj.pattern ?? '*'}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.glob')} description={<>{obj.pattern ?? '*'}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function GrepCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string; glob?: string };
-  return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.grep')}</span>
-        <span className="op-meta">{obj.pattern ?? ''}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.grep')} description={<>{obj.pattern ?? ''}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function WebFetchCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
   const obj = (input ?? {}) as { url?: string };
-  return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.fetch')}</span>
-        <span className="op-meta">{obj.url ?? ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.fetch')} description={obj.url} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function WebSearchCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
   const obj = (input ?? {}) as { query?: string };
-  return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.search')}</span>
-        <span className="op-meta">{obj.query ?? ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.search')} description={obj.query} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function GenericCard({
@@ -540,28 +430,59 @@ function GenericCard({
   runSucceeded: boolean;
 }) {
   const summary = describeInput(input);
-  return (
-    <div className="op-card op-generic">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{name}</span>
-        {summary ? <span className="op-meta">{truncate(summary, 200)}</span> : null}
-      </div>
-    </div>
-  );
+  return <ToolTrace title={name} description={summary ? truncate(summary, 200) : undefined} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
-function ResultBadge({ result, runStreaming, runSucceeded }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
+/** A tool only expands when there is real input detail or output to inspect.
+ * Keep large output unmounted until requested; source events remain untouched. */
+function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail }: {
+  title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
+  runSucceeded: boolean; detail?: () => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [visited, setVisited] = useState(false);
+  const status = result?.isError ? 'error' : !result && runStreaming ? 'running'
+    : !result && !runSucceeded ? 'pending' : undefined;
+  const line = <TraceLine status={status}>
+    <ResultBadge className={styles.status} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+    <TraceTitle title={title}>{title}</TraceTitle>
+    {description ? <TraceDescription>{description}</TraceDescription> : null}
+  </TraceLine>;
+  if (!detail && !result?.content) return <div data-trace-kind="tool">{line}</div>;
+  return <TraceCollapsible data-trace-kind="tool" open={open}
+    onOpenChange={value => { if (value) setVisited(true); setOpen(value); }}>
+    <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
+    <TraceCollapsibleContent className={styles.detail}>{visited ? <>
+      {detail ? <div className={styles.input}>{detail()}</div> : null}
+      {result?.content ? <ToolOutput content={result.content} /> : null}
+    </> : null}</TraceCollapsibleContent>
+  </TraceCollapsible>;
+}
+
+// Formatting is presentation-only: persisted provider output is never rewritten.
+// Bound parsing as well as rendering so unusually large results cannot stall a stream.
+function ToolOutput({ content }: { content: string }) {
   const t = useT();
-  if (!result && runStreaming) return <span className="op-status op-status-running" title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
-  if (!result && !runSucceeded) return <span className="op-status op-status-error" title={t('tool.error')}><Icon name="close" size={14} /></span>;
-  if (result?.isError) return <span className="op-status op-status-error" title={result.content || t('tool.error')}><Icon name="close" size={14} /></span>;
-  return <span className="op-status op-status-ok" title={t('tool.done')}><Icon name="check" size={14} /></span>;
+  const formatted = useMemo(() => {
+    let value = content;
+    if (content.length <= 32_768 && /^\s*[\[{]/.test(content)) {
+      try { value = JSON.stringify(JSON.parse(content), null, 2); } catch { /* Plain tool output stays verbatim. */ }
+    }
+    return truncate(value, 4000);
+  }, [content]);
+  return <div className={styles.output}>
+    <span className={styles.outputLabel}>{t('tool.output')}</span>
+    <pre className="op-output">{formatted}</pre>
+  </div>;
 }
 
-function FileErrorDetail({ result }: { result?: Props['result'] }) {
-  if (!result?.isError || !result.content.trim()) return null;
-  return <pre className="op-output">{truncate(result.content, 1200)}</pre>;
+function ResultBadge({ result, runStreaming, runSucceeded, className = '' }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean; className?: string }) {
+  const t = useT();
+  if (!result && runStreaming) return <span className={`op-status op-status-running ${className}`} title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
+  if (!result && !runSucceeded) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
+  if (result?.isError) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
+  return <span className={`op-status op-status-ok ${className}`} title={t('tool.done')}><Icon name="check" size={14} /></span>;
 }
 
 function describeInput(input: unknown): string {
@@ -569,6 +490,8 @@ function describeInput(input: unknown): string {
   if (typeof input === 'string') return input;
   if (typeof input !== 'object') return String(input);
   const obj = input as Record<string, unknown>;
+  // Empty argument payloads carry no useful user-facing description.
+  if (Object.keys(obj).length === 0) return '';
   for (const key of ['file_path', 'path', 'pattern', 'url', 'query', 'name', 'command']) {
     const v = obj[key];
     if (typeof v === 'string') return v;

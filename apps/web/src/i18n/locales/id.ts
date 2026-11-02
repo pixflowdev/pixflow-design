@@ -255,6 +255,7 @@ export const id: Dict = {
   voiceDisconnected: "Koneksi suara berakhir. Mulai panggilan baru untuk menghubungkan kembali.",
   voiceConnectTimeout: "Suara Codex tidak terhubung. Periksa Bridge lalu coba lagi.",
 
+  'activity.steps': 'Langkah: {count}',
   'activity.live.browser': "Menggunakan browser",
   'activity.live.edit': "Mengedit file",
   'activity.live.read': "Membaca file",

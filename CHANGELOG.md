@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.0] - Release candidate
 
+- Unify messages, reasoning and tool activity in Workspace and floating panels with compact expandable traces. Show only activity supplied by the API or CLI, retain saved chat history and copy actions, and keep long tool output collapsed until opened.
+- Keep Claude tool calls from appearing twice when the runtime repeats stream frames, and prevent an open Workspace tab from incorrectly marking a floating-panel Direct run as failed.
+- Preview linked sources after a sentence in web-search replies by hovering or activating a domain badge in Workspace or the floating panel.
+- Expand Sources below a web-search reply to see each cited page once. Long code blocks show visible Expand and Collapse actions in their headers.
+- New prompts settle near the top of Workspace and floating chats. Live activity opens into a timeline of reported steps, with source badges where available. The timeline folds as the answer arrives and remembers a manual toggle.
+- See reasoning summaries as they arrive and follow streamed answers into formatted code blocks. A new prompt slides into place, with reduced-motion support.
+- Stream short text updates immediately in both chat panels and catch up quickly when a provider sends a larger chunk.
 - Protect unsaved Workspace changes when navigating or closing a tool page, and retain Bridge HTTP error details so compatible features can distinguish unavailable endpoints from connection failures. Extend shared translation contracts and CLI operations for the separately installed Pro module; Pro owns its translation features and release notes.
 - Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
 - Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state. Keep added navigation buttons consistent in size, spacing and interaction states.

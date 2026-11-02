@@ -255,6 +255,7 @@ export const fa: Dict = {
   voiceDisconnected: "ارتباط صوتی پایان یافت. برای اتصال دوباره، تماس جدیدی شروع کنید.",
   voiceConnectTimeout: "گفت‌وگوی صوتی Codex متصل نشد. Bridge را بررسی کنید و دوباره تلاش کنید.",
 
+  'activity.steps': 'تعداد مراحل: {count}',
   'activity.live.browser': "استفاده از مرورگر",
   'activity.live.edit': "ویرایش فایل‌ها",
   'activity.live.read': "خواندن فایل‌ها",

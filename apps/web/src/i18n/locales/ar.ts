@@ -255,6 +255,7 @@ export const ar: Dict = {
   voiceDisconnected: "انتهى الاتصال الصوتي. ابدأ مكالمة جديدة لإعادة الاتصال.",
   voiceConnectTimeout: "لم يتصل صوت Codex. تحقّق من Bridge وحاول مجددًا.",
 
+  'activity.steps': 'الخطوات: {count}',
   'activity.live.browser': "استخدام المتصفح",
   'activity.live.edit': "تحرير الملفات",
   'activity.live.read': "قراءة الملفات",

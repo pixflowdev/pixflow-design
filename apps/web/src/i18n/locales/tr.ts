@@ -255,6 +255,7 @@ export const tr: Dict = {
   voiceDisconnected: "Ses bağlantısı sona erdi. Yeniden bağlanmak için yeni bir arama başlatın.",
   voiceConnectTimeout: "Codex ses bağlantısı kurulamadı. Bridge’i kontrol edip tekrar deneyin.",
 
+  'activity.steps': 'Adım sayısı: {count}',
   'activity.live.browser': "Tarayıcı kullanılıyor",
   'activity.live.edit': "Dosyalar düzenleniyor",
   'activity.live.read': "Dosyalar okunuyor",

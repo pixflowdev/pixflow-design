@@ -255,6 +255,7 @@ export const hu: Dict = {
   voiceDisconnected: "A hangkapcsolat véget ért. Az újracsatlakozáshoz indítson új hívást.",
   voiceConnectTimeout: "Nem sikerült létrehozni a Codex hangkapcsolatát. Ellenőrizze a Bridge-et, és próbálja újra.",
 
+  'activity.steps': 'Lépések: {count}',
   'activity.live.browser': "Böngésző használata",
   'activity.live.edit': "Fájlok szerkesztése",
   'activity.live.read': "Fájlok olvasása",

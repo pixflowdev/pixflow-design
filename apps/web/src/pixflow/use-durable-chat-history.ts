@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
 import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
 import { historicalRecoveryCopy, preserveHistoryCopies } from './history-recovery';
@@ -379,10 +379,12 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     } catch { if (owner === generation.current) setError('save'); }
     finally { if (owner === generation.current) setRecovering(false); }
   }, [outboxKey, persistOutbox, recovering]);
+  const visibleMessages = useMemo(() => readyKey === sessionKey
+    ? mergeChatHistory(history, messages) : messages, [readyKey, sessionKey, history, messages]);
   return {
     binding: readyKey === sessionKey ? binding.current : null,
     ready: active && readyKey === sessionKey,
-    messages: readyKey === sessionKey ? mergeChatHistory(history, messages) : messages,
+    messages: visibleMessages,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,
     hasMore, loading, error, loadEarlier, recover, recovering,
     retry: () => { if (binding.current && pending.current.size) void flush(); else setRetryCount(value => value + 1); },

@@ -255,6 +255,7 @@ export const zhTW: Dict = {
   voiceDisconnected: "語音連線已結束。開始新通話以重新連線。",
   voiceConnectTimeout: "Codex 語音未連線。請檢查 Bridge 後重試。",
 
+  'activity.steps': '步驟：{count}',
   'activity.live.browser': "正在使用瀏覽器",
   'activity.live.edit': "正在編輯檔案",
   'activity.live.read': "正在讀取檔案",

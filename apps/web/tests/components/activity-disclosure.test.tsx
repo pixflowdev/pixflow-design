@@ -22,6 +22,7 @@ it('renders the shared Workspace and floating-panel rows with the real activity 
   expect(ui.queryByText('echo checked')).toBeNull();
   fireEvent.click(toggle);
   expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  fireEvent.click(ui.container.querySelector('[data-trace-kind="tool"] > button')!);
   expect(ui.getByText('echo checked')).toBeTruthy();
   expect(ui.getByText('Checked the files.')).toBeTruthy();
   fireEvent.click(toggle);
@@ -38,23 +39,27 @@ it('keeps details lazy, retains the user toggle while streaming and removes hidd
   vi.useFakeTimers();
   const body = () => <a href="#details">Details</a>;
   const ui = render(<ActivityDisclosure label="Reading" icon="read" active>{body}</ActivityDisclosure>);
-  expect(ui.queryByText('Details')).toBeNull();
+  expect(ui.getByRole('button', { name: 'Reading', expanded: true })).toBeTruthy();
+  fireEvent.click(ui.getByRole('button'));
+  expect(ui.queryByRole('link')).toBeNull();
   fireEvent.click(ui.getByRole('button'));
   expect(ui.getByRole('link')).toBeTruthy();
   ui.rerender(<ActivityDisclosure label="Running" icon="command" active>{body}</ActivityDisclosure>);
   expect(ui.getByRole('button').getAttribute('aria-expanded')).toBe('true');
-  expect(ui.getByRole('button').textContent).toBe('Reading');
+  expect(ui.getByRole('button', { name: 'Reading', expanded: true })).toBeTruthy();
   expect(ui.container.querySelector('[data-activity-icon="read"]')).toBeTruthy();
   act(() => vi.advanceTimersByTime(1000));
-  expect(ui.getByRole('button').textContent).toBe('Running');
+  expect(ui.getByRole('button', { name: 'Running', expanded: true })).toBeTruthy();
   expect(ui.container.querySelector('[data-activity-icon="command"]')).toBeTruthy();
   ui.rerender(<ActivityDisclosure label="Done" active={false}>{body}</ActivityDisclosure>);
-  expect(ui.getByRole('button').textContent).toBe('Done');
+  expect(ui.getByRole('button', { name: 'Done', expanded: true })).toBeTruthy();
   expect(ui.container.querySelector('[data-active="false"]')).toBeTruthy();
   fireEvent.click(ui.getByRole('button'));
   expect(ui.container.querySelector('[inert]')).toBeTruthy();
+  expect(ui.getByRole('button', { name: 'Done', expanded: false })).toBeTruthy();
   act(() => vi.advanceTimersByTime(160));
-  expect(ui.queryByText('Details')).toBeNull();
+  expect(ui.queryByRole('link')).toBeNull();
+  expect(ui.getByText('Details')).toBeTruthy();
 });
 
 it('keeps failed tool details inside activity while exposing an error summary', () => {
@@ -72,6 +77,7 @@ it('keeps failed tool details inside activity while exposing an error summary', 
   expect(ui.queryByText('Failed visibly')).toBeNull();
   expect(ui.getByText('error · 1')).toBeTruthy();
   fireEvent.click(ui.getByText('error · 1').closest('button')!);
+  fireEvent.click(ui.getByText('error · 1').closest('[data-activity-group]')!.querySelector('[data-trace-kind="tool"] > button')!);
   expect(ui.getByText('Failed visibly')).toBeTruthy();
   expect([...ui.container.querySelectorAll('.action-card-toggle')].every(node => node.closest('[data-activity-group]'))).toBe(true);
   expect(ui.container.textContent).not.toContain('Private detail');

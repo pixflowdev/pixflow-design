@@ -1,0 +1,224 @@
+{
+  "version": "2.2.0",
+  "deployment": "hold",
+  "core": "42bff0c448cb853d60c89279ea23ab01da42476c",
+  "pro": "63252bef23cce361b2aeb81b28fb266834f4ef65",
+  "bridgeCore": "50744ab415c465f728b4e236fe65ffb6d81460f2",
+  "bridgePro": "387c46e406d4b4f8e6a69521fc5650b98c3990c8",
+  "moduleApi": 14,
+  "packages": [
+    {
+      "file": "free/pixflow-design-2.2.0.zip",
+      "bytes": 2458053,
+      "sha256": "81a77bfe3250e972db4fd46527c5df9b58b38a716e82526ce42899d825c94d84",
+      "githubAssetId": 701942194
+    },
+    {
+      "file": "pro/pixflow-design-pro-2.2.0.zip",
+      "bytes": 7397206,
+      "sha256": "81f994b4035d3fc419235ef850a3d8bb95c9bc8caa97c0793e0a50b2c3918d01",
+      "githubAssetId": 701951375
+    },
+    {
+      "file": "bridge/install-bridge-2.2.0.ps1",
+      "bytes": 4550,
+      "sha256": "a5a1a467cdf301d360db4bf45b45b84e05b66e7cf79bc6772404091c51301082",
+      "githubAssetId": 701921785
+    },
+    {
+      "file": "bridge/install-bridge-2.2.0.sh",
+      "bytes": 2861,
+      "sha256": "82f1f2d45388bf1e838b9228287bc75d513f3dd62b8b5e97bca85e56db30fe5d",
+      "githubAssetId": 701921818
+    },
+    {
+      "file": "bridge/pixflow-design-bridge-2.2.0-win-x64-setup.exe",
+      "bytes": 248753940,
+      "sha256": "db87927164991619ce6283d940cbe25afaf381b84c5e8e67da8e36259a70d402",
+      "githubAssetId": 701932043
+    },
+    {
+      "file": "bridge/pixflow-design-bridge-2.2.0.zip",
+      "bytes": 4717840,
+      "sha256": "d9c44377a94564d41e80d38f505c45ca0f672225337192d01b888e0910557386",
+      "githubAssetId": 701896760
+    }
+  ],
+  "languagePacks": [
+    {
+      "locale": "id",
+      "sha256": "7d4d85efbc93ebcccb5178ed1dfc0a51094df7903067a091e8ecfda2be764b18",
+      "bytes": 608414,
+      "wpLocale": "id_ID",
+      "file": "id-7d4d85efbc93ebcccb5178ed1dfc0a51094df7903067a091e8ecfda2be764b18.json"
+    },
+    {
+      "locale": "de",
+      "sha256": "499ba4e588060fd7c5b822cd16982380bba43efff01eb0dc0ba84bd6b6f5a623",
+      "bytes": 569048,
+      "wpLocale": "de_DE",
+      "file": "de-499ba4e588060fd7c5b822cd16982380bba43efff01eb0dc0ba84bd6b6f5a623.json"
+    },
+    {
+      "locale": "zh-CN",
+      "sha256": "26c99999d5c680b87d558482961bac22613e2672a9448223669d18d28952c1d8",
+      "bytes": 576611,
+      "wpLocale": "zh_CN",
+      "file": "zh-CN-26c99999d5c680b87d558482961bac22613e2672a9448223669d18d28952c1d8.json"
+    },
+    {
+      "locale": "zh-TW",
+      "sha256": "be661bec61019439e51412fd6906c291d14a8d581418978f4ff29e7116b7bda2",
+      "bytes": 580112,
+      "wpLocale": "zh_TW",
+      "file": "zh-TW-be661bec61019439e51412fd6906c291d14a8d581418978f4ff29e7116b7bda2.json"
+    },
+    {
+      "locale": "pt-BR",
+      "sha256": "c12e9d78133244f523029e35f5299ac050f713d35055a49d6ffbc8a541f46e70",
+      "bytes": 645443,
+      "wpLocale": "pt_BR",
+      "file": "pt-BR-c12e9d78133244f523029e35f5299ac050f713d35055a49d6ffbc8a541f46e70.json"
+    },
+    {
+      "locale": "es-ES",
+      "sha256": "a42b708d068c7b9f7728cec12bbbca8ebfa58afb0dc14ea9634583f37c426d67",
+      "bytes": 657339,
+      "wpLocale": "es_ES",
+      "file": "es-ES-a42b708d068c7b9f7728cec12bbbca8ebfa58afb0dc14ea9634583f37c426d67.json"
+    },
+    {
+      "locale": "ru",
+      "sha256": "5943a9a9f3b0c9c08d98eb3ed853cb3a3a12f96e064077396e7ac9d6f4365bea",
+      "bytes": 770608,
+      "wpLocale": "ru_RU",
+      "file": "ru-5943a9a9f3b0c9c08d98eb3ed853cb3a3a12f96e064077396e7ac9d6f4365bea.json"
+    },
+    {
+      "locale": "fa",
+      "sha256": "3019f4e2eb59e243f16362ce12682312459f2ee4b07ffd2356f343c9b7c3b736",
+      "bytes": 828982,
+      "wpLocale": "fa_IR",
+      "file": "fa-3019f4e2eb59e243f16362ce12682312459f2ee4b07ffd2356f343c9b7c3b736.json"
+    },
+    {
+      "locale": "ar",
+      "sha256": "eb096fd7aef6ee58b145bf1fb9f1835c21226929ab87927e3139081ccc58fd3f",
+      "bytes": 778293,
+      "wpLocale": "ar",
+      "file": "ar-eb096fd7aef6ee58b145bf1fb9f1835c21226929ab87927e3139081ccc58fd3f.json"
+    },
+    {
+      "locale": "ja",
+      "sha256": "ad5182bc3611c94f75c7b405a4e18a98b4c45eafbf1366702a0784dada7c2e3e",
+      "bytes": 752624,
+      "wpLocale": "ja",
+      "file": "ja-ad5182bc3611c94f75c7b405a4e18a98b4c45eafbf1366702a0784dada7c2e3e.json"
+    },
+    {
+      "locale": "ko",
+      "sha256": "5d9669cbc92e52fa5e94e3ec25c23c84a255ee2e850519c5c7785e13d9995720",
+      "bytes": 676861,
+      "wpLocale": "ko_KR",
+      "file": "ko-5d9669cbc92e52fa5e94e3ec25c23c84a255ee2e850519c5c7785e13d9995720.json"
+    },
+    {
+      "locale": "pl",
+      "sha256": "24b8e7bd0989912c18194dcef0af4857a8ef08b88988ef680caac1b14ad6afc7",
+      "bytes": 647926,
+      "wpLocale": "pl_PL",
+      "file": "pl-24b8e7bd0989912c18194dcef0af4857a8ef08b88988ef680caac1b14ad6afc7.json"
+    },
+    {
+      "locale": "hu",
+      "sha256": "b9c644c83535fa39a8623b9ce79013253fbf4f7aaac2c655872be81e0b730a9f",
+      "bytes": 674591,
+      "wpLocale": "hu_HU",
+      "file": "hu-b9c644c83535fa39a8623b9ce79013253fbf4f7aaac2c655872be81e0b730a9f.json"
+    },
+    {
+      "locale": "fr",
+      "sha256": "1e9223d3d7da07692b5474b204b46949549bf4ce28b0b72f5d4ade6baec7dd46",
+      "bytes": 585358,
+      "wpLocale": "fr_FR",
+      "file": "fr-1e9223d3d7da07692b5474b204b46949549bf4ce28b0b72f5d4ade6baec7dd46.json"
+    },
+    {
+      "locale": "uk",
+      "sha256": "0a972d6730697220dbaa43602a06e8e40947dbd99d580103384767303b8c0de5",
+      "bytes": 903293,
+      "wpLocale": "uk",
+      "file": "uk-0a972d6730697220dbaa43602a06e8e40947dbd99d580103384767303b8c0de5.json"
+    },
+    {
+      "locale": "tr",
+      "sha256": "288c168dabacde4c092daa8d3dab606bfad90ea5904c048897c259b9f830f99d",
+      "bytes": 646743,
+      "wpLocale": "tr_TR",
+      "file": "tr-288c168dabacde4c092daa8d3dab606bfad90ea5904c048897c259b9f830f99d.json"
+    },
+    {
+      "locale": "th",
+      "sha256": "48c29edc60f95539653d5b8fb88e8efd7101033010495d62fc295582189b5839",
+      "bytes": 1072602,
+      "wpLocale": "th",
+      "file": "th-48c29edc60f95539653d5b8fb88e8efd7101033010495d62fc295582189b5839.json"
+    },
+    {
+      "locale": "it",
+      "sha256": "f51c49e3865e9c31d1381038a7d9336c7788b05459ff18f426be5441e56f9477",
+      "bytes": 643765,
+      "wpLocale": "it_IT",
+      "file": "it-f51c49e3865e9c31d1381038a7d9336c7788b05459ff18f426be5441e56f9477.json"
+    }
+  ],
+  "mac": {
+    "arm64": "pending",
+    "x64": "pending"
+  },
+  "languagePackDownload": {
+    "id": 701889007,
+    "name": "pixflow-language-packs-2.2.0.zip",
+    "bytes": 3529363,
+    "sha256": "e7301539f2f09ee55d4159b6214cac8653a62f8f8e6de55f1aa21e4be334703e",
+    "downloadVerified": true
+  },
+  "githubDrafts": [
+    {
+      "repo": "pixflow-design",
+      "tag": "v2.2.0",
+      "rev": "42bff0c448cb853d60c89279ea23ab01da42476c",
+      "releaseId": 431501746,
+      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-1eb398b475e14e9a6ed9"
+    },
+    {
+      "repo": "pixflow-design-pro",
+      "tag": "v2.2.0",
+      "rev": "63252bef23cce361b2aeb81b28fb266834f4ef65",
+      "releaseId": 431501814,
+      "url": "https://github.com/pixflowdev/pixflow-design-pro/releases/tag/untagged-f3340a3b143017d859c9"
+    },
+    {
+      "repo": "pixflow-design",
+      "tag": "bridge-v2.2.0",
+      "rev": "50744ab415c465f728b4e236fe65ffb6d81460f2",
+      "releaseId": 431501883,
+      "url": "https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-540fb9a9ef2f74ad5218"
+    }
+  ],
+  "windows": {
+    "verifiedPayloadFiles": 11590,
+    "nativeHostIdentityVerified": true,
+    "health": {
+      "product": "pixflow-design-bridge",
+      "version": "2.2.0",
+      "test": "exact win-unpacked executable with isolated config and data",
+      "healthy": true,
+      "transport": "tray-gateway",
+      "listenerOwnedByTestExecutable": true
+    },
+    "installerExecution": "Payload verified and run in isolation; no in-place NSIS upgrade or repair on this candidate.",
+    "authenticode": "NotSigned"
+  },
+  "linux": "Shared runtime ZIP integrity and shell syntax verified. Native Linux installation not exercised here."
+}

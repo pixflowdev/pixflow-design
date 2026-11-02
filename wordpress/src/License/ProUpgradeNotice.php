@@ -28,16 +28,8 @@ final class ProUpgradeNotice
         $status = (new LicenseService())->status();
         if (!empty($status['license']['present']) && ($status['central_entitlement']['code'] ?? '') === 'invalid_central_entitlement') return null;
         $pro = $status['pro'] ?? null;
-        if (!is_array($pro) || (!empty($pro['eligible']) && ($pro['installation'] ?? '') === 'active')) return null;
-        if (!empty($pro['eligible'])) {
-            $inactive = ($pro['installation'] ?? '') === 'inactive';
-            return [
-                'title' => __('Your Pixflow plan includes Pro', 'pixflow-design'),
-                'description' => __('Bring back your premium tools with the Pro add-on. Your licence, content and saved settings stay in place. If you used Bricks two-factor authentication, re-enable it in settings after activating Pro.', 'pixflow-design'),
-                'label' => $inactive ? __('Activate Pro', 'pixflow-design') : __('Download Pro', 'pixflow-design'),
-                'url' => $inactive ? $pro['plugins_url'] : $pro['account_url'],
-            ];
-        }
+        // Installation diagnostics belong in settings, not in the upgrade offer.
+        if (!is_array($pro) || !empty($pro['eligible'])) return null;
         $trial_status = $pro['trial_status'] ?? 'unknown';
         $trial = !empty($pro['trial_url']) && $trial_status === 'eligible';
         $check_trial = !empty($pro['trial_url']) && $trial_status === 'unknown';

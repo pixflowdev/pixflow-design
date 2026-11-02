@@ -238,7 +238,7 @@ describe('Pixflow bridge HTTP gateway', () => {
   });
 
   it('keeps a paired site healthy while its worker is slow and detects a stopped worker', async () => {
-    const site = { key: 'slow', origin: 'https://staging.test', label: 'Staging', dataDir: '', url: 'https://staging.test' };
+    const site = { key: 'slow', origin: 'https://staging.test', label: 'Staging', dataDir: '', syncRoot: '', url: 'https://staging.test' };
     const worker = createServer((_req, res) => {
       setTimeout(() => res.end(JSON.stringify({ ok: true, site })), 2000);
     });

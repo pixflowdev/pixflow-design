@@ -1198,6 +1198,8 @@ export function SettingsDialog({
   const bricksIntegrationActive = getPixflowWordPressConfig()?.bricksIntegrationActive ?? initial.bricksIntegrationActive ?? false;
   const freeSettings = isPixflowWordPressEmbed() && !assetsAvailable();
   const [freeLicenseStatus, setFreeLicenseStatus] = useState(pixflowLicenseStatus);
+  const [freeLicenseReadState, setFreeLicenseReadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [freeLicenseReadAttempt, setFreeLicenseReadAttempt] = useState(0);
   useEffect(() => {
     const closeForConversation = () => onClose();
     window.addEventListener('pixflow-design:conversation-opened', closeForConversation);
@@ -1612,11 +1614,17 @@ export function SettingsDialog({
   useEffect(() => {
     if (!freeSettings) return;
     let cancelled = false;
-    void fetchPixflowLicenseStatus().then(status => {
-      if (!cancelled) setFreeLicenseStatus(status);
-    }).catch(() => { /* Keep Free available if status cannot be fetched. */ });
+    setFreeLicenseReadState('loading');
+    void fetchPixflowLicenseStatus(freeLicenseReadAttempt ? { force: true } : undefined).then(status => {
+      if (!cancelled) {
+        setFreeLicenseStatus(status);
+        setFreeLicenseReadState('ready');
+      }
+    }).catch(() => {
+      if (!cancelled) setFreeLicenseReadState('error');
+    });
     return () => { cancelled = true; };
-  }, [freeSettings]);
+  }, [freeSettings, freeLicenseReadAttempt]);
 
   // A surface profile is an execution boundary, not only a navigation filter.
   // Resolve profile changes before the next paint so a disallowed section can
@@ -3565,7 +3573,15 @@ export function SettingsDialog({
               </button>
             ))}
             </div>
-            {freeSettings && <div className={settingsStyles.sidebarUpgrade}>
+            {freeSettings && freeLicenseReadState === 'error' && !freeLicenseStatus && (
+              <div className={settingsStyles.sidebarUpgrade} role="status">
+                <span>{translateUi('ui.pixflowLicensePanel.feedback61')}</span>
+                <Button onClick={() => setFreeLicenseReadAttempt(attempt => attempt + 1)}>
+                  {translateUi('promptTemplates.retry')}
+                </Button>
+              </div>
+            )}
+            {freeSettings && freeLicenseStatus && <div className={settingsStyles.sidebarUpgrade}>
               <div className={settingsStyles.sidebarUpgradeCopy}>
                 <strong>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.pixflowProMigration.yourProAccess") : 'Pixflow Design Pro'}</strong>
                 <span>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.settingsDialog.yourLicenceIncludesTheProAddOn") : translateUi("ui.settingsDialog.moreToolsForYourNextIdea")}</span>

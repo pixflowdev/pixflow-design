@@ -29,6 +29,7 @@ jobs:
       - run: pnpm guard
       - run: pnpm typecheck
       - run: pnpm --filter @open-design/daemon test tests/text-generation.test.ts tests/agent-text-route.test.ts tests/site-translations-cli.test.ts
+      - run: pnpm --filter @open-design/daemon test tests/pixflow/workspace-builder-session.test.ts tests/wp-admin-cli.test.ts tests/cli-startup.test.ts
       - run: pnpm --filter @open-design/web test tests/hooks/useLocalAgentHydration.test.tsx tests/components/InlineModelSwitcher.test.tsx tests/components/WorkspaceSidebar.test.tsx tests/pixflow/workspace-config-publish.test.ts
       - run: pnpm --filter @open-design/web test tests/router.navigate.test.tsx tests/pixflow/bridge-request-connectivity.test.ts
       - run: pnpm --dir e2e test tests/pixflow/bridge-mode-switch.test.ts

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New prompts settle near the top of Workspace and floating chats. Live activity opens into a timeline of reported steps, with source badges where available. The timeline folds as the answer arrives and remembers a manual toggle.
 - See reasoning summaries as they arrive and follow streamed answers into formatted code blocks. A new prompt slides into place, with reduced-motion support.
 - Stream short text updates immediately in both chat panels and catch up quickly when a provider sends a larger chunk.
+- Let Workspace agents read the connected WordPress site title and discover available builder tools without asking for a second site pairing.
 - Protect unsaved Workspace changes when navigating or closing a tool page, and retain Bridge HTTP error details so compatible features can distinguish unavailable endpoints from connection failures. Extend shared translation contracts and CLI operations for the separately installed Pro module; Pro owns its translation features and release notes.
 - Keep API and Local CLI selections synchronized across Workspace, floating panels and Execution settings, and discover local agents after switching without reloading the page.
 - Hide chat organization controls on Workspace tool pages while retaining the navigation rail and saved chat state. Keep added navigation buttons consistent in size, spacing and interaction states.

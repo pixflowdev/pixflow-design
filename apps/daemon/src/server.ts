@@ -16453,12 +16453,14 @@ export async function startServer({
       ? String(chatBody.projectMetadata.toolPolicy || '')
       : '';
     let workspaceBuilderPrompt = '';
+    let workspaceDiscovery = '';
     if (run.workspaceBuilderSession) {
       const staged = await stageWorkspaceBuilderHelper(RUNTIME_DATA_DIR, run.workspaceBuilderSession);
       if (run.cancelRequested || ['succeeded', 'failed', 'canceled'].includes(run.status)) { await staged.cleanup(); throw new Error('Workspace run was cancelled before handoff tools were ready.'); }
       const previousFinalize = run.onFinalize;
       run.onFinalize = () => { previousFinalize?.(); void staged.cleanup().catch(() => undefined); };
       workspaceBuilderPrompt = staged.prompt;
+      workspaceDiscovery = staged.discovery;
     }
     const runtimeToolPrompt = [createAgentRuntimeToolPrompt(daemonUrl, toolTokenGrant, runtimeToolPolicy || null), composioSkillPrompt(), workspaceBuilderPrompt].filter(Boolean).join('\n\n');
     const commentHint = renderCommentAttachmentHint(safeCommentAttachments);
@@ -17833,6 +17835,8 @@ export async function startServer({
       undefined,
       { resolvedBin: agentLaunch.selectedPath },
     );
+    if (workspaceDiscovery) agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY = workspaceDiscovery;
+    else delete agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY;
     if (def.id === 'amr') {
       const loginStatus = readVelaLoginStatus(agentSpawnEnv, configuredAgentSpawnEnv);
       if (!loginStatus.loggedIn) {

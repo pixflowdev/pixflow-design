@@ -174,7 +174,7 @@ final class DirectSiteRestController
     public function session(\WP_REST_Request $request): array
     {
         if ($request->get_method() === 'DELETE') return $this->close($request);
-        return ['features' => ['composio' => \PixflowDesign\WordPress\Modules\ComposioAccess::configured(), 'image-generation' => \PixflowDesign\WordPress\Modules\ImageGenerationAccess::available(), 'external-mcp' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('external-mcp'), 'audio' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('audio')], 'integrations' => ['bricks' => \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')], 'identity' => $this->identity($this->session ?? []), 'writable' => $this->session['writable'] ?? false, 'editorTarget' => $this->session['editorTarget'] ?? null, 'workspaceSource' => $this->session['workspaceSource'] ?? null];
+        return ['siteTitle' => sanitize_text_field((string) get_bloginfo('name')), 'features' => ['composio' => \PixflowDesign\WordPress\Modules\ComposioAccess::configured(), 'image-generation' => \PixflowDesign\WordPress\Modules\ImageGenerationAccess::available(), 'external-mcp' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('external-mcp'), 'audio' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('audio')], 'integrations' => ['bricks' => \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')], 'identity' => $this->identity($this->session ?? []), 'writable' => $this->session['writable'] ?? false, 'editorTarget' => $this->session['editorTarget'] ?? null, 'workspaceSource' => $this->session['workspaceSource'] ?? null];
     }
 
     private function identity(array $session): array

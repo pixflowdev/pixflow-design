@@ -113,6 +113,24 @@ describe('direct site agent connection', () => {
   }
   const answerScript=`for await(const chunk of process.stdin) {}; console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'First answer'}}));`;
 
+  it('opens a retained Markdown report only for its owning site and user', async () => {
+    const { dir, request, post } = await fixture();
+    runner.script = answerScript;
+    await (await post('run-stream', request)).text();
+    const root = path.join(dir, 'direct-site-runs');
+    const [directory] = await fs.readdir(root);
+    await fs.writeFile(path.join(root, directory!, 'SEO-AUDIT.md'), '# Audit');
+    const body = { directory, filename: 'SEO-AUDIT.md', session: request.session };
+    expect(await (await post('report', body)).json()).toEqual({ text: '# Audit' });
+    for (const filename of ['../report.md', 'AGENTS.md', 'site-connection.json']) {
+      expect((await post('report', { ...body, filename })).status).toBe(404);
+    }
+    runner.userId++;
+    expect((await post('report', body)).status).toBe(404);
+    runner.authorized = false;
+    expect((await post('report', body)).status).toBe(403);
+  });
+
   it('keeps Workspace voice on the live-handoff policy on fresh and resumed turns', async () => {
     const { request } = await fixture();
     const input = { ...request, session: { ...request.session, workspaceSource: { projectId: 'project', conversationId: 'chat', requestId: 'message' } } };

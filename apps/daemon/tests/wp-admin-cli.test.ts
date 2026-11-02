@@ -6,6 +6,23 @@ import path from 'node:path';
 import { runWpAdminCli } from '../src/wp-admin-cli.js';
 
 describe('wp-admin CLI contract client', () => {
+  it('serves only discovery from a Workspace run without borrowing pairing authority', async () => {
+    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const fetcher = vi.fn();
+    vi.stubGlobal('fetch', fetcher);
+    vi.stubEnv('PIXFLOW_WORKSPACE_DISCOVERY', JSON.stringify({ scope: 'workspace', siteTitle: 'QA', siteOrigin: 'https://example.test', helper: '/run/builder-tool.mjs', tools: ['builder.destinations'] }));
+    try {
+      expect(await runWpAdminCli(['context', '--json'])).toEqual({ exitCode: 0 });
+      expect(JSON.parse(String(output.mock.calls.at(-1)?.[0]))).toMatchObject({ scope: 'workspace', siteTitle: 'QA' });
+      expect(await runWpAdminCli(['site-tool', '--tool', 'help', '--json'])).toEqual({ exitCode: 0 });
+      expect(JSON.parse(String(output.mock.calls.at(-1)?.[0]))).toMatchObject({ tools: ['builder.destinations'] });
+      expect(await runWpAdminCli(['site-tool', '--tool', 'files.write', '--json'])).toEqual({ exitCode: 4 });
+      expect(fetcher).not.toHaveBeenCalled();
+      fetcher.mockResolvedValue(Response.json({ paired: true }));
+      expect(await runWpAdminCli(['context', '--site-url', 'https://other.test', '--token', 'explicit', '--json'])).toEqual({ exitCode: 0 });
+      expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('other.test'), expect.objectContaining({ headers: expect.objectContaining({ authorization: 'Bearer explicit' }) }));
+    } finally { output.mockRestore(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
+  });
   it('writes screenshot evidence through the shared daemon endpoint without a WordPress session', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'wp-cli-capture-'));
     const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);

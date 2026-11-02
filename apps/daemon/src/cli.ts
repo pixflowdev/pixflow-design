@@ -344,7 +344,9 @@ if (first && SUBCOMMAND_MAP[first]) {
   if (first !== 'agents' && first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
 }
 
-if (!handledSubcommand && argv[0] === 'tools' && argv[1] === 'live-artifacts') {
+if (!handledSubcommand && argv[0] === 'tools' && (argv.length === 1 || (argv.length === 2 && ['--help', '-h', 'help'].includes(argv[1])))) {
+  console.log('Usage: od tools <live-artifacts|connectors|design-systems> <action> [options]\nWordPress Workspace: od wp-admin context --json shows the connected site; od wp-admin site-tool --tool help --json lists this run\'s builder tools.');
+} else if (!handledSubcommand && argv[0] === 'tools' && argv[1] === 'live-artifacts') {
   runLiveArtifactsToolCli(argv.slice(2))
     .then(({ exitCode }) => {
       process.exitCode = exitCode;

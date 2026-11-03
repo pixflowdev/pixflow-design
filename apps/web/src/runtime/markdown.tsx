@@ -36,6 +36,8 @@ export interface RenderMarkdownOptions {
   onLinkClick?: MarkdownLinkClickHandler;
   /** The assistant's turn includes a provider web search. */
   searchedWeb?: boolean;
+  /** Images already represented by an interactive attachment in this message. */
+  attachmentUrls?: ReadonlySet<string>;
 }
 
 export function renderMarkdown(input: string, options?: RenderMarkdownOptions): ReactNode {
@@ -638,6 +640,10 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
       // Image: m[2] = alt (may be empty), m[3] = src
       const src = m[3];
       const alt = m[2] || '';
+      if (options?.attachmentUrls?.has(src)) {
+        lastIndex = re.lastIndex;
+        continue;
+      }
       if (isSafeMarkdownImageSrc(src)) {
         out.push(
           <img

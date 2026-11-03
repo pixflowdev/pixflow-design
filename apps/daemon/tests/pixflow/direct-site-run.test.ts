@@ -226,7 +226,7 @@ describe('direct site agent connection', () => {
     const {request, post} = await fixture(false);
     await (await post('run-stream', {...request, context:{imageGenerationAllowed:!allowed}})).text();
     expect(runner.prompts.at(-1)?.includes('Image generation and generated-image import are unavailable')).toBe(!allowed);
-    expect(runner.prompts.at(-1)?.includes('Use the configured Pixflow media providers')).toBe(allowed);
+    expect(runner.prompts.at(-1)?.includes('No Pixflow image provider is configured')).toBe(allowed);
   });
 
   it('enables design guidance for an unset preference and preserves explicit opt-out', async () => {
@@ -698,10 +698,18 @@ describe('direct site agent connection', () => {
     expect(directSitePrompt(input, false, true, true)).toContain(path);
     expect(directSitePrompt({ ...input, enhancedDesignGuidance: false })).not.toContain(path);
   });
-  it('only enables the imagegen preference for opted-in Codex runs', () => {
+  it('uses native images for opted-in Codex or when there is no image provider', () => {
     const input = { agentId: 'codex', prompt: 'Generate an image', history: [], session: { endpoint: 'https://site.example/tools', token: '', writable: true, expiresAt: 0 } };
-    expect(directSitePrompt(input, true)).toContain('node site-tool.mjs media.import');
-    expect(directSitePrompt(input, true)).toContain('Videos still use the configured video provider');
+    expect(directSitePrompt(input, true)).toContain('Bridge imports the result');
+    for (const resumed of [false, true]) {
+      const native = directSitePrompt(input, false, true, resumed, true, false, []);
+      expect(native).toContain('No Pixflow image provider is configured');
+      expect(native).toContain('invoke native imagegen immediately');
+      const configured = directSitePrompt(input, false, true, resumed, true, false, ['openai']);
+      expect(configured).toContain('Configured Pixflow image providers: openai');
+      expect(configured).not.toContain('invoke native imagegen immediately');
+      expect(directSitePrompt({...input, agentId: 'claude'}, false, true, resumed, true, false, [])).toContain('an image provider must be configured');
+    }
     expect(directSitePrompt(input)).not.toContain('Image generation preference:');
     expect(directSitePrompt({ ...input, agentId: 'claude' }, true)).not.toContain('Image generation preference:');
   });

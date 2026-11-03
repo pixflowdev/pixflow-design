@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { encodeMediaImage } from '../utils/encode-media-image';
 import { Input } from '@base-ui/react/input';
 import { MediaQualitySlider } from './MediaQualitySlider';
 import { WorkspaceSelect } from './WorkspaceSelect';
@@ -10,21 +11,7 @@ type Result = { blob: Blob; url: string; width: number; height: number; signatur
 const size = (bytes: number) => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(2)} MB`;
 
 
-export async function encodeMediaImage(image: HTMLImageElement, format: string, quality: number, limit: number) {
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.min(image.naturalWidth, limit || image.naturalWidth);
-  canvas.height = Math.max(1, Math.round(image.naturalHeight * canvas.width / image.naturalWidth));
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('Canvas unavailable');
-  if (format === 'jpeg') { context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); }
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const mime = 'image/' + format;
-  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => {
-    if (value?.type === mime) resolve(value);
-    else reject(new Error('Unsupported image format'));
-  }, mime, quality / 100));
-  return { blob, width: canvas.width, height: canvas.height };
-}
+export { encodeMediaImage };
 
 export function saveMediaCopy(item: PixflowMediaItem, blob: Blob) {
   const extension = blob.type.slice(6).replace('jpeg', 'jpg');

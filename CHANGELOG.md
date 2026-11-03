@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fit & optimise Gutenberg Image, Cover and supported Query Loop images to their responsive placements. Reuse local images pasted by URL, or choose Import & optimise for an external image.
+- Fitted sizes are shared without adding copies to the Media Library. An enabled Bridge upscaler can enlarge undersized originals before compression; compression still works without Bridge. Revert to original restores the canvas without reloading.
+
 - Paired sites keep showing Bridge as connected while a provider scan is slow. Interrupted scans preserve the previous provider list, and Local CLI settings offer Claude sign-in when authentication is missing.
 
 - Browse Media as a list or a grid with two, three or four columns. Filter by file types present in your library. The header and column labels stay visible while the file list and preview scroll independently.

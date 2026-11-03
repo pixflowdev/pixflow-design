@@ -1,14 +1,7 @@
 import {useEffect,useState} from 'react';
-import {pixflowWordPressRestFetch} from './runtime-fetch';
-import {pixflowOptionalBridgeJson} from './optional-bridge';
 import type {UpscalerStatus} from '@open-design/contracts';
-export async function upscalerRequest<T>(action: string, signal: AbortSignal, model: string, png?: string, noise?: number): Promise<T> {
-  const opened=await pixflowWordPressRestFetch('/wp-admin/direct/sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'design'}),signal});
-  if(!opened.ok)throw new Error('Reconnect to WordPress before using the upscaler.');
-  return pixflowOptionalBridgeJson<T>('pixflow/upscaler/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:await opened.json(),model,png,noise}),signal},{timeoutMs:180000});
-}
-
-
+import {upscalerRequest} from './upscaler-request';
+export {upscalerRequest} from './upscaler-request';
 export const UPSCALER_CHANGE='pixflow-upscaler-settings-changed';
 export function notifyUpscalerChange(){
   window.dispatchEvent(new Event(UPSCALER_CHANGE));

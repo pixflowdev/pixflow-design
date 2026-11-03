@@ -3984,8 +3984,8 @@ export function SettingsDialog({
                                     />
                                   )
                                 ) : null}
-                                {a.id === 'claude' ? (
-                                  <ClaudeSignIn authenticated={a.authStatus === 'ok'} testAction={a.authStatus === 'ok' ? testButton : undefined} onConnected={() => { void handleRefreshAgents(); }} />
+                                {a.id === 'claude' && a.authStatus === 'missing' ? (
+                                  <ClaudeSignIn onConnected={() => { void handleRefreshAgents(); }} />
                                 ) : testButton}
                               </div>
 

@@ -12,7 +12,7 @@ it.each(['codex', 'claude'])('labels the actual %s desktop runtime without chang
  const view=render(<SettingsDialog {...props} agents={[agent]} />);
  expect(screen.getAllByText('Live from Desktop app').length).toBeGreaterThan(0);
  if (id === 'claude') {
-   expect(screen.getByRole('button',{name:'Sign in again'})).toBeTruthy();
+   expect(screen.queryByRole('button',{name:/sign in/i})).toBeNull();
    expect(screen.getByRole('button',{name:'Test'})).toBeTruthy();
  }
  expect(screen.queryByText('Live from CLI')).toBeNull();
@@ -50,4 +50,17 @@ it('adopts an external CLI choice after an API selection has hydrated', async ()
  await waitFor(()=>expect(screen.getByRole('tab',{name:/Local CLI/}).getAttribute('aria-selected')).toBe('true'));
  await act(async () => { await new Promise(resolve => setTimeout(resolve,800)); });
  expect(persist).not.toHaveBeenCalled();
+});
+
+it('asks for Claude sign-in only on an explicit missing-auth result', () => {
+  const props = {
+    initial: { ...initial, agentId: 'claude' },
+    daemonLive: true, appVersionInfo: null, initialSection: 'execution' as const,
+    onPersist: vi.fn(), onPersistComposioKey: vi.fn(), onClose: vi.fn(), onRefreshAgents: vi.fn(),
+  };
+  const agent = { id: 'claude', name: 'Claude', bin: 'claude', available: true };
+  const view = render(<SettingsDialog {...props} agents={[{...agent, authStatus:'unknown'}]} />);
+  expect(screen.queryByRole('button', {name:/sign in/i})).toBeNull();
+  view.rerender(<SettingsDialog {...props} agents={[{...agent, authStatus:'missing'}]} />);
+  expect(screen.getByRole('button', {name:'Sign in with Claude'})).toBeTruthy();
 });

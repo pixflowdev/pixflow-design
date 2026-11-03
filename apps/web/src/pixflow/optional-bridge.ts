@@ -51,6 +51,12 @@ export const PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE =
 export const PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE =
   'The browser reported that local access to Pixflow Design Bridge is blocked. Allow Apps on device or local network access in this site\'s browser permissions, then rescan Local CLI.';
 
+export class PixflowProviderScanIncompleteError extends Error {}
+
+function isRequestTimeout(error: unknown): boolean {
+  return error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError');
+}
+
 export class PixflowOptionalBridgeUnavailableError extends Error {
   cause?: unknown;
 
@@ -344,7 +350,9 @@ function requestWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 3_5
     const normalized = normalizePixflowOptionalBridgeError(error);
     if (normalized instanceof PixflowOptionalBridgeUnavailableError) {
       if (url === pixflowOptionalBridgeApiUrl('health')) {
-        notifyPixflowOptionalBridgeDisconnected(error);
+        if (!isRequestTimeout(error) || !cachedHealth?.value.available || Date.now() - cachedHealth.checkedAt > HEALTH_CACHE_MS) {
+          notifyPixflowOptionalBridgeDisconnected(error);
+        }
       } else {
         // A slow endpoint or endpoint-specific CORS failure is not proof that
         // the Bridge is offline. Health owns the shared connection state.
@@ -530,6 +538,10 @@ export async function probePixflowOptionalBridge(options?: {
     cachedHealth = { checkedAt: Date.now(), value };
     return value;
   } catch (error) {
+    if (error instanceof PixflowOptionalBridgeUnavailableError && isRequestTimeout(error.cause)
+      && cachedHealth?.value.available && Date.now() - cachedHealth.checkedAt <= HEALTH_CACHE_MS) {
+      return cachedHealth.value;
+    }
     const value: PixflowOptionalBridgeHealth = {
       available: false,
       requiredVersion: readBridgeConfig()?.bridgeRequiredVersion,
@@ -713,7 +725,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
     const data = dataLines.join('\n');
     if (eventName === 'done') {
-      if (data && JSON.parse(data).timedOut) throw new Error('Provider scan timed out');
+      if (data && JSON.parse(data).timedOut) throw new PixflowProviderScanIncompleteError('Provider scan timed out');
       done = true;
       return;
     }
@@ -725,7 +737,8 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
       const agent = JSON.parse(data) as AgentInfo;
       if (!isPixflowSupportedCliAgent(agent)) return;
       collected.push(agent);
-      args.onAgent(agent);
+      // Keep the last completed snapshot visible until a replacement scan commits.
+      if (!cachedAgents?.value.length) args.onAgent(agent);
     } catch {
       // Ignore malformed records so one bad probe does not break the list.
     }
@@ -753,7 +766,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
   }
 
-  if (!done) throw new Error('agents stream ended before done');
+  if (!done) throw new PixflowProviderScanIncompleteError('Provider scan ended before completion');
   cachedAgents = { checkedAt: Date.now(), value: collected };
   persistAgentsCache(collected, cachedAgents.checkedAt);
   finishDiscovery(true);

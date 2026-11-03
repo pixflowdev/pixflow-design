@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { DesignSystemTokenContractRebuildJobResponse } from '@open-design/contracts';
 
+import * as agents from '../src/agents.js';
 import { isLocalSameOrigin } from '../src/origin-validation.js';
 import { listDesignSystems } from '../src/design-systems.js';
 import { registerStaticResourceRoutes } from '../src/routes/static-resource.js';
@@ -85,6 +86,19 @@ describe('static resource mutation routes', () => {
         });
       }),
   );
+
+  it('reports the discovery deadline separately from a completed empty list', async () => {
+    const detect = vi.spyOn(agents, 'detectAgents').mockImplementationOnce(() => new Promise(() => {}));
+    try {
+      const response = await fetch(baseUrl + '/api/agents?force=1');
+      expect(response.status).toBe(504);
+      expect(await response.json()).toMatchObject({ code: 'PIXFLOW_PROVIDER_SCAN_TIMEOUT' });
+      detect.mockResolvedValueOnce([]);
+      expect(await (await fetch(baseUrl + '/api/agents?force=1')).json()).toEqual({ agents: [] });
+    } finally {
+      detect.mockRestore();
+    }
+  }, 20_000);
 
   it.each([
     ['POST', '/api/skills/install'],

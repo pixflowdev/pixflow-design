@@ -427,3 +427,13 @@ describe('Pixflow bridge HTTP gateway', () => {
 
 it('allows authenticated steering to wait for a reply boundary', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/direct-site/steer'))).toBe(240_000); });
 it('uses the same steering budget in Workspace without widening unrelated routes', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/steer'))).toBe(240_000); expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/cancel'))).toBe(25_000); });
+
+it.each(['ready','working','unavailable'] as const)('answers paired health from the managed process state (%s)', async state => {
+  const site = { key: 'paired', origin: 'https://hosted.test', label: 'Staging', url: 'https://hosted.test', dataDir: '', syncRoot: '' };
+  const worker = vi.fn(() => null);
+  const options = { getState: () => 'running' as const, getSite: () => site, getDaemonUrl: worker, getWebUrl: () => null, getRuntimeState: () => state };
+  const base = await startGateway({ ...options, version: 'test', resolveSite: () => options });
+  const response = await fetch(base + '/api/health', { headers: { Origin: site.origin, 'X-Pixflow-Site-Key': site.key } });
+  expect(await response.json()).toMatchObject({ ok: state !== 'unavailable', runtimeState: state, site: { key: site.key } });
+  expect(worker).not.toHaveBeenCalled();
+});

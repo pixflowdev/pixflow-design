@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Paired sites keep showing Bridge as connected while a provider scan is slow. Interrupted scans preserve the previous provider list, and Local CLI settings offer Claude sign-in when authentication is missing.
+
 - Browse Media as a list or a grid with two, three or four columns. Filter by file types present in your library. The header and column labels stay visible while the file list and preview scroll independently.
 - Open generated images from chat in a Media dialog and return to the conversation when you close it. Saved images are clickable before Bridge reconnects.
 - Click an image preview for a full-screen lightbox with Download, Copy URL, Optimise image and, when available, Upscale image.

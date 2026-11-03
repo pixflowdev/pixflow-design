@@ -188,7 +188,7 @@
       });
     }).catch(function (error) {
       if (error && error.name === 'AbortError') {
-        throw new Error('Pixflow Design Bridge did not respond.');
+        throw error;
       }
       throw error;
     }).finally(function () {
@@ -355,6 +355,7 @@
       setState('connected', 'Pixflow Bridge', 'Pixflow Design Bridge is connected' + version + '. Click to check the connection.');
     }).catch(function (error) {
       failedProbeCount = Math.min(failedProbeCount + 1, 5);
+      if (currentState === 'connected' && failedProbeCount === 1 && error && (error.name === 'AbortError' || error.name === 'TimeoutError')) return;
       var wasSwitching = currentState === 'switching';
       hasResolvedOnce = true;
       currentVersion = '';

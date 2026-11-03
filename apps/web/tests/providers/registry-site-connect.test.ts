@@ -28,3 +28,11 @@ it('publishes a pairing connection diagnosis without retrying provider discovery
   expect(getProviderDiscoveryState().error).toContain('refused');
   expect(bridge.stream).not.toHaveBeenCalled();expect(bridge.fallback).not.toHaveBeenCalled();
 });
+
+it('does not immediately launch another discovery after a partial scan', async () => {
+  const {PixflowProviderScanIncompleteError} = await import('../../src/pixflow/optional-bridge');
+  bridge.fallback.mockClear();
+  bridge.stream.mockRejectedValueOnce(new PixflowProviderScanIncompleteError('Provider scan timed out'));
+  await expect(fetchAgentsStream({useOptionalBridge:true,onAgent:vi.fn()})).rejects.toThrow('timed out');
+  expect(bridge.fallback).not.toHaveBeenCalled();
+});

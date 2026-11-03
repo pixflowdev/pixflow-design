@@ -403,6 +403,8 @@ function stripFns(
   return rest;
 }
 
+// One completed observation per adapter, scoped to its configured environment.
+const lastProbe = new Map<string, { key: string; agent: DetectedAgent; at: number }>();
 const activeProbes = new Map<string, Promise<DetectedAgent>>();
 
 function safeProbe(
@@ -413,7 +415,11 @@ function safeProbe(
   const key = stableAgentEnvKey({ [def.id]: configuredEnv });
   const active = activeProbes.get(key);
   if (active) return active;
-  const pending = runProbe(def, configuredEnv, systemProxyEnv).finally(() => activeProbes.delete(key));
+  const last = lastProbe.get(def.id);
+  const previous = last?.key === key && Date.now() - last.at < AGENT_DETECTION_CACHE_MS ? last.agent : undefined;
+  const pending = runProbe(def, configuredEnv, systemProxyEnv, previous, agent => {
+    lastProbe.set(def.id, { key, agent, at: Date.now() });
+  }).finally(() => activeProbes.delete(key));
   activeProbes.set(key, pending);
   return pending;
 }
@@ -421,15 +427,24 @@ function safeProbe(
 async function runProbe(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
-  systemProxyEnv: NodeJS.ProcessEnv = {},
+  systemProxyEnv: NodeJS.ProcessEnv,
+  previous: DetectedAgent | undefined,
+  remember: (agent: DetectedAgent) => void,
 ): Promise<DetectedAgent> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let installed: DetectedAgent | null = null;
   try {
     return await Promise.race([
-      probe(def, configuredEnv, agent => { installed = agent; }, systemProxyEnv),
+      probe(def, configuredEnv, agent => { installed = agent; }, systemProxyEnv).then(agent => {
+        // A late completion may belong to a superseded scan.
+        if (timeout !== null) remember(agent);
+        return agent;
+      }),
       new Promise<DetectedAgent>((resolve) => {
-        timeout = setTimeout(() => resolve(installed ?? unavailableAgent(def)), 7000);
+        timeout = setTimeout(() => {
+          const sameInstallation = previous?.available && (!installed || previous.path === installed.path);
+          resolve(sameInstallation ? previous : installed ?? unavailableAgent(def));
+        }, 7000);
       }),
     ]);
   } catch {
@@ -443,6 +458,7 @@ async function runProbe(
     return unavailableAgent(def);
   } finally {
     if (timeout) clearTimeout(timeout);
+    timeout = null;
   }
 }
 

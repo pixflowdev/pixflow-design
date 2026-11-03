@@ -159,3 +159,33 @@ it.each(['list','stream'])('preserves the connection diagnosis in an explicit %s
   const api=await import('../../src/pixflow/optional-bridge');
   await expect(kind==='list' ? api.fetchPixflowOptionalBridgeAgents({force:true}) : api.fetchPixflowOptionalBridgeAgentsStream({force:true,onAgent:()=>{}})).rejects.toThrow('cannot determine');
 });
+
+it('retains verified providers and Claude authentication when a stream ends at its deadline', async () => {
+  const claude = { id: 'claude', available: true, authStatus: 'ok', models: [] };
+  const codex = { id: 'codex', available: true, models: [] };
+  const fetch = vi.fn()
+    .mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockResolvedValueOnce(Response.json({ agents: [claude, codex] }))
+    .mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockResolvedValueOnce(new Response('event: agent\ndata: {"id":"claude","available":false}\n\nevent: done\ndata: {"timedOut":true}\n\n'));
+  setup(fetch);
+  const api = await import('../../src/pixflow/optional-bridge');
+  const saved = await api.fetchPixflowOptionalBridgeAgents({ force: true });
+  expect(saved).toHaveLength(2);
+  const paint = vi.fn();
+  await expect(api.fetchPixflowOptionalBridgeAgentsStream({ force: true, onAgent: paint })).rejects.toThrow('timed out');
+  expect(paint).not.toHaveBeenCalled();
+  expect(await api.fetchPixflowOptionalBridgeAgents()).toEqual(saved);
+});
+
+it('keeps a recently confirmed connection on a health timeout but reports connection refusal', async () => {
+  const fetch = vi.fn().mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockRejectedValueOnce(new DOMException('timeout', 'TimeoutError'))
+    .mockRejectedValueOnce(new Error('connection refused'));
+  const dispatch = setup(fetch);
+  const {probePixflowOptionalBridge} = await import('../../src/pixflow/optional-bridge');
+  await probePixflowOptionalBridge({force:true});
+  expect((await probePixflowOptionalBridge({force:true})).available).toBe(true);
+  expect(dispatch).not.toHaveBeenCalled();
+  expect((await probePixflowOptionalBridge({force:true})).available).toBe(false);
+});

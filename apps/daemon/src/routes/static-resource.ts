@@ -107,8 +107,12 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
       try {
         const list = await Promise.race([
           detectAgents(agentCliEnv, { force: forceDetection }),
-          agentDetectionTimeout([]),
+          agentDetectionTimeout(null),
         ]);
+        if (list === null) {
+          res.status(504).json({ error: 'Provider scan timed out', code: 'PIXFLOW_PROVIDER_SCAN_TIMEOUT' });
+          return;
+        }
         res.json({ agents: list });
       } catch (err: any) {
         res.status(500).json({ error: String(err) });

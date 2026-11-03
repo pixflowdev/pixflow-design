@@ -163,10 +163,13 @@ async function handleRequest(
 
   if (req.method === "GET" && requestUrl.pathname === "/api/health") {
     const runtimeState = options.getRuntimeState?.();
-    const dormant = runtimeState === 'sleeping' || runtimeState === 'waking' || runtimeState === 'releasing';
-    const daemon = await readDaemonStatus(options).catch(() => null);
+    // Managed sites have an origin-checked registration and a process-liveness
+    // snapshot. A worker queued behind a provider probe need not answer a
+    // second HTTP request for the tray to confirm that connection.
+    const daemon = runtimeState === undefined ? await readDaemonStatus(options).catch(() => null) : null;
+    const connected = runtimeState === undefined ? daemon !== null : runtimeState !== 'unavailable';
     writeJson(res, 200, {
-      ok: options.getState() === "running" && (dormant || daemon !== null),
+      ok: options.getState() === "running" && connected,
       ...(runtimeState ? { runtimeState } : {}),
       product: "pixflow-design-bridge",
       transport: "tray-gateway",

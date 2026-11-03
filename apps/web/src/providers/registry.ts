@@ -74,6 +74,7 @@ import { toPixflowRuntimeIframeUrl, toPixflowRuntimeUrl } from '../pixflow/bridg
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { pixflowRuntimeFetch, pixflowWordPressRestFetch, withWordPressNonce } from '../pixflow/runtime-fetch';
 import {
+  PixflowProviderScanIncompleteError,
   ensurePixflowOptionalBridgeSiteContext,
   PixflowOptionalBridgeUnavailableError,
   fetchPixflowOptionalBridgeAgents,
@@ -496,7 +497,7 @@ export async function fetchAgentsStream(args: {
       const agents = await fetchPixflowOptionalBridgeAgentsStream({ onAgent, signal, force: true });
       return agents;
     } catch (error) {
-      if (error instanceof PixflowOptionalBridgeUnavailableError) throw error;
+      if (signal?.aborted || error instanceof PixflowProviderScanIncompleteError || error instanceof PixflowOptionalBridgeUnavailableError) throw error;
       const agents = await fetchPixflowOptionalBridgeAgents({ force: true });
       for (const agent of agents) {
         if (signal?.aborted) break;

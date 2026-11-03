@@ -27,3 +27,65 @@ dialog[data-pixflow-fit-config] button:not(:disabled):hover {filter:brightness(.
 dialog[data-pixflow-fit-config] :is(button,input):focus-visible {outline:2px solid var(--accent,#146ef5);outline-offset:2px;}
 dialog[data-pixflow-fit-config] button:disabled {opacity:.45;cursor:default;}
 @media(max-width:400px){dialog[data-pixflow-fit-config] :is(header,section,footer){padding-inline:16px;}dialog[data-pixflow-fit-config] .pf-fit-fields{gap:8px;}}
+
+/* Bricks supplies an info control as the mount point for this editor action. */
+[data-control="info"][controlkey="pixflowDynamicFit"] {
+  background: transparent;
+  padding: 0;
+}
+[data-control="info"][controlkey="pixflowDynamicFit"] :is([data-pixflow-dynamic-fit-launch],[data-pixflow-static-fit-launch]) {
+  background: var(--bricks-color-primary, #ffd64f);
+  color: var(--bricks-text-dark, #212121);
+  border: 0;
+  border-radius: var(--builder-border-radius, 4px);
+  padding: 0 12px;
+  min-height: 32px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+:is([data-pixflow-dynamic-fit-launch],[data-pixflow-static-fit-launch]):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+
+html:not([data-pixflow-bricks-loop]) [data-controlkey="pixflowDynamicFit"],
+html:not([data-pixflow-bricks-loop="dynamic"]) [data-pixflow-dynamic-fit-launch],
+html:not([data-pixflow-bricks-loop="static"]) [data-pixflow-static-fit-launch] {
+  display: none;
+}
+
+[data-pixflow-fit-toast] {
+  position: fixed;
+  inset: auto 20px 20px auto;
+  z-index: 2147483646;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--builder-bg, #242629);
+  color: var(--builder-color, #fff);
+  box-shadow: 0 3px 16px #0003;
+  font: 500 13px/1.5 system-ui, sans-serif;
+  pointer-events: none;
+}
+
+[data-controlkey="pixflowDynamicFit"]:not([data-fit-stale]) :is([data-pixflow-fit-notice],button span:nth-child(2)),
+[data-controlkey="pixflowDynamicFit"][data-fit-stale] button span:first-child {display:none}
+[data-pixflow-fit-notice] {display:block;margin-bottom:8px;color:var(--builder-color);font-size:12px;line-height:1.5}
+
+[data-pixflow-fit-notice][hidden] {display:none}
+
+/* Keep native inspector actions together, including the size notice at narrow panel widths. */
+[data-pixflow-fit-actions] {display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin-block:8px}
+[data-pixflow-fit-actions] [data-pixflow-fit-notice] {flex-basis:100%;margin:0;line-height:1.45;color:inherit}
+[data-pixflow-fit-actions] button[hidden], [data-pixflow-fit-actions] [role="status"]:empty {display:none}
+[data-pixflow-fit-actions="elementor"] button[data-fit-configure] {min-height:28px;padding:4px 10px;border:1px solid var(--e-a-border-color-bold,#a4afb7);border-radius:3px;background:var(--e-a-bg-default,transparent);color:var(--e-a-color-txt,#495157);font:inherit;cursor:pointer}
+[data-pixflow-fit-actions="etch"] button {min-height:30px;padding:4px 10px;border-radius:5px;cursor:pointer;font:inherit}
+[data-pixflow-fit-actions="etch"] button[data-fit-configure] {background:var(--e-accent,#58dbd3);color:#172626}
+[data-pixflow-fit-actions="etch"] button[data-pixflow-fit-etch] {color:inherit;background:transparent;border:1px solid currentColor}
+[data-pixflow-fit-actions] button:hover {filter:brightness(.94)}
+[data-pixflow-fit-actions] button:focus-visible {outline:2px solid currentColor;outline-offset:2px}
+
+html:not([data-pixflow-bricks-fitted]) [data-pixflow-fit-revert]{display:none!important}
+
+[data-pixflow-static-fit-launch]:not([data-fit-import="yes"]) [data-fit-import-label],
+[data-pixflow-static-fit-launch][data-fit-import="yes"] span:not([data-fit-import-label]) {display:none!important}

@@ -1,9 +1,10 @@
+import {bindEditorFit,installEditorFitSave,type EditorFit} from './editor-fit-controls';
 /** Configure only the placement. The editor's own change handler owns Undo and Save. */
-type RowTarget = { node: Element; cover?: boolean; read(): string; write(value: string): void };
+type RowTarget = { node: Element; cover?: boolean; staticImage?: boolean; read(): string; write(value: string): void };
 const host = window as any;
 const translate = (text: string) => host.wp.i18n.__(text,'pixflow-design');
 
-function measure({node,cover}: RowTarget): string[] {
+export function measure({node,cover}: Pick<RowTarget,"node"|"cover">): string[] {
   const frame = node.ownerDocument.defaultView?.frameElement as HTMLElement | null;
   const original=frame?.getAttribute('style');
   try {
@@ -62,10 +63,10 @@ function configure(target: RowTarget) {
     return el;
   }
   const header = element('header',dialog);
-  const title = element('h2',header,'Optimise dynamic images');
+  const title = element('h2',header,target.staticImage ? 'Optimise image' : 'Optimise dynamic images');
   title.id = 'pixflow-fit-title';
   dialog.setAttribute('aria-labelledby',title.id);
-  element('p',header,'Calculate the image sizes for this placement. Each row keeps its own image.');
+  element('p',header,target.staticImage ? 'Fit this image to its placement across screen sizes.' : 'Calculate the image sizes for this placement. Each row keeps its own image.');
   const form = element('form',dialog);
   const body = element('section',form);
   const toolbar = element('div',body);
@@ -88,12 +89,12 @@ function configure(target: RowTarget) {
     const input = element('input',label);
     input.type = 'text';
     if (!target.cover) input.inputMode = 'numeric';
-    input.placeholder = '—';
+    input.placeholder = 'â€”';
     input.value = original.split(',')[i] || '';
     input.oninput = ()=>{removing = false; update();};
     return input;
   });
-  const status = element('p',body,target.cover ? 'Enter width × height in pixels, for example 480 × 320.' : 'Widths are in pixels. You can adjust each size before saving.');
+  const status = element('p',body,target.cover ? 'Enter width Ã— height in pixels, for example 480 Ã— 320.' : 'Widths are in pixels. You can adjust each size before saving.');
   status.setAttribute('role','status');
   const footer = element('footer',form);
   if (original) {
@@ -109,7 +110,7 @@ function configure(target: RowTarget) {
   const save = element('button',footer,'Save');
   save.type = 'submit';
   save.className = 'pf-fit-save';
-  function draft() { return removing ? '' : inputs.map(i=>i.value.trim().replace(/\s*[×x]\s*/g,'x')).join(','); }
+  function draft() { return removing ? '' : inputs.map(i=>i.value.trim().replace(/\s*[Ã—x]\s*/g,'x')).join(','); }
   function update() {
     const value = draft();
     const valid = removing || value.split(',').every(slot=>/^[1-9]\d{0,3}(?:x[1-9]\d{0,3})?$/.test(slot) && slot.split('x').every(n=>Number(n)<=4096));
@@ -134,16 +135,38 @@ window.addEventListener('pixflow:dynamic-fit-configure',e=>configure((e as Custo
 
 const wp=host.wp;
 if(wp?.hooks && wp?.element && wp?.blockEditor) {
+  const store=()=>wp.data.select('core/block-editor');
+  const dynamicBlock=(name:string,attrs:any)=>name==='core/post-featured-image'||!!attrs.useFeaturedImage||
+    [attrs.metadata?.bindings?.url,attrs.metadata?.bindings?.id].some(binding=>typeof binding?.source==='string'&&binding.source.trim());
+  const eligible=(id:string,name:string,attrs:any)=>{
+    if(!['core/image','core/cover','core/post-featured-image'].includes(name))return false;
+    if(!dynamicBlock(name,attrs))return Number(attrs.id)>0 || (name==='core/image' && /^https?:\/\//i.test(attrs.url||''));
+    return store().getBlockParents(id).some((parent:string)=>store().getBlockName(parent)==='core/query');
+  };
+  const target=(id:string):EditorFit|undefined=>{
+    const block=store()?.getBlock(id);
+    if (!block || !['core/image','core/cover','core/post-featured-image'].includes(block.name)) return;
+    const attrs=block.attributes;
+    const dynamic=dynamicBlock(block.name,attrs);
+    if (!eligible(id,block.name,attrs)) return;
+    const doc=document.querySelector<HTMLIFrameElement>('iframe[name="editor-canvas"]')?.contentDocument??document;
+    const root=doc.querySelector('[data-block="'+CSS.escape(id)+'"]');
+    if(!root)return;
+    const cover=block.name==='core/cover';
+    return {node:cover?root:root.querySelector('img')??root,cover,dynamic,attachmentId:dynamic?0:Number(attrs.id)||0,sourceUrl:dynamic?undefined:attrs.url,
+      read:()=>store().getBlock(id)?.attributes.pixflowDynamicFit||'',
+      write:profile=>wp.data.dispatch('core/block-editor').updateBlockAttributes(id,{pixflowDynamicFit:profile})};
+  };
+  const Control=({id,profile}:{id:string;profile:string})=>{
+    const ref=wp.element.useRef(null);
+    wp.element.useLayoutEffect(()=>{const t=target(id);if(t&&ref.current)return bindEditorFit(ref.current,t,()=>target(id),()=>store()?.getSelectedBlockClientId()===id);},[id,profile]);
+    return wp.element.createElement('div',null,wp.element.createElement('button',{ref,type:'button',className:'components-button is-secondary'},translate('Optimise image')));
+  };
   wp.hooks.addFilter('editor.BlockEdit','pixflow/dynamic-fit',(Edit:any)=>(props:any)=>{
     const h=wp.element.createElement;
-    if((props.name!=='core/post-featured-image' && !(props.name==='core/cover'&&props.attributes.useFeaturedImage))||!props.isSelected)return h(Edit,props);
+    if(!props.isSelected||!eligible(props.clientId,props.name,props.attributes))return h(Edit,props);
     return h(wp.element.Fragment,null,h(Edit,props),h(wp.blockEditor.InspectorControls,null,
-      h(wp.components.PanelBody,{title:translate('Optimise dynamic images'),initialOpen:false},
-        h(wp.components.Button,{variant:'secondary',onClick:()=>{
-          const canvas=document.querySelector<HTMLIFrameElement>('iframe[name="editor-canvas"]')?.contentDocument??document;
-          const root=canvas.querySelector('[data-block="'+CSS.escape(props.clientId)+'"]');
-          if(root) configure({node:root.querySelector('img')??root,cover:props.name==='core/cover'||(props.attributes.scale==='cover'&&!!props.attributes.height),
-            read:()=>props.attributes.pixflowDynamicFit||'',write:v=>props.setAttributes({pixflowDynamicFit:v||undefined})});
-        }},translate(props.attributes.pixflowDynamicFit?'Edit placement sizes':'Measure placement')))));
+      h(wp.components.PanelBody,{title:translate('Image optimisation')},h(Control,{key:JSON.stringify([props.attributes.id,props.attributes.useFeaturedImage,props.attributes.url,props.attributes.metadata?.bindings]),id:props.clientId,profile:props.attributes.pixflowDynamicFit}))));
   });
+  installEditorFitSave(()=>Array.from(store()?.getClientIdsWithDescendants()??[]).map(id=>target(String(id))).filter((t):t is EditorFit=>!!t),'.editor-post-publish-button,.editor-post-save-draft','iframe[name="editor-canvas"]');
 }

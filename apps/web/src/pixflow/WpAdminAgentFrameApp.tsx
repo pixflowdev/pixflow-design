@@ -1,3 +1,4 @@
+import { compactTranscriptEvents } from './direct-history-storage';
 import { conversationBinding, conversationDraftKey } from './conversation-address';
 import { useFloatingConversation, normalizeFloatingRunMetadata, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
 import { rememberLastActiveChat } from './last-active-chat';
@@ -12,7 +13,7 @@ import { mergeChatHistory } from './chat-history-client';
 import { resolveEditorRunTarget } from './editor-run-target';
 import { wpAdminBootstrapContextStatus } from './wp-admin-bootstrap-context';
 import { useT as usePixflowUiTranslation } from '../i18n';
-import { acceptedSteeringMessageIds, steeringPromptHistory, steeringTranscriptEvents } from './steering-messages';
+import { acceptedSteeringMessageIds, steeringPromptHistory } from './steering-messages';
 import { memoryIndexOf } from './saved-memory';
 import { withGutenbergTarget } from './gutenberg-native-tools';
 import { readLockedSkills } from './locked-skills';
@@ -604,7 +605,7 @@ export function persistMessages(key: string, messages: WpAdminMessage[], mode?: 
   const retained = acknowledged ? messages.slice(-50) : messages;
   // Final text and lifecycle state must replace an older running snapshot even
   // when verbose tool diagnostics no longer fit in the browser's shared quota.
-  const compact = () => JSON.stringify(retained.map(({ events, ...message }) => ({ ...message, events: steeringTranscriptEvents(events) })));
+  const compact = () => JSON.stringify(retained.map(({ events, ...message }) => ({ ...message, events: compactTranscriptEvents(events) })));
   const raw = mode === 'daemon' && acknowledged ? compact() : JSON.stringify(retained);
   if ((key.startsWith('pixflow-direct:') || key.startsWith('bricks:') || !!conversationBinding(key)) && typeof sessionStorage !== 'undefined') {
     try { sessionStorage.setItem(`pixflow:admin-transcript:${key}`, raw); }

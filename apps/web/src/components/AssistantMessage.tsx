@@ -1,10 +1,12 @@
+import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
+import { ChatMediaAttachment } from './chat/ChatMediaAttachment';
 import { Message, MessageContent, MessageHeader, MessageFooter } from './chat/Message';
 import { Sources } from './chat/Sources';
 import { citationSource } from './chat/InlineCitation';
 import { Trace, TraceLine, TraceIcon, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
 import { GeneratedMedia, MediaGenerationPlaceholder } from './chat/GeneratedMedia';
 import { hasPixflowWordPressContext } from '../pixflow/wordpress-context';
-import { isInlineMedia, pendingMediaGenerations } from './chat/media-generation';
+import { isInlineMedia, pendingMediaGenerations, transcriptImageCards } from './chat/media-generation';
 import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { activityAction, liveActivityLabel, completedActivityLabel } from './chat/activity-label';
@@ -424,6 +426,16 @@ function AssistantMessageImpl({
     if (!message.content || saved.some(event => event.kind === 'text' && event.text.trim())) return saved;
     return [...saved, { kind: 'text' as const, text: message.content }];
   }, [message.events, message.content]);
+  const attachedImages = useMemo(() => typeof window === 'undefined' ? [] : transcriptImageCards(events, window.location.origin, getPixflowWordPressConfig() ? message.content : ''), [events, message.content]);
+  const attachmentUrls = useMemo(() => {
+    const urls = new Set<string>();
+    for (const image of attachedImages) {
+      urls.add(image.url);
+      const url = new URL(image.url);
+      if (url.origin === window.location.origin) urls.add(url.pathname + url.search + url.hash);
+    }
+    return urls;
+  }, [attachedImages]);
   // ChatPane renders the canonical TodoWrite card as a standalone chat row, so
   // we strip TodoWrite tool-groups out of the per-message flow to avoid the
   // same task list rendering twice.
@@ -692,6 +704,7 @@ function AssistantMessageImpl({
                 key={i}
                 text={b.text}
                 searchedWeb={searchedWeb}
+                attachmentUrls={attachmentUrls}
                 hideRecoveredHtmlFallback={message.agentId === "grok-build" && !streaming}
                 assistantMessageId={message.id}
                 isLastAssistant={!!isLast}
@@ -778,7 +791,10 @@ function AssistantMessageImpl({
             stepLabel={steps > 1 ? t('activity.steps', { count: steps }) : undefined}
             issueLabel={errors ? `${t('tool.error')} · ${errors}` : undefined}>{renderSection}</ActivityDisclosure>;
         })}
-        {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} />)}
+        {attachedImages.map(image => (
+          <ChatMediaAttachment key={image.url} image={image} />
+        ))}
+        {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} startedAtMs={item.startedAtMs} />)}
         {projectId && displayedProduced.some(isInlineMedia) && <GeneratedMedia files={displayedProduced.filter(isInlineMedia)} projectId={projectId} onRequestOpenFile={onRequestOpenFile} />}
         {!streaming && displayedProduced.some(file => !isInlineMedia(file)) && projectId ? (
           <ProducedFiles
@@ -2128,6 +2144,7 @@ function chatFileLinkClickHandler(
 
 function ProseBlock({
   text,
+  attachmentUrls,
   searchedWeb,
   hideRecoveredHtmlFallback,
   assistantMessageId,
@@ -2144,6 +2161,7 @@ function ProseBlock({
 }: {
   text: string;
   searchedWeb: boolean;
+  attachmentUrls: ReadonlySet<string>;
   hideRecoveredHtmlFallback?: boolean;
   assistantMessageId: string;
   isLastAssistant: boolean;
@@ -2229,7 +2247,7 @@ function ProseBlock({
         if (seg.kind === "text") {
           return (
             <div className="stream-prose" key={seg.key}>
-              <StreamingMarkdown text={seg.text} onLinkClick={onLinkClick} searchedWeb={searchedWeb} live={Boolean(showStreamCursor && !live)} />
+              <StreamingMarkdown text={seg.text} attachmentUrls={attachmentUrls} onLinkClick={onLinkClick} searchedWeb={searchedWeb} live={Boolean(showStreamCursor && !live)} />
             </div>
           );
         }

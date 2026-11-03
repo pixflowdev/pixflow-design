@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Browse images in the Media lightbox, compare compression previews and save smaller copies. Bulk optimisation supports selecting matching images across library pages.
+- Open generated chat images directly in the Media library. Restored images stay clickable before Bridge reconnects.
 
 ## [2.2.0] - Release candidate
 

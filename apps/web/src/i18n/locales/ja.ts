@@ -4344,6 +4344,8 @@ export const ja: Dict = {
   "media.fit.msgda9b2ddd34": "画像をアップスケーリング中… %s",
   "media.fit.msg079ad799f6": "アップスケーリングが中断されました。残りのサイズは再試行されます。",
   "media.fit.msg930edbc570": "幅はピクセル単位です。保存する前に各サイズを調整できます。",
+  "media.fit.msge43d53f0cd": "静的な単一画像の配置を選択します。",
+  "media.fit.msg44ce6e4a2f": "画像を選択してください…",
   "media.optimise.action": "画像を最適化",
   "media.optimise.format": "形式",
   "media.optimise.width": "最大幅",

@@ -3623,6 +3623,8 @@ export const ar: Dict = {
   "media.fit.msgda9b2ddd34": "ترقية الصورة... %s",
   "media.fit.msg079ad799f6": "تمت مقاطعة عملية الارتقاء. سيتم إعادة محاولة الأحجام المتبقية.",
   "media.fit.msg930edbc570": "العرض بالبكسل. يمكنك ضبط كل حجم قبل الحفظ.",
+  "media.fit.msge43d53f0cd": "اختر موضعًا ثابتًا لصورة واحدة.",
+  "media.fit.msg44ce6e4a2f": "اختر الصورة…",
   "media.optimise.action": "تحسين الصورة",
   "media.optimise.format": "التنسيق",
   "media.optimise.width": "العرض الأقصى",

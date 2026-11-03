@@ -3668,6 +3668,8 @@ export const it: Dict = {
   "media.fit.msgda9b2ddd34": "Immagine ingrandita… %s",
   "media.fit.msg079ad799f6": "Upscaling interrotto. Le dimensioni rimanenti verranno ritentate.",
   "media.fit.msg930edbc570": "Le larghezze sono in pixel. Puoi modificare ciascuna dimensione prima di salvare.",
+  "media.fit.msge43d53f0cd": "Scegli un posizionamento statico a immagine singola.",
+  "media.fit.msg44ce6e4a2f": "Scegli l'immagine...",
   "media.optimise.action": "Ottimizza immagine",
   "media.optimise.format": "Formato",
   "media.optimise.width": "Larghezza massima",

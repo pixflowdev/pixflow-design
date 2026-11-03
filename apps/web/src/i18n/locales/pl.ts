@@ -3623,6 +3623,8 @@ export const pl: Dict = {
   "media.fit.msgda9b2ddd34": "Skalowanie obrazu… %s",
   "media.fit.msg079ad799f6": "Skalowanie zostało przerwane. Pozostałe rozmiary zostaną ponowione.",
   "media.fit.msg930edbc570": "Szerokości podano w pikselach. Możesz dostosować każdy rozmiar przed zapisaniem.",
+  "media.fit.msge43d53f0cd": "Wybierz statyczne miejsce docelowe z jednym obrazem.",
+  "media.fit.msg44ce6e4a2f": "Choose image…",
   "media.optimise.action": "Optymalizuj obraz",
   "media.optimise.format": "Format",
   "media.optimise.width": "Maksymalna szerokość",

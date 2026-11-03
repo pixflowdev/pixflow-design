@@ -4344,6 +4344,8 @@ export const id: Dict = {
   "media.fit.msgda9b2ddd34": "Meningkatkan gambar… %s",
   "media.fit.msg079ad799f6": "Peningkatan skala terhenti. Ukuran yang tersisa akan dicoba lagi.",
   "media.fit.msg930edbc570": "Lebar dalam piksel. Anda dapat menyesuaikan setiap ukuran sebelum menyimpannya.",
+  "media.fit.msge43d53f0cd": "Pilih penempatan gambar tunggal yang statis.",
+  "media.fit.msg44ce6e4a2f": "Pilih gambar…",
   "media.optimise.action": "Optimalkan gambar",
   "media.optimise.format": "Format",
   "media.optimise.width": "Lebar maksimum",

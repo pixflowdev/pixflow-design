@@ -4344,6 +4344,8 @@ export const th: Dict = {
   "media.fit.msgda9b2ddd34": "กำลังขยายขนาดภาพ… %s",
   "media.fit.msg079ad799f6": "การลดขนาดถูกขัดจังหวะ ขนาดที่เหลือจะถูกลองอีกครั้ง",
   "media.fit.msg930edbc570": "ความกว้างมีหน่วยเป็นพิกเซล คุณสามารถปรับขนาดแต่ละขนาดก่อนบันทึกได้",
+  "media.fit.msge43d53f0cd": "เลือกตำแหน่งภาพนิ่งแบบภาพเดียว",
+  "media.fit.msg44ce6e4a2f": "เลือกภาพ...",
   "media.optimise.action": "ปรับขนาดไฟล์ภาพ",
   "media.optimise.format": "รูปแบบ",
   "media.optimise.width": "ความกว้างสูงสุด",

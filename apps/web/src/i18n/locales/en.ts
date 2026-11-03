@@ -4907,6 +4907,8 @@ export const en: Dict = {
   "media.fit.msgda9b2ddd34": "Upscaling image… %s",
   "media.fit.msg079ad799f6": "Upscaling interrupted. Remaining sizes will be retried.",
   "media.fit.msg930edbc570": "Widths are in pixels. You can adjust each size before saving.",
+  "media.fit.msge43d53f0cd": "Choose a static, single-image placement.",
+  "media.fit.msg44ce6e4a2f": "Choose image…",
   "media.optimise.action": "Optimise image",
   "media.optimise.format": "Format",
   "media.optimise.width": "Maximum width",

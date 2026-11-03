@@ -4344,6 +4344,8 @@ export const ko: Dict = {
   "media.fit.msgda9b2ddd34": "이미지 업스케일링… %s",
   "media.fit.msg079ad799f6": "업스케일링이 중단되었습니다. 나머지 크기는 다시 시도됩니다.",
   "media.fit.msg930edbc570": "너비는 픽셀 단위입니다. 저장하기 전에 각 크기를 조정할 수 있습니다.",
+  "media.fit.msge43d53f0cd": "정적 단일 이미지 배치를 선택합니다.",
+  "media.fit.msg44ce6e4a2f": "이미지를 선택하세요…",
   "media.optimise.action": "이미지 최적화",
   "media.optimise.format": "형식",
   "media.optimise.width": "최대 너비",

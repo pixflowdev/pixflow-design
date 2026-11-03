@@ -3623,6 +3623,8 @@ export const hu: Dict = {
   "media.fit.msgda9b2ddd34": "Kép felnagyítása… %s",
   "media.fit.msg079ad799f6": "A felskálázás megszakadt. A fennmaradó méreteket újra megpróbáljuk.",
   "media.fit.msg930edbc570": "A szélesség pixelben értendő. Mentés előtt módosíthatja az egyes méreteket.",
+  "media.fit.msge43d53f0cd": "Válasszon egy statikus, egyképes elhelyezést.",
+  "media.fit.msg44ce6e4a2f": "Kép kiválasztása…",
   "media.optimise.action": "Kép optimalizálása",
   "media.optimise.format": "Formátum",
   "media.optimise.width": "Maximális szélesség",

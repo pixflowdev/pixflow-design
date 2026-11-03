@@ -4345,6 +4345,8 @@ export const zhTW: Dict = {
   "media.fit.msgda9b2ddd34": "放大圖…%s",
   "media.fit.msg079ad799f6": "升級中斷。將重試剩餘尺寸。",
   "media.fit.msg930edbc570": "寬度以像素為單位。您可以在儲存之前調整每個尺寸。",
+  "media.fit.msge43d53f0cd": "選擇靜態的單一影像放置位置。",
+  "media.fit.msg44ce6e4a2f": "Choose image…",
   "media.optimise.action": "最佳化圖片",
   "media.optimise.format": "格式",
   "media.optimise.width": "最大寬度",

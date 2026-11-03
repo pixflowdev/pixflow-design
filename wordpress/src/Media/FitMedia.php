@@ -35,6 +35,8 @@ final class FitMedia {
             $deps, (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . $asset), true);
         // The builder controls use wp.i18n before the Workspace has mounted.
         $messages = [
+            'Choose a static, single-image placement.' => __('Choose a static, single-image placement.', 'pixflow-design'),
+            'Choose image…' => __('Choose image…', 'pixflow-design'),
             'Calculate' => __('Calculate', 'pixflow-design'),
             'Calculate the image sizes for this placement. Each row keeps its own image.' => __('Calculate the image sizes for this placement. Each row keeps its own image.', 'pixflow-design'),
             'Calculated from the editor preview.' => __('Calculated from the editor preview.', 'pixflow-design'),

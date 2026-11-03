@@ -2033,6 +2033,8 @@ export interface Dict {
   "media.fit.msgda9b2ddd34": string;
   "media.fit.msg079ad799f6": string;
   "media.fit.msg930edbc570": string;
+  "media.fit.msge43d53f0cd": string;
+  "media.fit.msg44ce6e4a2f": string;
   "media.optimise.action": string;
   "media.optimise.format": string;
   "media.optimise.width": string;

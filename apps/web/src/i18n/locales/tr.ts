@@ -3623,6 +3623,8 @@ export const tr: Dict = {
   "media.fit.msgda9b2ddd34": "Görüntü büyütülüyor… %s",
   "media.fit.msg079ad799f6": "Yükseltme kesintiye uğradı. Kalan boyutlar yeniden denenecek.",
   "media.fit.msg930edbc570": "Genişlikler piksel cinsindendir. Kaydetmeden önce her boyutu ayarlayabilirsiniz.",
+  "media.fit.msge43d53f0cd": "Statik, tek resimli bir yerleşim seçin.",
+  "media.fit.msg44ce6e4a2f": "Resim seç…",
   "media.optimise.action": "Görseli optimize et",
   "media.optimise.format": "Biçim",
   "media.optimise.width": "Azami genişlik",

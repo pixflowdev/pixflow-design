@@ -3668,6 +3668,8 @@ export const de: Dict = {
   "media.fit.msgda9b2ddd34": "Hochskaliertes Bild… %s",
   "media.fit.msg079ad799f6": "Hochskalierung unterbrochen. Die verbleibenden Größen werden erneut versucht.",
   "media.fit.msg930edbc570": "Die Breiten werden in Pixel angegeben. Sie können jede Größe vor dem Speichern anpassen.",
+  "media.fit.msge43d53f0cd": "Wählen Sie eine statische Einzelbildplatzierung.",
+  "media.fit.msg44ce6e4a2f": "Bild auswählen…",
   "media.optimise.action": "Bild optimieren",
   "media.optimise.format": "Format",
   "media.optimise.width": "Maximale Breite",

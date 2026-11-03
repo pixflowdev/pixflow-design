@@ -2782,5 +2782,21 @@
       "wordpress/src/Media/FitMedia.php"
     ],
     "key": "media.fit.msg930edbc570"
+  },
+  {
+    "message": "Choose a static, single-image placement.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msge43d53f0cd"
+  },
+  {
+    "message": "Choose image…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg44ce6e4a2f"
   }
 ]

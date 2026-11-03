@@ -3668,6 +3668,8 @@ export const ptBR: Dict = {
   "media.fit.msgda9b2ddd34": "Aumentando a imagem… %s",
   "media.fit.msg079ad799f6": "Upscaling interrompido. Os tamanhos restantes serão tentados novamente.",
   "media.fit.msg930edbc570": "As larguras estão em pixels. Você pode ajustar cada tamanho antes de salvar.",
+  "media.fit.msge43d53f0cd": "Escolha um posicionamento estático de imagem única.",
+  "media.fit.msg44ce6e4a2f": "Escolha a imagem…",
   "media.optimise.action": "Otimizar imagem",
   "media.optimise.format": "Formato",
   "media.optimise.width": "Largura máxima",

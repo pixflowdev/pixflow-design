@@ -3668,6 +3668,8 @@ export const fr: Dict = {
   "media.fit.msgda9b2ddd34": "Mise à l'échelle de l'image… %s",
   "media.fit.msg079ad799f6": "Mise à l'échelle interrompue. Les tailles restantes seront réessayées.",
   "media.fit.msg930edbc570": "Les largeurs sont en pixels. Vous pouvez ajuster chaque taille avant de sauvegarder.",
+  "media.fit.msge43d53f0cd": "Choisissez un placement statique d’une seule image.",
+  "media.fit.msg44ce6e4a2f": "Choisissez une image…",
   "media.optimise.action": "Optimiser l’image",
   "media.optimise.format": "Format",
   "media.optimise.width": "Largeur maximale",

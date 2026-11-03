@@ -3623,6 +3623,8 @@ export const fa: Dict = {
   "media.fit.msgda9b2ddd34": "ارتقاء تصویر… %s",
   "media.fit.msg079ad799f6": "افزایش مقیاس قطع شد. اندازه‌های باقی‌مانده دوباره امتحان خواهند شد.",
   "media.fit.msg930edbc570": "عرض ها بر حسب پیکسل هستند. می توانید هر اندازه را قبل از ذخیره تنظیم کنید.",
+  "media.fit.msge43d53f0cd": "یک مکان ثابت و تک تصویری را انتخاب کنید.",
+  "media.fit.msg44ce6e4a2f": "انتخاب تصویر…",
   "media.optimise.action": "بهینه‌سازی تصویر",
   "media.optimise.format": "قالب",
   "media.optimise.width": "حداکثر عرض",

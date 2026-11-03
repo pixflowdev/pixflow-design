@@ -3668,6 +3668,8 @@ export const esES: Dict = {
   "media.fit.msgda9b2ddd34": "Imagen mejorada… %s",
   "media.fit.msg079ad799f6": "Se interrumpió la ampliación. Se volverán a intentar los tamaños restantes.",
   "media.fit.msg930edbc570": "Los anchos están en píxeles. Puede ajustar cada tamaño antes de guardar.",
+  "media.fit.msge43d53f0cd": "Elija una ubicación estática de una sola imagen.",
+  "media.fit.msg44ce6e4a2f": "Elige imagen…",
   "media.optimise.action": "Optimizar imagen",
   "media.optimise.format": "Formato",
   "media.optimise.width": "Anchura máxima",

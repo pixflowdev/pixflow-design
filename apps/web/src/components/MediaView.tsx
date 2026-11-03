@@ -1,4 +1,5 @@
 import { useUpscalerInventory } from '../pixflow/upscaler-access';
+import { WorkspaceSelect } from './WorkspaceSelect';
 import { MediaUpscaler } from './MediaUpscaler';
 import { MediaQualitySlider } from './MediaQualitySlider';
 import './MediaView.css';
@@ -16,8 +17,20 @@ import {
 import { Icon } from './Icon';
 import { openWordPressMediaLibrary } from './wordPressMediaPicker';
 
-type MediaFilter = 'all' | 'image' | 'video' | 'audio';
-type SourceFilter = 'all' | 'pixflow';
+
+const mediaLayouts = ['list','2','3','4'] as const;
+type MediaLayout = typeof mediaLayouts[number];
+function initialMediaLayout():MediaLayout {
+  try { return mediaLayouts.find(value=>value===localStorage.getItem('pixflow.media.layout'))??'list'; }
+  catch { return 'list'; }
+}
+function MediaLayoutIcon({layout}:{layout:MediaLayout}){
+  const cols=layout==='list'?1:Number(layout);
+  return <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true" fill="currentColor">
+    {Array.from({length:cols*(cols===1?3:2)},(_,i)=><rect key={i} rx="0.6" x={1+(i%cols)*16/cols}
+      y={2+Math.floor(i/cols)*(cols===1?5:8)} width={16/cols-1} height={cols===1?2:6}/>)}
+  </svg>;
+}
 const MEDIA_PAGE_SIZE = 30;
 
 function formatFileSize(size: number): string {
@@ -94,7 +107,7 @@ function MediaImagePreview({item,onOptimise,onUpscale}:{item:PixflowMediaItem;on
   </>;
 }
 
-export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: number; attachmentUrl?: string } = {}) {
+export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveForSettings }: { onLeaveForSettings?: () => void; headerAction?: React.ReactNode; attachmentId?: number; attachmentUrl?: string } = {}) {
   const translateUi = usePixflowUiTranslation();
   const [items, setItems] = useState<PixflowMediaItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -102,8 +115,10 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [type, setType] = useState<MediaFilter>('all');
-  const [source, setSource] = useState<SourceFilter>('all');
+  const [type, setType] = useState('all');
+  const [availableTypes,setAvailableTypes]=useState<{value:string;label:string}[]>([]);
+  const requestId=useRef(0);
+  const [layout,setLayout]=useState<MediaLayout>(initialMediaLayout);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -130,16 +145,19 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
   const pageEnd = Math.min(total, page * MEDIA_PAGE_SIZE);
 
   async function load(nextPage = page) {
+    const id=++requestId.current;
     setLoading(true);
     setMessage('');
     try {
       const result = await fetchPixflowMedia({
         type,
-        source,
         search: debouncedSearch,
         page: nextPage,
         perPage: MEDIA_PAGE_SIZE,
       });
+      if(id!==requestId.current)return;
+      setAvailableTypes(result.availableTypes ?? []);
+      if(type!=='all' && !result.availableTypes?.some(option=>option.value===type))setType('all');
       setItems(result.items);
       setTotal(result.total);
       setSelectedId((current) =>
@@ -150,13 +168,13 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
     } catch (error) {
       setMessage(error instanceof Error ? error.message : translateUi("ui.mediaView.feedback57"));
     } finally {
-      setLoading(false);
+      if(id===requestId.current)setLoading(false);
     }
   }
 
   useEffect(() => {
     setPage(1);
-  }, [type, source, debouncedSearch]);
+  }, [type, debouncedSearch]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -168,10 +186,12 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
   useEffect(() => {
     void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, source, debouncedSearch, page]);
+  }, [type, debouncedSearch, page]);
 
   const [bulk, setBulk] = useState(false);
   const [selection, setSelection] = useState<PixflowMediaItem[]>([]);
+  const [compress,setCompress]=useState(false);
+  const [queue,setQueue]=useState<PixflowMediaItem[]>();
   const [quality, setQuality] = useState(82);
   const [results, setResults] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
@@ -182,23 +202,22 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
   const lookup=useRef<AbortController>();
   const [selecting,setSelecting]=useState(false);
   useEffect(()=>{
-    setSelection([]);
     setSelecting(false);
     return ()=>lookup.current?.abort();
-  },[bulk,search,source,type]);
+  },[bulk,search,type]);
 
   async function selectAllImages(){
-    if(running||selecting||type==='video'||type==='audio')return;
+    if(running||selecting||(type!=='all'&&type!=='image'))return;
     const task=new AbortController();lookup.current=task;setSelecting(true);setMessage('');
     try {
       const matches=new Map<string,PixflowMediaItem>();
       let pages=1;
       for(let current=1;current<=pages;current++){
-        const result=await fetchPixflowMedia({type:'image',source,search,page:current,perPage:100},task.signal);
+        const result=await fetchPixflowMedia({type:'image',search,page:current,perPage:100},task.signal);
         if(current===1)pages=Math.ceil(result.total/100);
         for(const item of result.items)if(eligible(item))matches.set(item.id,item);
       }
-      if(!task.signal.aborted)setSelection([...matches.values()]);
+      if(!task.signal.aborted)setSelection(previous=>[...previous,...[...matches.values()].filter(item=>!previous.some(entry=>entry.id===item.id))]);
     }catch(error){if(!task.signal.aborted)setMessage(error instanceof Error?error.message:translateUi('ui.mediaView.feedback58'));}
     finally{if(lookup.current===task){lookup.current=undefined;setSelecting(false);}}
   }
@@ -238,8 +257,18 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
   const returnTo = useRef<{ button: HTMLElement; scroll: HTMLElement; top: number } | null>(null);
   const {status:upscaler}=useUpscalerInventory();
   const canUpscale=!!(upscaler?.supported && upscaler.enabled && upscaler.installedModels?.length);
+  const needsUpscalerSetup = upscaler?.supported === true && upscaler.installedModels?.length === 0;
+  const showUpscaleAction = canUpscale || needsUpscalerSetup;
   useEffect(()=>{if(!canUpscale)setUpscaleItem(null);},[canUpscale]);
-  function openUpscaler(item: PixflowMediaItem, button: HTMLElement) {
+  function openUpscaler(item: PixflowMediaItem, button: HTMLElement, batchItems?: PixflowMediaItem[]) {
+    if (needsUpscalerSetup) {
+      onLeaveForSettings?.();
+      if (window.dispatchEvent(new Event('pixflow-design:open-upscaler-settings', { cancelable: true }))) {
+        window.postMessage({ source: 'pixflow-design-shell', type: 'pixflow-design:open-settings', section: 'upscaler' }, window.location.origin);
+      }
+      return;
+    }
+    setQueue(batchItems);
     let scroll = button.parentElement;
     while (scroll && !/auto|scroll/.test(getComputedStyle(scroll).overflowY)) scroll = scroll.parentElement;
     scroll ??= document.documentElement;
@@ -254,7 +283,8 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
     scroll.scrollTop = 0;
   }
   function closeUpscaler() {
-    setUpscaleItem(null);
+    if(queue)void load();
+    setQueue(undefined);setUpscaleItem(null);
     const target = returnTo.current;
     requestAnimationFrame(() => {
       if (target) {
@@ -335,99 +365,94 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
           event.currentTarget.value = '';
         }}
       />
-      {upscaleItem && canUpscale && <MediaUpscaler installedModels={upscaler!.installedModels!} item={upscaleItem} onBack={closeUpscaler} onSaved={copy => {
+      {upscaleItem && canUpscale && <MediaUpscaler queue={queue} headerAction={headerAction} installedModels={upscaler!.installedModels!} item={upscaleItem} onBack={closeUpscaler} onSaved={copy => {
         closeUpscaler();
         selectCopy(copy);
       }} />}
       <div className="direct-media-files-main" style={upscaleItem ? {display:'none'} : undefined}>
-        <header className="direct-media-titlebar">
-          <div>
-            <div className="direct-media-title">
-              <span className="direct-media-title-icon"><Icon name="image" size={16} /></span>
-              <span>{translateUi("entry.navMedia")}</span>
+        <header className="direct-media-header">
+          <div className="direct-media-titlebar">
+            <div>
+              <div className="direct-media-title">
+                <span className="direct-media-title-icon"><Icon name="image" size={16} /></span>
+                <span>{translateUi("entry.navMedia")}</span>
+              </div>
+              <p>{translateUi("ui.mediaView.generatedImagesVideosAudioUploadsAndWordpress")}</p>
             </div>
-            <p>{translateUi("ui.mediaView.generatedImagesVideosAudioUploadsAndWordpress")}</p>
+            <div className="direct-media-files-actions">
+              <button type="button" disabled={running} aria-pressed={bulk} onClick={() => {
+                setCompress(false);setBulk(!bulk); setSelection([]); setResults([]);
+              }}>{translateUi(bulk?'common.cancel':'media.bulk.select')}</button>
+              <button type="button" onClick={() => void load()} disabled={loading}>
+                <Icon name="refresh" size={14} />
+                {translateUi("designFiles.refresh")} </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()}>
+                <Icon name="upload" size={14} />
+                {translateUi("designFiles.upload.label")} </button>
+              {attachmentId === undefined && !attachmentUrl && <button type="button" onClick={openWpMedia}>
+                <Icon name="import" size={14} />
+                {translateUi("ui.composerPlusMenu.wpMedia")} </button>}
+              {headerAction}
+            </div>
           </div>
-          <div className="direct-media-files-actions">
-            <button type="button" disabled={running} aria-pressed={bulk} onClick={() => {
-              setBulk(!bulk); setSelection([]); setResults([]);
-            }}>{translateUi('media.bulk.action')}</button>
-            <button type="button" onClick={() => void load()} disabled={loading}>
-              <Icon name="refresh" size={14} />
-              {translateUi("designFiles.refresh")} </button>
-            <button type="button" onClick={() => fileInputRef.current?.click()}>
-              <Icon name="upload" size={14} />
-              {translateUi("designFiles.upload.label")} </button>
-            {attachmentId === undefined && !attachmentUrl && <button type="button" onClick={openWpMedia}>
-              <Icon name="import" size={14} />
-              {translateUi("ui.composerPlusMenu.wpMedia")} </button>}
+
+          <div className="direct-media-files-head">
+            <label className="direct-media-search">
+              <Icon name="search" size={14} />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={translateUi("ui.mediaView.searchMedia")}
+              />
+            </label>
+            <div className="direct-media-layout-select">
+              <WorkspaceSelect label={translateUi('ui.mediaView.mediaType')} value={type}
+                options={[{value:'all',label:translateUi('common.all')},...availableTypes]}
+                onValueChange={value=>{pickedRow.current=true;setLinked(null);setPage(1);setType(value);}}/>
+            </div>
+            <div className="direct-media-layout-select">
+              <WorkspaceSelect label={translateUi('designs.viewToggleAria')} value={layout}
+                options={mediaLayouts.map(value=>({value,label:value==='list'?translateUi('media.view.list'):translateUi('media.view.columns',{count:value})}))}
+                renderOption={option=><><MediaLayoutIcon layout={option.value}/><span>{option.label}</span></>}
+                onValueChange={value=>{
+                  const next=mediaLayouts.find(layout=>layout===value);
+                  if(next){setLayout(next);try{localStorage.setItem('pixflow.media.layout',next);}catch{}}
+                }}/>
+            </div>
           </div>
         </header>
 
-        <div className="direct-media-files-head">
-          <label className="direct-media-search">
-            <Icon name="search" size={14} />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={translateUi("ui.mediaView.searchMedia")}
-            />
-          </label>
-          <div className="direct-media-filter-group" role="group" aria-label={translateUi("ui.mediaView.mediaType")}>
-            {(['all', 'image', 'video', 'audio'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className={type === value ? 'is-active' : ''}
-                onClick={() => setType(value)}
-              >
-                {value === 'all' ? translateUi("common.all") : `${value[0]!.toUpperCase()}${value.slice(1)}`}
-              </button>
-            ))}
-          </div>
-          <div className="direct-media-filter-group" role="group" aria-label={translateUi("ui.mediaView.mediaSource")}>
-            {(['all', 'pixflow'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className={source === value ? 'is-active' : ''}
-                onClick={() => setSource(value)}
-              >
-                {value === 'all' ? translateUi("ui.mediaView.allLibrary") : translateUi("ui.mediaView.pixflowOnly")}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {bulk && <section className="direct-media-batch">
-          <span>{translateUi('media.bulk.hint')}</span>
+
           <div className="direct-media-batch-selection">
-            <button type="button" disabled={running||selecting||type==='audio'||type==='video'} onClick={()=>void selectAllImages()}>
+            <button type="button" disabled={running||selecting||(type!=='all'&&type!=='image')} onClick={()=>void selectAllImages()}>
               {translateUi(selecting?'common.loading':'media.bulk.selectAll')}</button>
             <button type="button" disabled={running||selecting||!selection.length} onClick={()=>setSelection([])}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
           </div>
-          <MediaQualitySlider value={quality} onChange={setQuality} disabled={running} />
+          <button type="button" aria-pressed={compress} disabled={running||selecting||!selection.length} onClick={()=>setCompress(!compress)}>{translateUi('media.bulk.action')} ({selection.length})</button>
+          {showUpscaleAction && <button type="button" disabled={running||selecting||!selection.length} onClick={event=>{openUpscaler(selection[0]!,event.currentTarget,[...selection]);}}>{translateUi('media.upscale.action')} ({selection.length})</button>}
+          {compress && <><span>{translateUi('media.bulk.hint')}</span><MediaQualitySlider value={quality} onChange={setQuality} disabled={running} />
           <button type="button" disabled={running || selecting || !selection.length} onClick={() => void runBatch()}>
             {translateUi('media.optimise.save')} ({selection.length})
-          </button>
+          </button></>}
           <ul aria-live="polite">{results.map((line, index) => <li key={index}>{line}</li>)}</ul>
         </section>}
         {message ? <div className="direct-media-message">{message}</div> : null}
 
         <div className="direct-media-files-body">
-          <div className="direct-media-table" role="table" aria-label={translateUi("ui.mediaView.pixflowMedia")}>
-            <div className="direct-media-table-row direct-media-table-head" role="row">
+          <div className="direct-media-table" data-layout={layout} role={layout==='list'?'table':'group'} aria-label={translateUi("ui.mediaView.pixflowMedia")}>
+            {layout==='list' && <div className="direct-media-table-row direct-media-table-head" role="row">
               <span>{translateUi("routines.fieldName")}</span>
               <span>{translateUi("designFiles.groupByKind")}</span>
               <span>{translateUi("pluginsView.source")}</span>
               <span>{translateUi("designFiles.groupByModified")}</span>
-            </div>
+            </div>}
             {loading ? (
               <div className="direct-media-empty">{translateUi("ui.mediaView.loadingMedia")}</div>
             ) : items.length === 0 ? (
               <div className="direct-media-empty">{translateUi("ui.mediaView.noMediaYetUploadFilesOrAdd")}</div>
             ) : (
-              items.map((item) => (
+              <div className="direct-media-entries" style={layout==='list'?undefined:{gridTemplateColumns:'repeat('+layout+',minmax(0,1fr))'}}>{items.map((item) => (
                 <button
                   key={item.id}
                   type="button"
@@ -459,7 +484,7 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
                   <span>{item.isPixflowMedia ? item.source : translateUi("ui.mediaView.wpLibrary")}</span>
                   <span>{formatDate(item.modifiedAt || item.createdAt)}</span>
                 </button>
-              ))
+              ))}</div>
             )}
             {!loading && total > MEDIA_PAGE_SIZE ? (
               <div className="direct-media-pagination" role="navigation" aria-label={translateUi("ui.mediaView.mediaPages")}>
@@ -496,7 +521,7 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
                         requestAnimationFrame(()=>{const field=optimiserRegion.current?.querySelector<HTMLElement>('[role=combobox]');
                           field?.focus();field?.scrollIntoView({block:'nearest'});});
                       }:undefined}
-                      onUpscale={eligible(selected)&&canUpscale?button=>openUpscaler(selected,button):undefined}/>
+                      onUpscale={eligible(selected)&&showUpscaleAction?button=>openUpscaler(selected,button):undefined}/>
                   ) : selected.type === 'video' ? (
                     <video src={selected.url} controls />
                   ) : selected.type === 'audio' ? (
@@ -506,21 +531,30 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
                   )}
                 </div>
                 <div className="direct-media-preview-meta">
-                  <h2>{selected.title || selected.filename}</h2>
-                  <p>{selected.mimeType}</p>
+                  <div className="direct-media-preview-heading">
+                    <h2>{selected.title || selected.filename}</h2>
+                    <p><span title={selected.mimeType}>{selected.mimeType.split('/').pop()?.toUpperCase()}</span>
+                      <span aria-hidden="true"> · </span>{formatFileSize(selected.sizeBytes)}</p>
+                  </div>
                   <dl>
                     <div><dt>{translateUi("chat.designToolbox.context.file")}</dt><dd>{selected.filename}</dd></div>
-                    <div><dt>{translateUi("ui.designBrowserPanel.size")}</dt><dd>{formatFileSize(selected.sizeBytes)}</dd></div>
                     <div><dt>{translateUi("pluginsView.source")}</dt><dd>{selected.isPixflowMedia ? selected.source : translateUi("ui.mediaView.wpLibrary")}</dd></div>
                     {selected.width && selected.height ? (
-                      <div><dt>{translateUi("ui.mediaView.dimensions")}</dt><dd>{selected.width} x {selected.height}</dd></div>
+                      <div><dt>{translateUi("ui.mediaView.dimensions")}</dt><dd>{selected.width} × {selected.height}</dd></div>
                     ) : null}
                   </dl>
-                  {['image/png', 'image/jpeg', 'image/webp'].includes(selected.mimeType) &&
-                    <div key={selected.id} ref={optimiserRegion}>
-                      <MediaOptimiser item={selected} onSaved={selectCopy} expanded={optimiseId===selected.id} onExpandedChange={open=>setOptimiseId(open?selected.id:undefined)}/>
-                      {canUpscale && <button type="button" onClick={event => openUpscaler(selected, event.currentTarget)}>{translateUi('media.upscale.action')}</button>}
-                    </div>}
+                  {eligible(selected) && <div key={selected.id} ref={optimiserRegion} className="direct-media-edit-tools">
+                    <div className="direct-media-edit-actions">
+                      <button type="button" aria-expanded={optimiseId===selected.id} onClick={()=>setOptimiseId(optimiseId===selected.id?undefined:selected.id)}>
+                        <Icon name="sliders" size={15}/>{translateUi('media.optimise.action')}
+                      </button>
+                      {showUpscaleAction && <button type="button" onClick={event=>openUpscaler(selected,event.currentTarget)}>
+                        <Icon name="expand" size={15}/>{translateUi('media.upscale.action')}
+                      </button>}
+                    </div>
+                    {optimiseId===selected.id && <MediaOptimiser item={selected} onSaved={selectCopy} expanded
+                      onExpandedChange={open=>setOptimiseId(open?selected.id:undefined)}/>}
+                  </div>}
                   <div className="direct-media-preview-links">
                     <a href={selected.url} target="_blank" rel="noreferrer">
                       <Icon name="external-link" size={14} />

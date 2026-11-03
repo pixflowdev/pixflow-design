@@ -8,7 +8,7 @@ import styles from './GeneratedMedia.module.css';
 
 type ChatImage = { attachmentId?: number; url: string; title: string };
 
-function MediaDialog({ image, close }: { image: ChatImage; close: () => void }) {
+function MediaDialog({ image, close }: { image?: ChatImage; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const t = useT();
   useEffect(() => {
@@ -21,21 +21,22 @@ function MediaDialog({ image, close }: { image: ChatImage; close: () => void }) 
     onClick={event => { if (event.target === event.currentTarget) close(); }}
     onKeyDown={event => event.stopPropagation()}>
     <div className={styles.mediaBody}>
-      <Button variant="subtle" size="icon" className={styles.mediaClose} aria-label={t('common.close')} onClick={close}>
-        <Icon name="close" size={18} />
-      </Button>
-      <MediaView attachmentId={image.attachmentId} attachmentUrl={image.url} />
+      <MediaView onLeaveForSettings={close} attachmentId={image?.attachmentId} attachmentUrl={image?.url} headerAction={
+        <Button variant="subtle" size="icon" className="direct-media-close" aria-label={t('common.close')} onClick={close}>
+          <Icon name="close" size={18} />
+        </Button>
+      }/>
     </div>
   </dialog>;
 }
 
 /** The restored transcript can replace its rows while a visitor is browsing Media. */
-function openChatMedia(image: ChatImage, trigger: HTMLButtonElement) {
+export function openMediaLibrary(trigger: HTMLElement, image?: ChatImage, theme?: string) {
   const doc = trigger.ownerDocument;
   const host = doc.createElement('div');
   host.className = 'pixflow-design-portal-scope';
   const scope = trigger.closest<HTMLElement>('[data-theme]');
-  host.dataset.theme = scope?.dataset.theme || doc.documentElement.dataset.pixflowTheme || 'light';
+  host.dataset.theme = theme || scope?.dataset.theme || doc.documentElement.dataset.pixflowTheme || 'light';
   const source = doc.defaultView!.getComputedStyle(trigger);
   host.style.fontFamily = source.fontFamily;
   // Appearance updates target portal scopes too. Copy the initial custom accent
@@ -50,7 +51,7 @@ function openChatMedia(image: ChatImage, trigger: HTMLButtonElement) {
   const close = () => {
     root.unmount();
     host.remove();
-    const target = trigger.isConnected ? trigger : Array.from(doc.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]'))
+    const target = trigger.isConnected ? trigger : image && Array.from(doc.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]'))
       .find(button => button.querySelector('img')?.src === image.url);
     target?.focus({ preventScroll: true });
   };
@@ -60,7 +61,7 @@ function openChatMedia(image: ChatImage, trigger: HTMLButtonElement) {
 export function ChatMediaAttachment({ image }: { image: ChatImage }) {
   const t = useT();
   return <button type="button" className={styles.attachment} aria-haspopup="dialog"
-    aria-label={image.title || t('entry.navMedia')} onClick={event => openChatMedia(image, event.currentTarget)}>
+    aria-label={image.title || t('entry.navMedia')} onClick={event => openMediaLibrary(event.currentTarget, image)}>
     <img src={image.url} alt={image.title} loading="lazy" decoding="async" />
   </button>;
 }

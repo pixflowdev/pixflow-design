@@ -1975,6 +1975,10 @@ export interface Dict {
   "media.upscale.save": string;
   "media.upscale.requires": string;
   "media.bulk.action": string;
+  "media.view.list": string;
+  "media.view.columns": string;
+  "media.bulk.select": string;
+  "media.bulk.saveUpscaled": string;
   "media.bulk.selectAll": string;
   "media.bulk.hint": string;
   "media.bulk.noSaving": string;

@@ -11,3 +11,6 @@
 .settings .toggle[data-checked] {background:var(--accent);}
 .thumb {height:15px;width:15px;border-radius:50%;background:var(--text-on-accent,white);}
 .toggle[data-checked] .thumb {transform:translateX(14px);}
+
+.settings .iconButton { display:inline-flex; flex:0 0 30px; align-items:center; justify-content:center; box-sizing:border-box; width:30px; min-width:30px; height:30px; min-height:30px; padding:0; line-height:1; border-radius:8px; }
+.settings .iconButton>svg { display:block; flex-shrink:0; margin:0; }

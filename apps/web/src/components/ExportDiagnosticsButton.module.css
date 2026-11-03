@@ -1,15 +1,30 @@
 .deviceOption {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
   font-size: 13px;
+  line-height: 1.45;
   cursor: pointer;
 }
-
-.deviceOption input[type="checkbox"] {
+.deviceOption .switchControl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
   flex: none;
-  width: 1em;
-  height: 1em;
-  margin: 0;
-  accent-color: var(--accent);
+  box-sizing: border-box;
+  width: 34px;
+  height: 20px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
 }
+.deviceOption .switchControl[data-checked] { background: var(--accent); }
+.switchControl:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.switchControl:disabled { opacity: .55; cursor: default; }
+.thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-on-accent, white); }
+.switchControl[data-checked] .thumb { transform: translateX(14px); }
+[dir=rtl] .switchControl[data-checked] .thumb { transform: translateX(-14px); }

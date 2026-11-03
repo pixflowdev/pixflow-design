@@ -49,7 +49,7 @@ export function UpscalerSettings({onDownloads}:{onDownloads:()=>void}){
       return <div className={styles.row} key={pack.id}><div><strong>{pack.name}</strong><small>{pack.bytes?(pack.bytes/1e6).toFixed(1)+' MB':'…'}</small></div>
         <small>{pending===pack.id?t('common.loading'):!status?'…':t(installed?'ui.dictationSettings.downloaded':'ui.dictationSettings.notDownloaded')}</small>
         {upgrade && <Button variant="ghost" disabled={!!pending} onClick={()=>void change('install',pack.id)}>{t('media.upscale.noise')}</Button>}
-        <Button variant="ghost" size="icon" aria-label={t(installed?'dictationDelete':'dictationDownload')+' '+pack.name}
+        <Button className={styles.iconButton} variant="ghost" size="icon" aria-label={t(installed?'dictationDelete':'dictationDownload')+' '+pack.name}
           disabled={!status||!!pending||status.busy} onClick={()=>void change(installed?'remove':'install',pack.id)}>
           {installed?<IconTrash size={17}/>:<IconDownload size={17}/>}
         </Button></div>;

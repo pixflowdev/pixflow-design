@@ -27,3 +27,4 @@ export function WorkspaceSelect<T extends { value: string; label: string }>({ la
     </Select.Root>
   </div>;
 }
+

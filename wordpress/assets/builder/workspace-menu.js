@@ -44,6 +44,8 @@
       path('M6 14h7a3 3 0 0 0 3-3');
       path('M16 12v4');
       path('M13 16h6');
+    } else if (name === 'media') {
+      path('M3 4h18v16H3z M3 16l5-5 4 4 3-3 6 6 M15 8h.01');
     } else if (name === 'translations') {
       path('M4 5h10M9 3v2M6 8c1 3 3 5 6 7M13 5c0 4-3 8-8 11M13 20l4-9 4 9M15 17h4');
     } else if (name === 'settings') {
@@ -173,6 +175,10 @@
       button.appendChild(name);
       button.addEventListener('click', function () {
         close();
+        if (tool === 'media' && window.PixflowDesignApp && window.PixflowDesignApp.openMediaLibrary) {
+          window.PixflowDesignApp.openMediaLibrary(trigger, undefined, resolvedTheme());
+          return;
+        }
         options.onOpenTool(tool);
       });
       row.appendChild(button);
@@ -182,6 +188,8 @@
 
     addTool('Google Fonts', 'font', 'google-fonts');
     addTool('Icon Sets', 'icons', 'icon-sets');
+    var mediaTool = addTool('Media library', 'media', 'media');
+    mediaTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'entry.navMedia');
     var sitemapTool = addTool('Sitemap Builder', 'sitemap', 'sitemap');
     sitemapTool.hidden = options.planningAvailable === false;
     var designSystemTool = addTool(options.designSystemLabel || 'Design Your System', 'palette', 'design-system');
@@ -368,6 +376,12 @@
 
     document.addEventListener('pointerdown', onDocumentPointerDown);
     document.addEventListener('keydown', onDocumentKeyDown);
+    function openUpscalerSettings(event) {
+      if (event.defaultPrevented || !trigger.isConnected || !trigger.getClientRects().length) return;
+      event.preventDefault();
+      options.onOpenSettings('upscaler');
+    }
+    window.addEventListener('pixflow-design:open-upscaler-settings', openUpscalerSettings);
     window.addEventListener('resize', onViewportChange);
     window.addEventListener('scroll', onViewportChange, true);
     window.addEventListener('pixflow-design:feature-runtime-changed', refreshWorkspaceState);
@@ -379,6 +393,7 @@
       refreshWorkspaceState: refreshWorkspaceState,
       refreshDesignSystemVisibility: refreshDesignSystemVisibility,
       destroy: function () {
+        window.removeEventListener('pixflow-design:open-upscaler-settings', openUpscalerSettings);
         stopUpdates();
         document.removeEventListener('pointerdown', onDocumentPointerDown);
         document.removeEventListener('keydown', onDocumentKeyDown);

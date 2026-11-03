@@ -1451,7 +1451,7 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
       if (data.type === 'pixflow-design:open-settings') {
         setToolbarWorkspaceTool('settings');
         setSettingsWelcome(false);
-        setSettingsInitialSection(data.section === 'resourcePacks' ? 'resourcePacks' : data.section === 'dictation' ? 'dictation' : 'execution');
+        setSettingsInitialSection(data.section === 'upscaler' ? 'upscaler' : data.section === 'resourcePacks' ? 'resourcePacks' : data.section === 'dictation' ? 'dictation' : 'execution');
         setSettingsHighlight(null);
         setSettingsOpen(true);
       }

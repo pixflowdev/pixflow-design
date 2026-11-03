@@ -1,3 +1,4 @@
+import { openMediaLibrary } from '../components/chat/ChatMediaAttachment';
 import { migrateWorkspaceRouteHash } from './workspace-route-hash';
 import { createRoot, type Root } from 'react-dom/client';
 import { installPixflowInputAutofillProtection } from './input-autofill';
@@ -52,6 +53,7 @@ type PixflowDesignMountHandle = {
 declare global {
   interface Window {
     PixflowDesignApp?: {
+      openMediaLibrary?: typeof openMediaLibrary;
       translationsShortcutLabel?: typeof translationsShortcutLabel;
       watchTranslationUpdates?: typeof watchTranslationUpdates;
       mount(container: HTMLElement, config?: PixflowDesignWordPressConfig): PixflowDesignMountHandle;
@@ -479,4 +481,4 @@ function mount(container: HTMLElement, config: PixflowDesignWordPressConfig = {}
   };
 }
 
-window.PixflowDesignApp = { mount, translationsShortcutLabel, watchTranslationUpdates };
+window.PixflowDesignApp = { mount, openMediaLibrary, translationsShortcutLabel, watchTranslationUpdates };

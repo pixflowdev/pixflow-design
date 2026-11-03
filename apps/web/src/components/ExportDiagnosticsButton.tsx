@@ -1,3 +1,4 @@
+import { Switch } from '@base-ui/react/switch';
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { Icon } from './Icon';
@@ -258,8 +259,11 @@ export function ExportDiagnosticsRow() {
   return (
     <div className="diagnostics-export-row">
       {hasPixflowWordPressContext() && <label className={styles.deviceOption}>
-        <input type="checkbox" checked={includeDevice} disabled={busy} onChange={event => setIncludeDevice(event.target.checked)} />
         <span>{t('diagnostics.includeBridge')}</span>
+        <Switch.Root className={styles.switchControl} checked={includeDevice} disabled={busy}
+          onCheckedChange={setIncludeDevice} aria-label={t('diagnostics.includeBridge')}>
+          <Switch.Thumb className={styles.thumb} />
+        </Switch.Root>
       </label>}
       <button
         type="button"

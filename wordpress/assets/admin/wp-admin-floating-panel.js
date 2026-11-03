@@ -496,9 +496,9 @@
         designSystemLabel: 'Design systems',
         onToggleWorkspace: function () { if (overlay && !overlay.hidden) close(); else if (workspaceAvailable()) open(); },
         onOpenTool: function (tool) { if (!workspaceAvailable()) return; keepWorkspaceOnToolClose = false; open({ type: 'pixflow-design:open-workspace-tool', tool: tool === 'design-system' ? 'design-systems' : tool }); },
-        onOpenSettings: function () {
+        onOpenSettings: function (section) {
           keepWorkspaceOnToolClose = Boolean(overlay && !overlay.hidden);
-          open({ type: 'pixflow-design:open-settings', section: 'execution' }, keepWorkspaceOnToolClose);
+          open({ type: 'pixflow-design:open-settings', section: section || 'execution' }, keepWorkspaceOnToolClose);
         },
         onThemeChange: function (value) {
           theme = value;

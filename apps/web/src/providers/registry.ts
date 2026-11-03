@@ -169,6 +169,7 @@ async function activeWorkspaceFetch(
 export type PixflowMediaType = 'image' | 'video' | 'audio' | 'file';
 
 export interface PixflowMediaItem {
+  thumbnailUrl?: string;
   previewRevision?: number;
   id: string;
   attachmentId: number;
@@ -194,6 +195,7 @@ export interface PixflowMediaItem {
 }
 
 export interface PixflowMediaListResponse {
+  availableTypes?: { value: string; label: string }[];
   ok: boolean;
   items: PixflowMediaItem[];
   total: number;
@@ -204,7 +206,7 @@ export interface PixflowMediaListResponse {
 export async function fetchPixflowMedia(params: {
   attachmentId?: number;
   attachmentUrl?: string;
-  type?: 'all' | 'image' | 'video' | 'audio';
+  type?: string;
   source?: 'all' | 'pixflow';
   search?: string;
   page?: number;

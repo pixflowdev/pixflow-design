@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Browse Media in list or grid view, filter by available file types, and select images across pages to compress or upscale copies. Open Media from editor tools and install missing upscaler models directly from Media when Bridge is connected. About now uses a switch for optional device diagnostics.
+
 - Install optional local Bridge upscaling models, compare image details and save a larger copy or explicitly replace an attachment in its original format.
 
 - Browse images in the Media lightbox, compare compression previews and save smaller copies. Bulk optimisation supports selecting matching images across library pages.

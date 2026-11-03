@@ -27,6 +27,8 @@ final class FitMedia {
         $asset = 'app/pixflow-fit-media.js';
         if (!current_user_can('upload_files') || !is_file(PIXFLOW_DESIGN_ASSETS_DIR . $asset)) return;
         wp_enqueue_media();
+        $css = 'builder/dynamic-fit.css';
+        wp_enqueue_style('pixflow-dynamic-fit', PIXFLOW_DESIGN_ASSETS_URL . $css, [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . $css));
         $deps = ['media-views', 'wp-api-fetch', 'wp-i18n'];
         if (doing_action('enqueue_block_editor_assets')) $deps[] = 'wp-block-editor';
         wp_enqueue_script('pixflow-fit-media', PIXFLOW_DESIGN_ASSETS_URL . $asset,

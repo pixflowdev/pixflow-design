@@ -24,26 +24,111 @@ function measure({node,cover}: RowTarget): string[] {
 }
 
 function configure(target: RowTarget) {
-  if(document.querySelector('[data-pixflow-fit-config]'))return;
-  const dialog=document.createElement('dialog');
-  dialog.dataset.pixflowFitConfig='';
-  dialog.style.cssText='position:fixed;inset:0;margin:auto;width:min(400px,90vw);padding:24px;border:1px solid #7776;border-radius:12px;color:CanvasText;background:Canvas;font:14px/1.5 system-ui;z-index:2147483647';
-  const title=document.createElement('h2');title.id='pixflow-fit-title';title.textContent=translate('Optimise dynamic images');dialog.setAttribute('aria-labelledby',title.id);
-  const hint=document.createElement('p');hint.textContent=translate('Each row keeps its own image. Check the measured widths in pixels before enabling optimisation.');
-  const values=target.read()?.split(','); const sizes=values?.length===3?values:measure(target);
-  const form=document.createElement('form');dialog.append(title,hint,form);
-  const inputs=['Mobile','Tablet','Desktop'].map((label,i)=>{
-    const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;justify-content:space-between;margin:8px 0';
-    row.append(translate(label));const input=document.createElement('input');input.required=true;input.pattern='[1-9][0-9]{0,3}(x[1-9][0-9]{0,3})?';input.value=sizes[i]||'';input.style.width='8em';
-    row.append(input);form.append(row);return input;
+  if (document.querySelector('[data-pixflow-fit-config]')) return;
+  const dialog = document.createElement('dialog');
+  dialog.className = 'pixflow-design-portal-scope';
+  dialog.dataset.pixflowFitConfig = '';
+  const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const root = document.documentElement;
+  const scope = document.querySelector<HTMLElement>('.pixflow-design-token-scope[data-theme], .pixflow-bricks-agent-shell[data-theme]');
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+  function syncTheme() {
+    let preference: string | undefined;
+    try { preference = JSON.parse(localStorage.getItem('open-design:config') || '{}').theme; } catch { /* Storage is optional. */ }
+    const resolved = root.dataset.pixflowTheme || scope?.dataset.theme || preference;
+    dialog.dataset.theme = resolved === 'dark' || resolved === 'light' ? resolved : system.matches ? 'dark' : 'light';
+    if (scope && scope.dataset.theme === dialog.dataset.theme) {
+      for (const name of ['--accent-solid','--accent-solid-hover','--accent-solid-contrast']) {
+        const value = getComputedStyle(scope).getPropertyValue(name);
+        if (value) dialog.style.setProperty(name,value);
+      }
+    }
+  }
+  syncTheme();
+  const observer = new MutationObserver(syncTheme);
+  observer.observe(root,{attributes:true,attributeFilter:['data-pixflow-theme']});
+  if (scope) observer.observe(scope,{attributes:true,attributeFilter:['data-theme','style']});
+  system.addEventListener('change',syncTheme);
+  function element<K extends keyof HTMLElementTagNameMap>(tag: K, parent: HTMLElement, text?: string) {
+    const el = document.createElement(tag);
+    if (text) el.textContent = translate(text);
+    parent.append(el);
+    return el;
+  }
+  function button(parent: HTMLElement, text: string, action: () => void) {
+    const el = element('button',parent,text);
+    el.type = 'button';
+    el.onclick = action;
+    return el;
+  }
+  const header = element('header',dialog);
+  const title = element('h2',header,'Optimise dynamic images');
+  title.id = 'pixflow-fit-title';
+  dialog.setAttribute('aria-labelledby',title.id);
+  element('p',header,'Calculate the image sizes for this placement. Each row keeps its own image.');
+  const form = element('form',dialog);
+  const body = element('section',form);
+  const toolbar = element('div',body);
+  toolbar.className = 'pf-fit-toolbar';
+  element('h3',toolbar,'Placement sizes');
+  const original = target.read() || '';
+  let removing = false;
+  const calculate = button(toolbar,'Calculate',()=>{
+    const sizes = measure(target);
+    removing = false;
+    inputs.forEach((input,i)=>{ input.value = sizes[i] || ''; input.disabled = false; });
+    status.textContent = translate(sizes.every(Boolean) ? 'Calculated from the editor preview.' : 'Enter a size for each visible placement.');
+    update();
   });
-  const actions=document.createElement('div');actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;margin-top:18px';form.append(actions);
-  const button=(text:string,fn:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=translate(text);b.onclick=fn;actions.append(b);return b;};
-  if(target.read())button('Disable',()=>{target.write('');dialog.close();});
-  button('Cancel',()=>dialog.close());button(target.read()?'Save changes':'Enable for this placement',()=>form.requestSubmit());
-  form.onsubmit=e=>{e.preventDefault();for(const input of inputs){if(input.value.split('x').some(n=>Number(n)>4096)){input.setCustomValidity(translate('Use a size from 1 to 4096 pixels.'));input.reportValidity();input.oninput=()=>input.setCustomValidity('');return;}}
-    target.write(inputs.map(i=>i.value).join(','));dialog.close();};
-  dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
+  const fields = element('div',body);
+  fields.className = 'pf-fit-fields';
+  const inputs = ['Mobile','Tablet','Desktop'].map((name,i)=>{
+    const label = element('label',fields);
+    element('span',label,name);
+    const input = element('input',label);
+    input.type = 'text';
+    if (!target.cover) input.inputMode = 'numeric';
+    input.placeholder = '—';
+    input.value = original.split(',')[i] || '';
+    input.oninput = ()=>{removing = false; update();};
+    return input;
+  });
+  const status = element('p',body,target.cover ? 'Enter width × height in pixels, for example 480 × 320.' : 'Widths are in pixels. You can adjust each size before saving.');
+  status.setAttribute('role','status');
+  const footer = element('footer',form);
+  if (original) {
+    const disable = button(footer,'Disable',()=>{
+      removing = true;
+      inputs.forEach(input=>{input.disabled=true;});
+      status.textContent = translate('Save to disable optimisation for this placement.');
+      update();
+    });
+    disable.className = 'pf-fit-disable';
+  }
+  button(footer,'Cancel',()=>dialog.close());
+  const save = element('button',footer,'Save');
+  save.type = 'submit';
+  save.className = 'pf-fit-save';
+  function draft() { return removing ? '' : inputs.map(i=>i.value.trim().replace(/\s*[×x]\s*/g,'x')).join(','); }
+  function update() {
+    const value = draft();
+    const valid = removing || value.split(',').every(slot=>/^[1-9]\d{0,3}(?:x[1-9]\d{0,3})?$/.test(slot) && slot.split('x').every(n=>Number(n)<=4096));
+    save.disabled = !valid || value === original;
+  }
+  form.onsubmit = event=>{
+    event.preventDefault();
+    if (!save.disabled) {target.write(draft());dialog.close();}
+  };
+  update();
+  dialog.onclose = ()=>{
+    observer.disconnect();
+    system.removeEventListener('change',syncTheme);
+    dialog.remove();
+    if(previous?.isConnected) previous.focus({preventScroll:true});
+  };
+  document.body.append(dialog);
+  dialog.showModal();
+  calculate.focus();
 }
 window.addEventListener('pixflow:dynamic-fit-configure',e=>configure((e as CustomEvent<RowTarget>).detail));
 

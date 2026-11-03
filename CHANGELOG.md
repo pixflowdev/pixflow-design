@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.2] - Release candidate
 
+- The Pro upgrade notice follows the saved licence entitlement.
 - Completed commands fold into the chat trace and edits show filenames.
 - Open Markdown reports created by Bridge from their links in saved chats.
 

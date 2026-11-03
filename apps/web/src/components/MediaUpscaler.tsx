@@ -139,7 +139,7 @@ function UpscaleEditor({item,installedModels,onBack,onSaved,headerAction,setting
 
   async function processImage(task:AbortController,isCrop:boolean,point:{x:number;y:number}){
         const image=source.current??(await readMediaImage(item,task.signal)).image;
-        
+
         if(isCrop){setPoint(point);setCropPending(true);}
         setPicking(false);setCrop(undefined);
         const cw=isCrop?Math.min(128,image.naturalWidth):image.naturalWidth;

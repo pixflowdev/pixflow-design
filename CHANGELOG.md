@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.2.2] - Release candidate
+
+- Completed commands fold into the chat trace and edits show filenames.
+- Open Markdown reports created by Bridge from their links in saved chats.
+
 ## [2.2.1] - Release candidate
 
 - Fit & optimise Gutenberg Image, Cover and supported Query Loop images to their responsive placements. Reuse local images pasted by URL, or choose Import & optimise for an external image.

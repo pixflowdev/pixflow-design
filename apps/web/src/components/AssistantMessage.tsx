@@ -2416,7 +2416,6 @@ function ThinkingBlock({
 }) {
   const t = useT();
   const [override, setOverride] = useState<boolean>();
-  const [hasOpened, setHasOpened] = useState(false);
   const isThinking = streaming === true;
   const open = override ?? isThinking;
   // Thinking events carry no server timestamps, so the "用时 X 秒" duration is
@@ -2441,12 +2440,12 @@ function ThinkingBlock({
       : t("assistant.thought");
   // Collapsed previews never need to parse the full tool transcript. Treat the
   // bounded prefix as partial so a protocol tag cut at the boundary stays hidden.
-  const showDetail = open || hasOpened;
+  const showDetail = open;
   const decoded = useMemo(() => splitRichAnswer(stripArtifact(showDetail ? text : text.slice(0, 2000)), isThinking || !showDetail), [text, isThinking, showDetail]);
   const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').slice(0, 500).replace(/\s+/g, ' ').trim();
   return (
     <TraceCollapsible className="thinking-block" data-trace-kind="reasoning" open={open}
-      onOpenChange={value => { if (value) setHasOpened(true); setOverride(value); }}>
+      onOpenChange={setOverride}>
       <TraceCollapsibleTrigger className="thinking-toggle">
         <TraceLine status={isThinking ? 'running' : undefined}>
           <TraceIcon><Icon name={isThinking ? 'spinner' : 'sparkles'} size={14} /></TraceIcon>
@@ -2733,12 +2732,29 @@ function ToolGroupCard({
   projectFileNames?: Set<string>;
   onRequestOpenFile?: (name: string) => void;
 }) {
-  items = dedupeSnapshotToolRetries(items);
-  return <Trace data-trace-kind="tools">
-    {items.map(item => <ToolCard key={item.use.id} use={item.use} result={item.result}
-      runStreaming={runStreaming} runSucceeded={runSucceeded}
-      projectFileNames={projectFileNames} onRequestOpenFile={onRequestOpenFile} />)}
-  </Trace>;
+  const t = useT();
+  const rows: React.ReactNode[] = [];
+  const completed: ToolItem[] = [];
+  function card(item: ToolItem) {
+    return <ToolCard key={item.use.id} use={item.use} result={item.result} runStreaming={runStreaming}
+      runSucceeded={runSucceeded} projectFileNames={projectFileNames} onRequestOpenFile={onRequestOpenFile} />;
+  }
+  function flushCommands() {
+    if (!completed.length) return;
+    const batch = completed.splice(0);
+    if (batch.length === 1) { rows.push(card(batch[0]!)); return; }
+    rows.push(<TraceCollapsible key={batch[0]!.use.id} data-trace-kind="commands">
+      <TraceCollapsibleTrigger><TraceLine><TraceTitle>{t('activity.completed.command')}</TraceTitle>
+        <TraceDescription>{batch.length}</TraceDescription></TraceLine></TraceCollapsibleTrigger>
+      <TraceCollapsibleContent keepMounted>{batch.map(card)}</TraceCollapsibleContent>
+    </TraceCollapsible>);
+  }
+  for (const item of dedupeSnapshotToolRetries(items)) {
+    if (activityAction(item.use.name) === 'command' && item.result && !item.result.isError) completed.push(item);
+    else { flushCommands(); rows.push(card(item)); }
+  }
+  flushCommands();
+  return <Trace data-trace-kind="tools">{rows}</Trace>;
 }
 
 function toolFamily(name: string): string {

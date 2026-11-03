@@ -46,9 +46,17 @@ async function targetWidth({node, cover}: Placement, aspect: number, max: number
   for (const sheet of Array.from(node.ownerDocument.styleSheets)) {
     try { collect(sheet.cssRules); } catch { /* Third-party stylesheets can be applied but not inspected. */ }
   }
+  // WordPress and Bricks emit attachment dimensions as HTML attributes. The
+  // current attachment (or placeholder) is not the intrinsic size of its replacement.
+  const image = !cover && node.tagName === 'IMG' ? node : null;
+  const intrinsicWidth = image?.getAttribute('width') ?? null;
+  const intrinsicHeight = image?.getAttribute('height') ?? null;
   const transition = frame.style.getPropertyValue('transition-property');
   const priority = frame.style.getPropertyPriority('transition-property');
   try {
+    image?.setAttribute('width', String(max));
+    image?.setAttribute('height', String(Math.round(max / aspect)));
+    width = measure();
     frame.style.setProperty('transition-property','none','important');
     for (const w of widths) {
       if (width >= max) break;
@@ -57,6 +65,10 @@ async function targetWidth({node, cover}: Placement, aspect: number, max: number
       width = Math.max(width, measure());
     }
   } finally {
+    if (image) {
+      if (intrinsicWidth === null) image.removeAttribute('width'); else image.setAttribute('width', intrinsicWidth);
+      if (intrinsicHeight === null) image.removeAttribute('height'); else image.setAttribute('height', intrinsicHeight);
+    }
     properties.forEach((key, i) => {
       const [value, priority] = original[i]!;
       if (value) frame.style.setProperty(key, value, priority); else frame.style.removeProperty(key);
@@ -69,16 +81,19 @@ async function targetWidth({node, cover}: Placement, aspect: number, max: number
 }
 
 async function makeCopy(model: Attachment, target: Placement, signal: AbortSignal, current: () => boolean, status: HTMLElement) {
-  const res = await fetch(model.get('url'), {signal});
+  const sourceId = Number(model.get('pixflowFitSource'));
+  const original = sourceId && sourceId !== model.id ? wp.media.attachment(sourceId) : model;
+  if (original !== model) await original.fetch();
+  const res = await fetch(original.get('url'), {signal});
   if (!res.ok) throw Error(label('Could not read this image.'));
   const source = await res.blob();
-  if (model.get('mime') === 'image/png') {
+  if (original.get('mime') === 'image/png') {
     const bytes = new DataView(await source.arrayBuffer());
     for (let i = 8; i + 12 <= bytes.byteLength; i += bytes.getUint32(i) + 12) {
       if (bytes.getUint32(i+4) === 0x6163544c) throw Error(label('Animated images keep their original format.'));
     }
   }
-  if (model.get('mime') === 'image/webp') {
+  if (original.get('mime') === 'image/webp') {
     const bytes = new DataView(await source.arrayBuffer());
     for (let i = 12; i + 8 <= bytes.byteLength;) {
       if (bytes.getUint32(i) === 0x414e494d) throw Error(label('Animated images keep their original format.'));
@@ -91,12 +106,17 @@ async function makeCopy(model: Attachment, target: Placement, signal: AbortSigna
   try {
     const img = new Image(); img.src = url; await img.decode();
     const width = await targetWidth(target, img.naturalWidth / img.naturalHeight, img.naturalWidth);
+    if (original !== model && Number(model.get('width')) === width) {
+      status.textContent = label('This copy already fits the placement.');
+      return;
+    }
     encoded = await encodeMediaImage(img, 'webp', 82, width);
   } finally { URL.revokeObjectURL(url); }
   if (!current()) return;
   if (encoded.blob.size >= source.size) { status.textContent = label('The original is already smaller.'); return; }
   const form = new FormData();
-  form.append('file', encoded.blob, model.get('filename').replace(/\.[^.]+$/, '') + '-fit-' + encoded.width + '.webp');
+  form.append('file', encoded.blob, original.get('filename').replace(/\.[^.]+$/, '') + '-fit-' + encoded.width + '.webp');
+  form.append('pixflow_fit_source', String(original.id));
   for (const key of ['title','caption','description','alt']) {
     const value = model.get(key);
     if (typeof value === 'string') form.append(key === 'alt' ? 'alt_text' : key, value);

@@ -21,10 +21,12 @@ it('keeps large collapsed output out of the DOM until requested and preserves di
   expect(container.querySelector('[data-activity-group] > button')).toBeNull();
   const preview = container.querySelector('.thinking-preview')!;
   expect(preview.textContent!.length).toBeLessThan(600);
-  expect(container.querySelector('.thinking-body')!.textContent).toBe('');
+  expect(container.textContent).not.toContain('END_OF_CANVAS');
   const toggle = container.querySelector('.thinking-toggle')!;
   fireEvent.click(toggle);
   expect(container.querySelector('.thinking-body')!.textContent).toContain('END_OF_CANVAS');
+  fireEvent.click(toggle);
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
   fireEvent.click(toggle);
   expect(container.querySelector('.thinking-body')!.textContent).toContain('END_OF_CANVAS');
 });

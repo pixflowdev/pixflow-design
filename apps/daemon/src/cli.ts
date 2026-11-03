@@ -23,6 +23,7 @@ import {
 import { runWpAdminCli } from './wp-admin-cli.js';
 import { requestWorkspaceOrganization } from './workspace-organization-cli.js';
 import { runDirectSiteCli } from './pixflow/direct-site-cli.js';
+import { runUpscalerCli } from './pixflow/upscaler-cli.js';
 import { runDictationCli } from './pixflow/dictation-cli.js';
 import { runBridgePairingCli } from './bridge-pairing-cli.js';
 import { runBridgeSitesCli } from './bridge-sites-cli.js';
@@ -313,6 +314,7 @@ const SUBCOMMAND_MAP = {
   'wp-admin': runWpAdmin,
   'direct-site': runDirectSiteCli,
   'dictation': runDictationCli,
+  'upscaler': runUpscalerCli,
   'bridge-pair': runBridgePairingCli,
   'bridge-sites': runBridgeSitesCli,
   builder: runBuilderDestinationsCli,
@@ -341,7 +343,7 @@ if (first && SUBCOMMAND_MAP[first]) {
   // These HTTP clients own undici fetch responses. Let Node drain their
   // socket before exiting on Windows; an immediate process.exit can trip
   // libuv's closing-handle assertion even after a successful response.
-  if (first !== 'agents' && first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
+  if (first !== 'agents' && first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'upscaler' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
 }
 
 if (!handledSubcommand && argv[0] === 'tools' && (argv.length === 1 || (argv.length === 2 && ['--help', '-h', 'help'].includes(argv[1])))) {

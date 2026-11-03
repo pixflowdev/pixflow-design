@@ -1,3 +1,5 @@
+import { useUpscalerInventory } from '../pixflow/upscaler-access';
+import { MediaUpscaler } from './MediaUpscaler';
 import { MediaQualitySlider } from './MediaQualitySlider';
 import './MediaView.css';
 import { MediaOptimiser, readMediaImage, encodeMediaImage, saveMediaCopy } from './MediaOptimiser';
@@ -50,7 +52,7 @@ function shortKind(item: PixflowMediaItem): string {
   return 'FILE';
 }
 
-function MediaImagePreview({item,onOptimise}:{item:PixflowMediaItem;onOptimise?:()=>void}) {
+function MediaImagePreview({item,onOptimise,onUpscale}:{item:PixflowMediaItem;onOptimise?:()=>void;onUpscale?:(trigger:HTMLElement)=>void}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const t = usePixflowUiTranslation();
   const trigger=useRef<HTMLButtonElement>(null);
@@ -73,6 +75,7 @@ function MediaImagePreview({item,onOptimise}:{item:PixflowMediaItem;onOptimise?:
           {item.width && item.height ? <small>{item.width} × {item.height} px</small> : null}
         </div>
         {onOptimise && <button type="button" onClick={()=>{dialog.current?.close();onOptimise();}}>{t('media.optimise.action')}</button>}
+        {onUpscale && <button type="button" onClick={()=>{dialog.current?.close();if(trigger.current)onUpscale(trigger.current);}}>{t('media.upscale.action')}</button>}
         <button type="button" className="direct-media-lightbox-copy" aria-label={t('ui.designBrowserPanel.copyUrl')} title={t('ui.designBrowserPanel.copyUrl')}
           onClick={async () => setCopyStatus(await copyToClipboard(item.url) ? t('ui.designBrowserPanel.feedback7') : t('media.optimise.copyFailed'))}>
           <Icon name="copy" size={16} />
@@ -231,6 +234,36 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
 
   const [optimiseId,setOptimiseId]=useState<string>();
   const optimiserRegion=useRef<HTMLDivElement>(null);
+  const [upscaleItem, setUpscaleItem] = useState<PixflowMediaItem | null>(null);
+  const returnTo = useRef<{ button: HTMLElement; scroll: HTMLElement; top: number } | null>(null);
+  const {status:upscaler}=useUpscalerInventory();
+  const canUpscale=!!(upscaler?.supported && upscaler.enabled && upscaler.installedModels?.length);
+  useEffect(()=>{if(!canUpscale)setUpscaleItem(null);},[canUpscale]);
+  function openUpscaler(item: PixflowMediaItem, button: HTMLElement) {
+    let scroll = button.parentElement;
+    while (scroll && !/auto|scroll/.test(getComputedStyle(scroll).overflowY)) scroll = scroll.parentElement;
+    scroll ??= document.documentElement;
+    // The preview can scroll independently. Preserve the library's outer scroll position.
+    if (scroll.classList.contains('direct-media-preview')) {
+      let parent = scroll.parentElement;
+      while (parent && !/auto|scroll/.test(getComputedStyle(parent).overflowY)) parent = parent.parentElement;
+      scroll = parent ?? document.documentElement;
+    }
+    returnTo.current = { button, scroll, top: scroll.scrollTop };
+    setUpscaleItem(item);
+    scroll.scrollTop = 0;
+  }
+  function closeUpscaler() {
+    setUpscaleItem(null);
+    const target = returnTo.current;
+    requestAnimationFrame(() => {
+      if (target) {
+        target.scroll.scrollTop = target.top;
+        target.button.focus({ preventScroll: true });
+      }
+    });
+  }
+
   function selectCopy(copy: PixflowMediaItem) {
     pickedRow.current = true;
     setLinked(copy);
@@ -302,7 +335,11 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
           event.currentTarget.value = '';
         }}
       />
-      <div className="direct-media-files-main">
+      {upscaleItem && canUpscale && <MediaUpscaler installedModels={upscaler!.installedModels!} item={upscaleItem} onBack={closeUpscaler} onSaved={copy => {
+        closeUpscaler();
+        selectCopy(copy);
+      }} />}
+      <div className="direct-media-files-main" style={upscaleItem ? {display:'none'} : undefined}>
         <header className="direct-media-titlebar">
           <div>
             <div className="direct-media-title">
@@ -459,7 +496,7 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
                         requestAnimationFrame(()=>{const field=optimiserRegion.current?.querySelector<HTMLElement>('[role=combobox]');
                           field?.focus();field?.scrollIntoView({block:'nearest'});});
                       }:undefined}
-                      />
+                      onUpscale={eligible(selected)&&canUpscale?button=>openUpscaler(selected,button):undefined}/>
                   ) : selected.type === 'video' ? (
                     <video src={selected.url} controls />
                   ) : selected.type === 'audio' ? (
@@ -482,6 +519,7 @@ export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: numb
                   {['image/png', 'image/jpeg', 'image/webp'].includes(selected.mimeType) &&
                     <div key={selected.id} ref={optimiserRegion}>
                       <MediaOptimiser item={selected} onSaved={selectCopy} expanded={optimiseId===selected.id} onExpandedChange={open=>setOptimiseId(open?selected.id:undefined)}/>
+                      {canUpscale && <button type="button" onClick={event => openUpscaler(selected, event.currentTarget)}>{translateUi('media.upscale.action')}</button>}
                     </div>}
                   <div className="direct-media-preview-links">
                     <a href={selected.url} target="_blank" rel="noreferrer">

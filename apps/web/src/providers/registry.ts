@@ -241,9 +241,10 @@ export async function importPixflowWpMedia(attachmentIds: number[]): Promise<Pix
   return json.items ?? [];
 }
 
-export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>): Promise<PixflowMediaItem> {
+export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>, options?: { upscaled?: boolean }): Promise<PixflowMediaItem> {
   const form = new FormData();
   form.append('file', file);
+  if (options?.upscaled) form.append('surface', 'upscaler');
   if (metadata) {
     for (const key of ['altText', 'caption', 'description'] as const) {
       if (metadata[key]) form.append(key, metadata[key]);

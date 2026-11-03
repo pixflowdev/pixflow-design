@@ -1982,6 +1982,12 @@ export interface Dict {
   "media.bulk.selectAll": string;
   "media.bulk.hint": string;
   "media.bulk.noSaving": string;
+  "media.fit.title": string;
+  "media.fit.import": string;
+  "media.fit.dynamic": string;
+  "media.fit.redoDynamic": string;
+  "media.fit.redo": string;
+  "media.fit.revert": string;
   "media.optimise.action": string;
   "media.optimise.format": string;
   "media.optimise.width": string;

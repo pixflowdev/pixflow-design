@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.2.1] - Release candidate
+
 - Fit & optimise Gutenberg Image, Cover and supported Query Loop images to their responsive placements. Reuse local images pasted by URL, or choose Import & optimise for an external image.
 - Fitted sizes are shared without adding copies to the Media Library. An enabled Bridge upscaler can enlarge undersized originals before compression; compression still works without Bridge. Revert to original restores the canvas without reloading.
 
@@ -20,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Download optional Photo and Illustration models in Image upscaler settings. With Bridge connected, choosing Upscale image opens setup if a model is needed. Once installed, the enable switch controls availability in Media.
 - Upscale at 1.5×, 2×, 3× or 4×, or set a custom scale or target width. Inspect a detail at 100%, compare before and after, and adjust noise reduction where supported. Save directly, optionally compress the result, or explicitly overwrite the original in its existing format.
 - In Settings → About, use the switch beside the diagnostics export to choose whether to include Bridge, device and Claude sign-in details.
+
+### Pixflow Design Bridge
+
+- Install optional image models for local enlargement before compression. Slow provider discovery keeps the paired connection and previously detected providers available.
 
 ## [2.2.0] - Release candidate
 

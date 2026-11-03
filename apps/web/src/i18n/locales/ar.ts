@@ -6783,4 +6783,11 @@ export const ar: Dict = {
   "siteTranslations.multilingualSearchHint": "يعثر بحث ووردبريس الأصلي على النص المنشور باللغة الحالية. لا يشمل عمليات بحث AJAX المخصصة.",
   "siteTranslations.languageSuggestions": "اقتراح لغة",
   "siteTranslations.languageSuggestionsHint": "اعرض نسخة منشورة تطابق لغة متصفح الزائر. احفظ اختياره دون إعادة توجيه تلقائية.",
+  "editorFit.optimisation": "تحسين الصور",
+  "editorFit.importAndOptimise": "استيراد وتحسين",
+  "editorFit.optimiseDynamic": "تحسين الصور الديناميكية",
+  "editorFit.optimiseImage": "تحسين الصورة",
+  "editorFit.reoptimiseDynamic": "إعادة تحسين الصور الديناميكية",
+  "editorFit.reoptimiseImage": "إعادة تحسين الصورة",
+  "editorFit.revert": "استعادة الأصل",
 };

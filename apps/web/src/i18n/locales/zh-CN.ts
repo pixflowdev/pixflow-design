@@ -6784,4 +6784,11 @@ export const zhCN: Dict = {
   "siteTranslations.multilingualSearchHint": "WordPress 原生搜索可查找当前语言的已发布文本。不包括自定义 AJAX 搜索。",
   "siteTranslations.languageSuggestions": "建议语言",
   "siteTranslations.languageSuggestionsHint": "推荐与访客浏览器语言匹配的已发布版本。记住访客选择，不自动跳转。",
+  "editorFit.optimisation": "图像优化",
+  "editorFit.importAndOptimise": "导入并优化",
+  "editorFit.optimiseDynamic": "优化动态图像",
+  "editorFit.optimiseImage": "优化图像",
+  "editorFit.reoptimiseDynamic": "重新优化动态图像",
+  "editorFit.reoptimiseImage": "重新优化图像",
+  "editorFit.revert": "恢复原图",
 };

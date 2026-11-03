@@ -6784,4 +6784,11 @@ export const tr: Dict = {
   "siteTranslations.multilingualSearchHint": "WordPress araması mevcut dilde yayımlanmış metinleri bulur. Özel AJAX aramaları dahil değildir.",
   "siteTranslations.languageSuggestions": "Dil öner",
   "siteTranslations.languageSuggestionsHint": "Ziyaretçinin tarayıcı diline uygun yayımlanmış sürümü önerir. Otomatik yönlendirme yapmadan seçimi hatırlar.",
+  "editorFit.optimisation": "Görsel optimizasyonu",
+  "editorFit.importAndOptimise": "İçe aktar ve optimize et",
+  "editorFit.optimiseDynamic": "Dinamik görselleri optimize et",
+  "editorFit.optimiseImage": "Görseli optimize et",
+  "editorFit.reoptimiseDynamic": "Dinamik görselleri yeniden optimize et",
+  "editorFit.reoptimiseImage": "Görseli yeniden optimize et",
+  "editorFit.revert": "Özgün görsele dön",
 };

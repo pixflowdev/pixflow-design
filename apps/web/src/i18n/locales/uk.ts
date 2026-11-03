@@ -6783,4 +6783,11 @@ export const uk: Dict = {
   "siteTranslations.multilingualSearchHint": "Вбудований пошук WordPress знаходить опублікований текст поточною мовою. Власний AJAX-пошук не включено.",
   "siteTranslations.languageSuggestions": "Пропонувати мову",
   "siteTranslations.languageSuggestionsHint": "Пропонуйте опубліковану версію мовою браузера. Вибір зберігається без автоматичного переспрямування.",
+  "editorFit.optimisation": "Оптимізація зображень",
+  "editorFit.importAndOptimise": "Імпортувати й оптимізувати",
+  "editorFit.optimiseDynamic": "Оптимізувати динамічні зображення",
+  "editorFit.optimiseImage": "Оптимізувати зображення",
+  "editorFit.reoptimiseDynamic": "Повторно оптимізувати динамічні зображення",
+  "editorFit.reoptimiseImage": "Повторно оптимізувати зображення",
+  "editorFit.revert": "Відновити оригінал",
 };

@@ -6784,4 +6784,11 @@ export const pl: Dict = {
   "siteTranslations.multilingualSearchHint": "Wbudowana wyszukiwarka WordPress znajduje opublikowane teksty w bieżącym języku. Niestandardowe wyszukiwanie AJAX nie jest objęte.",
   "siteTranslations.languageSuggestions": "Zaproponuj język",
   "siteTranslations.languageSuggestionsHint": "Zaproponuj opublikowaną wersję zgodną z językiem przeglądarki. Zapamiętaj wybór bez automatycznego przekierowania.",
+  "editorFit.optimisation": "Optymalizacja obrazów",
+  "editorFit.importAndOptimise": "Importuj i zoptymalizuj",
+  "editorFit.optimiseDynamic": "Zoptymalizuj obrazy dynamiczne",
+  "editorFit.optimiseImage": "Zoptymalizuj obraz",
+  "editorFit.reoptimiseDynamic": "Ponownie zoptymalizuj obrazy dynamiczne",
+  "editorFit.reoptimiseImage": "Ponownie zoptymalizuj obraz",
+  "editorFit.revert": "Przywróć oryginał",
 };

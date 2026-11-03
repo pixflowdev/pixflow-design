@@ -6783,4 +6783,11 @@ export const ja: Dict = {
   "siteTranslations.multilingualSearchHint": "WordPressの標準検索で現在の言語の公開済みテキストを検索します。独自のAJAX検索は対象外です。",
   "siteTranslations.languageSuggestions": "言語を提案",
   "siteTranslations.languageSuggestionsHint": "ブラウザーの言語に合う公開済みのページを提案します。自動転送せずに選択を記憶します。",
+  "editorFit.optimisation": "画像の最適化",
+  "editorFit.importAndOptimise": "インポートして最適化",
+  "editorFit.optimiseDynamic": "動的画像を最適化",
+  "editorFit.optimiseImage": "画像を最適化",
+  "editorFit.reoptimiseDynamic": "動的画像を再最適化",
+  "editorFit.reoptimiseImage": "画像を再最適化",
+  "editorFit.revert": "元の画像に戻す",
 };

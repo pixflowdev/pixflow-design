@@ -17,7 +17,6 @@ import { Fragment, useEffect, useRef, useState, type MouseEvent, type ReactNode 
 import { useT } from '../i18n';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { Icon } from '../components/Icon';
-import { BridgeReportLink } from '../pixflow/BridgeReportLink';
 import { InlineCitation, citationSource } from '../components/chat/InlineCitation';
 
 export type MarkdownLinkClickHandler = (
@@ -584,7 +583,7 @@ function inlineTokenPattern(): RegExp {
   //     `_conditions format: `...user_logged_in...``) can be misread as one
   //     long `_..._` emphasis span and consume the code-span delimiter.
   //  7. bold (**a** / __a__) before italic (*a* / _a_).
-  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\\?\(((?:\\?<(?:[a-zA-Z]:[/\\]|\/(?!\/))[^>\n]*[/\\]direct-site-runs[/\\]run-[a-zA-Z0-9]{6}[/\\][^>\n]+\\?>)|[^)\s]+)\\?\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
 }
 
 function researchLinks(text: string): Map<number, { title: string; url: URL }> {
@@ -664,12 +663,6 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
       }
     } else if (m[4] && m[5]) {
       const href = m[5];
-      const report = /[/\\]direct-site-runs[/\\](run-[A-Za-z0-9]{6})[/\\]([A-Za-z0-9][A-Za-z0-9 _.-]{0,120}\.md)\\?>?$/i.exec(href);
-      if (report && /^\\?<?(?:[A-Za-z]:[/\\]|\/(?!\/))/.test(href)) {
-        out.push(<BridgeReportLink key={key++} directory={report[1]!} filename={report[2]!} label={m[4]} />);
-        lastIndex = re.lastIndex;
-        continue;
-      }
       const source = sources?.get(m.index)?.url;
       out.push(
         source ? <InlineCitation key={key++} source={source} title={m[4]} /> : <a

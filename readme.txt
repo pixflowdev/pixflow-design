@@ -34,7 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = 2.2.2 =
-Restore chat Trace details, Bridge report links and licence-based notices.
+Restore chat Trace details and licence-based notices.
 
 = 2.2.1 =
 * Fit responsive Gutenberg images, compress media, use the optional upscaler and keep Bridge connected during slow provider discovery.

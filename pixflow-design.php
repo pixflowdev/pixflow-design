@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('PIXFLOW_DESIGN_VERSION', '2.2.2');
 // Pixflow-owned: WordPress plugin declares the minimum compatible local bridge.
-define('PIXFLOW_DESIGN_BRIDGE_VERSION', '2.2.2');
+define('PIXFLOW_DESIGN_BRIDGE_VERSION', '2.2.1');
 define('PIXFLOW_DESIGN_PLUGIN_FILE', __FILE__);
 define('PIXFLOW_DESIGN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PIXFLOW_DESIGN_PLUGIN_URL', plugin_dir_url(__FILE__));

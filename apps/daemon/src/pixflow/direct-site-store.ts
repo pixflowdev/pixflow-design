@@ -58,9 +58,6 @@ export class DirectSiteStore {
   get(id: string): DirectRunRecord | null {
     return record(this.db.prepare('SELECT * FROM pixflow_direct_runs WHERE id = ?').get(id) as Record<string, unknown> | undefined);
   }
-  ownsWorkspace(owner: string, workspace: string): boolean {
-    return Boolean(this.db.prepare('SELECT 1 FROM pixflow_direct_runs WHERE owner=? AND workspace=? LIMIT 1').get(owner, workspace));
-  }
   create(run: DirectRunRecord): void {
     this.db.prepare(`INSERT INTO pixflow_direct_runs VALUES (@id,@owner,@tokenHash,@requestHash,@conversationId,@taskId,@attemptId,@surface,@workspace,@outcome,@lastSequence,@createdAt,@updatedAt)`).run(run);
   }

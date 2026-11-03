@@ -169,6 +169,7 @@ async function activeWorkspaceFetch(
 export type PixflowMediaType = 'image' | 'video' | 'audio' | 'file';
 
 export interface PixflowMediaItem {
+  previewRevision?: number;
   id: string;
   attachmentId: number;
   title: string;
@@ -201,13 +202,17 @@ export interface PixflowMediaListResponse {
 }
 
 export async function fetchPixflowMedia(params: {
+  attachmentId?: number;
+  attachmentUrl?: string;
   type?: 'all' | 'image' | 'video' | 'audio';
   source?: 'all' | 'pixflow';
   search?: string;
   page?: number;
   perPage?: number;
-} = {}): Promise<PixflowMediaListResponse> {
+} = {}, signal?:AbortSignal): Promise<PixflowMediaListResponse> {
   const query = new URLSearchParams();
+  if (params.attachmentUrl) query.set('attachmentUrl', params.attachmentUrl);
+  if (params.attachmentId) query.set('attachmentId', String(params.attachmentId));
   if (params.type && params.type !== 'all') query.set('type', params.type);
   if (params.source && params.source !== 'all') query.set('source', params.source);
   if (params.search) query.set('search', params.search);
@@ -215,7 +220,7 @@ export async function fetchPixflowMedia(params: {
   if (params.perPage) query.set('perPage', String(params.perPage));
 
   const resp = await pixflowWordPressRestFetch(`/media${query.size > 0 ? `?${query.toString()}` : ''}`, {
-    cache: 'no-store',
+    cache: 'no-store',signal,
   });
   if (!resp.ok) {
     throw new Error(`media ${resp.status}`);
@@ -236,9 +241,14 @@ export async function importPixflowWpMedia(attachmentIds: number[]): Promise<Pix
   return json.items ?? [];
 }
 
-export async function uploadPixflowMedia(file: File): Promise<PixflowMediaItem> {
+export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>): Promise<PixflowMediaItem> {
   const form = new FormData();
   form.append('file', file);
+  if (metadata) {
+    for (const key of ['altText', 'caption', 'description'] as const) {
+      if (metadata[key]) form.append(key, metadata[key]);
+    }
+  }
   const resp = await pixflowWordPressRestFetch('/media/upload', {
     method: 'POST',
     body: form,

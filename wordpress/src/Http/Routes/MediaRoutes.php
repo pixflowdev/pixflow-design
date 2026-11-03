@@ -107,8 +107,15 @@ final class MediaRoutes
         return current_user_can('upload_files');
     }
 
-    public function list(\WP_REST_Request $request): \WP_REST_Response
+    public function list(\WP_REST_Request $request): \WP_REST_Response|\WP_Error
     {
+        if ($request->has_param('attachmentId') || $request->has_param('attachmentUrl')) {
+            $id = $request->has_param('attachmentId')
+                ? absint($request->get_param('attachmentId'))
+                : attachment_url_to_postid(strtok((string) $request->get_param('attachmentUrl'), '?#') ?: '');
+            $item = $this->media->get($id);
+            return is_wp_error($item) ? $item : $this->response(['ok' => true, 'items' => [$item], 'total' => 1]);
+        }
         $result = $this->media->list([
             'page' => (int) $request->get_param('page'),
             'perPage' => (int) $request->get_param('perPage'),

@@ -1473,7 +1473,7 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
           setSettingsInitialSection('designSystems');
           setPendingWorkspaceTool(null);
           setSettingsOpen(true);
-        } else if (data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())) {
+        } else if (data.tool === 'media' || data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())) {
           setToolbarWorkspaceTool(null);
           setPendingWorkspaceTool(null);
           setSettingsOpen(false);

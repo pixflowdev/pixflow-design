@@ -115,29 +115,29 @@ final class DynamicFit {
     public static function fitSource($request) {
         $url=explode('#',(string)$request['source'],2)[0];
         if (!in_array(wp_parse_url($url,PHP_URL_SCHEME),['http','https'],true) || !wp_parse_url($url,PHP_URL_HOST)
-            || wp_parse_url($url,PHP_URL_USER)!==null || strlen($url)>4096) return new \WP_Error('url','Enter a valid image URL.',['status'=>400]);
+            || wp_parse_url($url,PHP_URL_USER)!==null || strlen($url)>4096) return new \WP_Error('url',__('Enter a valid image URL.','pixflow-design'),['status'=>400]);
         global $wpdb;
         $import=$request['import']===true;
         $lock='pixfit_'.substr(hash('sha256',$wpdb->prefix.$url),0,48);
-        if ($import && !$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 2)',$lock))) return new \WP_Error('busy','Import already in progress. Try again.',['status'=>409]);
+        if ($import && !$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 2)',$lock))) return new \WP_Error('busy',__('Import already in progress. Try again.','pixflow-design'),['status'=>409]);
         try {
             $id=self::identify($url);
-            if ($id && !current_user_can('edit_post',$id)) return new \WP_Error('denied','Cannot edit this attachment.',['status'=>403]);
+            if ($id && !current_user_can('edit_post',$id)) return new \WP_Error('denied',__('Cannot edit this attachment.','pixflow-design'),['status'=>403]);
             if ($id || !$import) return ['id'=>$id];
             require_once ABSPATH.'wp-admin/includes/file.php';
             require_once ABSPATH.'wp-admin/includes/media.php';
             require_once ABSPATH.'wp-admin/includes/image.php';
             $tmp=wp_tempnam('pixflow-image');
-            if (!$tmp) return new \WP_Error('storage','Temporary storage unavailable.',['status'=>503]);
+            if (!$tmp) return new \WP_Error('storage',__('Temporary storage unavailable.','pixflow-design'),['status'=>503]);
             $limit=12*MB_IN_BYTES;
             try {
                 $response=wp_safe_remote_get($url,['stream'=>true,'filename'=>$tmp,'timeout'=>20,'limit_response_size'=>$limit+1,'redirection'=>2]);
                 if (is_wp_error($response) || wp_remote_retrieve_response_code($response)!==200 || filesize($tmp)>$limit)
-                    return new \WP_Error('download','Could not import this image. Check the URL and file size.',['status'=>400]);
+                    return new \WP_Error('download',__('Could not import this image. Check the URL and file size.','pixflow-design'),['status'=>400]);
                 $size=wp_getimagesize($tmp);
                 $extensions=['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
                 if (!$size || !isset($extensions[$size['mime']]) || $size[0]*$size[1]>32000000)
-                    return new \WP_Error('format','Choose a JPEG, PNG or WebP up to 32 megapixels.',['status'=>400]);
+                    return new \WP_Error('format',__('Choose a JPEG, PNG or WebP up to 32 megapixels.','pixflow-design'),['status'=>400]);
                 $name=sanitize_file_name(pathinfo(wp_parse_url($url,PHP_URL_PATH)??'',PATHINFO_FILENAME)) ?: 'imported-image';
                 $id=media_handle_sideload(['name'=>$name.'.'.$extensions[$size['mime']],'tmp_name'=>$tmp],0);
                 if (is_wp_error($id)) return $id;
@@ -200,25 +200,25 @@ final class DynamicFit {
                 $id=(int)$r['id'];$width=(int)$r['width'];$src=self::source($id);
                 $job=(string)$r['version'].'-'.$width;
                 if (!$src || $src['version']!==$r['version'] || !in_array($job,get_post_meta($id,self::PENDING,false),true))
-                    return new \WP_Error('stale','The placement has changed.',['status'=>409]);
+                    return new \WP_Error('stale',__('The placement has changed.','pixflow-design'),['status'=>409]);
                 $file=$r->get_file_params()['file']??[];
                 $tmp=$file['tmp_name']??'';
-                if (!$tmp || !is_uploaded_file($tmp) || filesize($tmp)>32*1024*1024) return new \WP_Error('invalid','Invalid image upload.',['status'=>400]);
+                if (!$tmp || !is_uploaded_file($tmp) || filesize($tmp)>32*1024*1024) return new \WP_Error('invalid',__('Invalid image upload.','pixflow-design'),['status'=>400]);
                 $size=wp_getimagesize($tmp);
                 if (!$size || $size['mime']!=='image/webp' || $size[0]!==$width || $size[1]!==max(1,(int)round($width*$src['meta']['height']/$src['meta']['width'])))
-                    return new \WP_Error('dimensions','Incorrect image dimensions.',['status'=>400]);
-                if (!wp_mkdir_p($src['dir'])) return new \WP_Error('directory','Could not create cache directory.',['status'=>500]);
+                    return new \WP_Error('dimensions',__('Incorrect image dimensions.','pixflow-design'),['status'=>400]);
+                if (!wp_mkdir_p($src['dir'])) return new \WP_Error('directory',__('Could not create cache directory.','pixflow-design'),['status'=>500]);
                 $dest=$src['dir'].'/'.$job.'.webp';
                 $lock=fopen($src['dir'].'/.lock','c');
-                if (!$lock) return new \WP_Error('lock','Cache unavailable.',['status'=>503]);
+                if (!$lock) return new \WP_Error('lock',__('Cache unavailable.','pixflow-design'),['status'=>503]);
                 try {
-                    if (!flock($lock,LOCK_EX) || !in_array($job,get_post_meta($id,self::PENDING,false),true)) return new \WP_Error('stale','Job expired.',['status'=>409]);
+                    if (!flock($lock,LOCK_EX) || !in_array($job,get_post_meta($id,self::PENDING,false),true)) return new \WP_Error('stale',__('Job expired.','pixflow-design'),['status'=>409]);
                     if (!is_file($dest)) {
                         $stage=$dest.'.'.wp_generate_uuid4().'.tmp';
-                        if (!move_uploaded_file($tmp,$stage)) return new \WP_Error('upload','Could not stage image.',['status'=>500]);
+                        if (!move_uploaded_file($tmp,$stage)) return new \WP_Error('upload',__('Could not stage image.','pixflow-design'),['status'=>500]);
                         try {
                             touch($dest.'.unserved');
-                            if (!rename($stage,$dest)) return new \WP_Error('cache','Could not save image.',['status'=>500]);
+                            if (!rename($stage,$dest)) return new \WP_Error('cache',__('Could not save image.','pixflow-design'),['status'=>500]);
                         } finally { if (is_file($stage)) wp_delete_file($stage); }
                     }
                     self::dropPending($id,$job);self::scheduleExpiry($id);

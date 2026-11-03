@@ -169,7 +169,7 @@ function UpscaleEditor({item,installedModels,onBack,onSaved,headerAction,setting
           return {image,blob,model:treatment};
         }
         const png=before.split(',')[1]!;
-        if(png.length>4*Math.ceil(UPSCALER_MAX_INPUT_BYTES/3))throw new Error('This image exceeds the Bridge input limit.');
+        if(png.length>4*Math.ceil(UPSCALER_MAX_INPUT_BYTES/3))throw new Error(t('media.fit.msgab4eb7a0a8'));
         const result=await request<UpscalerResult>('run',task.signal,model,png,noise);
         const uri='data:image/png;base64,'+result.png;
         const decoded=new Image();decoded.src=uri;await decoded.decode();

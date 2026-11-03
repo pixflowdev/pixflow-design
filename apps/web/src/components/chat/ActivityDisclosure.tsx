@@ -42,6 +42,6 @@ export function ActivityDisclosure({ label, icon = 'tools', active, live = activ
         {issueLabel ? <TraceDescription>{issueLabel}</TraceDescription> : null}
       </TraceLine>
     </TraceCollapsibleTrigger>}
-    <TraceCollapsibleContent>{open || visited ? <Trace data-chain-of-thought="">{children()}</Trace> : null}</TraceCollapsibleContent>
+    <TraceCollapsibleContent keepMounted>{open || visited ? <Trace data-chain-of-thought="">{children()}</Trace> : null}</TraceCollapsibleContent>
   </TraceCollapsible>;
 }

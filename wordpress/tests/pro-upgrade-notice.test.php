@@ -41,11 +41,11 @@ namespace {
     }
     $GLOBALS['pro']+=['plugins_url'=>'https://site.test/wp-admin/plugins.php','account_url'=>'https://pixflow.dev/account#pro-download'];
     $GLOBALS['pro']['eligible']=true;
-    check($notice->offer()['label']==='Download Pro','Paid customer download');
-    $GLOBALS['pro']['installation']='inactive';
-    check($notice->offer()['label']==='Activate Pro','Paid customer activation');
-    $GLOBALS['pro']['installation']='active';
-    check($notice->offer()===null,'No upsell for active paid users');
+    foreach (['missing','inactive','incomplete','incompatible','active'] as $installation) {
+        $GLOBALS['pro']['installation']=$installation;
+        check($notice->offer()===null, 'Paid licence must suppress the banner: '.$installation);
+        check($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')===[], 'Paid licence must suppress the upgrade link');
+    }
     $GLOBALS['pro']['eligible']=false;
     $GLOBALS['dismissed']=true;
     check($notice->offer()===null,'Dismissal respected');

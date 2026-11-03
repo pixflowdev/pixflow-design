@@ -6,7 +6,7 @@ test('release versions align the plugin and standalone Bridge without changing t
   const read = (path: string) => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
   const main = read('pixflow-design.php');
   const version = main.match(/Version: (\S+)/)?.[1];
-  assert.equal(version, '2.2.1');
+  assert.equal(version, '2.2.2');
   assert.ok(main.includes("define('PIXFLOW_DESIGN_VERSION', '" + version + "')"));
   const bridgeVersion = main.match(/define\('PIXFLOW_DESIGN_BRIDGE_VERSION', '([^']+)'\)/)?.[1];
   assert.equal(bridgeVersion, '2.2.1');

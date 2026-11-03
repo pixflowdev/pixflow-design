@@ -6783,4 +6783,11 @@ export const ko: Dict = {
   "siteTranslations.multilingualSearchHint": "WordPress 기본 검색으로 현재 언어의 게시된 텍스트를 찾습니다. 사용자 지정 AJAX 검색은 포함되지 않습니다.",
   "siteTranslations.languageSuggestions": "언어 제안",
   "siteTranslations.languageSuggestionsHint": "방문자의 브라우저 언어에 맞는 게시된 버전을 제안합니다. 자동으로 이동하지 않고 선택을 기억합니다.",
+  "editorFit.optimisation": "이미지 최적화",
+  "editorFit.importAndOptimise": "가져와서 최적화",
+  "editorFit.optimiseDynamic": "동적 이미지 최적화",
+  "editorFit.optimiseImage": "이미지 최적화",
+  "editorFit.reoptimiseDynamic": "동적 이미지 다시 최적화",
+  "editorFit.reoptimiseImage": "이미지 다시 최적화",
+  "editorFit.revert": "원본으로 복원",
 };

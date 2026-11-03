@@ -6783,4 +6783,11 @@ export const fa: Dict = {
   "siteTranslations.multilingualSearchHint": "جستجوی بومی وردپرس متن منتشرشده را به زبان فعلی پیدا می‌کند. جستجوهای سفارشی AJAX شامل نمی‌شوند.",
   "siteTranslations.languageSuggestions": "پیشنهاد زبان",
   "siteTranslations.languageSuggestionsHint": "نسخه منتشرشده مطابق زبان مرورگر را پیشنهاد دهید. انتخاب کاربر بدون تغییر مسیر خودکار ذخیره می‌شود.",
+  "editorFit.optimisation": "بهینه‌سازی تصویر",
+  "editorFit.importAndOptimise": "وارد کردن و بهینه‌سازی",
+  "editorFit.optimiseDynamic": "بهینه‌سازی تصاویر پویا",
+  "editorFit.optimiseImage": "بهینه‌سازی تصویر",
+  "editorFit.reoptimiseDynamic": "بهینه‌سازی دوبارهٔ تصاویر پویا",
+  "editorFit.reoptimiseImage": "بهینه‌سازی دوبارهٔ تصویر",
+  "editorFit.revert": "بازگرداندن نسخهٔ اصلی",
 };

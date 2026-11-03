@@ -6783,4 +6783,11 @@ export const id: Dict = {
   "siteTranslations.multilingualSearchHint": "Pencarian bawaan WordPress menemukan teks terbit dalam bahasa saat ini. Pencarian AJAX khusus tidak disertakan.",
   "siteTranslations.languageSuggestions": "Sarankan bahasa",
   "siteTranslations.languageSuggestionsHint": "Tawarkan versi terbit yang sesuai dengan bahasa browser pengunjung. Ingat pilihannya tanpa mengalihkan otomatis.",
+  "editorFit.optimisation": "Optimasi gambar",
+  "editorFit.importAndOptimise": "Impor dan optimalkan",
+  "editorFit.optimiseDynamic": "Optimalkan gambar dinamis",
+  "editorFit.optimiseImage": "Optimalkan gambar",
+  "editorFit.reoptimiseDynamic": "Optimalkan kembali gambar dinamis",
+  "editorFit.reoptimiseImage": "Optimalkan kembali gambar",
+  "editorFit.revert": "Kembalikan ke gambar asli",
 };

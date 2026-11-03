@@ -6784,4 +6784,11 @@ export const hu: Dict = {
   "siteTranslations.multilingualSearchHint": "A WordPress beépített keresője az aktuális nyelv közzétett szövegeiben keres. Egyéni AJAX-keresők nem támogatottak.",
   "siteTranslations.languageSuggestions": "Nyelv javaslata",
   "siteTranslations.languageSuggestionsHint": "A böngésző nyelvéhez illő közzétett változatot ajánl. Megjegyzi a választást automatikus átirányítás nélkül.",
+  "editorFit.optimisation": "Képoptimalizálás",
+  "editorFit.importAndOptimise": "Importálás és optimalizálás",
+  "editorFit.optimiseDynamic": "Dinamikus képek optimalizálása",
+  "editorFit.optimiseImage": "Kép optimalizálása",
+  "editorFit.reoptimiseDynamic": "Dinamikus képek újraoptimalizálása",
+  "editorFit.reoptimiseImage": "Kép újraoptimalizálása",
+  "editorFit.revert": "Eredeti visszaállítása",
 };

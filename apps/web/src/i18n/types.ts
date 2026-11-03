@@ -6914,4 +6914,11 @@ export interface Dict {
   "siteTranslations.multilingualSearchHint": string;
   "siteTranslations.languageSuggestions": string;
   "siteTranslations.languageSuggestionsHint": string;
+  "editorFit.optimisation": string;
+  "editorFit.importAndOptimise": string;
+  "editorFit.optimiseDynamic": string;
+  "editorFit.optimiseImage": string;
+  "editorFit.reoptimiseDynamic": string;
+  "editorFit.reoptimiseImage": string;
+  "editorFit.revert": string;
 }

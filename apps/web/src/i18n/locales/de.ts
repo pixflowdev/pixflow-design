@@ -6864,4 +6864,11 @@ export const de: Dict = {
   "siteTranslations.multilingualSearchHint": "Die WordPress-Suche findet veröffentlichte Texte in der aktuellen Sprache. Individuelle AJAX-Suchen sind nicht enthalten.",
   "siteTranslations.languageSuggestions": "Sprache vorschlagen",
   "siteTranslations.languageSuggestionsHint": "Eine veröffentlichte Version passend zur Browsersprache anbieten. Die Auswahl wird ohne automatische Weiterleitung gespeichert.",
+  "editorFit.optimisation": "Bildoptimierung",
+  "editorFit.importAndOptimise": "Importieren und optimieren",
+  "editorFit.optimiseDynamic": "Dynamische Bilder optimieren",
+  "editorFit.optimiseImage": "Bild optimieren",
+  "editorFit.reoptimiseDynamic": "Dynamische Bilder erneut optimieren",
+  "editorFit.reoptimiseImage": "Bild erneut optimieren",
+  "editorFit.revert": "Original wiederherstellen",
 };

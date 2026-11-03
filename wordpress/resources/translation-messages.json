@@ -2302,5 +2302,61 @@
       "pro/wordpress-pro/src/Translations/SwitcherBricks.php:18"
     ],
     "key": "annotationStyle.group.typography"
+  },
+  {
+    "message": "Image optimisation",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.optimisation"
+  },
+  {
+    "message": "Import & optimise",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.importAndOptimise"
+  },
+  {
+    "message": "Optimise dynamic images",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.optimiseDynamic"
+  },
+  {
+    "message": "Optimise image",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.optimiseImage"
+  },
+  {
+    "message": "Reoptimise dynamic images",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.reoptimiseDynamic"
+  },
+  {
+    "message": "Reoptimise image",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.reoptimiseImage"
+  },
+  {
+    "message": "Revert to original",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "editorFit.revert"
   }
 ]

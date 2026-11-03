@@ -6783,4 +6783,11 @@ export const th: Dict = {
   "siteTranslations.multilingualSearchHint": "การค้นหามาตรฐานของ WordPress ค้นหาข้อความที่เผยแพร่ในภาษาปัจจุบัน ไม่รวมการค้นหา AJAX แบบกำหนดเอง",
   "siteTranslations.languageSuggestions": "แนะนำภาษา",
   "siteTranslations.languageSuggestionsHint": "เสนอเวอร์ชันที่เผยแพร่ซึ่งตรงกับภาษาของเบราว์เซอร์ จดจำตัวเลือกโดยไม่เปลี่ยนหน้าอัตโนมัติ",
+  "editorFit.optimisation": "การเพิ่มประสิทธิภาพรูปภาพ",
+  "editorFit.importAndOptimise": "นำเข้าและเพิ่มประสิทธิภาพ",
+  "editorFit.optimiseDynamic": "เพิ่มประสิทธิภาพรูปภาพแบบไดนามิก",
+  "editorFit.optimiseImage": "เพิ่มประสิทธิภาพรูปภาพ",
+  "editorFit.reoptimiseDynamic": "เพิ่มประสิทธิภาพรูปภาพแบบไดนามิกอีกครั้ง",
+  "editorFit.reoptimiseImage": "เพิ่มประสิทธิภาพรูปภาพอีกครั้ง",
+  "editorFit.revert": "คืนค่ารูปต้นฉบับ",
 };

@@ -6783,4 +6783,11 @@ export const ru: Dict = {
   "siteTranslations.multilingualSearchHint": "Встроенный поиск WordPress находит опубликованный текст на текущем языке. Пользовательский AJAX-поиск не включён.",
   "siteTranslations.languageSuggestions": "Предлагать язык",
   "siteTranslations.languageSuggestionsHint": "Предлагайте опубликованную версию на языке браузера. Выбор сохраняется без автоматического перенаправления.",
+  "editorFit.optimisation": "Оптимизация изображений",
+  "editorFit.importAndOptimise": "Импортировать и оптимизировать",
+  "editorFit.optimiseDynamic": "Оптимизировать динамические изображения",
+  "editorFit.optimiseImage": "Оптимизировать изображение",
+  "editorFit.reoptimiseDynamic": "Повторно оптимизировать динамические изображения",
+  "editorFit.reoptimiseImage": "Повторно оптимизировать изображение",
+  "editorFit.revert": "Восстановить оригинал",
 };

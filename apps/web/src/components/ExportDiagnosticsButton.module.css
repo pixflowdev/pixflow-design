@@ -1,5 +1,18 @@
+:global(.settings-about-diagnostics):has(> .exportRow) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.exportRow {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.exportRow > button { justify-self: start; }
+.exportRow .deviceOption > label { display: block; margin: 0; color: var(--text); cursor: pointer; }
 .deviceOption {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 12px;

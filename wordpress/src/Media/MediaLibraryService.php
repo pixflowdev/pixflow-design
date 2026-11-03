@@ -139,6 +139,7 @@ final class MediaLibraryService
         $filename = sanitize_file_name(basename($file));
         return [
             'attachmentId' => $attachment_id,
+            'libraryUrl' => add_query_arg('pixflow_media_id', $attachment_id, admin_url('index.php')),
             'filename' => $filename !== '' ? $filename : sprintf('attachment-%d', $attachment_id),
             'mimeType' => sanitize_mime_type((string) get_post_mime_type($attachment_id)) ?: 'application/octet-stream',
             'contentBase64' => base64_encode($content),
@@ -755,6 +756,7 @@ final class MediaLibraryService
         return [
             'id' => (string) $attachment_id,
             'attachmentId' => $attachment_id,
+            'libraryUrl' => add_query_arg('pixflow_media_id', $attachment_id, admin_url('index.php')),
             'title' => sanitize_text_field(get_the_title($attachment_id) ?: $filename),
             'altText' => sanitize_text_field((string) get_post_meta($attachment_id, '_wp_attachment_image_alt', true)),
             'caption' => sanitize_textarea_field((string) $post->post_excerpt),

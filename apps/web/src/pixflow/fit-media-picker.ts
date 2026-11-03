@@ -1,3 +1,4 @@
+import './dynamic-fit-editor';
 import { encodeMediaImage } from '../utils/encode-media-image';
 
 type Placement = { node: Element; cover: boolean };

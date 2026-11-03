@@ -23,6 +23,7 @@ final class MediaRoutes
 
     public function register(): void
     {
+        \PixflowDesign\WordPress\Media\DynamicFit::register();
         \PixflowDesign\WordPress\Media\FitMedia::register_source_tracking();
         add_action('rest_api_init', [$this, 'register_routes']);
     }

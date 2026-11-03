@@ -18,6 +18,7 @@ export async function runCodexTurn(options: {
   /** Direct-site scratch workspaces own AGENTS.md; ancestor repository guidance is unrelated. */
   isolateProjectInstructions?: boolean;
   runtimeWorkspaceRoots?: string[];
+  importImage?: (item: Message, threadId: string) => Promise<Record<string, unknown>>;
   onSettled?: (threadId: string, error?: unknown) => void;
   model?: string | undefined; reasoning?: string | undefined; fastMode?: boolean | undefined; resumeSessionId: string | null;
   signal: AbortSignal; onChild: (child: ReturnType<typeof spawn>) => void;
@@ -29,6 +30,7 @@ export async function runCodexTurn(options: {
   });
   options.onChild(child);
   let sequence = 0, threadId = '', turnId = '', ended = false, buffer = '', completedCleanly = false;
+  const imageImports: Promise<string | null>[] = [];
   let compacting = false;
   let startedMessageId = '', outputMessageId = '', hasText = false, trailingNewlines = 0;
   let activeMessageId = '';
@@ -127,7 +129,17 @@ export async function runCodexTurn(options: {
         const trailing = event.delta.match(/\n*$/)?.[0].length || 0;
         trailingNewlines = trailing === event.delta.length ? Math.min(2, trailingNewlines + trailing) : Math.min(2, trailing);
       }
-      if (event) options.onEvent(event);
+      if (message.method === 'item/completed' && params.item?.type === 'imageGeneration' && options.importImage && event && !event.isError) {
+        const imported = options.importImage(params.item, threadId).then(media => {
+          options.onEvent({...event, content:JSON.stringify({pixflowGeneratedMedia:media})});
+          return null;
+        }).catch((error: Error) => {
+          const detail = 'Image generated, but saving to Pixflow Media failed: ' + error.message;
+          options.onEvent({...event,isError:true,content:detail});
+          return detail;
+        });
+        imageImports.push(imported);
+      } else if (event) options.onEvent(event);
     }
   });
   try {
@@ -191,6 +203,8 @@ export async function runCodexTurn(options: {
       return delivery;
     });
     await completion;
+    const importError = (await Promise.all(imageImports)).find(Boolean);
+    if (importError) throw new Error(importError);
     options.onSettled?.(threadId);
     return threadId;
   } catch (error) {

@@ -22,6 +22,16 @@ export function voiceProgress(method: string, params: Event): Event | null {
     type: 'voice_transcript', role: item.role === 'user' ? 'user' : 'assistant', text: String(item.text ?? ''), id: item.id,
   };
   if (!item || !['item/started', 'item/completed'].includes(method)) return null;
+  if (item.type === 'imageGeneration' && typeof item.id === 'string') {
+    // Full image bytes belong to the generated asset, never to saved chat events.
+    if (method === 'item/started') {
+      const started = item.startedAtMs ?? params.startedAtMs;
+      return { type: 'tool_use', id: item.id, name: 'codex.imagegen',
+        input: { startedAtMs: typeof started === 'number' && Number.isFinite(started) ? started : Date.now() } };
+    }
+    return { type: 'tool_result', toolUseId: item.id, content: String(item.status ?? 'completed'),
+      isError: item.status === 'failed' || !!item.failure };
+  }
   const name = item.type === 'commandExecution' ? 'Bash' : item.type === 'fileChange' ? 'Edit'
     : item.type === 'webSearch' ? 'WebSearch' : item.type === 'mcpToolCall' ? String(item.tool) : null;
   if (!name) return null;

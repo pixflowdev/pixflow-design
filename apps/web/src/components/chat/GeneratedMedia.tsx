@@ -12,9 +12,38 @@ function source(projectId: string, file: ProjectFile) {
   return appendProjectFileQuery(projectRawUrl(projectId, file.name), `v=${encodeURIComponent(file.sha256 ?? file.mtime)}`);
 }
 
-export function MediaGenerationPlaceholder({ kind }: { kind: 'image' | 'video' }) {
+export function estimatedImageProgress(elapsedMs: number): number {
+  const time = Math.max(0, elapsedMs / 45_000);
+  const stops = [[0, 3], [0.1, 25], [0.55, 58], [0.85, 88], [1, 90]] as const;
+  for (let index = 1; index < stops.length; index++) {
+    const [end, high] = stops[index]!;
+    const [start, low] = stops[index - 1]!;
+    if (time <= end) return Math.floor(low + (time - start) / (end - start) * (high - low));
+  }
+  return Math.min(99, Math.floor(100 - 10 * Math.exp(-1.5 * (time - 1))));
+}
+
+function ImageEstimate({ started }: { started: number }) {
+  const [value, setValue] = useState(() => estimatedImageProgress(Date.now() - started));
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      clearTimeout(timer);
+      const next = estimatedImageProgress(Date.now() - started);
+      setValue(next);
+      if (!document.hidden && next < 99) timer = setTimeout(tick, 500);
+    };
+    tick();
+    document.addEventListener('visibilitychange', tick);
+    return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', tick); };
+  }, [started]);
+  return <b className={styles.estimate} aria-hidden="true">≈ {value}%</b>;
+}
+
+export function MediaGenerationPlaceholder({ kind, startedAtMs }: { kind: 'image' | 'video'; startedAtMs?: number }) {
   const t = useT();
   return <div className={styles.pending} role="status" aria-busy="true" aria-label={t(kind === 'video' ? 'chat.generatingVideo' : 'chat.generatingImage')}>
+    {kind === 'image' && startedAtMs !== undefined && <ImageEstimate started={startedAtMs} />}
     <div className={styles.dots} aria-hidden="true" />
     <span>{t(kind === 'video' ? 'chat.generatingVideo' : 'chat.generatingImage')}</span>
   </div>;

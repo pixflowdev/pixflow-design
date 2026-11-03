@@ -23,6 +23,10 @@ import { startBricksContextMirror } from './bricks-context-mirror.js';
 import { DirectSiteStore, directDigest, type DirectRunRecord } from './direct-site-store.js';
 import { authenticateDirectOwner, DirectSessionAuthorizationError, redactDirectEvent, revokeDirectSession } from './direct-site-session.js';
 import { directOperationState } from './direct-site-operation-state.js';
+import { generateMedia } from '../media.js';
+import { readMaskedConfig } from '../media-config.js';
+import { IMAGE_MODELS, MEDIA_PROVIDERS } from '../media-models.js';
+import { importNativeImage } from './native-image-import.js';
 import { runCodexTurn, type CodexSteer } from './codex-turn.js';
 import { runOpenCodeTurn } from './opencode-turn.js';
 import { isNativeSessionMissing } from './native-session-recovery.js';
@@ -37,18 +41,18 @@ import type { PixflowDirectToolHistoryRequest, PixflowDirectToolHistoryResponse 
 
 interface DirectResources {
   helper: string;
-  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean) => string;
+  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean, imageProviders?: string[]) => string;
   skills: (input: PixflowDirectSiteRunRequest, signal: AbortSignal) => Promise<unknown>;
   attachments: (input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) => Promise<Array<{name:string;path:string;kind:string}>>;
 }
-type LiveRun = { recordSteering?: (messageId: string, prompt: string, attachments: unknown, comments: unknown) => void; agentId: string; clients: Set<Response>; done: boolean; cancel: () => void; credentialHash: string; externalMcp?: boolean; legacyContinuation: boolean; storageFailure?: string; voice?: boolean; endVoiceRequested?: boolean; endVoice?: () => void; steer?: CodexSteer | undefined };
+type LiveRun = { generateImage?: (prompt: string, model?: string) => Promise<unknown>; recordSteering?: (messageId: string, prompt: string, attachments: unknown, comments: unknown) => void; agentId: string; clients: Set<Response>; done: boolean; cancel: () => void; credentialHash: string; externalMcp?: boolean; legacyContinuation: boolean; storageFailure?: string; voice?: boolean; endVoiceRequested?: boolean; endVoice?: () => void; steer?: CodexSteer | undefined };
 const storageFailureMessage = 'Bridge could not save this conversation. Work has stopped; changes already applied may remain. Free disk space or check storage access, then restart Bridge and inspect the site before continuing.';
 const storageFailureEvents = () => [{type:'error',message:storageFailureMessage},{type:'done',ok:false,outcome:'interrupted',message:storageFailureMessage}];
 const validId = (id: unknown): id is string => typeof id === 'string' && /^[a-f0-9]{32}$/.test(id);
 const validToken = (token: unknown): token is string => typeof token === 'string' && /^[a-f0-9]{64}$/.test(token);
 
 /** Durable records own output; in-memory state owns only the currently running process. */
-export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database): () => void {
+export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database, mediaRoot = dataDir): () => void {
   const store = new DirectSiteStore(database ?? openDatabase(dataDir,{dataDir}));
   const parent = path.join(dataDir,'direct-site-runs');
   const managedWorkspace = (workspace: string) => path.dirname(path.resolve(workspace)) === path.resolve(parent) && path.basename(workspace).startsWith('run-');
@@ -77,6 +81,20 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
   // Long-running Bridges need the same retention as a freshly started Bridge.
   const retentionTimer = setInterval(() => { try { pruneHistory(); } catch { /* Retry next hour if the store is temporarily unavailable. */ } }, 60 * 60_000);
   retentionTimer.unref();
+
+  app.post('/api/pixflow/direct-site/image/:id', permission, async (req, res) => {
+    const live = runs.get(String(req.params.id));
+    const token = req.get('Authorization')?.replace(/^Bearer /, '');
+    if (!live?.generateImage || live.done || !token || live.credentialHash !== directDigest(token)) {
+      res.sendStatus(403); return;
+    }
+    const { prompt, model } = req.body ?? {};
+    if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 20000 || (model !== undefined && typeof model !== 'string')) {
+      res.status(400).json({message:'Invalid image request.'}); return;
+    }
+    try { res.json(await live.generateImage(prompt, model)); }
+    catch (error) { res.status(502).json({message:error instanceof Error ? error.message : 'Image generation failed.'}); }
+  });
 
   app.options('/api/pixflow/direct-site/history-clear',permission,(_req,res)=>{res.status(204).end();});
   app.post('/api/pixflow/direct-site/history-clear',permission,async(req,res)=>{
@@ -274,6 +292,14 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(!def)throw new Error('Select an installed CLI agent in Settings â†’ Execution.');
       if(!['claude-stream-json','json-event-stream','stream-json'].includes(def.streamFormat))throw new Error(`Direct mode does not yet support ${def.name}'s ${def.streamFormat} transport. Select Codex, Claude, or OpenCode.`);
       const config=await readAppConfig(dataDir);
+      const imageProviders = imageGenerationAllowed ? await readMaskedConfig(mediaRoot).then(({providers}) =>
+        MEDIA_PROVIDERS.filter(provider => {
+          const setting = providers[provider.id];
+          if (!provider.integrated || provider.id === 'stub' || setting?.enabled === false ||
+              !IMAGE_MODELS.some(model => model.provider === provider.id)) return false;
+          return provider.id === 'custom-image' ? Boolean(setting?.baseUrl && setting.model) : setting?.configured === true;
+        }).map(provider => provider.id)
+      ).catch(() => undefined) : undefined;
       const externalMcp=await readDirectMcpConfiguration(dataDir,def.id,externalMcpAllowed);
       if (input.enhancedDesignGuidance !== undefined && typeof input.enhancedDesignGuidance !== 'boolean') throw new Error('Enhanced design guidance must be a boolean.');
       input.enhancedDesignGuidance ??= config.enhancedDesignGuidance !== false;
@@ -285,7 +311,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       compatibility=directDigest({agent:def.id,externalMcp,executable:launch.launchPath,model:input.model ?? 'default',mode:input.mode ?? (input.session.writable?'design':'ask'),writable:input.session.writable,canvasPostId:input.canvasPostId,
         // A page-pinned canvas is a replaceable transport, not conversation identity.
         // The real mailbox and renewed credentials are still refreshed for each turn.
-        instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured)});
+        instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders)});
       const compatible=previousConversation?.compatibility===compatibility && previousConversation.lineage===lineage(input.history);
       let resumeSessionId=compatible && def.resumesSessionViaCli ? previousConversation.nativeSessionId : null;
       await fs.mkdir(parent,{recursive:true});
@@ -313,6 +339,29 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         send({type:'steering_message',id:messageId,text:prompt,contentOffset:assistant.length,createdAt:Date.now(),
           ...(Array.isArray(attachments)?{attachments}:{}),...(Array.isArray(comments)?{commentAttachments:comments}:{})});
       },agentId:def.id,clients:new Set(),done:false,cancel,credentialHash:directDigest(input.session.token),externalMcp:!!(Object.keys(externalMcp.codex).length || externalMcp.claude || externalMcp.opencode),legacyContinuation:!input.conversationId,voice:!!input.voice});
+      const imageWorkspace = workspace;
+      const imageRun = runs.get(id)!;
+      if (imageGenerationAllowed && input.session.writable && imageProviders?.length) {
+        imageRun.generateImage = async (prompt, requestedModel) => {
+          const model = IMAGE_MODELS.find(candidate => imageProviders.includes(candidate.provider ?? '') && (!requestedModel || candidate.id === requestedModel));
+          if (!model) throw new Error('Select an available image model.');
+          const toolId = randomUUID();
+          send({type:'tool_use', id:toolId, name:'generate_image', input:{model:model.id}});
+          try {
+            const result = await generateMedia({projectRoot:mediaRoot, projectsRoot:parent, projectId:path.basename(imageWorkspace),
+              surface:'image', model:model.id, prompt, output:'image-'+toolId+'.png'});
+            if (result.usedStubFallback || result.intentionalStub) throw new Error('The image provider did not return a generated image.');
+            preparation.signal.throwIfAborted();
+            const bytes = await fs.readFile(path.join(imageWorkspace,result.name));
+            const media = await importNativeImage({result:bytes.toString('base64')},'',undefined,input.session,preparation.signal);
+            send({type:'tool_result',toolUseId:toolId,content:JSON.stringify({pixflowGeneratedMedia:media})});
+            return media;
+          } catch (error) {
+            send({type:'tool_result',toolUseId:toolId,isError:true,content:error instanceof Error ? error.message : 'Image generation failed.'});
+            throw error;
+          }
+        };
+      }
       store.saveConversation({key:conversationKey,compatibility,lineage:lineage(input.history),workspace,nativeSessionId:null});
       attach(id,res);
       send({type:'run',surface:record.surface,resuming:!!resumeSessionId});
@@ -323,7 +372,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(storageFailed)return;
       // All app access uses the WordPress session and its current account allowance.
       // No legacy Bridge connector grant or project credential is issued to the child.
-      await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
+      await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,imageEndpoint:imageRun.generateImage ? `http://127.0.0.1:${req.socket.localPort}/api/pixflow/direct-site/image/${id}` : undefined,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
       await fs.writeFile(path.join(workspace,'site-tool.mjs'),resources.helper);
       await fs.writeFile(path.join(workspace,'visual-capture.mjs'),AGENT_VISUAL_CAPTURE_SOURCE);
       if(input.canvasId)stopMirror=await startBricksContextMirror(workspace,input.session,input.canvasId,(input.context as {liveBuilderContext?:unknown}|undefined)?.liveBuilderContext);
@@ -341,7 +390,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           writable: input.session.writable, expiresAt: input.session.expiresAt, signal: preparation.signal,
           voice: input.voice.name,
           mcpServers: externalMcp.codex,
-          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured),
+          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders),
           onChild: value => {child=value;timings.spawnMs=elapsed();},
           onEndReady: end => {const live=runs.get(id);if(live){live.endVoice=end;if(live.endVoiceRequested)end();}},
           onEvent: event => {
@@ -362,7 +411,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       let usedTools=false;
       let missingSession=false;
       for(let attempt=0;attempt<2;attempt++) {
-        const prompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId,imageGenerationAllowed,composioConfigured)
+        const prompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId,imageGenerationAllowed,composioConfigured,imageProviders)
           +(attachments.length?'\n\nUser reference files:\n'+JSON.stringify(attachments):'');
         // File-based CLIs need the complete composed request available until the child exits.
         // Each attempt owns its file so retries cannot read an earlier conversation seed.
@@ -415,6 +464,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         if(def.id==='codex'||def.id==='opencode') {
           try {
           capturedSessionId=await (def.id==='codex'?runCodexTurn:runOpenCodeTurn)({executable:launch.launchPath,env,cwd:workspace,prompt,images,
+            ...(imageGenerationAllowed && input.session.writable && def.id === 'codex' ? {importImage: (item: Record<string,unknown>, threadId: string) => importNativeImage(item,threadId,env.CODEX_HOME,input.session,preparation.signal)} : {}),
             mcpServers: externalMcp.codex,
             isolateProjectInstructions: true,
             model:input.model,reasoning:input.reasoning,fastMode:input.fastMode,resumeSessionId,signal:preparation.signal,

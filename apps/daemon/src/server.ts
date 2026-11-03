@@ -7640,7 +7640,7 @@ export async function startServer({
   // prompts run as one hybrid agent conversation. The selected CLI decides
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
-  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
+  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db, PROJECT_ROOT);
   const claudeLogin = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'), () => pixflowBridgeSiteInfo()?.key ?? '', RUNTIME_DATA_DIR,
     () => pixflowBridgeSiteInfo()?.origin ?? '');

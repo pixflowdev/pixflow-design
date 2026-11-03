@@ -295,6 +295,15 @@ describe('renderMarkdown', () => {
     expect(bodyTd.length).toBe(2);
   });
 
+  it('leaves the attachment card as the only preview of its image and preserves unrelated images and text', () => {
+    const result = renderToStaticMarkup(<>{renderMarkdown('Saved ![gradient](/gradient.png) with ![reference](/other.png).', {
+      attachmentUrls: new Set(['/gradient.png']),
+    })}</>);
+    expect(result).not.toContain('src="/gradient.png"');
+    expect(result).toContain('src="/other.png"');
+    expect(result).toContain('Saved');
+  });
+
   it('renders ![alt](url) as <img> for relative BYOK image URLs', () => {
     const out = html('Here is your cat: ![cute kitten](/api/byok-image/abc-123.png)');
     expect(out).toContain('<img');

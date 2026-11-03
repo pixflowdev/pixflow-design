@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Install optional local Bridge upscaling models, compare image details and save a larger copy or explicitly replace an attachment in its original format.
 
 - Browse images in the Media lightbox, compare compression previews and save smaller copies. Bulk optimisation supports selecting matching images across library pages.
+- Open generated chat images directly in the Media library. Restored images stay clickable before Bridge reconnects.
 
 ## [2.2.0] - Release candidate
 

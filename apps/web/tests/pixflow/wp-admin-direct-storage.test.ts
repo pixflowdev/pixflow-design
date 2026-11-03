@@ -125,3 +125,13 @@ it('restores a Bricks-owned active reply in the admin renderer after navigation'
   expect(restoreMessages(key,'bricks')).toMatchObject([{id:'user',content:'Update the ACF fields'},{id:'reply',content:'Inspecting fields',status:'streaming',runStatus:'running'}]);
   expect(readRawWpAdminHistory('pixflow-direct:unrelated:1')).toEqual([]);
 });
+
+it('restores the generated image attachment before fetching remote history', () => {
+  const key = 'pixflow-direct:generated-media:1';
+  const image = { kind: 'tool_result', toolUseId: 'image', content: JSON.stringify({
+    pixflowGeneratedMedia: { attachmentId: 929, url: 'https://example.org/file.png', libraryUrl: 'https://example.org/?pixflow_media_id=929' },
+  }) };
+  persistMessages(key, [{ id: 'done', role: 'assistant', content: 'Created.', events: [image] }], 'daemon', true);
+  sessionStorage.clear();
+  expect(restoreMessages(key)[0]?.events).toEqual([image]);
+});

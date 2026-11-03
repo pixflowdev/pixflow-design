@@ -104,6 +104,32 @@ final class MediaLibraryService
         $source = sanitize_key((string) ($args['source'] ?? 'all'));
         $search = sanitize_text_field((string) ($args['search'] ?? ''));
 
+        // Inventory is independent of pagination and search. Only fetch distinct MIME strings.
+        global $wpdb;
+        $mimes = $wpdb->get_col("SELECT DISTINCT post_mime_type FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_status = 'inherit' AND post_mime_type <> ''");
+        $extensions = [];
+        foreach (wp_get_mime_types() as $pattern => $registered) {
+            $extensions[$registered] ??= explode('|', $pattern)[0];
+        }
+        $groups = [];
+        foreach ($mimes as $mime) {
+            $family = explode('/', $mime)[0];
+            $kind = in_array($family, ['image', 'audio', 'video', 'font'], true) ? $family
+                : ($mime === 'application/pdf' ? 'pdf'
+                    : (preg_match('~(?:font|woff|opentype|truetype|ms-fontobject)~i', $mime) ? 'font'
+                        : (wp_ext2type($extensions[$mime] ?? '') ?: 'file')));
+            $groups[$kind][] = $mime;
+        }
+        $labels = ['image' => __('Images'), 'video' => __('Video'), 'audio' => __('Audio'), 'font' => __('Fonts'),
+            'pdf' => 'PDF', 'document' => __('Documents'), 'spreadsheet' => __('Spreadsheets'), 'interactive' => __('Interactive'),
+            'text' => __('Text'), 'archive' => __('Archives'), 'code' => __('Code'), 'file' => __('Files')];
+        $available = [];
+        foreach ($labels + array_combine(array_keys($groups), array_map('ucfirst', array_keys($groups))) as $kind => $label) {
+            if (isset($groups[$kind])) {
+                $available[] = ['value' => $kind, 'label' => $label];
+            }
+        }
+
         $query_args = [
             'post_type' => 'attachment',
             'post_status' => 'inherit',
@@ -111,10 +137,14 @@ final class MediaLibraryService
             'paged' => $page,
             'orderby' => 'date',
             'order' => 'DESC',
-            'post_mime_type' => in_array($type, ['image', 'video', 'audio'], true)
-                ? $type
-                : ['image', 'video', 'audio'],
         ];
+        if ($type !== 'all') {
+            if (isset($groups[$type])) {
+                $query_args['post_mime_type'] = $groups[$type];
+            } else {
+                $query_args['post__in'] = [0];
+            }
+        }
 
         if ($search !== '') {
             $query_args['s'] = $search;
@@ -147,6 +177,7 @@ final class MediaLibraryService
             'total' => (int) $query->found_posts,
             'page' => $page,
             'perPage' => $per_page,
+            'availableTypes' => $available,
         ];
     }
 
@@ -812,7 +843,7 @@ final class MediaLibraryService
 
     private function format_item(int $attachment_id): ?array
     {
-        if (!$this->is_supported_attachment($attachment_id) || !current_user_can('read_post', $attachment_id)) {
+        if (get_post_type($attachment_id) !== 'attachment' || !current_user_can('read_post', $attachment_id)) {
             return null;
         }
 

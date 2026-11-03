@@ -16,12 +16,47 @@ import { encodeMediaImage, readMediaImage } from './MediaOptimiser';
 import { UPSCALER_MAX_INPUT_BYTES, UPSCALER_MAX_OUTPUT_PIXELS, type UpscalerStatus, type UpscalerResult } from '@open-design/contracts';
 const formats = ['png','webp','jpeg'].map(value => ({value,label:value.toUpperCase()}));
 
-export function MediaUpscaler({item,installedModels,onBack,onSaved}:{item:PixflowMediaItem;installedModels:string[];onBack:()=>void;onSaved:(copy:PixflowMediaItem)=>void}) {
-  const t = useT();
-  const [kind,setKind]=useState(installedModels.some(id=>id.startsWith('photo'))?'photo':'art');
-  const [analysis,setAnalysis]=useState<ReturnType<typeof analyseUpscaleImage>>();
+type UpscaleProps={headerAction?:React.ReactNode;item:PixflowMediaItem;installedModels:string[];onBack:()=>void;onSaved:(copy:PixflowMediaItem)=>void;queue?:PixflowMediaItem[]};
+export function MediaUpscaler(props:UpscaleProps) {
+  const t=useT();
+  const [active,setActive]=useState(props.item.id);
+  const [pending,setPending]=useState<string[]>([]);
+  const [outcomes,setOutcomes]=useState<Record<string,{ok:boolean;message:string}>>({});
+  const queue=props.queue;
+  const item=queue?.find(entry=>entry.id===(pending[0]??active))??props.item;
+  const [kind,setKind]=useState(props.installedModels.some(id=>id.startsWith('photo'))?'photo':'art');
   const [noiseEnabled,setNoiseEnabled]=useState(false);
   const [manualStrength,setManualStrength]=useState<number>();
+  const [target,setTarget]=useState({unit:'scale',value:'2'});
+  const [minify,setMinify]=useState(false);
+  const [chosenFormat,setFormat]=useState(props.item.mimeType==='image/png'?'webp':props.item.mimeType.slice(6));
+  const [quality,setQuality]=useState(85);
+  const remaining=queue?.filter(entry=>!outcomes[entry.id]?.ok)??[];
+  function finish(ok:boolean,message:string){
+    setOutcomes(prev=>({...prev,[item.id]:{ok,message}}));
+    setActive(item.id);setPending(prev=>prev.slice(1));
+  }
+  return <UpscaleEditor key={item.id} {...props} item={item}
+    settings={{kind,setKind,noiseEnabled,setNoiseEnabled,manualStrength,setManualStrength,target,setTarget,minify,setMinify,chosenFormat,setFormat,quality,setQuality}}
+    autoSave={!!pending.length} onFailure={message=>finish(false,message)}
+    onSaved={copy=>queue?finish(true,copy.filename):props.onSaved(copy)}
+    batchAction={queue && <><button type="button" disabled={!remaining.length||!!pending.length}
+      onClick={()=>setPending(remaining.map(entry=>entry.id))}>{t('media.bulk.saveUpscaled')} ({remaining.length})</button>{pending.length>1 && <button type="button" onClick={()=>setPending(prev=>prev.slice(0,1))}>{t('chat.stop')}</button>}</>}
+    filmstrip={queue && <div className="direct-upscale-queue" aria-label={t('media.bulk.select')}>
+      {queue.map(entry=><button key={entry.id} type="button" disabled={!!pending.length} aria-pressed={entry.id===item.id}
+        onClick={()=>setActive(entry.id)}><img src={entry.thumbnailUrl||entry.url} alt="" loading="lazy"/><span>{entry.filename}
+        <small>{pending[0]===entry.id?t('common.loading'):outcomes[entry.id]?.message}</small></span></button>)}
+    </div>}/>;
+}
+type Setter<T>=(value:T)=>void;
+type EditorSettings={kind:string;setKind:Setter<string>;noiseEnabled:boolean;setNoiseEnabled:Setter<boolean>;
+  manualStrength?:number;setManualStrength:Setter<number>;target:{unit:string;value:string};setTarget:Setter<{unit:string;value:string}>;
+  minify:boolean;setMinify:Setter<boolean>;chosenFormat:string;setFormat:Setter<string>;quality:number;setQuality:Setter<number>};
+function UpscaleEditor({item,installedModels,onBack,onSaved,headerAction,settings,filmstrip,batchAction,autoSave,onFailure}:UpscaleProps & {
+ settings:EditorSettings;filmstrip?:React.ReactNode;batchAction?:React.ReactNode;autoSave:boolean;onFailure:(message:string)=>void}) {
+  const t = useT();
+  const {kind,setKind,noiseEnabled,setNoiseEnabled,manualStrength,setManualStrength,target,setTarget,minify,setMinify,chosenFormat,setFormat,quality,setQuality}=settings;
+  const [analysis,setAnalysis]=useState<ReturnType<typeof analyseUpscaleImage>>();
   const [crop,setCrop]=useState<{before:string;after:string;key:string;width:number;height:number}>();
   const source=useRef<HTMLImageElement>();
   const [picking,setPicking]=useState(false);
@@ -34,14 +69,10 @@ export function MediaUpscaler({item,installedModels,onBack,onSaved}:{item:Pixflo
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [native,setNative] = useState<{image:HTMLImageElement;blob:Blob;model:string}>();
-  const [target,setTarget] = useState({unit:'scale',value:'2'});
-  const [minify,setMinify]=useState(false);
   const sourceFormat=item.mimeType.replace('image/','');
-  const [chosenFormat,setFormat]=useState(sourceFormat==='png'?'webp':sourceFormat);
   const format=minify?chosenFormat:sourceFormat;
   const originalHash=useRef<Promise<string>>();
   const confirmation=useRef<HTMLDialogElement>(null);
-  const [quality,setQuality] = useState(85);
   const [detail,setDetail] = useState(false);
   const [divider,setDivider] = useState(50);
   const [exported,setExported] = useState<{url:string;blob:Blob;key:string}>();
@@ -177,18 +208,29 @@ export function MediaUpscaler({item,installedModels,onBack,onSaved}:{item:Pixflo
           if(!task.signal.aborted)onSaved(copy);
         }
       }
-    }catch(err){if(!task.signal.aborted)setError(err instanceof Error?err.message:String(err));}
+    }catch(err){if(!task.signal.aborted){const reason=err instanceof Error?err.message:String(err);setError(reason);if(autoSave)onFailure(reason);}}
     finally{controller.current=null;setBusy(false);setCropPending(false);setPendingOriginal(undefined);}
   }
 
+  const started=useRef(false);
+  useEffect(()=>{
+    if(!autoSave){started.current=false;return;}
+    if(started.current||controller.current)return;
+    if(!valid||tooLarge||error||(state&&!ready)){
+      started.current=true;onFailure(error||t(tooLarge||!valid?'media.upscale.limit':'media.upscale.requires'));return;
+    }
+    if(!ready||!analysis)return;
+    started.current=true;void act('save');
+  });
   return <section className="direct-upscale-view">
-    <header><button type="button" onClick={onBack} disabled={busy && !!preview}>← {t('designFiles.back')}</button>
-      <div><h2 ref={heading} tabIndex={-1}>{t('media.upscale.action')}</h2><small>{item.filename}</small></div></header>
+    <header><button type="button" onClick={onBack} disabled={busy||autoSave}>← {t('designFiles.back')}</button>
+      <div><h2 ref={heading} tabIndex={-1}>{t('media.upscale.action')}</h2><small>{item.filename}</small></div>{headerAction}</header>
+    {filmstrip}
     <div className="direct-upscale-layout">
       <div className="direct-upscale-canvas">
         <div className="direct-upscale-zoom"><button type="button" disabled={cropPending} aria-pressed={!detail&&!picking&&!currentCrop&&!cropPending} onClick={()=>{setCrop(undefined);setPicking(false);setDetail(false);}}>{t('media.upscale.fit')}</button>
           <button type="button" disabled={cropPending} aria-pressed={detail} onClick={()=>{setCrop(undefined);setPicking(false);setDetail(true);}}>100%</button>
-          <button type="button" disabled={busy||!ready||!valid} aria-pressed={picking||cropPending||!!currentCrop} onClick={()=>{setCrop(undefined);setDetail(false);setPicking(!picking);}}>{t('media.upscale.pick')}</button></div>
+          <button type="button" disabled={busy||autoSave||!ready||!valid} aria-pressed={picking||cropPending||!!currentCrop} onClick={()=>{setCrop(undefined);setDetail(false);setPicking(!picking);}}>{t('media.upscale.pick')}</button></div>
         <div className="direct-upscale-viewport" tabIndex={0}>
           <div className="direct-upscale-plane" style={{width:pendingOriginal?pendingOriginal.width:currentCrop?currentCrop.width:detail?(preview?width:item.width ?? undefined):'min(100cqw, '+((item.width||1)/(item.height||1)*100)+'cqh)',aspectRatio:pendingOriginal?pendingOriginal.width+'/'+pendingOriginal.height:currentCrop?currentCrop.width+'/'+currentCrop.height:(item.width||1)+'/'+(item.height||1)}}>
             <img src={pendingOriginal?.before??currentCrop?.before??item.url} alt={item.title || item.filename} />
@@ -222,30 +264,30 @@ export function MediaUpscaler({item,installedModels,onBack,onSaved}:{item:Pixflo
         {(currentCrop||preview) && !picking && !cropPending && <div className="direct-upscale-labels"><span>{t('media.optimise.original')}</span><input type="range" min="0" max="100" value={divider} aria-label={t('media.upscale.compare')} onChange={e=>setDivider(Number(e.target.value))}/><span>{t('common.preview')}</span></div>}
       </div>
       <aside className="direct-upscale-settings">
-        <WorkspaceSelect label={t('media.upscale.kind')} value={effectiveKind} disabled={busy}
+        <WorkspaceSelect label={t('media.upscale.kind')} value={effectiveKind} disabled={busy||autoSave}
           options={[{value:'photo',label:t('media.upscale.photo')},{value:'art',label:t('ui.finalBrowser.c659a0d0ed')}].filter(option=>option.value==='photo'?canPhoto:canArt)}
           onValueChange={setKind}/>
         <label className="direct-upscale-switch-row">{t('media.upscale.noise')}
           <Switch.Root className="direct-upscale-switch" checked={noiseAvailable && noiseEnabled}
-            aria-label={t('media.upscale.noise')} onCheckedChange={setNoiseEnabled} disabled={busy||!noiseAvailable}>
+            aria-label={t('media.upscale.noise')} onCheckedChange={setNoiseEnabled} disabled={busy||autoSave||!noiseAvailable}>
             <Switch.Thumb className="direct-upscale-switch-thumb"/>
           </Switch.Root>
         </label>
         {model!=='photo2' && <small>{t('media.upscale.noiseRange')}</small>}
         {noiseAvailable && noiseEnabled && <Slider.Root className="direct-media-quality" min={1} max={4} step={1}
-          value={strength} onValueChange={setManualStrength} disabled={busy}>
+          value={strength} onValueChange={setManualStrength} disabled={busy||autoSave}>
           <div className="direct-media-quality-label">{t('media.upscale.strength')}<span>{strength} / 4</span></div>
           <Slider.Control className="direct-media-quality-control"><Slider.Track className="direct-media-quality-track">
             <Slider.Indicator className="direct-media-quality-range"/><Slider.Thumb className="direct-media-quality-thumb" aria-label={t('media.upscale.strength')}/>
           </Slider.Track></Slider.Control>
         </Slider.Root>}
         <label>{t('media.upscale.scale')} (×)
-          <Input className="direct-media-width" data-slot="input" type="number" min="0.5" max={maxScale} step="any" disabled={busy}
+          <Input className="direct-media-width" data-slot="input" type="number" min="0.5" max={maxScale} step="any" disabled={busy||autoSave}
             value={target.unit==='scale'?target.value:valid?Number(factor.toFixed(4)):''} aria-invalid={!valid}
             onChange={e=>setTarget({unit:'scale',value:e.target.value})}/>
         </label>
         <RadioGroup className="direct-upscale-presets" aria-label={t('media.upscale.scale')}
-          value={valid ? factor : 0} disabled={busy}
+          value={valid ? factor : 0} disabled={busy||autoSave}
           onValueChange={value=>setTarget({unit:'scale',value:String(value)})}>
           {[1.5,2,3,4].filter(scale=>scale<=maxScale).map(scale=>(
             <Radio.Root key={scale} value={scale} className="direct-upscale-preset">
@@ -254,29 +296,29 @@ export function MediaUpscaler({item,installedModels,onBack,onSaved}:{item:Pixflo
           ))}
         </RadioGroup>
         <label>{t('media.upscale.target')} (px)
-          <Input className="direct-media-width" data-slot="input" type="number" disabled={busy} min={Math.ceil(w/2)} max={w*maxScale}
+          <Input className="direct-media-width" data-slot="input" type="number" disabled={busy||autoSave} min={Math.ceil(w/2)} max={w*maxScale}
             value={target.unit==='width'?target.value:width||''} aria-invalid={!valid} onChange={e=>setTarget({unit:'width',value:e.target.value})}/>
         </label>
         <output>{valid ? width+' × '+height+' px' : '0.5× – '+maxScale+'×'}</output>
         {tooLarge && <p>{t('media.upscale.limit')}</p>}
         {state && !state.supported && <p>{t('media.upscale.requires')}</p>}
-        {model==='resize' && <button type="button" disabled={busy||!valid} onClick={()=>void act('run')}>{t('media.upscale.generate')}</button>}
-        {model!=='resize' && state?.supported && <button type="button" disabled={busy||tooLarge||!valid||!ready} onClick={()=>void act('run')}>{t('media.upscale.generate')}</button>}
+        {model==='resize' && <button type="button" disabled={busy||autoSave||!valid} onClick={()=>void act('run')}>{t('media.upscale.generate')}</button>}
+        {model!=='resize' && state?.supported && <button type="button" disabled={busy||autoSave||tooLarge||!valid||!ready} onClick={()=>void act('run')}>{t('media.upscale.generate')}</button>}
         <hr/>
         <label className="direct-upscale-switch-row">
           {t('media.upscale.minify')}
-          <Switch.Root className="direct-upscale-switch" checked={minify} onCheckedChange={setMinify} disabled={busy} aria-label={t('media.upscale.minify')}>
+          <Switch.Root className="direct-upscale-switch" checked={minify} onCheckedChange={setMinify} disabled={busy||autoSave} aria-label={t('media.upscale.minify')}>
             <Switch.Thumb className="direct-upscale-switch-thumb"/>
           </Switch.Root>
         </label>
-        {minify && <WorkspaceSelect label={t('media.optimise.format')} value={format} options={formats} disabled={busy} onValueChange={setFormat}/>}
-        {minify && format!=='png' && <MediaQualitySlider value={quality} onChange={setQuality} disabled={busy}/>}
+        {minify && <WorkspaceSelect label={t('media.optimise.format')} value={format} options={formats} disabled={busy||autoSave} onValueChange={setFormat}/>}
+        {minify && format!=='png' && <MediaQualitySlider value={quality} onChange={setQuality} disabled={busy||autoSave}/>}
         {format==='jpeg' && <small>{t('media.upscale.white')}</small>}
         {preview && <output>{new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(preview.blob.size/1024)} KiB</output>}
-        <button type="button" disabled={busy||!ready||!valid||tooLarge} onClick={()=>void act('save')}>{t('media.upscale.save')}</button>
-        <button type="button" disabled={busy||!ready||!valid||tooLarge||format!==sourceFormat||!originalHash.current}
-          onClick={()=>confirmation.current?.showModal()}>{t('media.upscale.overwrite')}</button>
-        {format!==sourceFormat && <small>{t('media.upscale.sameFormat')} ({sourceFormat.toUpperCase()})</small>}
+        {batchAction || <button type="button" disabled={busy||autoSave||!ready||!valid||tooLarge} onClick={()=>void act('save')}>{t('media.upscale.save')}</button>}
+        {!batchAction && <button type="button" disabled={busy||autoSave||!ready||!valid||tooLarge||format!==sourceFormat||!originalHash.current}
+          onClick={()=>confirmation.current?.showModal()}>{t('media.upscale.overwrite')}</button>}
+        {!batchAction && format!==sourceFormat && <small>{t('media.upscale.sameFormat')} ({sourceFormat.toUpperCase()})</small>}
         <dialog ref={confirmation} className="direct-upscale-confirm" aria-label={t('media.upscale.overwrite')} onCancel={event=>event.stopPropagation()}>
           <strong>{t('media.upscale.overwrite')}?</strong><p>{item.filename} · {width} × {height} px</p>
           <button type="button" autoFocus onClick={()=>confirmation.current?.close()}>{t('common.cancel')}</button>

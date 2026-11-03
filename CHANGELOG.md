@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Install optional local Bridge upscaling models, compare image details and save a larger copy or explicitly replace an attachment in its original format.
-
-- Browse images in the Media lightbox, compare compression previews and save smaller copies. Bulk optimisation supports selecting matching images across library pages.
-- Open generated chat images directly in the Media library. Restored images stay clickable before Bridge reconnects.
+- Browse Media as a list or a grid with two, three or four columns. Filter by file types present in your library. The header and column labels stay visible while the file list and preview scroll independently.
+- Open generated images from chat in a Media dialog and return to the conversation when you close it. Saved images are clickable before Bridge reconnects.
+- Click an image preview for a full-screen lightbox with Download, Copy URL, Optimise image and, when available, Upscale image.
+- Compare an image with its compressed preview and see the file size difference before saving a copy. Adjust the export format, quality and maximum width.
+- Use Bulk select to pick individual images or select matching images across library pages. Compress the selection or queue it for upscaling and save the results as copies.
+- Download optional Photo and Illustration models in Image upscaler settings. With Bridge connected, choosing Upscale image opens setup if a model is needed. Once installed, the enable switch controls availability in Media.
+- Upscale at 1.5×, 2×, 3× or 4×, or set a custom scale or target width. Inspect a detail at 100%, compare before and after, and adjust noise reduction where supported. Save directly, optionally compress the result, or explicitly overwrite the original in its existing format.
+- In Settings → About, use the switch beside the diagnostics export to choose whether to include Bridge, device and Claude sign-in details.
 
 ## [2.2.0] - Release candidate
 

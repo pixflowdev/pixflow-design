@@ -1,7 +1,7 @@
 .toolbar { flex:none; display:flex; align-items:center; padding:6px 10px; }
 .toolbar[data-header=true] { padding:0; height:0; }
 .headerSlot:global(.pixflow-design-token-scope) { background:transparent; display:flex; align-items:center; flex:none; margin-inline-end:6px; }
-.headerSlot > button:global(.ghost) { width:30px; height:30px; padding:0; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--text-muted); }
+.headerSlot > button:global(.ghost) { width:30px; height:30px; padding:0; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--text-muted); display:flex; align-items:center; justify-content:center; }
 .headerSlot > button:global(.ghost):hover,.headerSlot > button:global(.ghost):focus-visible { background:color-mix(in srgb,var(--text) 7%,transparent); color:var(--text); }
 .headerSlot > button:global(.ghost) svg { width:19px; height:19px; min-width:19px; flex:none; }
 .toolbar > button { width:36px; height:32px; border-radius:8px; color:var(--text); }

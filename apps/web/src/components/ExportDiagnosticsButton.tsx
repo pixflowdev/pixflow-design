@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { Switch } from '@base-ui/react/switch';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { Icon } from './Icon';
 import { pixflowWordPressRestFetch } from '../pixflow/runtime-fetch';
@@ -211,6 +212,7 @@ async function exportViaHttp(includeDevice: boolean): Promise<{ filename: string
  * browser download via the daemon HTTP endpoint).
  */
 export function ExportDiagnosticsRow() {
+  const optionId = useId();
   const t = useT();
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [includeDevice, setIncludeDevice] = useState(false);
@@ -256,11 +258,14 @@ export function ExportDiagnosticsRow() {
 
   const busy = status.kind === 'busy';
   return (
-    <div className="diagnostics-export-row">
-      {hasPixflowWordPressContext() && <label className={styles.deviceOption}>
-        <input type="checkbox" checked={includeDevice} disabled={busy} onChange={event => setIncludeDevice(event.target.checked)} />
-        <span>{t('diagnostics.includeBridge')}</span>
-      </label>}
+    <div className={styles.exportRow}>
+      {hasPixflowWordPressContext() && <div className={styles.deviceOption}>
+        <label htmlFor={optionId}>{t('diagnostics.includeBridge')}</label>
+        <Switch.Root id={optionId} className={styles.switchControl} checked={includeDevice} disabled={busy}
+          onCheckedChange={setIncludeDevice} aria-label={t('diagnostics.includeBridge')}>
+          <Switch.Thumb className={styles.thumb} />
+        </Switch.Root>
+      </div>}
       <button
         type="button"
         className="ghost diagnostics-export-button"

@@ -380,22 +380,27 @@ final class DynamicFit {
             }
             if (is_file($file)) return;
             $failure='pxfit_'.$id.'_'.$src['version'].'_'.$w;
-            set_transient($failure,1,DAY_IN_SECONDS);
-            // Preserve animated inputs. These chunk types precede the first animation frame.
-            $mime=get_post_mime_type($id);
-            if ($mime!=='image/jpeg' && self::animated($src['path'],$mime)) return;
-            $editor=wp_get_image_editor($src['path']);
-            if (is_wp_error($editor) || !$editor->supports_mime_type('image/webp')) return;
-            if ($w < $src['meta']['width'] && is_wp_error($editor->resize($w,null,false))) return;
-            $editor->set_quality(82);
-            $tmp=$file.'.'.wp_generate_uuid4().'.webp';
             try {
-                $saved=$editor->save($tmp,'image/webp');
-                if (!is_wp_error($saved) && $saved['mime-type']==='image/webp' && (int)$saved['width']===$w && filesize($tmp)<filesize($src['path'])) {
-                    touch($file.'.unserved');
-                    if (rename($tmp,$file)) { delete_transient($failure); self::scheduleExpiry($id); }
-                }
-            } finally { if (is_file($tmp)) wp_delete_file($tmp); }
+                // Preserve animated inputs. These chunk types precede the first animation frame.
+                $mime=get_post_mime_type($id);
+                if ($mime!=='image/jpeg' && self::animated($src['path'],$mime)) return;
+                $editor=wp_get_image_editor($src['path']);
+                if (is_wp_error($editor) || !$editor->supports_mime_type('image/webp')) return;
+                if ($w < $src['meta']['width'] && is_wp_error($editor->resize($w,null,false))) return;
+                $editor->set_quality(82);
+                $tmp=$file.'.'.wp_generate_uuid4().'.webp';
+                try {
+                    $saved=$editor->save($tmp,'image/webp');
+                    if (!is_wp_error($saved) && $saved['mime-type']==='image/webp' && (int)$saved['width']===$w && filesize($tmp)<filesize($src['path'])) {
+                        touch($file.'.unserved');
+                        if (rename($tmp,$file)) self::scheduleExpiry($id);
+                    }
+                } finally { if (is_file($tmp)) wp_delete_file($tmp); }
+            } finally {
+                // Concurrent renders keep the native image until generation has settled.
+                if (is_file($file)) delete_transient($failure);
+                else set_transient($failure,1,DAY_IN_SECONDS);
+            }
         } finally { fclose($lock); }
     }
 

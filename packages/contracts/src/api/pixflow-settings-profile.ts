@@ -3,6 +3,7 @@ import type { PixflowSurface } from './pixflow-surface.js';
 /** Stable IDs used by the existing shared SettingsDialog. */
 export const PIXFLOW_SETTINGS_SECTION_IDS = [
   'dictation',
+  'upscaler',
   'execution',
   'instructions',
   'media',
@@ -59,6 +60,7 @@ export type PixflowSettingsSurfaceProfile = {
  */
 const SHARED_SECTIONS: readonly PixflowSettingsSectionId[] = [
   'dictation',
+  'upscaler',
   'execution',
   'memory',
   'media',

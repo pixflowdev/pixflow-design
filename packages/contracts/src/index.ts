@@ -101,3 +101,4 @@ export * from './api/claude-sign-in.js';
 export * from './api/pixflow-support.js';
 export * from './api/codex-usage.js';
 export * from './api/site-translations.js';
+export * from './api/upscaler.js';

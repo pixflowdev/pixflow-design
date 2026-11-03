@@ -149,6 +149,7 @@ import { McpClientSection } from './McpClientSection';
 import { SkillsSection } from './SkillsSection';
 import { availableSkillUpdates, useSkillLibraryCatalogue } from './useSkillLibraryCatalogue';
 import { CodexVoiceSettings } from './CodexVoiceSettings';
+import { UpscalerSettings } from './UpscalerSettings';
 import { DictationSettings } from './DictationSettings';
 import settingsStyles from './SettingsDialog.module.css';
 import appearanceStyles from './AppearanceSection.module.css';
@@ -235,6 +236,7 @@ import {
 
 export type SettingsSection =
   | 'dictation'
+  | 'upscaler'
   | 'execution'
   | 'instructions'
   | 'media'
@@ -3072,6 +3074,7 @@ export function SettingsDialog({
   // BYOK content so "Local CLI" only renders once (in the seg-control tab),
   // not twice (heading + tab).
   const sectionHeader: Record<SettingsSection, { title: string; subtitle: string }> = {
+    upscaler: { title:t('media.upscale.settingsTitle'), subtitle:t('media.upscale.settingsHelp') },
     dictation: { title: t('dictationTitle'), subtitle: t('dictationLocal') },
     execution: { title: t('settings.title'), subtitle: hasPixflowWordPressContext() && composioAvailable() ? 'Choose Local CLI, API · BYOK or Composio.' : t('settings.subtitle') },
     instructions: {
@@ -3136,6 +3139,7 @@ export function SettingsDialog({
     { section: 'execution', icon: IconTerminal2, title: t('settings.envConfigure'), subtitle: `${t('settings.localCli')} / ${t('settings.modeApiMeta')}` },
     { section: 'media', icon: IconPhotoVideo, title: t('settings.mediaProviders'), subtitle: translateUi("ui.settingsDialog.imageVideoAudio") },
     ...(audioAvailable() ? [{ section: 'dictation' as const, icon: IconMicrophone, title: t('dictationTitle'), subtitle: t('dictationLocal') }] : []),
+    { section:'upscaler',icon:IconPhotoVideo,title:t('media.upscale.settingsTitle'),subtitle:t('media.upscale.settingsHelp') },
     { section: 'memory', icon: IconBrain, title: t('settings.memory'), subtitle: translateUi("ui.settingsDialog.rulesAndSavedContext") },
     ...(isWpAdminSurface || hasPixflowWordPressContext() ? [{
       section: 'bricksExtensions' as const,
@@ -4718,6 +4722,7 @@ export function SettingsDialog({
             </>
           ) : null}
 
+          {activeSection === 'upscaler' && <UpscalerSettings onDownloads={()=>setActiveSection('resourcePacks')}/>}
           {activeSection === 'dictation' && audioAvailable() ? <DictationSettings onInstallBridge={() => setActiveSection('resourcePacks')} /> : null}
           {activeSection === 'media' ? (
             <MediaProvidersSection

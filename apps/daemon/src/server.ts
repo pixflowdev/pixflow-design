@@ -80,6 +80,7 @@ import { sanitizePixflowBricksIntentContract } from './pixflow/bricks-intent-con
 export { resolveProjectRoot };
 import { createCommandInvocation } from '@open-design/platform';
 import { registerDirectSiteRunRoutes } from './pixflow/direct-site-run.js';
+import { registerUpscalerRoutes } from './pixflow/upscaler.js';
 import { registerDictationRoutes } from './pixflow/dictation-routes.js';
 import { installPixflowRuntimeIdle, registerPixflowRuntimeWork } from './pixflow/runtime-idle.js';
 import { SIDECAR_DEFAULTS, SIDECAR_ENV } from '@open-design/sidecar-proto';
@@ -5278,6 +5279,8 @@ export async function startServer({
 
   const app = express();
   installRouteRegistrationGuard(app);
+  // Normalised PNG pixels travel as base64 JSON on this route only.
+  app.post('/api/pixflow/upscaler/run', requireLocalDaemonRequest, express.json({ limit: '24mb' }));
   app.use(express.json({ limit: '4mb' }));
   installPixflowRuntimeIdle(app, {
     token: process.env.PIXFLOW_DESIGN_RUNTIME_CONTROL_TOKEN,
@@ -7645,6 +7648,7 @@ export async function startServer({
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
   registerCodexUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
+  registerUpscalerRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   registerAgentTextRoute(app, requireLocalDaemonRequest, RUNTIME_DATA_DIR,
     agent => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, agent));

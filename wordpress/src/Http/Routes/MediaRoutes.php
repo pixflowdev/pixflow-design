@@ -58,6 +58,16 @@ final class MediaRoutes
             ],
         ]);
 
+        register_rest_route(self::NAMESPACE, '/media/attachments/(?P<id>\d+)/overwrite', [
+            'methods' => 'POST',
+            'permission_callback' => static fn(\WP_REST_Request $request): bool =>
+                current_user_can('upload_files') && current_user_can('edit_post', (int) $request['id']),
+            'callback' => function (\WP_REST_Request $request): \WP_REST_Response {
+                $item = $this->media->overwrite_image((int) $request['id'], $request->get_file_params()['file'] ?? [], (string) $request->get_param('originalHash'));
+                return is_wp_error($item) ? $this->error_response($item) : $this->response(['ok' => true, 'item' => $item]);
+            },
+        ]);
+
         register_rest_route(self::NAMESPACE, '/media/upload', [
             [
                 'methods' => 'POST',

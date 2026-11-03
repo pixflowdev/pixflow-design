@@ -19,6 +19,83 @@ final class MediaLibraryService
     private const META_SURFACE = '_pixflow_design_surface';
     private const META_CONTENT_SHA256 = '_pixflow_design_media_sha256';
 
+    /** Keep existing attachment URLs valid. Prepare all replacements before changing any public file. */
+    public function overwrite_image(int $id, array $upload, string $expected_hash): array|\WP_Error
+    {
+        $path = get_attached_file($id, true);
+        $root = realpath(wp_get_upload_dir()['basedir']);
+        $mime = get_post_mime_type($id);
+        $input = $upload['tmp_name'] ?? '';
+        if (get_post_type($id) !== 'attachment' || !$root || !$path || !is_file($path) || is_link($path)
+            || !str_starts_with(wp_normalize_path((string) realpath($path)), trailingslashit(wp_normalize_path($root)))
+            || !in_array($mime, ['image/png','image/jpeg','image/webp'], true)) {
+            return new \WP_Error('unsupported', 'This attachment cannot be overwritten.', ['status' => 400]);
+        }
+        if (($upload['error'] ?? -1) !== UPLOAD_ERR_OK || !is_uploaded_file($input) || wp_get_image_mime($input) !== $mime) {
+            return new \WP_Error('format', 'Overwrite requires the original file format.', ['status' => 400]);
+        }
+        $size = wp_getimagesize($input);
+        if (!$size || $size[0] * $size[1] > 32000000) return new \WP_Error('dimensions', 'Unsupported image dimensions.', ['status' => 400]);
+        $dir = dirname($path);
+        $stage = $dir . '/.pixflow-' . wp_generate_uuid4();
+        if (!mkdir($stage, 0700)) return new \WP_Error('stage', 'Could not prepare image replacement.', ['status'=>500]);
+        $lock = fopen(get_temp_dir() . 'pixflow-media-' . hash('sha256', $path) . '.lock', 'c');
+        $backups = [];
+        $installed = [];
+        try {
+            if (!$lock || !flock($lock, LOCK_EX | LOCK_NB) || !hash_equals((string) hash_file('sha256', $path), $expected_hash))
+                return new \WP_Error('changed', 'The original has changed or is being edited. Reopen it before overwriting.', ['status'=>409]);
+            $meta = wp_get_attachment_metadata($id) ?: [];
+            $full = $stage . '/' . basename($path);
+            if (!move_uploaded_file($input, $full)) throw new \RuntimeException();
+            $files = [basename($path) => $full];
+            $old_sizes = $meta['sizes'] ?? [];
+            $meta['sizes'] = [];
+            $registered = wp_get_registered_image_subsizes();
+            foreach ($old_sizes as $name => $old) {
+                $filename = $old['file'] ?? '';
+                if (!$filename || wp_basename($filename) !== $filename || $filename === basename($path) || !preg_match('/\.(?:jpe?g|png|webp|avif|gif)$/i', $filename) || is_link($dir.'/'.$filename))
+                    throw new \RuntimeException();
+                $editor = wp_get_image_editor($full);
+                if (is_wp_error($editor)) throw new \RuntimeException();
+                $width = min((int)$old['width'], $size[0]);
+                $height = min((int)$old['height'], $size[1]);
+                if ($width < 1 || $height < 1) throw new \RuntimeException();
+                if ($width !== $size[0] || $height !== $size[1]) {
+                    $resized = $editor->resize($width, $height, $registered[$name]['crop'] ?? false);
+                    if (is_wp_error($resized)) throw new \RuntimeException();
+                }
+                $result = $editor->save($stage.'/'.$filename, $old['mime-type'] ?? $mime);
+                if (is_wp_error($result) || !is_file($result['path'])) throw new \RuntimeException();
+                $files[$filename] = $result['path'];
+                $meta['sizes'][$name] = array_merge($old, ['width'=>$result['width'], 'height'=>$result['height'], 'filesize'=>filesize($result['path'])]);
+            }
+            $meta['width']=$size[0]; $meta['height']=$size[1]; $meta['filesize']=filesize($full);
+            foreach ($files as $filename => $staged) {
+                $dest=$dir.'/'.$filename;
+                if (file_exists($dest)) {
+                    $backup=$stage.'/'.wp_generate_uuid4();
+                    if (!rename($dest,$backup)) throw new \RuntimeException();
+                    $backups[$dest]=$backup;
+                }
+                if (!rename($staged,$dest)) throw new \RuntimeException();
+                $installed[]=$dest;
+            }
+            if (!wp_update_attachment_metadata($id,$meta) && wp_get_attachment_metadata($id)!==$meta) throw new \RuntimeException();
+            if (metadata_exists('post',$id,self::META_CONTENT_SHA256)) update_post_meta($id,self::META_CONTENT_SHA256,hash_file('sha256',$path));
+            clean_post_cache($id);
+            return $this->get($id);
+        } catch (\Throwable $error) {
+            foreach ($installed as $dest) wp_delete_file($dest);
+            foreach ($backups as $dest=>$backup) rename($backup,$dest);
+            return new \WP_Error('overwrite_failed','Could not replace the image.', ['status'=>500]);
+        } finally {
+            if ($lock) fclose($lock);
+            foreach (glob($stage.'/*') ?: [] as $file) wp_delete_file($file);
+            rmdir($stage);
+        }
+    }
+
     public function list(array $args = []): array
     {
         $page = max(1, (int) ($args['page'] ?? 1));
@@ -171,7 +248,19 @@ final class MediaLibraryService
         }
 
         $this->load_media_includes();
-        $attachment_id = media_handle_upload($field, 0);
+        // Upscaled copies are explicitly saved for their full pixel dimensions.
+        $upscaled = in_array($mime, ['image/png', 'image/webp', 'image/jpeg'], true) && ($metadata['surface'] ?? '') === 'upscaler';
+        $keep_full_size = static fn () => false;
+        if ($upscaled) {
+            add_filter('big_image_size_threshold', $keep_full_size, PHP_INT_MAX);
+        }
+        try {
+            $attachment_id = media_handle_upload($field, 0);
+        } finally {
+            if ($upscaled) {
+                remove_filter('big_image_size_threshold', $keep_full_size, PHP_INT_MAX);
+            }
+        }
         if (is_wp_error($attachment_id)) {
             return $attachment_id;
         }

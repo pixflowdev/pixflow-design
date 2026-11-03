@@ -476,6 +476,7 @@
         keepWorkspaceOnToolClose = false;
       }
     });
+    if (/^[1-9]\d*$/.test(new URLSearchParams(window.location.search).get('pixflow_media_id') || '') && workspaceAvailable()) open({type:'pixflow-design:open-workspace-tool', tool:'media'});
     trigger.setAttribute('role', 'button');
     trigger.setAttribute('aria-haspopup', 'menu');
     trigger.setAttribute('aria-expanded', 'false');

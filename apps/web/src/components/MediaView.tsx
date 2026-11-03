@@ -1,3 +1,7 @@
+import { MediaQualitySlider } from './MediaQualitySlider';
+import './MediaView.css';
+import { MediaOptimiser, readMediaImage, encodeMediaImage, saveMediaCopy } from './MediaOptimiser';
+import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -6,6 +10,7 @@ import {
   uploadPixflowMedia,
   type PixflowMediaItem,
 } from '../providers/registry';
+
 import { Icon } from './Icon';
 import { openWordPressMediaLibrary } from './wordPressMediaPicker';
 
@@ -45,7 +50,48 @@ function shortKind(item: PixflowMediaItem): string {
   return 'FILE';
 }
 
-export function MediaView() {
+function MediaImagePreview({item,onOptimise}:{item:PixflowMediaItem;onOptimise?:()=>void}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const t = usePixflowUiTranslation();
+  const trigger=useRef<HTMLButtonElement>(null);
+  const title = item.title || item.filename;
+  const previewUrl=new URL(item.url,document.baseURI);
+  if(item.previewRevision)previewUrl.searchParams.set('pixflow_revision',String(item.previewRevision));
+  const [copyStatus, setCopyStatus] = useState('');
+  return <>
+    <button ref={trigger} className="direct-media-zoom" type="button" aria-haspopup="dialog"
+      aria-label={t('designSystemPicker.fullscreenAria', { title })}
+      onClick={() => { setCopyStatus(''); dialog.current?.showModal(); }}>
+      <img src={previewUrl.href} alt={title} />
+    </button>
+    <dialog ref={dialog} className="direct-media-lightbox" aria-label={title}
+      onCancel={event => event.stopPropagation()}
+      onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+      <div className="direct-media-lightbox-toolbar">
+        <div className="direct-media-lightbox-info">
+          <strong title={item.filename}>{item.filename}</strong>
+          {item.width && item.height ? <small>{item.width} × {item.height} px</small> : null}
+        </div>
+        {onOptimise && <button type="button" onClick={()=>{dialog.current?.close();onOptimise();}}>{t('media.optimise.action')}</button>}
+        <button type="button" className="direct-media-lightbox-copy" aria-label={t('ui.designBrowserPanel.copyUrl')} title={t('ui.designBrowserPanel.copyUrl')}
+          onClick={async () => setCopyStatus(await copyToClipboard(item.url) ? t('ui.designBrowserPanel.feedback7') : t('media.optimise.copyFailed'))}>
+          <Icon name="copy" size={16} />
+        </button>
+        <span className="direct-media-copy-status" role="status">{copyStatus}</span>
+        <a className="direct-media-lightbox-download" href={item.url} download={item.filename}>
+          <Icon name="download" size={16} />{t('designFiles.download')}
+        </a>
+        <button className="direct-media-lightbox-close" type="button" autoFocus
+          aria-label={t('promptTemplates.closeFullscreen')} onClick={() => dialog.current?.close()}>
+          <Icon name="close" size={20} />
+        </button>
+      </div>
+      <img src={previewUrl.href} alt={title} />
+    </dialog>
+  </>;
+}
+
+export function MediaView({ attachmentId, attachmentUrl }: { attachmentId?: number; attachmentUrl?: string } = {}) {
   const translateUi = usePixflowUiTranslation();
   const [items, setItems] = useState<PixflowMediaItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -60,9 +106,20 @@ export function MediaView() {
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const pickedRow = useRef(false);
+  const [linked, setLinked] = useState<PixflowMediaItem | null>(null);
+  useEffect(() => {
+    const id = attachmentId ?? Number(new URLSearchParams(window.location.search).get('pixflow_media_id'));
+    if (!attachmentUrl && (!Number.isSafeInteger(id) || id <= 0)) return;
+    let active = true;
+    fetchPixflowMedia(attachmentId || !attachmentUrl ? { attachmentId: id } : { attachmentUrl }).then(result => {
+      if (active && !pickedRow.current) setLinked(result.items[0] ?? null);
+    }).catch(error => { if (active) setMessage(String(error)); });
+    return () => { active = false; };
+  }, [attachmentId, attachmentUrl]);
   const selected = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? items[0] ?? null,
-    [items, selectedId],
+    () => (attachmentId || attachmentUrl) && !pickedRow.current ? linked : linked ?? items.find((item) => item.id === selectedId) ?? items[0] ?? null,
+    [items, selectedId, linked, attachmentId, attachmentUrl],
   );
 
   const pageCount = Math.max(1, Math.ceil(total / MEDIA_PAGE_SIZE));
@@ -109,6 +166,77 @@ export function MediaView() {
     void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, source, debouncedSearch, page]);
+
+  const [bulk, setBulk] = useState(false);
+  const [selection, setSelection] = useState<PixflowMediaItem[]>([]);
+  const [quality, setQuality] = useState(82);
+  const [results, setResults] = useState<string[]>([]);
+  const [running, setRunning] = useState(false);
+  const batch = useRef<AbortController | null>(null);
+  useEffect(() => () => batch.current?.abort(), []);
+  const eligible = (item: PixflowMediaItem) => ['image/jpeg', 'image/png', 'image/webp'].includes(item.mimeType);
+
+  const lookup=useRef<AbortController>();
+  const [selecting,setSelecting]=useState(false);
+  useEffect(()=>{
+    setSelection([]);
+    setSelecting(false);
+    return ()=>lookup.current?.abort();
+  },[bulk,search,source,type]);
+
+  async function selectAllImages(){
+    if(running||selecting||type==='video'||type==='audio')return;
+    const task=new AbortController();lookup.current=task;setSelecting(true);setMessage('');
+    try {
+      const matches=new Map<string,PixflowMediaItem>();
+      let pages=1;
+      for(let current=1;current<=pages;current++){
+        const result=await fetchPixflowMedia({type:'image',source,search,page:current,perPage:100},task.signal);
+        if(current===1)pages=Math.ceil(result.total/100);
+        for(const item of result.items)if(eligible(item))matches.set(item.id,item);
+      }
+      if(!task.signal.aborted)setSelection([...matches.values()]);
+    }catch(error){if(!task.signal.aborted)setMessage(error instanceof Error?error.message:translateUi('ui.mediaView.feedback58'));}
+    finally{if(lookup.current===task){lookup.current=undefined;setSelecting(false);}}
+  }
+
+  async function runBatch() {
+    if (!selection.length || batch.current) return;
+    const controller = new AbortController();
+    batch.current = controller;
+    setRunning(true);
+    setResults([]);
+    try {
+      for (const item of selection) {
+        if (controller.signal.aborted) break;
+        try {
+          const source = await readMediaImage(item, controller.signal);
+          const { blob } = await encodeMediaImage(source.image, 'webp', quality, 0);
+          if (controller.signal.aborted) break;
+          let status = translateUi('media.bulk.noSaving');
+          if (blob.size < source.bytes) {
+            const copy = await saveMediaCopy(item, blob);
+            status = copy.filename + ' · ' + formatFileSize(blob.size) + ' · ' +
+              translateUi('media.optimise.smaller', { percent: ((1 - blob.size / source.bytes) * 100).toFixed(1) });
+          }
+          setResults(previous => [...previous, item.filename + ' — ' + status]);
+          setSelection(previous => previous.filter(entry => entry.id !== item.id));
+        } catch {
+          if (!controller.signal.aborted) setResults(previous => [...previous, item.filename + ' — ' + translateUi('ui.mediaView.feedback58')]);
+        }
+      }
+      if (!controller.signal.aborted) await load(page);
+    } finally { batch.current = null; setRunning(false); }
+  }
+
+  const [optimiseId,setOptimiseId]=useState<string>();
+  const optimiserRegion=useRef<HTMLDivElement>(null);
+  function selectCopy(copy: PixflowMediaItem) {
+    pickedRow.current = true;
+    setLinked(copy);
+    setSelectedId(copy.id);
+    void load();
+  }
 
   async function uploadFiles(files: File[]) {
     if (files.length === 0) return;
@@ -184,15 +312,18 @@ export function MediaView() {
             <p>{translateUi("ui.mediaView.generatedImagesVideosAudioUploadsAndWordpress")}</p>
           </div>
           <div className="direct-media-files-actions">
+            <button type="button" disabled={running} aria-pressed={bulk} onClick={() => {
+              setBulk(!bulk); setSelection([]); setResults([]);
+            }}>{translateUi('media.bulk.action')}</button>
             <button type="button" onClick={() => void load()} disabled={loading}>
               <Icon name="refresh" size={14} />
               {translateUi("designFiles.refresh")} </button>
             <button type="button" onClick={() => fileInputRef.current?.click()}>
               <Icon name="upload" size={14} />
               {translateUi("designFiles.upload.label")} </button>
-            <button type="button" onClick={openWpMedia}>
+            {attachmentId === undefined && !attachmentUrl && <button type="button" onClick={openWpMedia}>
               <Icon name="import" size={14} />
-              {translateUi("ui.composerPlusMenu.wpMedia")} </button>
+              {translateUi("ui.composerPlusMenu.wpMedia")} </button>}
           </div>
         </header>
 
@@ -231,6 +362,19 @@ export function MediaView() {
           </div>
         </div>
 
+        {bulk && <section className="direct-media-batch">
+          <span>{translateUi('media.bulk.hint')}</span>
+          <div className="direct-media-batch-selection">
+            <button type="button" disabled={running||selecting||type==='audio'||type==='video'} onClick={()=>void selectAllImages()}>
+              {translateUi(selecting?'common.loading':'media.bulk.selectAll')}</button>
+            <button type="button" disabled={running||selecting||!selection.length} onClick={()=>setSelection([])}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
+          </div>
+          <MediaQualitySlider value={quality} onChange={setQuality} disabled={running} />
+          <button type="button" disabled={running || selecting || !selection.length} onClick={() => void runBatch()}>
+            {translateUi('media.optimise.save')} ({selection.length})
+          </button>
+          <ul aria-live="polite">{results.map((line, index) => <li key={index}>{line}</li>)}</ul>
+        </section>}
         {message ? <div className="direct-media-message">{message}</div> : null}
 
         <div className="direct-media-files-body">
@@ -250,10 +394,18 @@ export function MediaView() {
                 <button
                   key={item.id}
                   type="button"
-                  className={`direct-media-file-row${selected?.id === item.id ? ' is-selected' : ''}`}
-                  onClick={() => setSelectedId(item.id)}
+                  disabled={bulk && (!eligible(item) || running || selecting)}
+                  aria-pressed={bulk ? selection.some(entry => entry.id === item.id) : undefined}
+                  className={`direct-media-file-row${(bulk ? selection.some(entry => entry.id === item.id) : selected?.id === item.id) ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    if (bulk) {
+                      setSelection(previous => previous.some(entry => entry.id === item.id)
+                        ? previous.filter(entry => entry.id !== item.id) : [...previous, item]);
+                    } else { pickedRow.current = true; setLinked(null); setSelectedId(item.id); }
+                  }}
                 >
                   <span className="direct-media-file-name">
+                    {bulk && <span aria-hidden="true" className="direct-media-check">{selection.some(entry => entry.id === item.id) ? '✓' : ''}</span>}
                     <span className={`direct-media-row-icon direct-media-row-icon--${item.type}`}>
                       {item.type === 'image' ? (
                         <img src={item.url} alt="" loading="lazy" />
@@ -301,7 +453,13 @@ export function MediaView() {
               <>
                 <div className="direct-media-preview-frame">
                   {selected.type === 'image' ? (
-                    <img src={selected.url} alt={selected.title || selected.filename} />
+                    <MediaImagePreview key={selected.id} item={selected}
+                      onOptimise={eligible(selected)?()=>{
+                        setOptimiseId(selected.id);
+                        requestAnimationFrame(()=>{const field=optimiserRegion.current?.querySelector<HTMLElement>('[role=combobox]');
+                          field?.focus();field?.scrollIntoView({block:'nearest'});});
+                      }:undefined}
+                      />
                   ) : selected.type === 'video' ? (
                     <video src={selected.url} controls />
                   ) : selected.type === 'audio' ? (
@@ -321,6 +479,10 @@ export function MediaView() {
                       <div><dt>{translateUi("ui.mediaView.dimensions")}</dt><dd>{selected.width} x {selected.height}</dd></div>
                     ) : null}
                   </dl>
+                  {['image/png', 'image/jpeg', 'image/webp'].includes(selected.mimeType) &&
+                    <div key={selected.id} ref={optimiserRegion}>
+                      <MediaOptimiser item={selected} onSaved={selectCopy} expanded={optimiseId===selected.id} onExpandedChange={open=>setOptimiseId(open?selected.id:undefined)}/>
+                    </div>}
                   <div className="direct-media-preview-links">
                     <a href={selected.url} target="_blank" rel="noreferrer">
                       <Icon name="external-link" size={14} />

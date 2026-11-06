@@ -280,7 +280,7 @@ test('pi fetchModels reads the model table from stdout', async () => {
     } else {
       writeFileSync(
         bin,
-        '#!/bin/sh\nif [ "$1" = "--list-models" ]; then\n  printf \'%s\\n\' \\\n+    \'provider model context max-out thinking images\' \\\n+    \'anthropic claude-sonnet-4-5 200K 64K yes yes\'\n  exit 0\nfi\nexit 1\n',
+        '#!/bin/sh\nif [ "$1" = "--list-models" ]; then\n  printf \'%s\\n\' \\\n    \'provider model context max-out thinking images\' \\\n    \'anthropic claude-sonnet-4-5 200K 64K yes yes\'\n  exit 0\nfi\nexit 1\n',
       );
       chmodSync(bin, 0o755);
     }

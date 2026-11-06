@@ -7,6 +7,25 @@ import { codexAppBundleCandidates } from '../../src/runtimes/executables.js';
 
 const fsTest = process.platform === 'win32' ? test.skip : test;
 
+test('finds native Grok with a stale Windows PATH', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'od-grok-native-'));
+  try {
+    await withEnvSnapshot(['PATH', 'PATHEXT', 'OD_AGENT_HOME', 'OD_SANDBOX_MODE', 'OD_DATA_DIR'], () => withPlatform('win32', () => {
+      const bin = join(home, '.grok', 'bin', 'grok.EXE');
+      mkdirSync(resolve(bin, '..'), { recursive: true });
+      writeFileSync(bin, '');
+      delete process.env.OD_SANDBOX_MODE;
+      delete process.env.OD_DATA_DIR;
+      process.env.OD_AGENT_HOME = home;
+      process.env.PATH = '';
+      process.env.PATHEXT = '.EXE;.CMD;.BAT';
+      assert.equal(resolveAgentExecutable(minimalAgentDef({ id: 'grok-build', bin: 'grok' })), bin);
+    }));
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
 fsTest('resolveAgentExecutable finds Codex.app CLI when PATH is empty', () => {
   const home = mkdtempSync(join(tmpdir(), 'od-codex-app-bundle-'));
   try {

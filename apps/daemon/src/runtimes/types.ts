@@ -141,6 +141,8 @@ export type RuntimeAgentDef = {
     env: RuntimeEnv,
   ) => Promise<RuntimeModelOption[] | { models: RuntimeModelOption[]; source: RuntimeModelSource } | null>;
   reasoningOptions?: RuntimeReasoningOption[];
+  /** Model-specific validation for both chat and connection-test requests. */
+  modelReasoningOptions?: (model: string | null | undefined) => RuntimeReasoningOption[];
   supportsImagePaths?: boolean;
   maxPromptArgBytes?: number;
   mcpDiscovery?: string;

@@ -8,6 +8,19 @@ vi.mock('../../src/i18n', () => ({ useI18n: () => ({ locale: 'en', t: (key: keyo
 import { codexUsageRequest } from '../../src/providers/daemon';
 import { CodexUsageIndicator } from '../../src/components/CodexUsageIndicator';
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
+test('Grok ring shows actual allowance, reset and an honest unavailable state', async () => {
+ vi.mocked(codexUsageRequest).mockResolvedValueOnce({status:'available',source:'cli',checkedAt:'2026-11-06T00:00:00Z',windows:[{bucket:'grok-build',durationMinutes:10080,remainingPercent:96,resetsAt:1794528000}]}).mockResolvedValueOnce({status:'unavailable',source:'cli',checkedAt:'2026-11-06T00:00:00Z',windows:[]});
+ render(<CodexUsageIndicator provider="grok-build" model="grok-4.7" />);
+ const button=await screen.findByRole('button',{name:'Grok account usage: 96% remaining'});
+ expect(button.querySelector('[stroke-dashoffset]')?.getAttribute('stroke-dashoffset')).toBe('4');
+ fireEvent.mouseEnter(button);
+ expect(screen.getByRole('tooltip').textContent).toContain('7 days');
+ expect(screen.getByRole('tooltip').textContent).toContain('Resets');
+ fireEvent.click(button);
+ await screen.findByText('Unavailable');
+ expect(button.querySelector('[stroke-dashoffset]')).toBeNull();
+ expect(screen.getByRole('dialog',{name:'Grok account usage'})).toBeTruthy();
+});
 const data = { status: 'available' as const, source: 'desktop' as const, checkedAt: '2026-10-30T00:00:00Z', windows: [{ bucket: 'codex', durationMinutes: 10080, remainingPercent: 19, resetsAt: 1793784989 }] };
 
 test('ring reflects the lowest remaining window and hover shows all reported limits', async () => {

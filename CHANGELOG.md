@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
+- Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
+- Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
+- Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
+- Use the updated, theme-aware Grok mark in provider menus.
+
 ## [2.2.2] - Release candidate
 
 - The Pro upgrade notice follows the saved licence entitlement.

@@ -31,7 +31,7 @@ const GOLDEN_DIR = join(REPO, 'mocks/golden');
 const RECORDINGS_DIR = join(REPO, 'mocks/recordings');
 
 // Exercise each protocol with the same locally authored tool and text fixture.
-const CASES = (['claude', 'codex', 'opencode'] as const).flatMap(agent =>
+const CASES = (['claude', 'codex', 'opencode', 'grok'] as const).flatMap(agent =>
   ['synthetic-success', 'synthetic-failure', 'synthetic-empty'].map(trace => ({ agent, trace })),
 );
 
@@ -73,8 +73,9 @@ function runMockAndCollectEvents(agent: string, trace: string): unknown[] {
   const handler =
     agent === 'claude'
       ? createClaudeStreamHandler(sink)
-      : createJsonEventStreamHandler(agent, sink);
+      : createJsonEventStreamHandler(agent === 'grok' ? 'grok-build' : agent, sink);
   handler.feed(proc.stdout);
+  handler.flush();
   return normalizeVolatile(events);
 }
 

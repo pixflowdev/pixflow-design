@@ -426,6 +426,7 @@ import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKno
 import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
 import { registerClaudeUsageRoute } from './routes/claude-usage.js';
 import { registerCodexUsageRoute } from './routes/codex-usage.js';
+import { registerGrokUsageRoute } from './routes/grok-usage.js';
 import { registerAgentTextRoute } from './routes/agent-text.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
@@ -7648,6 +7649,8 @@ export async function startServer({
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
   registerCodexUsageRoute(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
+  registerGrokUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'grok-build'));
   registerUpscalerRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   registerAgentTextRoute(app, requireLocalDaemonRequest, RUNTIME_DATA_DIR,

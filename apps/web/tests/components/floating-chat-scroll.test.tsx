@@ -15,7 +15,7 @@ function Panel({ rows, running }: { rows: Row[]; running: boolean }) {
 }
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-it.each([false, true])('anchors once, follows the edge and preserves scrollback (reduced motion: %s)', reduced => {
+it.each([false, true])('follows the bottom without reserved space and preserves scrollback (reduced motion: %s)', reduced => {
   const frames = new Map<number, FrameRequestCallback>();
   let nextId = 0;
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(++nextId, cb); return nextId; });
@@ -43,24 +43,25 @@ it.each([false, true])('anchors once, follows the edge and preserves scrollback 
   Object.defineProperty(row, 'getBoundingClientRect', { value: () => ({ top: 1000 - offset }) });
   height = 1050;
   paint();
-  expect(move).toHaveBeenCalledWith({ top: 988, behavior: reduced ? 'instant' : 'smooth' });
-  expect(tail.offsetHeight).toBe(338);
+  expect(offset).toBe(650);
+  expect(tail.offsetHeight).toBe(0);
   height += 100;
   view.rerender(<Panel rows={[...turn]} running />);
   paint();
-  expect(tail.offsetHeight).toBe(238);
-  expect(move).toHaveBeenCalledTimes(1);
+  expect(offset).toBe(750);
+  expect(tail.offsetHeight).toBe(0);
+  expect(move).not.toHaveBeenCalled();
   // Move away after the update has queued, before its animation frame runs.
   view.rerender(<Panel rows={[...turn]} running />);
   fireEvent.wheel(el, { deltaY: -120 });
-  el.scrollTop = 850;
+  el.scrollTop = 500;
   fireEvent.scroll(el);
   paint();
-  expect(offset).toBe(850);
+  expect(offset).toBe(500);
   height += 400;
   view.rerender(<Panel rows={[...turn]} running={false} />);
   paint();
-  expect(offset).toBe(850);
+  expect(offset).toBe(500);
   expect(tail.offsetHeight).toBe(0);
   fireEvent.click(view.getByText('Latest'));
   expect(offset).toBe(height - 400);

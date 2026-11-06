@@ -1,9 +1,9 @@
 /* Shared request surface for WordPress and builder panels. */
 .card, .dock { flex: 0 1 auto; min-height: 0; margin: 8px 10px; color: var(--text); }
 .card { background: var(--composer-surface, var(--bg-elevated)); border: 1px solid var(--composer-border, var(--border-soft)); border-radius: 20px; overflow: hidden; outline: none; max-height: min(460px, 55vh); display: flex; flex-direction: column; font-size: 13px; }
-.card:focus-visible { outline: 1px solid var(--text-muted); outline-offset: 2px; }
+.card:focus-visible { outline: none; }
 .header { display: flex; align-items: flex-start; gap: 8px; padding: 14px 10px 8px 16px; }
-.header h3 { flex: 1; min-width: 0; margin: 0; font: inherit; font-weight: 550; line-height: 1.5; overflow-wrap: anywhere; }
+.header h3 { color: var(--text); flex: 1; min-width: 0; margin: 0; font: inherit; font-weight: 550; line-height: 1.5; overflow-wrap: anywhere; }
 .navigation { display: flex; align-items: center; flex-shrink: 0; gap: 1px; color: var(--text-muted); font-size: 11px; }
 .card .navigation button { box-sizing: border-box; width: 24px; height: 24px; min-height: 24px; padding: 0; border: 0; border-radius: 7px; color: inherit; background: transparent; display: inline-flex; align-items: center; justify-content: center; }
 .card svg, .dock svg { flex-shrink: 0; }
@@ -15,7 +15,8 @@
 .option { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 36px; padding: 9px 8px; border: 0; border-radius: 10px; background: transparent; text-align: start; white-space: normal; color: var(--text); font: inherit; }
 .card .option:hover:not(:disabled), .card .option[aria-checked="true"], .navigation button:hover:not(:disabled), .reopen:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
 .card .options:has(.option:hover) .option[aria-checked="true"]:not(:hover) { background: transparent; }
-.option:focus-visible, .input:focus-visible, .footer button:focus-visible { outline: 1px solid var(--text-muted); outline-offset: -1px; }
+.footer button:focus-visible { outline: 1px solid var(--text-muted); outline-offset: -1px; }
+.card .input:is(:focus, :focus-visible) { outline: none; box-shadow: none; border-color: transparent; }
 .number, .checkbox { flex: 0 0 20px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--text) 18%, transparent); border-radius: 5px; color: var(--text-muted); font-size: 11px; line-height: 1; }
 .checkbox { flex-basis: 16px; width: 16px; height: 16px; margin-top: 2px; }
 .copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; overflow-wrap: anywhere; }
@@ -34,8 +35,18 @@
 .skip { background: transparent; color: var(--text); border: 1px solid var(--border-soft); }
 .submit { background: var(--text); color: var(--composer-surface, var(--bg-elevated)); border: 1px solid transparent; }
 .submit:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 85%, var(--composer-surface, var(--bg-elevated))); }
-.card button:disabled, .input:disabled { opacity: .45; cursor: default; }
+.card button:disabled { opacity: .45; cursor: default; }
+/* WordPress paints disabled textareas light grey while providers reconnect. */
+.card .input:disabled { color: var(--text); background: transparent; opacity: 1; box-shadow: none; cursor: default; }
 .swatches { display: flex; gap: 4px; }
 .swatches span { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #8884; }
 .reopen { width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--composer-surface, var(--bg-elevated)); color: var(--text-muted); border: 0; font-size: 12px; }
 .reopen span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+
+.item { display: flex; flex-direction: column; min-height: 0; border: 0; margin: 0; padding: 0; min-width: 0; }
+.option { position: relative; cursor: pointer; }
+.option[data-checked] { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.option:has(input:focus-visible) { outline: none; background: color-mix(in srgb, var(--text) 6%, transparent); }
+.choiceInput:is(:focus, :focus-visible) { outline: none; box-shadow: none; }
+.option[data-disabled] { opacity: .45; cursor: default; }
+.choiceInput { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }

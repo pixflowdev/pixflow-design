@@ -1,5 +1,8 @@
+import { IconListCheck, IconCircle } from '@tabler/icons-react';
+import { Button } from '@open-design/components';
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent } from './chat/CodeBlock';
 import type { ReactNode } from 'react';
-import { TraceLine, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
+import { Trace, TraceIcon, TraceLine, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -245,63 +248,29 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
   const allComplete = completed === todos.length;
   const showDismiss = !!onDismiss && allComplete;
   return (
-    <div className={`op-card op-todo${expanded ? '' : ' op-todo-collapsed'}`}>
-      <div className="op-card-head op-todo-head">
-        <button
-          type="button"
-          className="op-todo-toggle"
-          aria-expanded={expanded}
-          onClick={() => setOverrideExpanded(!expanded)}
-          title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}
-        >
-          <span className="op-icon" aria-hidden>☐</span>
-          <span className="op-title">{t('tool.todos')}</span>
-          <span className="op-meta">
-            {done}/{todos.length}
-          </span>
-          {!expanded && inProgressTodo ? (
-            <span className="op-todo-current">
-              {inProgressTodo.activeForm || inProgressTodo.content}
-            </span>
-          ) : null}
-          <span className="op-todo-chev" aria-hidden>
-            {expanded ? '▾' : '▸'}
-          </span>
-        </button>
-        {showDismiss ? (
-          <button
-            type="button"
-            className="op-todo-done"
-            onClick={() => onDismiss?.()}
-            title={t('tool.todosDismiss')}
-          >
-            {t('tool.todosDone')}
-          </button>
-        ) : null}
-      </div>
-      <div className={`accordion-collapsible${expanded ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <ul className="todo-list">
-            {todos.map((todo, i) => (
-              <li key={i} className={`todo-item todo-${todo.status}`}>
-                <span className="todo-check" aria-hidden>
-                  {todo.status === 'completed'
-                    ? '✓'
-                    : todo.status === 'in_progress'
-                      ? '◐'
-                      : todo.status === 'stopped'
-                        ? '!'
-                        : '○'}
-                </span>
-                <span className="todo-text">
-                  {todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}
-                </span>
-              </li>
-            ))}
-          </ul>
+    <Trace className="op-todo" data-trace-kind="plan">
+      <TraceCollapsible open={expanded} onOpenChange={setOverrideExpanded}>
+        <div className={styles.planHeading}>
+          <TraceCollapsibleTrigger title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}>
+            <TraceLine><TraceIcon><IconListCheck size={14} /></TraceIcon>
+              <TraceTitle>{t('tool.todos')}</TraceTitle><TraceDescription>{done}/{todos.length}</TraceDescription>
+              {!expanded && inProgressTodo ? <TraceDescription>{inProgressTodo.activeForm || inProgressTodo.content}</TraceDescription> : null}
+            </TraceLine>
+          </TraceCollapsibleTrigger>
+          {showDismiss ? <Button variant="subtle" onClick={() => onDismiss?.()} title={t('tool.todosDismiss')}>{t('tool.todosDone')}</Button> : null}
         </div>
-      </div>
-    </div>
+        <TraceCollapsibleContent keepMounted>
+          <ul className="todo-list">
+            {todos.map((todo, i) => <li key={i} className={`todo-item todo-${todo.status}`}>
+              <TraceLine className={styles.planItem} status={todo.status === 'in_progress' ? 'running' : todo.status === 'stopped' ? 'error' : todo.status === 'pending' ? 'pending' : undefined}>
+                <TraceIcon>{todo.status === 'pending' ? <IconCircle size={14} /> : <Icon name={todo.status === 'completed' ? 'check' : todo.status === 'in_progress' ? 'spinner' : 'close'} size={14} />}</TraceIcon>
+                <TraceTitle>{todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}</TraceTitle>
+              </TraceLine>
+            </li>)}
+          </ul>
+        </TraceCollapsibleContent>
+      </TraceCollapsible>
+    </Trace>
   );
 }
 
@@ -398,7 +367,7 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const command = obj.command ?? '';
   const desc = obj.description;
   return <ToolTrace title={desc || t('chat.designToolbox.context.terminal')} result={result}
-    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<pre className="op-command">{truncate(command, 400)}</pre>)} />;
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<CodeBlock><CodeBlockContent><pre className="op-command"><code>{truncate(command, 400)}</code></pre></CodeBlockContent></CodeBlock>)} />;
 }
 
 function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
@@ -490,10 +459,10 @@ function ToolOutput({ content }: { content: string }) {
     }
     return truncate(value, 4000);
   }, [content]);
-  return <div className={styles.output}>
-    <span className={styles.outputLabel}>{t('tool.output')}</span>
-    <pre className="op-output">{formatted}</pre>
-  </div>;
+  return <CodeBlock className={styles.output} size="sm">
+    <CodeBlockHeader><CodeBlockTitle className={styles.outputLabel}>{t('tool.output')}</CodeBlockTitle></CodeBlockHeader>
+    <CodeBlockContent><pre className="op-output"><code>{formatted}</code></pre></CodeBlockContent>
+  </CodeBlock>;
 }
 
 function ResultBadge({ result, runStreaming, runSucceeded, className = '' }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean; className?: string }) {

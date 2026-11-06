@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
-import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
+import { ChatHistoryRequestError, chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
 import { historicalRecoveryCopy, preserveHistoryCopies } from './history-recovery';
 import { conversationBinding } from './conversation-address';
 
@@ -16,7 +16,7 @@ function readOutbox<T extends HistoryMessage>(key: string): { messages: T[]; rea
   } catch { return { messages: [], readable: false }; }
 }
 export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported }: {
-  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement>;
+  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement | null>;
   legacyMessages?: T[]; onImported?: (ids: string[]) => void;
 }) {
   const initialOwner = useRef(chatHistoryOwnerScope());
@@ -30,6 +30,8 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   const [readyKey, setReadyKey] = useState('');
   const [emptyLookup, setEmptyLookup] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const conflicts = useRef(new Set<string>());
   const binding = useRef<ChatHistoryBinding | null>(null);
   const pending = useRef(new Map<string, T>());
   const migrationSnapshots = useRef(new Map<string, T>());
@@ -49,6 +51,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   useLayoutEffect(() => {
     const node = scrollRef?.current;
     if (!node || !scrollAnchor.current) return;
+    if (node.dataset.slot === 'message-scroller-viewport') { scrollAnchor.current = null; return; }
     node.scrollTop = scrollAnchor.current.top + node.scrollHeight - scrollAnchor.current.height;
     scrollAnchor.current = null;
   }, [history, scrollRef]);
@@ -112,15 +115,17 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         let saved: T;
         try {
           saved = await saveChatHistoryMessage(target, snapshot);
-        } catch {
+        } catch (error) {
           // Each identity has its own revision. Preserve a conflicting recovery
           // copy, but do not let it prevent unrelated replies from being saved.
           failed = true;
           if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+          if (error instanceof ChatHistoryRequestError && error.status === 409) { conflicts.current.add(id); setConflict(true); }
           setError('save');
           continue;
         }
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        conflicts.current.delete(id); setConflict(conflicts.current.size > 0);
         const prior = known.current.get(id);
         known.current.set(id, saved);
         acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot));
@@ -152,7 +157,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   useEffect(() => {
     if (!active) return;
     const owner = ++generation.current;
-    binding.current = null; flushing.current = false;
+    binding.current = null; flushing.current = false; conflicts.current.clear(); setConflict(false);
     setReadyKey(''); setHistory([]); setHasMore(false); setCursor(null); setLoading(true);
     const initial = latest.current;
     const initialLegacy = legacy.current || [];
@@ -367,6 +372,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         if (!saved || pending.current.get(snapshot.id!) !== snapshot) continue;
         acknowledgedOutbox.current.set(snapshot.id!, historyMessageFingerprint(snapshot));
         pending.current.delete(snapshot.id!); known.current.set(snapshot.id!, saved);
+        conflicts.current.delete(snapshot.id!); setConflict(conflicts.current.size > 0);
       }
       const restored = latest.current.map(item => {
         const before = captured.find(snapshot => snapshot.id === item.id);
@@ -386,7 +392,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     ready: active && readyKey === sessionKey,
     messages: visibleMessages,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,
-    hasMore, loading, error, loadEarlier, recover, recovering,
+    hasMore, loading, error, conflict, loadEarlier, recover, recovering,
     retry: () => { if (binding.current && pending.current.size) void flush(); else setRetryCount(value => value + 1); },
   };
 }

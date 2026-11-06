@@ -25,7 +25,7 @@ This file is the single source of truth for agents entering this repository. Rea
 - Workspace packages come from `pnpm-workspace.yaml`: `apps/*`, `packages/*`, `tools/*`, and `e2e`.
 - Optional Pro skill library: maintained in the Pro repository; read its `skill-library/AGENTS.md` before adding or updating downloadable skills, research, credits or packages.
 - Top-level content: `skills/` holds essential Free guidance; `guidance/` holds router metadata. `design-systems/_schema/` retains shared validation for saved/personal resources. `mocks/` holds replay CLIs for regression checks. See the retirement rule below.
-- `apps/web` is the Next.js 16 App Router + React 18 web runtime; do not restore `apps/nextjs`.
+- `apps/web` is the Next.js 16 App Router + React 19 web runtime; do not restore `apps/nextjs`.
 - `apps/daemon` is the local privileged daemon and `od` bin. It owns `/api/*`, agent spawning, skills, design systems, artifacts, and static serving.
 - `apps/desktop` is the Electron shell; it discovers the web URL through sidecar IPC.
 - `apps/packaged` is the thin packaged Electron runtime entry; it starts packaged sidecars and owns the `od://` entry glue only.

@@ -30,25 +30,6 @@
   color: var(--text-muted);
 }
 
-@supports (background-clip: text) {
-  .cliScanLabel {
-    background: linear-gradient(110deg, var(--text-muted) 35%, var(--text) 50%, var(--text-muted) 65%);
-    background-size: 240% 100%;
-    background-clip: text;
-    color: transparent;
-    animation: scanShimmer 2.4s linear infinite;
-  }
-}
-
-@keyframes scanShimmer {
-  from { background-position: 120% 0; }
-  to { background-position: -120% 0; }
-}
-
-@media (prefers-reduced-motion: reduce), (forced-colors: active) {
-  .cliScanLabel { animation: none; background: none; color: var(--text-muted); }
-}
-
 .dialog:global(.modal-settings) {
   --settings-surface: var(--composer-surface, var(--bg-elevated));
   --settings-hover: var(--composer-hover, var(--bg-subtle));

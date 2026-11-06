@@ -104,7 +104,10 @@ export async function runCodexTurn(options: {
         ended = true;
         completedCleanly = params.turn?.status === 'completed';
         options.onSteerReady(undefined);
-        if (params.turn?.status === 'completed') resolveTurn();
+        if (params.turn?.status === 'completed') {
+          options.onEvent({type:'status',label:'response_complete'});
+          resolveTurn();
+        }
         else rejectTurn(new Error(params.turn?.error?.message || 'Codex did not complete this turn.'));
       }
       const event = voiceProgress(message.method, params);
@@ -164,6 +167,7 @@ export async function runCodexTurn(options: {
     options.onEvent({ type: 'session', sessionId: threadId });
     const result = await call('turn/start', {
       threadId, input: [{ type: 'text', text: options.prompt }, ...options.images.map(path => ({ type: 'localImage', path }))],
+      summary: 'auto',
       ...(options.fastMode ? { serviceTier: 'fast' } : {}),
     });
     turnId = result.turn.id;

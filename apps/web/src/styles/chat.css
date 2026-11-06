@@ -429,7 +429,7 @@
     color-mix(in srgb, var(--text-muted) 10%, transparent)
   );
   background-size: 200% 100%;
-  animation: chat-loading-sheen 1100ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 .chat-loading-lines span:nth-child(2) { width: 82%; }
 .chat-loading-lines span:nth-child(3) { width: 58%; }
@@ -457,11 +457,6 @@
   0%, 70%, 100% { opacity: 0.3; transform: translateY(0); }
   35% { opacity: 1; transform: translateY(-4px); }
 }
-@keyframes chat-loading-sheen {
-  from { background-position: 140% 0; }
-  to { background-position: -60% 0; }
-}
-
 /* -------- Messages -------------------------------------------------- */
 .msg {
   padding: 0;

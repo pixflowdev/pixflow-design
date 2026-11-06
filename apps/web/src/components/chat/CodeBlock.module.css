@@ -1,0 +1,7 @@
+.root { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md, 8px); color: var(--text); }
+.root[data-variant=destructive] { border-color: var(--danger); }
+.header { display: flex; align-items: center; min-width: 0; gap: 8px; padding: 8px 12px; color: var(--text-muted); }
+.title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.actions { display: flex; align-items: center; gap: 4px; margin-inline-start: auto; flex-shrink: 0; }
+.content { min-width: 0; overflow: auto; }
+.content:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

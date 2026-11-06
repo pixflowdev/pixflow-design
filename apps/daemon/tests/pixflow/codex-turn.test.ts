@@ -6,6 +6,16 @@ vi.mock('@open-design/platform', async original => ({ ...await original<typeof i
 vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), spawn: mocks.spawn }));
 import { runCodexTurn, type CodexSteer } from '../../src/pixflow/codex-turn.js';
 afterEach(() => vi.clearAllMocks());
+it('requests readable reasoning summaries and forwards only the supplied summary events', async () => {
+  const run = fixture();
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({method:'item/reasoning/summaryTextDelta',params:{threadId:'thread-1',delta:'Checking the public page.'}});
+  run.emit({method:'item/reasoning/textDelta',params:{threadId:'thread-1',delta:'Not a public summary'}});
+  run.emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  await run.done;
+  expect(run.requests.find(item => item.method === 'turn/start').params.summary).toBe('auto');
+  expect(run.events.mock.calls.filter(([event]) => event.type === 'thinking_delta')).toEqual([[{type:'thinking_delta',delta:'Checking the public page.'}]]);
+});
 function fixture(reject = false, signal = new AbortController().signal, overrides: Record<string, unknown> = {}, resumeError?: {message:string;code?:string}) {
   const child = Object.assign(new EventEmitter(), { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() });
   const requests: any[] = [];

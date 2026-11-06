@@ -3,8 +3,8 @@ import { renderMarkdown, type MarkdownLinkClickHandler } from '../../runtime/mar
 
 // Smooth uneven transport chunks over a short, bounded interval. This is
 // display state only: history, copy, tools and run completion use the real text.
-export function StreamingMarkdown({ text, live, onLinkClick, searchedWeb, attachmentUrls }: {
-  text: string; live: boolean; onLinkClick?: MarkdownLinkClickHandler; searchedWeb?: boolean; attachmentUrls?: ReadonlySet<string>;
+export function StreamingMarkdown({ text, live, onLinkClick, searchedWeb, citationUrls, attachmentUrls }: {
+  text: string; live: boolean; onLinkClick?: MarkdownLinkClickHandler; searchedWeb?: boolean; citationUrls?: ReadonlySet<string>; attachmentUrls?: ReadonlySet<string>;
 }) {
   const [shown, setShown] = useState(() => live ? '' : text);
   const current = useRef(shown);
@@ -50,5 +50,5 @@ export function StreamingMarkdown({ text, live, onLinkClick, searchedWeb, attach
     return () => document.removeEventListener('visibilitychange', flush);
   }, [live]);
   const visible = allowed && text.startsWith(shown) ? shown : text;
-  return useMemo(() => renderMarkdown(visible, { onLinkClick, searchedWeb, attachmentUrls }), [visible, onLinkClick, searchedWeb, attachmentUrls]);
+  return useMemo(() => renderMarkdown(visible, { onLinkClick, searchedWeb, citationUrls, attachmentUrls }), [visible, onLinkClick, searchedWeb, citationUrls, attachmentUrls]);
 }

@@ -1,0 +1,31 @@
+/* shadcn/ui shimmer (MIT), adapted from packages/shadcn/src/tailwind.css.
+   Shared by standalone, WordPress bundles and the native builder overlay. */
+:root { --pixflow-loading-sweep: pixflow-shimmer 2s linear infinite; }
+@keyframes pixflow-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+:where(.pixflow-shimmer-text, [data-slot="trace-line"][data-status="running"] > [data-slot="trace-title"], [data-semantic-preflight="pending"] .prose-block, #pixflow-direct-presence[data-presentation="quiet"][data-phase="editing"] .pixflow-direct-presence-brand) {
+  --_spread: var(--shimmer-spread, calc(3ch + 40px));
+  --_base: currentColor;
+  --_highlight: var(--shimmer-color, light-dark(oklch(from currentColor l c h / calc(alpha * .2)), oklch(from currentColor max(.8, calc(l + .4)) c h / calc(alpha + .4))));
+  background-image: linear-gradient(calc(90deg + var(--shimmer-angle, 20deg)),
+    var(--_base) calc(50% - var(--_spread)),
+    color-mix(in oklch, var(--_highlight), var(--_base) 50%) calc(50% - var(--_spread) * .5),
+    var(--_highlight) 50%,
+    color-mix(in oklch, var(--_highlight), var(--_base) 50%) calc(50% + var(--_spread) * .5),
+    var(--_base) calc(50% + var(--_spread)));
+  background-size: calc(200% + var(--_spread) * 2) 100%;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pixflow-shimmer 2s linear infinite;
+}
+#pixflow-direct-presence[data-presentation="quiet"][data-phase="editing"] .pixflow-direct-presence-brand {
+  --_highlight: var(--shimmer-color, oklch(from currentColor max(.8, calc(l + .4)) c h / calc(alpha + .4)));
+}
+:where(.pixflow-shimmer-text, [data-slot="trace-line"][data-status="running"] > [data-slot="trace-title"], [data-semantic-preflight="pending"] .prose-block, #pixflow-direct-presence[data-presentation="quiet"][data-phase="editing"] .pixflow-direct-presence-brand):dir(rtl) { animation-direction: reverse; }
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  :where(.pixflow-shimmer-text, [data-slot="trace-line"][data-status="running"] > [data-slot="trace-title"], [data-semantic-preflight="pending"] .prose-block, #pixflow-direct-presence[data-presentation="quiet"][data-phase="editing"] .pixflow-direct-presence-brand) { animation: none; background-image: none; -webkit-text-fill-color: currentColor; }
+}

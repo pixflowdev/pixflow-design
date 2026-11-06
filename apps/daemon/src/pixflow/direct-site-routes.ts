@@ -468,7 +468,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
             mcpServers: externalMcp.codex,
             isolateProjectInstructions: true,
             model:input.model,reasoning:input.reasoning,fastMode:input.fastMode,resumeSessionId,signal:preparation.signal,
-            onChild:value=>{child=value;timings.spawnMs=elapsed();},onEvent,
+            onChild:value=>{child=value;timings.spawnMs=elapsed();send({type:'status',label:'provider_waiting'});},onEvent,
             onSteerReady:steer=>{const live=runs.get(id);if(live)live.steer=steer;},
           });
           turnSucceeded=true;
@@ -479,6 +479,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         } else {
         child=spawn(invocation.command,invocation.args,{cwd:workspace,env,shell:false,windowsHide:true,windowsVerbatimArguments:invocation.windowsVerbatimArguments,stdio:['pipe','pipe','pipe']});
         timings.spawnMs=elapsed();
+        send({type:'status',label:'provider_waiting'});
         child.stdout?.on('data',(chunk:Buffer)=>{buffer+=decoder.write(chunk);const lines=buffer.split('\n');buffer=lines.pop()||'';lines.forEach(accept);});
         child.stderr?.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-4000);});
         child.stdin?.on('error',()=>undefined);

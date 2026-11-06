@@ -17975,6 +17975,7 @@ export async function startServer({
         processSpawnedAt: Date.now(),
       };
       run.child = child;
+      send('agent', { type: 'status', label: 'provider_waiting' });
       run.childPid = typeof child.pid === 'number' ? child.pid : null;
       run.processGroupId =
         process.platform !== 'win32' && typeof child.pid === 'number'

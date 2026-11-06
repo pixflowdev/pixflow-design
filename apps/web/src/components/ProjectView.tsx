@@ -190,7 +190,7 @@ import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
 import { listMessagePage, prependHistoryPage } from '../state/chat-history';
 import { useWorkspaceHistoryRefresh } from '../state/use-workspace-history-refresh';
-import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
+import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteConflicted, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
@@ -6174,7 +6174,7 @@ export function ProjectView({
               key={`${project.id}:${activeConversationId ?? 'conversation-unavailable'}:${chatSeed?.id ?? 'ready'}`}
               messages={messages}
               olderHistory={olderMessagesCursor ? { loading: loadingOlderMessages, error: olderMessagesError, load: loadOlderMessages } : undefined}
-              historyPersistence={historyWriteError ? { retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
+              historyPersistence={historyWriteError ? { conflict: workspaceHistoryWriteConflicted(project.id, activeConversationId!), retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
                 if (!activeConversationId || historyRecovering) return;
                 const recoveryGeneration = historyPageGeneration.current;
                 setHistoryRecovering(true);

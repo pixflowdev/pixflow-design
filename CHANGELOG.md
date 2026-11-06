@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
+- Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
+- Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.
+- Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
+- Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
+- Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
+
 ## [2.2.2] - Release candidate
 
 - The Pro upgrade notice follows the saved licence entitlement.

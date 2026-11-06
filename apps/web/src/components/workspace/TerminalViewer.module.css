@@ -273,8 +273,8 @@
     color-mix(in srgb, var(--terminal-fg) 16%, transparent),
     transparent
   );
-  transform: translateX(-100%);
-  animation: terminal-loading-sweep 1.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  background-size: 200% 100%;
+  @media (prefers-reduced-motion: no-preference) { animation: var(--pixflow-loading-sweep); }
 }
 
 @keyframes terminal-cursor-blink {
@@ -285,12 +285,6 @@
   46%,
   100% {
     opacity: 0.18;
-  }
-}
-
-@keyframes terminal-loading-sweep {
-  to {
-    transform: translateX(100%);
   }
 }
 

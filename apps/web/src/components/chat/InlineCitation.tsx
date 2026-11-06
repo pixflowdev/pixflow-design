@@ -1,4 +1,5 @@
-import { Popover } from '@base-ui/react/popover';
+import { Button, VisuallyHidden } from '@open-design/components';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from './HoverCard';
 import { useRef, useState } from 'react';
 import { useT } from '../../i18n';
 import { Icon } from '../Icon';
@@ -19,24 +20,23 @@ export function InlineCitation({ source, title }: { source: URL; title: string }
   const t = useT();
   const trigger = useRef<HTMLButtonElement>(null);
   const [portal, setPortal] = useState<HTMLElement | null>(null);
+  const [open, setOpen] = useState(false);
   const host = source.hostname;
-  return <Popover.Root onOpenChange={open => {
-    if (open) setPortal(workspacePortalTarget(trigger.current));
+  return <HoverCard open={open} onOpenChange={value => {
+    if (value) setPortal(workspacePortalTarget(trigger.current));
+    setOpen(value);
   }}>
-    <Popover.Trigger ref={trigger} type="button" className={styles.chip}
-      openOnHover delay={90} closeDelay={150} aria-label={`${title} (${host})`}>
+    <HoverCardTrigger render={<Button ref={trigger} />} className={styles.chip}
+      delay={10} closeDelay={100} aria-label={`${title} (${host})`}
+      onClick={() => { setPortal(workspacePortalTarget(trigger.current)); setOpen(value => !value); }}>
       {host}
-    </Popover.Trigger>
-    <Popover.Portal container={portal}>
-      <Popover.Positioner className={styles.positioner} side="top" align="start" sideOffset={6}>
-        <Popover.Popup className={styles.card} aria-label={title}>
+    </HoverCardTrigger>
+        <HoverCardContent container={portal} side="top" align="start" sideOffset={6} aria-label={title}>
           <strong>{title}</strong>
           <a href={source.href} target="_blank" rel="noopener noreferrer"
             aria-label={`${host} · ${t('common.openInNewTab')}`}>
-            {host}<Icon name="external-link" size={12} />
+            {host}<Icon name="external-link" size={12} /><VisuallyHidden>{t('common.openInNewTab')}</VisuallyHidden>
           </a>
-        </Popover.Popup>
-      </Popover.Positioner>
-    </Popover.Portal>
-  </Popover.Root>;
+        </HoverCardContent>
+  </HoverCard>;
 }

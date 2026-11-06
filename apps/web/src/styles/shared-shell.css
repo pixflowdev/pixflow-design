@@ -718,7 +718,7 @@ a.avatar-item:visited {
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-faint);
+  color: var(--text);
   font-weight: 600;
   padding: 8px 10px 4px;
 }
@@ -1749,7 +1749,7 @@ main.app.pixflow-bricks-agent-frame-app,
 }
 
 .avatar-popover.avatar-popover--bricks-agent .avatar-section-label {
-  color: var(--text-faint);
+  color: var(--text);
 }
 
 .avatar-popover.avatar-popover--bricks-agent .avatar-model-section {

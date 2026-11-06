@@ -363,11 +363,11 @@ describe('AssistantMessage thinking blocks', () => {
       />,
     );
 
-    fireEvent.click(container.querySelector('[data-activity-group] > button')!);
     expect(container.querySelector('.thinking-block')).toBeTruthy();
     expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
     fireEvent.click(container.querySelector('.thinking-toggle')!);
-    expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(2);
+    expect(container.querySelector('.thinking-body')?.textContent?.trim()).toBe('Reading the directory listing.');
+    expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
   });
 
   it('renders Pixflow wait events with a stage label and muted overview detail', () => {
@@ -564,7 +564,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('shows project files mentioned as plain filenames in the assistant summary', () => {
@@ -588,7 +588,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('does not recover old reference files as produced files', () => {

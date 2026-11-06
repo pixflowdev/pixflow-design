@@ -1,0 +1,4 @@
+/* The rich-text composer and its inputs keep their surface when focused. */
+.root.root:focus-within { outline: none; box-shadow: none; border-color: var(--composer-border, var(--border)); }
+.root.root :is(input, textarea, [contenteditable='true']):is(:focus, :focus-visible) { outline: none; box-shadow: none; }
+.root.root :global(.composer-input-wrap):focus-within { border-color: transparent; box-shadow: none; }

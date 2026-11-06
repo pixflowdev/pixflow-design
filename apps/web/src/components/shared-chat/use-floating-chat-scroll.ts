@@ -4,13 +4,13 @@ export function chatScrollBehavior(): ScrollBehavior {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
 }
 
-/** A fresh prompt anchors once. Streamed chunks consume the space below it;
- * only a reader at the live edge follows subsequent output. */
+/** Follow the actual live edge without reserving space below new prompts.
+ * Scrolling away suspends following until the reader returns or chooses Latest. */
 export function useFloatingChatScroll(
-  log: RefObject<HTMLDivElement>, spacer: RefObject<HTMLDivElement>, session: string,
+  log: RefObject<HTMLDivElement | null>, spacer: RefObject<HTMLDivElement | null>, session: string,
   messages: ReadonlyArray<{ id?: string; role?: string }>, running: boolean,
 ) {
-  const state = useRef({ follow: true, anchor: '', lastUser: '', align: false, moving: false, manual: false, running: false });
+  const state = useRef({ follow: true, moving: false, manual: false });
   const schedule = useRef<() => void>(() => {});
   const [scrollable, setScrollable] = useState(false);
   const [away, setAway] = useState(false);
@@ -20,7 +20,7 @@ export function useFloatingChatScroll(
     const el = log.current;
     if (!el) return;
     const view = state.current;
-    Object.assign(view, { anchor: '', follow: true, align: false, manual: false });
+    Object.assign(view, { follow: true, manual: false });
     if (spacer.current) spacer.current.style.height = '0px';
     const behavior = chatScrollBehavior();
     view.moving = behavior === 'smooth' && 'onscrollend' in el && el.scrollHeight - el.scrollTop - el.clientHeight > 2;
@@ -32,35 +32,19 @@ export function useFloatingChatScroll(
     const el = log.current, tail = spacer.current;
     if (!el || !tail) return;
     const view = state.current;
-    Object.assign(view, { follow: true, anchor: '', lastUser: '', align: false, moving: false, manual: false });
+    Object.assign(view, { follow: true, moving: false, manual: false });
     tail.style.height = '0px';
     let idle: number | undefined, frame: number | null = null;
     const distance = () => el.scrollHeight - el.clientHeight - el.scrollTop;
     const measure = () => {
       frame = null;
-      if (!view.running) {
-        view.anchor = '';
-        tail.style.height = '0px';
-        if (!view.manual) view.follow = true;
-      }
-      const row = view.anchor && el.querySelector<HTMLElement>(`[data-chat-user-id="${CSS.escape(view.anchor)}"]`);
-      if (row) {
-        const top = el.scrollTop + row.getBoundingClientRect().top - el.getBoundingClientRect().top;
-        const reserve = Math.max(0, el.clientHeight - (el.scrollHeight - tail.offsetHeight - top) - 12);
-        tail.style.height = `${reserve}px`;
-        if (view.align) {
-          view.align = false;
-          el.scrollTo({ top: Math.max(0, top - 12), behavior: chatScrollBehavior() });
-        }
-        if (!reserve) { view.anchor = ''; view.follow = true; }
-      }
-      if (!view.anchor && view.follow && !view.moving && distance() > 1) el.scrollTop = el.scrollHeight;
+      if (view.follow && !view.moving && distance() > 1) el.scrollTop = el.scrollHeight;
       setAway(!view.moving && distance() > 2);
       setScrollable(el.scrollHeight > el.clientHeight + 2);
     };
     function queue() { if (frame === null) frame = requestAnimationFrame(measure); }
     schedule.current = queue;
-    const release = () => { Object.assign(view, { manual: true, anchor: '', align: false, moving: false, follow: false }); };
+    const release = () => { Object.assign(view, { manual: true, moving: false, follow: false }); };
     const onKey = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) release();
     };
@@ -109,16 +93,6 @@ export function useFloatingChatScroll(
   }, [session, log, spacer]);
 
   useLayoutEffect(() => {
-    const view = state.current;
-    let user = '';
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i]?.role === 'user') { user = messages[i]?.id || ''; break; }
-    }
-    if (running && user && user !== view.lastUser) {
-      Object.assign(view, { anchor: user, align: true, follow: false, manual: false, moving: false });
-    }
-    view.running = running;
-    view.lastUser = user;
     schedule.current();
   }, [messages, running, session]);
   return { scrollable, scrolling, away, jump };

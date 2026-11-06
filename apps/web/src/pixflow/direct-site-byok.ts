@@ -278,7 +278,7 @@ export async function runByokSite(input: ByokSiteInput): Promise<PixflowDirectSi
           persist();
         }
       }
-      events.push({kind:'status',label:'thinking'}); publish();
+      events.push({kind:'status',label:'provider_waiting'}); publish();
       const turn=await call('provider.turn',{
         apiProtocol:config.apiProtocol || 'anthropic',baseUrl:config.baseUrl,apiKey:config.apiKey,model:config.model,apiVersion:config.apiVersion,maxTokens:config.maxTokens || 8192,
         system,messages:checkpoint.messages,turns:checkpoint.turns,results:checkpoint.results,images,

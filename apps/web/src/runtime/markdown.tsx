@@ -1,3 +1,4 @@
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockActions, CodeBlockContent } from '../components/chat/CodeBlock';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -36,6 +37,8 @@ export interface RenderMarkdownOptions {
   onLinkClick?: MarkdownLinkClickHandler;
   /** The assistant's turn includes a provider web search. */
   searchedWeb?: boolean;
+  /** Exact URLs read successfully through a provider's HTTP/browser tools. */
+  citationUrls?: ReadonlySet<string>;
   /** Images already represented by an interactive attachment in this message. */
   attachmentUrls?: ReadonlySet<string>;
 }
@@ -455,10 +458,10 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
   }
 
   return (
-    <div className="md-code-block" data-collapsed={collapsed ? 'true' : undefined}>
-      <div className="md-code-header">
-        <span className="md-code-lang">{lang || translateUi("ui.markdown.text")}</span>
-        <div className="md-code-actions">
+    <CodeBlock className="md-code-block" data-collapsed={collapsed ? 'true' : undefined}>
+      <CodeBlockHeader className="md-code-header">
+        <CodeBlockTitle className="md-code-lang">{lang || translateUi("ui.markdown.text")}</CodeBlockTitle>
+        <CodeBlockActions className="md-code-actions">
           {collapsible ? (
             <button
               type="button"
@@ -479,9 +482,9 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
             <Icon name={copied ? 'check' : 'copy'} size={12} />
             <span>{copyLabel}</span>
           </button>
-        </div>
-      </div>
-      <div className="md-code-body">
+        </CodeBlockActions>
+      </CodeBlockHeader>
+      <CodeBlockContent className="md-code-body">
         {highlightedHtml ? (
           <div
             className="md-code md-code-highlighted"
@@ -492,8 +495,8 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
             <code data-lang={lang ?? undefined}>{body}</code>
           </pre>
         )}
-      </div>
-    </div>
+      </CodeBlockContent>
+    </CodeBlock>
   );
 }
 
@@ -583,34 +586,39 @@ function inlineTokenPattern(): RegExp {
   //     `_conditions format: `...user_logged_in...``) can be misread as one
   //     long `_..._` emphasis span and consume the code-span delimiter.
   //  7. bold (**a** / __a__) before italic (*a* / _a_).
-  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\((<[^>\r\n]+>|[^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
 }
 
-function researchLinks(text: string): Map<number, { title: string; url: URL }> {
+function unwrapMarkdownDestination(value: string): string {
+  return value.startsWith('<') && value.endsWith('>') ? value.slice(1, -1) : value;
+}
+
+function researchLinks(text: string, allowed?: ReadonlySet<string>): Map<number, { title: string; url: URL }> {
   const inline = new Map<number, { title: string; url: URL }>();
   const trailing = new Map<number, { title: string; url: URL }>();
   for (const match of text.matchAll(inlineTokenPattern())) {
     if (!match[4] || !match[5]) continue;
-    const url = citationSource(match[5]);
+    const url = citationSource(unwrapMarkdownDestination(match[5]));
     if (!url) continue;
+    if (allowed && !allowed.has(url.href)) continue;
     const source = { title: match[4], url };
     inline.set(match.index, source);
     if (/[.!?。！？]\s*[(（]?\s*$/.test(text.slice(0, match.index))) trailing.set(match.index, source);
   }
   // Explicit trailing citations distinguish sources from ordinary links in the same passage.
   // Providers also cite sources directly in the sentence when there is no trailing reference.
-  return trailing.size ? trailing : inline;
+  return !allowed && trailing.size ? trailing : inline;
 }
 
 /** Collect the same labelled citations shown inline, in first-reference order. */
-export function collectMarkdownSources(prose: string[]): Array<{ title: string; url: URL }> {
+export function collectMarkdownSources(prose: string[], allowed?: ReadonlySet<string>): Array<{ title: string; url: URL }> {
   const sources = new Map<string, { title: string; url: URL }>();
   for (const text of prose) {
     for (const block of parseBlocks(text)) {
       const runs = 'text' in block ? [block.text] : 'items' in block ? block.items
         : block.kind === 'table' ? [...block.headers, ...block.rows.flat()] : [];
       for (const run of runs) {
-        for (const source of researchLinks(run).values()) {
+        for (const source of researchLinks(run, allowed).values()) {
           if (!sources.has(source.url.href)) sources.set(source.url.href, source);
         }
       }
@@ -625,7 +633,8 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
   const linkClickHandler = onLinkClick
     ? (href: string) => (event: MouseEvent<HTMLAnchorElement>) => onLinkClick(href, event)
     : undefined;
-  const sources = options?.searchedWeb ? researchLinks(text) : undefined;
+  const sources = options?.searchedWeb ? researchLinks(text)
+    : options?.citationUrls?.size ? researchLinks(text, options.citationUrls) : undefined;
   const re = inlineTokenPattern();
   let lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -662,7 +671,7 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
         pushText(out, alt, key++, options);
       }
     } else if (m[4] && m[5]) {
-      const href = m[5];
+      const href = unwrapMarkdownDestination(m[5]);
       const source = sources?.get(m.index)?.url;
       out.push(
         source ? <InlineCitation key={key++} source={source} title={m[4]} /> : <a

@@ -1,3 +1,4 @@
+import { cliVersionLabel } from '../utils/cli-version-label';
 // InlineModelSwitcher — top-bar chip exposing CLI/BYOK + model picker.
 //
 // Lives in the entry view's sticky top-bar so users can swap between a
@@ -745,8 +746,8 @@ export function InlineModelSwitcher({
                             title={
                               a.id === 'amr' && amrLoginPending
                                 ? amrPendingHoverLabel
-                                : a.id !== 'amr' && a.version
-                                  ? `${agentName} · ${a.version}`
+                                : a.id !== 'amr' && cliVersionLabel(a.version)
+                                  ? `${agentName} · ${cliVersionLabel(a.version)}`
                                   : agentName
                             }
                           >

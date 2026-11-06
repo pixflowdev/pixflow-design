@@ -1,3 +1,4 @@
+import '../../styles/shimmer.css';
 import { createContext, useContext, useState, type ComponentProps } from 'react';
 import { Collapsible } from '@base-ui/react/collapsible';
 import { Icon } from '../Icon';

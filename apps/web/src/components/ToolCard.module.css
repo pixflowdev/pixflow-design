@@ -16,14 +16,17 @@
 .input > pre { margin: 0; }
 .output { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .outputLabel { color: var(--text-muted); font-size: 11px; line-height: 1.5; text-transform: capitalize; }
-.output > pre {
+.output pre {
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 0;
   background: var(--bg-panel);
   color: var(--text);
   font-size: 12px;
   line-height: 1.6;
   tab-size: 2;
 }
+
+.planHeading { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+.planItem { align-items:flex-start; }
+.planItem > :global([data-slot=trace-title]) { white-space:normal; overflow-wrap:anywhere; }

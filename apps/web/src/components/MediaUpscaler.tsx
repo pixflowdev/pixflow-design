@@ -58,7 +58,7 @@ function UpscaleEditor({item,installedModels,onBack,onSaved,headerAction,setting
   const {kind,setKind,noiseEnabled,setNoiseEnabled,manualStrength,setManualStrength,target,setTarget,minify,setMinify,chosenFormat,setFormat,quality,setQuality}=settings;
   const [analysis,setAnalysis]=useState<ReturnType<typeof analyseUpscaleImage>>();
   const [crop,setCrop]=useState<{before:string;after:string;key:string;width:number;height:number}>();
-  const source=useRef<HTMLImageElement>();
+  const source=useRef<HTMLImageElement | undefined>(undefined);
   const [picking,setPicking]=useState(false);
   const [point,setPoint]=useState({x:0.5,y:0.5});
   const [cropPending,setCropPending]=useState(false);
@@ -71,7 +71,7 @@ function UpscaleEditor({item,installedModels,onBack,onSaved,headerAction,setting
   const [native,setNative] = useState<{image:HTMLImageElement;blob:Blob;model:string}>();
   const sourceFormat=item.mimeType.replace('image/','');
   const format=minify?chosenFormat:sourceFormat;
-  const originalHash=useRef<Promise<string>>();
+  const originalHash=useRef<Promise<string> | undefined>(undefined);
   const confirmation=useRef<HTMLDialogElement>(null);
   const [detail,setDetail] = useState(false);
   const [divider,setDivider] = useState(50);

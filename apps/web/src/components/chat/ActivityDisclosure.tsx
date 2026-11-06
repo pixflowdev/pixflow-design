@@ -18,7 +18,9 @@ export function ActivityDisclosure({ label, icon = 'tools', active, live = activ
   label: string; icon?: ActivityIconKind; active: boolean; live?: boolean; soloReasoning?: boolean; issueLabel?: string; stepLabel?: string; children: () => ReactNode;
 }) {
   const [override, setOverride] = useState<boolean>();
-  const open = soloReasoning || (override ?? live);
+  // A live summary is useful; expanding every command/output is not. Preserve
+  // the user's explicit choice across subsequent events and completion.
+  const open = soloReasoning || (override ?? false);
   const [visited, setVisited] = useState(open);
   const [displayed, setDisplayed] = useState({ label, icon });
   const changedAt = useRef(Date.now());

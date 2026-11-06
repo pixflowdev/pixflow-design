@@ -79,7 +79,7 @@ export function FloatingChatMenu() {
       }
     } catch { if (!controller.signal.aborted) { setError(true); setPending(false); } }
   }
-  const drawer = (<div ref={dialog} className={styles.layer} data-open={open} aria-hidden={!open} {...(!open ? { inert: '' } as Record<string, string> : {})}>
+  const drawer = (<div ref={node => { dialog.current = node; node?.toggleAttribute('inert', !open); }} className={styles.layer} data-open={open} aria-hidden={!open}>
       <div className={styles.scrim} onClick={close} aria-hidden="true" />
       <div role="dialog" aria-label={t('chat.conversationsAria')} className={styles.drawer}>
       <header className={styles.header}><strong>{t('chat.conversationsAria')}</strong></header>

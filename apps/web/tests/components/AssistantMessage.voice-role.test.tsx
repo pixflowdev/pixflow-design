@@ -4,12 +4,27 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AssistantMessage } from '../../src/components/AssistantMessage';
 import type { ChatMessage } from '../../src/types';
 const wordpress = vi.hoisted(() => ({ active:false }));
-vi.mock('../../src/pixflow/wordpress-context', () => ({hasPixflowWordPressContext:()=>wordpress.active}));
+vi.mock('../../src/pixflow/wordpress-context', async importOriginal => ({ ...await importOriginal<typeof import('../../src/pixflow/wordpress-context')>(), hasPixflowWordPressContext:()=>wordpress.active }));
 
 vi.mock('../../src/components/VoiceOrb', () => ({ VoiceOrb: () => <span data-testid="voice-orb" /> }));
 afterEach(() => { cleanup(); wordpress.active=false; });
 
 describe('voice message identity', () => {
+  it('renders genuine output as a shadcn attachment with its own download target', () => {
+    const view=render(<AssistantMessage projectId="saved" message={{id:'file',role:'assistant',content:'Your checklist is ready.',runStatus:'succeeded',producedFiles:[{name:'rainy-bird-checklist.md',type:'file',kind:'text',mime:'text/plain',size:3300,mtime:1500}]}} streaming={false} />);
+    expect(view.container.querySelector('[data-slot="attachment-title"]')?.textContent).toBe('rainy-bird-checklist.md');
+    const download=screen.getByRole('link',{name:'Download'});
+    expect(download.getAttribute('download')).toBe('rainy-bird-checklist.md');
+    expect(download.getAttribute('href')).toContain('rainy-bird-checklist.md');
+    expect(screen.queryByText('Files from this turn')).toBeNull();
+  });
+  it('does not present a staged plugin manifest as output from a text-only reply', () => {
+    render(<AssistantMessage projectId="saved" message={{id:'text-only', role:'assistant', content:'A short reply.', runStatus:'succeeded', startedAt:1000, endedAt:2000, producedFiles:[{name:'plugin-assets/od-default/plugin-manifest.json',type:'file',kind:'text',mime:'text/plain',size:2900,mtime:1500}]}} streaming={false} />);
+    expect(screen.getByText('A short reply.')).toBeTruthy();
+    expect(screen.queryByText('Files from this turn')).toBeNull();
+    expect(screen.queryByText('plugin-assets/od-default/plugin-manifest.json')).toBeNull();
+  });
+
   it.each([{events:[]},{events:[
     {kind:'assistant_message_boundary' as const,phase:'started' as const,messageId:'native-reply',contentOffset:0},
     {kind:'assistant_message_boundary' as const,phase:'completed' as const,messageId:'native-reply',contentOffset:50},
@@ -33,13 +48,13 @@ describe('voice message identity', () => {
     expect(screen.getByRole('button',{name:'Copy response markdown'})).toBeTruthy();
     expect(screen.getByRole('button',{name:'Fork from here'})).toBeTruthy();
   });
-  it('keeps a steered run Working through tool/thinking activity without a new Preparing state', () => {
+  it('shows reasoning for a steered run without returning to Preparing', () => {
     render(<AssistantMessage projectId="p1" message={{ id: 'run', role: 'assistant', content: '', runStatus: 'running', events: [
       { kind: 'steering_message', id: 'accepted', text: 'Use blue', contentOffset: 12, createdAt: 1 },
       { kind: 'thinking', text: 'Considering the change' },
     ] }} streaming />);
     expect(screen.queryByText(/Preparing/)).toBeNull();
-    expect(screen.getByText('Working')).toBeTruthy();
+    expect(screen.getAllByText('Thinking').length).toBeGreaterThan(0);
   });
   it('retains the saved Codex identity and separate paragraphs on forked replies', () => {
     const view = render(<AssistantMessage projectId="fork" message={{ id: 'copied', role: 'assistant', agentId: 'codex', agentName: 'Codex', content: 'First saved paragraph.\n\nSecond saved paragraph.', events: [{ kind: 'text', text: 'First saved paragraph.\n\nSecond saved paragraph.' }], historyOrigin: { projectId: 'original', conversationId: 'source', messageId: 'reply' } }} streaming={false} />);

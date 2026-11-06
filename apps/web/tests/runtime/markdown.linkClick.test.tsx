@@ -7,6 +7,16 @@ import { renderMarkdown } from '../../src/runtime/markdown';
 describe('renderMarkdown — onLinkClick option', () => {
   afterEach(() => cleanup());
 
+  it('parses angle-wrapped file paths containing spaces without exposing the path as prose', () => {
+    const onLinkClick=vi.fn(event => event);
+    const path='C:/Users/chris/Pixflow Design Bridge/checklist.md';
+    const view=render(<div>{renderMarkdown(`[Download checklist](<${path}>)`, {onLinkClick})}</div>);
+    const link=view.getByRole('link',{name:'Download checklist'});
+    expect(link.getAttribute('href')).toBe(path);
+    fireEvent.click(link);
+    expect(onLinkClick.mock.calls[0]?.[0]).toBe(path);
+  });
+
   it('omits onClick when the option is absent (backwards-compat for existing callers)', () => {
     // Existing surfaces — file viewer, system reminders, anywhere that
     // just renders markdown for display — must keep their previous

@@ -2,3 +2,10 @@
 .trigger.trigger { position: relative; background-image: none; padding-inline-end: 30px; }
 .trigger > .chevron { position: absolute; inset-inline-end: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; min-width: 14px; flex-shrink: 0; pointer-events: none; color: var(--text-muted); }
 .list { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; overscroll-behavior: contain; }
+
+.positioner { z-index: 10030; outline: none; }
+.popup.popup { position: relative; width: max(var(--anchor-width), 220px); max-width: min(480px, var(--available-width)); max-height: min(360px, var(--available-height)); display: flex; flex-direction: column; overflow: hidden; }
+.popup .list { min-height: 0; overflow: auto; }
+.popup [data-highlighted] { background: var(--bg-fill-tertiary); }
+
+.popup.popup input:is(:focus, :focus-visible) { outline: none; box-shadow: none; border-color: var(--border); }

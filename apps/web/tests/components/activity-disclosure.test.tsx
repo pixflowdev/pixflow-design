@@ -39,8 +39,7 @@ it('keeps details lazy, retains the user toggle while streaming and removes hidd
   vi.useFakeTimers();
   const body = () => <a href="#details">Details</a>;
   const ui = render(<ActivityDisclosure label="Reading" icon="read" active>{body}</ActivityDisclosure>);
-  expect(ui.getByRole('button', { name: 'Reading', expanded: true })).toBeTruthy();
-  fireEvent.click(ui.getByRole('button'));
+  expect(ui.getByRole('button', { name: 'Reading', expanded: false })).toBeTruthy();
   expect(ui.queryByRole('link')).toBeNull();
   fireEvent.click(ui.getByRole('button'));
   expect(ui.getByRole('link')).toBeTruthy();
@@ -80,7 +79,32 @@ it('keeps failed tool details inside activity while exposing an error summary', 
   fireEvent.click(ui.getByText('error · 1').closest('[data-activity-group]')!.querySelector('[data-trace-kind="tool"] > button')!);
   expect(ui.getByText('Failed visibly')).toBeTruthy();
   expect([...ui.container.querySelectorAll('.action-card-toggle')].every(node => node.closest('[data-activity-group]'))).toBe(true);
-  expect(ui.container.textContent).not.toContain('Private detail');
+  expect(ui.container.querySelector('[data-trace-kind="reasoning"]')?.closest('[data-activity-group]')).toBeNull();
+});
+
+it('shows supplied reasoning separately while routine live commands remain collapsed', () => {
+  const ui = render(<AssistantMessage projectId={null} streaming message={{id:'reasoning-tools',role:'assistant',content:'',events:[
+    {kind:'thinking',text:'I will check the published title against the saved title.'},
+    {kind:'tool_use',id:'read-title',name:'Bash',input:{command:'private diagnostic command',description:'Checking the published title'}},
+  ]}} />);
+  const reasoning = ui.container.querySelector('[data-trace-kind="reasoning"]');
+  expect(reasoning).toBeTruthy();
+  expect(reasoning?.closest('[data-activity-group]')).toBeNull();
+  expect(ui.getByRole('button', {name:/Checking the published title/,expanded:false})).toBeTruthy();
+  expect(ui.queryByText('private diagnostic command')).toBeNull();
+});
+
+it.each(['Codex', 'Claude', 'Grok Build', 'OpenAI'])('distinguishes request setup from waiting for %s without inventing reasoning', agentName => {
+  const message = {id:'progress',role:'assistant' as const,content:'',agentName,events:[] as import('../../src/types').AgentEvent[]};
+  const ui = render(<AssistantMessage projectId={null} streaming message={message} />);
+  expect(ui.container.querySelector('.assistant-label')?.textContent).toContain('Preparing');
+  ui.rerender(<AssistantMessage projectId={null} streaming message={{...message,events:[{kind:'status',label:'provider_waiting'}]}} />);
+  expect(ui.container.querySelector('.assistant-label')?.textContent).toBe(`Waiting for ${agentName}…`);
+  expect(ui.container.querySelector('[data-trace-kind="reasoning"]')).toBeNull();
+  expect(ui.container.textContent).not.toContain('provider_waiting');
+  ui.rerender(<AssistantMessage projectId={null} streaming message={{...message,events:[{kind:'status',label:'provider_waiting'},{kind:'thinking',text:'Checking the supplied evidence.'}]}} />);
+  expect(ui.container.querySelector('.assistant-label')?.textContent).toBe('Thinking');
+  expect(ui.container.querySelector('[data-trace-kind="reasoning"]')).toBeTruthy();
 });
 
 it('keeps a failed command and its running retry in the same shimmer group', () => {

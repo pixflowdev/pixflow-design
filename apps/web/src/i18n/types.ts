@@ -6263,6 +6263,9 @@ export interface Dict {
   'assistant.waitingFirstOutput': string;
   'assistant.statusBootingAgent': string;
   'assistant.statusPreparing': string;
+  'assistant.statusWaiting': string;
+  'assistant.statusWaitingFor': string;
+  'assistant.statusFinishing': string;
   'assistant.statusStarting': string;
   'assistant.statusRequesting': string;
   'assistant.statusThinking': string;

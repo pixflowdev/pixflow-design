@@ -1,3 +1,5 @@
+import { Bubble, BubbleContent } from '../chat/Bubble';
+import { ChatTranscriptItem } from '../chat/MessageScroller';
 import { Message, MessageContent, MessageFooter } from '../chat/Message';
 import { PageAnnotationMessage } from '../PageAnnotationMessage';
 import { questionAnswerDisplayText } from '../../artifacts/question-form';
@@ -177,17 +179,15 @@ export function SharedChatRows({
         );
         if (message.role === 'user') {
           return (
-            <SharedUserMessage
-              key={message.id}
-              message={message}
-              t={t}
-            />
+            <ChatTranscriptItem key={message.id} messageId={message.id}>
+              <SharedUserMessage message={message} t={t} />
+            </ChatTranscriptItem>
           );
         }
 
         const semanticPreflightPending = semanticPreflightPendingIds.has(message.id) && streaming;
         return (
-          <div
+          <ChatTranscriptItem messageId={renderedMessage.id}
             key={semanticPreflightPending ? 'semantic-preflight-pending' : renderedMessage.id}
             className={semanticPreflightPending ? styles.semanticPreflightPending : undefined}
             data-semantic-preflight={semanticPreflightPending ? 'pending' : undefined}
@@ -210,7 +210,7 @@ export function SharedChatRows({
               {...assistantPropsForMessage?.(renderedMessage)}
               projectId={renderedMessage.historyOrigin?.projectId ?? projectId}
             />
-          </div>
+          </ChatTranscriptItem>
         );
       })}
     </>
@@ -329,7 +329,7 @@ const SharedUserMessage = memo(function SharedUserMessage({
   t: TranslateFn;
 }) {
   const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -388,7 +388,7 @@ const SharedUserMessage = memo(function SharedUserMessage({
       ) : null}
       {message.content ? (
         <MessageContent className="user-text-wrap">
-          <div className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} /></div>
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} /></BubbleContent></Bubble>
           <MessageFooter className="user-actions">
             {ts ? (
               <time

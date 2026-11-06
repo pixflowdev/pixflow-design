@@ -30,6 +30,10 @@ jobs:
       - run: pnpm --filter @open-design/web test bridge-connection-route AvatarMenu WorkspaceBridgeStatus
       - run: pnpm --filter @open-design/web test agent-trace live-prose-reveal inline-citation floating-chat-scroll activity-disclosure assistant-message-tool-status assistant-message-thinking-volume ChatPane.streaming run-reattach
       - run: pnpm --filter @open-design/daemon test claude-stream-tools
+      - name: Shared shadcn controls, scrolling and saved history
+        run: |
+          pnpm --filter @open-design/web test searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence FileOpsSummary assistant-progress
+          pnpm --filter @open-design/daemon test tests/pixflow/codex-turn.test.ts
       - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
       - run: pnpm --filter @open-design/web test EntryShell.onboarding
       - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts

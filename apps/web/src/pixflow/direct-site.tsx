@@ -160,7 +160,7 @@ export function beginDirectPreparation(surface: string, sessionKey: string, meta
 }
 
 /** Same authenticated owner as resume/cancel. An uncertain delivery remains visible. */
-export async function steerDirectSite(surface: string, item: ComposerQueueItem): Promise<PixflowDirectSiteSteerResponse> {
+export async function steerDirectSite(surface: string, item: ComposerQueueItem, workspaceContext?: Record<string, unknown>): Promise<PixflowDirectSiteSteerResponse> {
   const run = activeRunOwners.get(runStorageKey(surface)) ?? pendingDirectSiteRun(surface);
   if (!run || run.preparing || run.byok || run.checkpoint?.outcome) return { messageId: item.id, state: 'rejected', message: 'The active run is no longer available. Keep this message queued.' };
   const response = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
@@ -170,7 +170,7 @@ export async function steerDirectSite(surface: string, item: ComposerQueueItem):
   const session = await response.json() as PixflowDirectSiteSession;
   const result = await pixflowRuntimeFetch('/api/pixflow/direct-site/steer', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...run.connection, session, messageId: item.id, prompt: item.prompt, attachments: item.attachments, context: { ...item.meta?.context, ...directMcpMentionContext(item.meta), comments: item.comments } }),
+    body: JSON.stringify({ ...run.connection, session, messageId: item.id, prompt: item.prompt, attachments: item.attachments, context: { ...workspaceContext, ...item.meta?.context, ...directMcpMentionContext(item.meta), comments: item.comments } }),
     signal: AbortSignal.timeout(240_000),
   });
   const value = await result.json();

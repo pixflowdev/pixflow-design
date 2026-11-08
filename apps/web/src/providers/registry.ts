@@ -375,6 +375,7 @@ function generatedMediaFilename(
 }
 
 export interface DirectWordPressMediaGenerationInput {
+  signal?: AbortSignal;
   projectId: string;
   protocol?: string;
   apiKey: string;
@@ -394,9 +395,10 @@ export interface DirectWordPressMediaGenerationInput {
 export async function generateProjectMediaOnWordPress(
   input: DirectWordPressMediaGenerationInput,
 ): Promise<{ file?: ProjectFile; provider?: string; media?: PixflowMediaItem; mediaError?: string }> {
-  const { onProgress, ...requestInput } = input;
+  const { onProgress, signal, ...requestInput } = input;
+  signal?.throwIfAborted();
   const resp = await pixflowRuntimeFetch('/api/media/generate', {
-    method: 'POST',
+    method: 'POST', signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestInput),
   });
@@ -417,9 +419,15 @@ export async function generateProjectMediaOnWordPress(
   let status = payload.task.status || 'queued';
   onProgress?.(`${requestInput.surface} task ${taskId} accepted; polling (${status})…`);
   while (Date.now() < deadline) {
-    await new Promise((resolve) => globalThis.setTimeout(resolve, 4000));
+    await new Promise<void>((resolve,reject)=>{
+      const done=()=>{signal?.removeEventListener('abort',abort);resolve();};
+      const timer=globalThis.setTimeout(done,4000);
+      const abort=()=>{clearTimeout(timer);reject(signal?.reason??new DOMException('Stopped','AbortError'));};
+      signal?.addEventListener('abort',abort,{once:true});
+      if(signal?.aborted)abort();
+    });
     const poll = await pixflowRuntimeFetch(`/api/media/tasks/${encodeURIComponent(taskId)}`, {
-      method: 'POST',
+      method: 'POST', signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         projectId: requestInput.projectId,

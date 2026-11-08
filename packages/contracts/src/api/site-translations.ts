@@ -50,5 +50,8 @@ export type SiteTranslationJob = {
 export type SiteTranslationProvider = { apiProtocol: string; model: string; baseUrl: string; apiKey: string; apiVersion?: string };
 export type AgentTextRequest = { agentId: 'codex'|'claude'; model: string; prompt: string };
 export type AgentTextResponse = { text: string; source: 'desktop'|'cli' };
+/** Bounded native generation window; callers wait beyond worker termination. */
+export const agentTextTimeoutMs = (agentId: string | undefined): number => agentId === 'grok-build' ? 180_000 : 120_000;
+export const agentTextClientTimeoutMs = (agentId: string | undefined): number => agentTextTimeoutMs(agentId) + 10_000;
 export type AgentTextCapability = { available: true };
 export type SiteTranslationClaim = { job: SiteTranslationJob; lease?: string; prompt?: string };

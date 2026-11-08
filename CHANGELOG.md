@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Continue native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+- Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
+- Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
+
 - Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
 - Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
 - Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.

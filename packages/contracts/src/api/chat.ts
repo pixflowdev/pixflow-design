@@ -439,6 +439,8 @@ export type PersistedAgentEvent =
 export interface ChatMessage {
   /** Read-only media provenance in a copied chat; never a resumable run/session. */
   historyOrigin?: { projectId: string; conversationId: string; messageId: string };
+  /** Presentation only; content retains the complete handoff for agent history. */
+  handoffPresentation?: { title: string; summary: string };
   id: string;
   /** Server transcript version and stable chronological paging sequence. */
   historyRevision?: number;

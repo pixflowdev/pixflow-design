@@ -18,6 +18,7 @@ export type EntryHomeView =
   | 'projects'
   | 'media'
   | 'sitemap'
+  | 'blog-studio'
   | 'translations'
   | 'plugins'
   | 'design-systems';
@@ -97,6 +98,7 @@ export function parseRoute(pathname: string): Route {
   if (parts[0] === 'sitemap') {
     return { kind: 'home', view: 'sitemap' };
   }
+  if (parts[0] === 'blog-studio') return { kind: 'home', view: 'blog-studio' };
   if (parts[0] === 'translations') return { kind: 'home', view: 'translations' };
   if (parts[0] === 'plugins' && !parts[1]) {
     return { kind: 'home', view: 'plugins' };
@@ -110,6 +112,7 @@ export function buildPath(route: Route): string {
     if (route.view === 'projects') return '/projects';
     if (route.view === 'media') return '/media';
     if (route.view === 'sitemap') return '/sitemap';
+    if (route.view === 'blog-studio') return '/blog-studio';
     if (route.view === 'translations') return '/translations';
     if (route.view === 'plugins') return '/plugins';
     if (route.view === 'design-systems') return '/design-systems';

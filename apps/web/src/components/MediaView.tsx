@@ -1,3 +1,4 @@
+import { Button } from '@open-design/components';
 import { useUpscalerInventory } from '../pixflow/upscaler-access';
 import { WorkspaceSelect } from './WorkspaceSelect';
 import { MediaUpscaler } from './MediaUpscaler';
@@ -107,7 +108,7 @@ function MediaImagePreview({item,onOptimise,onUpscale}:{item:PixflowMediaItem;on
   </>;
 }
 
-export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveForSettings }: { onLeaveForSettings?: () => void; headerAction?: React.ReactNode; attachmentId?: number; attachmentUrl?: string } = {}) {
+export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveForSettings, onSelectImage }: { onSelectImage?: (item: PixflowMediaItem) => void; onLeaveForSettings?: () => void; headerAction?: React.ReactNode; attachmentId?: number; attachmentUrl?: string } = {}) {
   const translateUi = usePixflowUiTranslation();
   const [items, setItems] = useState<PixflowMediaItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -531,6 +532,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
                   )}
                 </div>
                 <div className="direct-media-preview-meta">
+                  {onSelectImage && selected.type === 'image' && <Button onClick={() => onSelectImage(selected)}>Use this image</Button>}
                   <div className="direct-media-preview-heading">
                     <h2>{selected.title || selected.filename}</h2>
                     <p><span title={selected.mimeType}>{selected.mimeType.split('/').pop()?.toUpperCase()}</span>

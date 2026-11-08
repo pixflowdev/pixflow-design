@@ -35,6 +35,14 @@ final class FeatureContributions
         foreach (self::all() as $service) if (isset($service['tools'][$tool], $service['call'])) return ($service['call'])($tool, $args);
         throw new \RuntimeException('This operation requires an active Pixflow Design Pro feature.');
     }
+    /** Only explicitly catalogued, authorized operations may enter a feature's session-aware dispatcher. */
+    public static function direct_site_handler(string $tool): ?callable
+    {
+        foreach (self::all() as $service) {
+            if (isset($service['tools'][$tool]) && is_callable($service['directSiteCall'] ?? null)) return $service['directSiteCall'];
+        }
+        return null;
+    }
     public static function available(string $id): bool { return isset(self::$features[$id]) && self::authorized(); }
     public static function enqueue(): array { return array_values(array_filter(array_map(static fn(callable $callback): string => $callback(), array_values(self::authorized() ? self::$features : [])), static fn(string $handle): bool => $handle !== '')); }
 }

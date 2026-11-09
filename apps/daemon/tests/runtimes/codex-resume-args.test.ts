@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { agentCapabilities } from '../../src/runtimes/capabilities.js';
 import {resolveRuntimeReasoning} from '../../src/runtimes/claude-models.js';
 import { resolveProbedInputCapabilities } from '../../src/runtimes/detection.js';
@@ -30,13 +30,20 @@ describe('codex buildArgs session resume', () => {
   });
 
   it('uses the Windows-compatible unsandboxed flag when resuming a captured thread', () => {
-    const args = codexAgentDef.buildArgs('prompt', [], ['C:/extra'], {
-      model: 'gpt-5.5',
-      reasoning: 'medium',
-    }, {
-      cwd: 'C:/project',
-      resumeSessionId: threadId,
-    });
+    const args = (() => {
+      vi.stubEnv('OD_CODEX_SANDBOX', 'danger-full-access');
+      try {
+        return codexAgentDef.buildArgs('prompt', [], ['C:/extra'], {
+          model: 'gpt-5.5',
+          reasoning: 'medium',
+        }, {
+          cwd: 'C:/project',
+          resumeSessionId: threadId,
+        });
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    })();
     expect(args.slice(0, 2)).toEqual(['exec', 'resume']);
     expect(args.at(-1)).toBe(threadId);
     expect(args).not.toContain('--sandbox');

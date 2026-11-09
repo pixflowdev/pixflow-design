@@ -27,7 +27,7 @@ jobs:
       - run: pnpm guard
       - run: pnpm typecheck
       - name: Browser inspection and review workers
-        run: pnpm --filter @open-design/daemon test agent-text-route public-page-inspection text-generation codex-turn codex-voice codex-resume-args
+        run: pnpm --filter @open-design/daemon test agent-text-route public-page-inspection text-generation codex-turn codex-voice codex-resume-args tests/runtimes/agent-args.test.ts
       - name: Workspace routing and provider settings
         run: pnpm --filter @open-design/web test last-active-restoration runtime-fetch agentReasoning
       - run: pnpm wordpress:web

@@ -1,0 +1,89 @@
+{
+  "agent": "grok",
+  "trace": "synthetic-success",
+  "events": [
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-read",
+      "name": "Read",
+      "input": {
+        "target_file": "/fixture/example.txt",
+        "file_path": "/fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-read",
+      "content": "Hello fixture.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-write",
+      "name": "Write",
+      "input": {
+        "content": "Updated fixture.",
+        "target_file": "/fixture/example.txt",
+        "file_path": "/fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-write",
+      "content": "Fixture written.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-edit",
+      "name": "Edit",
+      "input": {
+        "old_string": "Updated",
+        "new_string": "Edited",
+        "target_file": "/fixture/example.txt",
+        "file_path": "/fixture/example.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-edit",
+      "content": "Fixture edited.",
+      "isError": false
+    },
+    {
+      "type": "tool_use",
+      "id": "synthetic-success-bash",
+      "name": "Bash",
+      "input": {
+        "command": "printf fixture"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-success-bash",
+      "content": "fixture",
+      "isError": false
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic fixture complete."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 10,
+        "output_tokens": 2
+      }
+    },
+    {
+      "type": "status",
+      "label": "completed",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn",
+      "sessionId": "<normalized>"
+    }
+  ]
+}

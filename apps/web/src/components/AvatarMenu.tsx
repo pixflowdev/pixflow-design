@@ -628,7 +628,7 @@ export function AvatarMenu({
         portalTarget,
       ) : null}
     </div>
-    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
+    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude' || config.agentId === 'grok-build') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
     </>
   );
 }

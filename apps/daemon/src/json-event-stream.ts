@@ -1,4 +1,5 @@
 import { createAntigravityEvents } from './antigravity-events.js';
+import { createGrokEvents } from './grok-events.js';
 type JsonObject = Record<string, unknown>;
 type StreamEvent = Record<string, unknown>;
 type StreamEventHandler = (event: StreamEvent) => void;
@@ -855,6 +856,7 @@ function handleCodexEvent(obj: unknown, onEvent: StreamEventHandler, state: Pars
 
 export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEventHandler) {
   const antigravity = createAntigravityEvents(onEvent);
+  const grok = kind === 'grok-build' ? createGrokEvents(onEvent) : null;
   let buffer = '';
   const state: ParserState = {
     cursorTextSoFar: '',
@@ -875,10 +877,12 @@ export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEv
     try {
       obj = JSON.parse(line);
     } catch {
+      if (grok) return; // Native login/diagnostic prose is not assistant content.
       onEvent({ type: 'raw', line });
       return;
     }
 
+    if (grok?.accept(obj)) return;
     if (kind === 'antigravity' && antigravity(obj)) return;
     if (kind === 'opencode' && handleOpenCodeEvent(obj, onEvent, state)) return;
     if (kind === 'gemini' && handleGeminiEvent(obj, onEvent, state)) return;
@@ -903,6 +907,7 @@ export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEv
     const rem = buffer.trim();
     buffer = '';
     if (rem) handleLine(rem);
+    grok?.flush();
     flushPendingArtifactText(state, onEvent);
   }
 

@@ -15,6 +15,18 @@ import { runDirectSite, steerDirectSite, pendingDirectSiteRun, DirectSiteRunErro
 afterEach(() => { cleanup(); window.sessionStorage.clear(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
 describe('direct site panel', () => {
+  it('shows an admission rejection as a failed request rather than a lost Bridge connection', async () => {
+    requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true}));
+    const message = 'Direct mode does not yet support Grok Build transport.';
+    requests.daemon.mockResolvedValue(new Response(JSON.stringify({type:'error',message})+'\n'+JSON.stringify({type:'done',ok:false,outcome:'failed'})+'\n',{status:400,headers:{'Content-Type':'application/x-ndjson'}}));
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({closed:true})));
+    const onOutcome=vi.fn(), onAccepted=vi.fn();
+    await expect(runDirectSite({agentId:'grok-build',prompt:'What is the current URL?',history:[],mode:'ask',persistenceMetadata:{id:'grok-admission'},signal:new AbortController().signal,onUpdate:vi.fn(),onOutcome,onAccepted})).rejects.toMatchObject({message,outcome:'failed'});
+    expect(onAccepted).not.toHaveBeenCalled();
+    expect(onOutcome).toHaveBeenCalledWith('failed');
+    expect(pendingDirectSiteRun()).toBeNull();
+    expect(requests.daemon).toHaveBeenCalledTimes(1);
+  });
   it.each(['gutenberg', 'bricks'] as const)('does not resume, replace or clear an inherited %s checkpoint during a new handoff', async builder => {
     const regularSurface = builder === 'gutenberg' ? 'admin' : 'bricks';
     const input = {agentId:'codex',prompt:'Old page',history:[],mode:'design',persistenceMetadata:{id:'old-message'},signal:new AbortController().signal,onUpdate:vi.fn()};

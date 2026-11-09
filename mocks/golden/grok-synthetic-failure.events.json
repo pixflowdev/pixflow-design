@@ -1,0 +1,42 @@
+{
+  "agent": "grok",
+  "trace": "synthetic-failure",
+  "events": [
+    {
+      "type": "tool_use",
+      "id": "synthetic-failure-missing",
+      "name": "Read",
+      "input": {
+        "target_file": "/fixture/missing.txt",
+        "file_path": "/fixture/missing.txt"
+      }
+    },
+    {
+      "type": "tool_result",
+      "toolUseId": "synthetic-failure-missing",
+      "content": "Synthetic file not found.",
+      "isError": true
+    },
+    {
+      "type": "text_delta",
+      "delta": "Synthetic failure handled."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 10,
+        "output_tokens": 2
+      }
+    },
+    {
+      "type": "status",
+      "label": "completed",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn",
+      "sessionId": "<normalized>"
+    }
+  ]
+}

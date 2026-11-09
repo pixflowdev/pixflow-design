@@ -280,7 +280,7 @@ test('pi fetchModels reads the model table from stdout', async () => {
     } else {
       writeFileSync(
         bin,
-        '#!/bin/sh\nif [ "$1" = "--list-models" ]; then\n  printf \'%s\\n\' \\\n+    \'provider model context max-out thinking images\' \\\n+    \'anthropic claude-sonnet-4-5 200K 64K yes yes\'\n  exit 0\nfi\nexit 1\n',
+        '#!/bin/sh\nif [ "$1" = "--list-models" ]; then\n  printf \'%s\\n\' \\\n    \'provider model context max-out thinking images\' \\\n    \'anthropic claude-sonnet-4-5 200K 64K yes yes\'\n  exit 0\nfi\nexit 1\n',
       );
       chmodSync(bin, 0o755);
     }
@@ -813,6 +813,8 @@ test('grok-build uses --prompt-file and never embeds the prompt in argv or stdin
   assert.deepEqual(args, [
     '--prompt-file',
     promptFilePath,
+    '--output-format',
+    'streaming-json',
     '--model',
     'grok-4.3',
   ]);
@@ -823,7 +825,7 @@ test('grok-build uses --prompt-file and never embeds the prompt in argv or stdin
   assert.equal(args.filter((entry) => entry === '--prompt-file').length, 1);
 });
 
-test('grok-build omits effort for default/build models but keeps it for reasoning models', () => {
+test('grok-build omits effort for default/build aliases but sends it to supported models', () => {
   const promptFilePath = '/tmp/od-grok-prompt/prompt.md';
   const defaultArgs = grokBuild.buildArgs('', [], [], { model: 'default', reasoning: 'high' }, { promptFilePath });
   assert.equal(defaultArgs.includes('--effort'), false);
@@ -831,12 +833,14 @@ test('grok-build omits effort for default/build models but keeps it for reasonin
   const buildArgs = grokBuild.buildArgs('', [], [], { model: 'grok-build', reasoning: 'high' }, { promptFilePath });
   assert.equal(buildArgs.includes('--effort'), false);
 
-  const reasoningArgs = grokBuild.buildArgs('', [], [], { model: 'grok-4.20-reasoning', reasoning: 'high' }, { promptFilePath });
+  const reasoningArgs = grokBuild.buildArgs('', [], [], { model: 'grok-4.7', reasoning: 'high' }, { promptFilePath });
   assert.deepEqual(reasoningArgs, [
     '--prompt-file',
     promptFilePath,
+    '--output-format',
+    'streaming-json',
     '--model',
-    'grok-4.20-reasoning',
+    'grok-4.7',
     '--effort',
     'high',
   ]);

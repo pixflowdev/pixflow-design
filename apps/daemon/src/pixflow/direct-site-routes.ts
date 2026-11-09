@@ -422,7 +422,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         timings.nativeSessionReused=!!resumeSessionId;
         const env=applyAgentLaunchEnv(spawnEnvForAgent(def.id,process.env,configuredEnv),launch);
         await configureDirectMcpProcess(externalMcp,def.id,workspace,env,args);
-        if(def.id==='claude'&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
+        if(['claude','grok-build'].includes(def.id)&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
         if(def.id==='codex')args.push('-c','sandbox_workspace_write.network_access=true','-c','approval_policy="never"');
         if(def.id==='opencode') {const inherited=env.OPENCODE_CONFIG_CONTENT?JSON.parse(env.OPENCODE_CONFIG_CONTENT):{};env.OPENCODE_CONFIG_CONTENT=JSON.stringify({...inherited,permission:'allow'});args.push('--title','Pixflow Direct');}
         const invocation=createCommandInvocation({command:launch.launchPath,args,env});

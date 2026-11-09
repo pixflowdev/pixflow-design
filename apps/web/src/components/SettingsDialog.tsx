@@ -3997,7 +3997,7 @@ export function SettingsDialog({
                                 />
                               ))}
                               {active ? renderAgentModelConfig(a) : null}
-                              {active && (a.id === 'codex' || a.id === 'claude') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
+                              {active && (a.id === 'codex' || a.id === 'claude' || a.id === 'grok-build') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
                             </div>
                           );
                           if (active && agentTestState.status !== 'idle') {

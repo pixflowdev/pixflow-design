@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
+- Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
+- Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
+- Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
+- Use the updated, theme-aware Grok mark in provider menus.
+
 - Continue native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
 - Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
 - Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
@@ -305,8 +311,3 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.
 - Prevent unrelated settings saves from reapplying unchanged Bricks extension metadata to other content.
-
-
-
-
-

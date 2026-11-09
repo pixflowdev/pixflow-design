@@ -385,7 +385,7 @@ function sessionHeader(value: PixflowDirectSiteSession): string {
     '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
-export async function codexUsageRequest(signal?: AbortSignal, provider: 'codex' | 'claude' = 'codex', model = ''): Promise<import('@open-design/contracts').CodexUsage> {
+export async function codexUsageRequest(signal?: AbortSignal, provider: import('@open-design/contracts').AccountUsageProvider = 'codex', model = ''): Promise<import('@open-design/contracts').CodexUsage> {
   const response = await daemonFetch(`/api/agents/${provider}/usage?model=${encodeURIComponent(model)}`, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error('Usage unavailable');
   return response.json();

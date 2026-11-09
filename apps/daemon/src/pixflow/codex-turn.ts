@@ -1,3 +1,4 @@
+import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { stopChildProcessTree } from '@open-design/platform';
@@ -24,6 +25,7 @@ export async function runCodexTurn(options: {
   signal: AbortSignal; onChild: (child: ReturnType<typeof spawn>) => void;
   onEvent: (event: Message) => void; onSteerReady: (steer: CodexSteer | undefined) => void;
 }): Promise<string> {
+  assertCodexReasoningSupported(options.reasoning);
   const child = spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
     ...(options.isolateProjectInstructions ? ['-c', 'project_root_markers=["AGENTS.md"]'] : [])], {
     cwd: options.cwd, env: options.env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
@@ -153,7 +155,7 @@ export async function runCodexTurn(options: {
       cwd: options.cwd, model: options.model, approvalPolicy: 'never',
       ...(options.runtimeWorkspaceRoots?.length ? { runtimeWorkspaceRoots: options.runtimeWorkspaceRoots } : {}),
       sandbox: codexNeedsDangerFullAccessSandbox(process.platform, options.env) ? 'danger-full-access' : 'workspace-write',
-      config: { model_reasoning_effort: options.reasoning ?? 'medium', 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
+      config: { model_reasoning_effort: clampCodexReasoning(options.model, options.reasoning && options.reasoning !== 'default' ? options.reasoning : 'medium'), 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
     };
     const thread = await call(options.resumeSessionId ? 'thread/resume' : 'thread/start', {
       ...settings, ...(options.resumeSessionId ? { threadId: options.resumeSessionId } : {}),

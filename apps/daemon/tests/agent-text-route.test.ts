@@ -32,7 +32,7 @@ describe('agent text HTTP boundary', () => {
     const send=await start();
     expect((await send(null,false,'GET')).status).toBe(403);
     const response=await send(null,true,'GET');
-    expect(await response.json()).toEqual({available:true});
+    expect(await response.json()).toMatchObject({available:true,parallelText:{codex:5,claude:5}});
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(generate).not.toHaveBeenCalled();
   });
@@ -40,6 +40,7 @@ describe('agent text HTTP boundary', () => {
     const send = await start();
     expect((await send(request, false)).status).toBe(403);
     expect((await send({...request, model:'--shell'})).status).toBe(400);
+    expect((await send({...request,agentId:'codex',reasoning:'ultra'})).status).toBe(400);
     expect(generate).not.toHaveBeenCalled();
   });
   it('serializes requests and releases the slot after completion', async () => {
@@ -53,6 +54,25 @@ describe('agent text HTTP boundary', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
     generate.mockResolvedValueOnce({text:'Next',source:'cli'});
     expect((await send(request)).status).toBe(200);
+  });
+  it.each(['codex','claude','grok-build'])('admits five opted-in %s requests and declines a sixth until a slot clears',async(agentId)=>{
+    const send=await start();
+    const release:Array<(value:unknown)=>void>=[];
+    generate.mockImplementation(()=>new Promise(resolve=>release.push(resolve)));
+    const work={...request,agentId,parallel:true};
+    const jobs=Array.from({length:5},()=>send(work));
+    await vi.waitFor(()=>expect(release.length).toBe(5));
+    expect((await send(work)).status).toBe(409);
+    release.forEach(resolve=>resolve({text:'ok',source:'cli'}));
+    expect((await Promise.all(jobs)).map(r=>r.status)).toEqual([200,200,200,200,200]);
+  });
+  it.each(['codex','claude','grok-build'])('reduces %s capacity after a provider limit without blocking a later single review',async(agentId)=>{
+    const send=await start();
+    generate.mockRejectedValueOnce(new Error('Provider concurrency limited.'));
+    expect((await send({...request,agentId,parallel:true})).status).toBe(429);
+    expect(await (await send(null,true,'GET')).json()).toMatchObject({parallelText:{[agentId]:1}});
+    generate.mockResolvedValueOnce({text:'Next',source:'cli'});
+    expect((await send({...request,agentId})).status).toBe(200);
   });
   it('redacts runtime failures and permits explicit retry', async () => {
     generate.mockRejectedValueOnce(new Error('secret-native-output'));

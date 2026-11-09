@@ -27,6 +27,7 @@ export function parseCodexDebugModels(stdout: string): RuntimeModelOption[] | nu
       input_modalities?: unknown;
       additional_speed_tiers?: unknown;
       service_tiers?: unknown;
+      supported_reasoning_levels?: unknown;
     };
     if (entry.visibility === 'hidden') continue;
     const id =
@@ -68,6 +69,11 @@ export function parseCodexDebugModels(stdout: string): RuntimeModelOption[] | nu
     out.push({
       id,
       label,
+      ...(Array.isArray(entry.supported_reasoning_levels)?{reasoningOptions:entry.supported_reasoning_levels.flatMap(level=>{
+        const effort=level&&typeof level==='object'?(level as {effort?:unknown}).effort:undefined;
+        const labels:Record<string,string>={none:'None',minimal:'Minimal',low:'Light',medium:'Medium',high:'High',xhigh:'Extra High',max:'Max'};
+        return typeof effort==='string'&&Object.hasOwn(labels,effort)?[{id:effort,label:labels[effort]!}]:[];
+      })}:{}),
       ...(inputModalities || supportsFast
         ? {
             metadata: {
@@ -145,10 +151,10 @@ export const codexAgentDef = {
       { id: 'default', label: 'Default' },
       { id: 'none', label: 'None' },
       { id: 'minimal', label: 'Minimal' },
-      { id: 'low', label: 'Low' },
+      { id: 'low', label: 'Light' },
       { id: 'medium', label: 'Medium' },
       { id: 'high', label: 'High' },
-      { id: 'xhigh', label: 'XHigh' },
+      { id: 'xhigh', label: 'Extra High' },
     ],
     // Prompt is delivered via stdin pipe (gated by `promptViaStdin: true`
     // below) to avoid Windows `spawn ENAMETOOLONG` while keeping Codex on
@@ -215,12 +221,10 @@ export const codexAgentDef = {
       if (options.model && options.model !== 'default') {
         args.push('--model', options.model);
       }
-      if (options.reasoning && options.reasoning !== 'default') {
-        const effort = clampCodexReasoning(options.model, options.reasoning);
-        // Codex accepts `-c key=value` config overrides; reasoning effort
-        // is exposed as `model_reasoning_effort`.
-        args.push('-c', `model_reasoning_effort="${effort}"`);
-      }
+      // Set Pixflow's default explicitly so a user's CLI config cannot enable Ultra.
+      const effort = clampCodexReasoning(options.model,
+        options.reasoning && options.reasoning !== 'default' ? options.reasoning : 'medium');
+      args.push('-c', `model_reasoning_effort="${effort}"`);
       if (options.fastMode === true) {
         args.push('-c', 'service_tier="fast"');
       }

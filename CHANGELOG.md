@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
+- Add anonymous desktop and mobile public-page inspection through Bridge and the od inspect-page command. Page inspection runs without an AI provider.
+- Support bounded specialist review workers for Codex, Claude and Grok Build, with provider capacity and timeout handling. Keep Ultra reasoning unavailable.
+- Preserve the original WordPress revision before an AI repair so the first edit can be recovered when revisions are enabled.
+
 - Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
 - Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
 - Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.

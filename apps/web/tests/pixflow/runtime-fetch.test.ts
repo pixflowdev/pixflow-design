@@ -144,4 +144,16 @@ describe('WordPress REST transport', () => {
     expect(init.credentials).toBe('same-origin');
     expect(new Headers(init.headers).get('X-WP-Nonce')).toBe('builder-nonce');
   });
+  it('preserves the subdirectory slash on authenticated direct-session POSTs', async () => {
+    vi.stubGlobal('window', browserWindow());
+    setConfig({ runtime: 'wordpress', version: '2.2.2', restBaseUrl: 'https://wp.test/qa/wp-json/pixflow-design/v1',
+      restRouteBaseUrl: 'https://wp.test/qa/', restNonce: 'fixture-nonce' });
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', fetchMock);
+    await pixflowWordPressRestFetch('/wp-admin/direct/sessions', { method: 'POST' });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new URL(url).pathname).toBe('/qa/');
+    expect(init.method).toBe('POST');
+    expect(new Headers(init.headers).get('X-WP-Nonce')).toBe('fixture-nonce');
+  });
 });

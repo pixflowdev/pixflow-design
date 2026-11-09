@@ -6,6 +6,13 @@ vi.mock('@open-design/platform', async original => ({ ...await original<typeof i
 vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), spawn: mocks.spawn }));
 import { runCodexTurn, type CodexSteer } from '../../src/pixflow/codex-turn.js';
 afterEach(() => vi.clearAllMocks());
+it.each(['default', undefined])('uses Medium for the composer reasoning choice %s', async (reasoning) => {
+  const run = fixture(false, undefined, {reasoning});
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  await run.done;
+  expect(run.requests.find(item=>item.method==='thread/start').params.config.model_reasoning_effort).toBe('medium');
+});
 it('requests readable reasoning summaries and forwards only the supplied summary events', async () => {
   const run = fixture();
   await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
@@ -215,4 +222,10 @@ it('returns long reply guidance to the queue without a late or duplicate steer',
     run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
     await run.done;
   } finally { vi.useRealTimers(); }
+});
+
+it('rejects Ultra before spawning a Codex process',async()=>{
+  const run=fixture(false,undefined,{reasoning:'ultra'});
+  await expect(run.done).rejects.toThrow('Ultra');
+  expect(mocks.spawn).not.toHaveBeenCalled();
 });

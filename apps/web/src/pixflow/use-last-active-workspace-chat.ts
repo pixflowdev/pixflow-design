@@ -1,32 +1,41 @@
 import { useEffect, useRef } from 'react';
-import { navigate, type Route } from '../router';
+import { buildPath, navigate, parseRoute, type Route } from '../router';
 import { readChatHistory } from './chat-history-client';
-import { lastActiveChatOwner, rememberLastActiveChat, restoreLastActiveChat } from './last-active-chat';
+import { getPixflowWordPressConfig } from './wordpress-context';
+import { rememberLastActiveChat } from './last-active-chat';
+import { decodeWorkspaceRouteHash } from './workspace-route-hash';
 
-/** Restore only the initial empty entry. Explicit routes and subsequent New chat actions win. */
+/** An ordinary Workspace opening belongs to this tab, site and WordPress user. */
 export function useLastActiveWorkspaceChat(route: Route, active: boolean): void {
-  const attempt = useRef<{ route: Route; result: ReturnType<typeof restoreLastActiveChat> } | null>(null);
-  const routeRef = useRef(route);
-  routeRef.current = route;
+  const config = getPixflowWordPressConfig();
+  const site = config?.restRouteBaseUrl || config?.restBaseUrl || config?.siteUrl;
+  const owner = site && config?.userId ? 'pixflow:workspace-route:' + JSON.stringify([site, config.userId]) : null;
+  const entered = useRef<string | null>(null);
   useEffect(() => {
-    if (!active) return;
-    // Reuse the initial permission check during effect replay; later routes never restore.
-    attempt.current ??= { route, result: route.kind === 'home' && route.view === 'home' && (!location.hash || location.hash === '#') ? restoreLastActiveChat() : Promise.resolve(null) };
-    if (attempt.current.route !== route) return;
-    let cancelled = false;
-    void attempt.current.result.then(binding => {
-      if (!cancelled && binding && routeRef.current === route) navigate({ kind: 'project', ...binding, fileName: null }, { replace: true });
-    });
-    return () => { cancelled = true; };
-  }, [active, route]);
+    if (!active || !owner) return;
+    try {
+      if (entered.current !== owner) {
+        entered.current = owner;
+        const stored = sessionStorage.getItem(owner);
+        if (route.kind === 'home' && route.view === 'home' && !decodeWorkspaceRouteHash(location.hash) && stored && stored !== '/') {
+          const target = parseRoute(stored);
+          if (buildPath(target) === stored) {
+            navigate(target, { replace: true });
+            return;
+          }
+        }
+      }
+      sessionStorage.setItem(owner, buildPath(route));
+    } catch { /* The current route still works if storage is unavailable. */ }
+  }, [active, owner, route]);
+
   useEffect(() => {
     if (!active || route.kind !== 'project' || !route.conversationId) return;
     let cancelled = false;
     const binding = { projectId: route.projectId, conversationId: route.conversationId };
-    const owner = lastActiveChatOwner();
     void readChatHistory(binding).then(() => {
-      if (!cancelled && owner === lastActiveChatOwner()) rememberLastActiveChat(binding);
-    }).catch(() => { /* Never remember a route that the current user cannot read. */ });
+      if (!cancelled) rememberLastActiveChat(binding);
+    }).catch(() => {});
     return () => { cancelled = true; };
-  }, [active, route]);
+  }, [active, owner, route]);
 }

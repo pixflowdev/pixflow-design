@@ -492,7 +492,7 @@ export async function ensurePixflowLicenseEntitlement(options: {allowSiteSwitch?
     return;
   }
   rememberChatPairing('');
-  const status = await readPixflowLicenseStatus({ force: true }, true);
+  const status = await readPixflowLicenseStatus({ force: true }, options.reusePairing === true);
   const token = String(status.bridge_entitlement?.token || '').trim();
   const central = status.central_entitlement?.enabled === true;
   if (status.requires_license !== false && (status.license.valid !== true || (central ? status.runtime_ready !== true || status.central_entitlement?.valid !== true : !token))) {

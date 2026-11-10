@@ -7,7 +7,8 @@ import styles from './CodexUsage.module.css';
 
 const USAGE_REFRESH_MS = 60_000;
 
-type UsageProvider = 'codex' | 'claude';
+type UsageProvider = import('@open-design/contracts').AccountUsageProvider;
+export const usageProviderName = (provider: UsageProvider) => provider === 'grok-build' ? 'Grok' : provider === 'claude' ? 'Claude' : 'Codex';
 type UsageSnapshot = { data: Usage | null; busy: boolean };
 
 /** One poller per provider/model, even when floating chat and Workspace stay mounted together. */
@@ -66,6 +67,8 @@ function createUsageStore(provider: UsageProvider, model: string) {
 
 const usageStores = new Map<string, ReturnType<typeof createUsageStore>>();
 function usageStore(provider: UsageProvider, model: string) {
+  // Grok reports one allowance shared by all its models.
+  if (provider === 'grok-build') model = '';
   if (typeof window === 'undefined') return createUsageStore(provider, model);
   const key = JSON.stringify([provider, model]);
   let store = usageStores.get(key);
@@ -79,7 +82,7 @@ export function useCodexUsage(provider: UsageProvider = 'codex', model = '') {
   return { ...snapshot, refresh: store.refresh, provider };
 }
 
-export function CodexUsage({ provider = 'codex', model = '' }: { provider?: 'codex' | 'claude'; model?: string }) {
+export function CodexUsage({ provider = 'codex', model = '' }: { provider?: UsageProvider; model?: string }) {
   return <CodexUsageDetails state={useCodexUsage(provider, model)} />;
 }
 
@@ -92,19 +95,19 @@ export function CodexUsageDetails({ state }: { state: ReturnType<typeof useCodex
     return new Intl.NumberFormat(locale, { style: 'unit', unit, unitDisplay: 'long' }).format(value);
   };
   const date = (value: number) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(value);
-  return <section className={styles.root} aria-label={t('settings.codexUsage').replace('Codex', state.provider === 'claude' ? 'Claude' : 'Codex')}>
-    <div className={styles.heading}><strong>{t('settings.codexUsage').replace('Codex', state.provider === 'claude' ? 'Claude' : 'Codex')}</strong>
+  return <section className={styles.root} aria-label={t('settings.codexUsage').replace('Codex', usageProviderName(state.provider))}>
+    <div className={styles.heading}><strong>{t('settings.codexUsage').replace('Codex', usageProviderName(state.provider))}</strong>
       <Button variant="ghost" disabled={busy} onClick={refresh}>{t('settings.usageRefresh')}</Button></div>
     <div role="status" aria-live="polite">
       {busy && !data ? t('common.loading') : data?.status !== 'available' ? t('builderDestination.unavailable') : data.windows.map((window, index) =>
         <div className={styles.window} key={`${window.bucket}-${index}`}>
-          <div className={styles.heading}><span>{(window.bucket === 'codex' || window.bucket === 'claude') ? '' : `${window.bucket} · `}{duration(window.durationMinutes)}</span>
+          <div className={styles.heading}><span>{(window.bucket === 'codex' || window.bucket === 'claude' || window.bucket === 'grok-build') ? '' : `${window.bucket} · `}{duration(window.durationMinutes)}</span>
             <span>{t('settings.usageRemaining', { value: new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(window.remainingPercent / 100) })}</span></div>
           <progress max={100} value={window.remainingPercent} aria-label={duration(window.durationMinutes)} />
           {window.resetsAt ? <small>{t('settings.usageResets', { value: date(window.resetsAt * 1000) })}</small> : null}
         </div>)}
     </div>
-    {data?.status === 'available' ? <small>{t('settings.usageChecked', { value: date(Date.parse(data.checkedAt)) }).replace('Codex', state.provider === 'claude' ? 'Claude' : 'Codex')}</small> : null}
+    {data?.status === 'available' ? <small>{t('settings.usageChecked', { value: date(Date.parse(data.checkedAt)) }).replace('Codex', usageProviderName(state.provider))}</small> : null}
   </section>;
 }
 

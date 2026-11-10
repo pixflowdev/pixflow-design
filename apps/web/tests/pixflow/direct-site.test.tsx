@@ -15,6 +15,19 @@ import { preparePanelSession, runDirectSite, steerDirectSite, pendingDirectSiteR
 afterEach(() => { cleanup(); window.sessionStorage.clear(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
 describe('direct site panel', () => {
+  it('shows an admission rejection as a failed request rather than a lost Bridge connection', async () => {
+    requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true}));
+    const message = 'Direct mode does not yet support Grok Build transport.';
+    requests.daemon.mockResolvedValue(new Response(JSON.stringify({type:'error',message})+'\n'+JSON.stringify({type:'done',ok:false,outcome:'failed'})+'\n',{status:400,headers:{'Content-Type':'application/x-ndjson'}}));
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({closed:true})));
+    const onOutcome=vi.fn(), onAccepted=vi.fn();
+    await expect(runDirectSite({agentId:'grok-build',prompt:'What is the current URL?',history:[],mode:'ask',persistenceMetadata:{id:'grok-admission'},signal:new AbortController().signal,onUpdate:vi.fn(),onOutcome,onAccepted})).rejects.toMatchObject({message,outcome:'failed'});
+    expect(onAccepted).not.toHaveBeenCalled();
+    expect(onOutcome).toHaveBeenCalledWith('failed');
+    expect(pendingDirectSiteRun()).toBeNull();
+    expect(requests.daemon).toHaveBeenCalledTimes(1);
+  });
+
   it('does not wait for a discarded preparation when the authoritative message cutoff changes', async () => {
     let finish!: (response: Response) => void;
     requests.wordpress.mockImplementation(() => new Promise<Response>(resolve => { finish = resolve; }));

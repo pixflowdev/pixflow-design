@@ -22,7 +22,7 @@ export function resolveRuntimeReasoning(def: RuntimeAgentDef | null, model: stri
   if (!def || typeof effort !== 'string') return undefined;
   return def.id === 'claude'
     ? (claudeSupportsEffort(model, effort) ? effort : undefined)
-    : def.reasoningOptions?.find(option => option.id === effort)?.id;
+    : (def.modelReasoningOptions?.(model) ?? def.reasoningOptions)?.find(option => option.id === effort)?.id;
 }
 
 /** Only advertise models returned by the selected runtime, never guessed version IDs. */

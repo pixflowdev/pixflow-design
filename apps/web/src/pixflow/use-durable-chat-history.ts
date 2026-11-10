@@ -105,7 +105,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       return true;
     } catch { setError('save'); return false; }
   }, [outboxKey]);
-  const activeWrite = useRef<Promise<void>>();
+  const activeWrite = useRef<Promise<void> | undefined>(undefined);
   const flush = useCallback(async (onlyIds?: ReadonlySet<string>): Promise<void> => {
     if (flushing.current) return activeWrite.current;
     if (!binding.current) return;

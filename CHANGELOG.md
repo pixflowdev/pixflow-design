@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Detect Cursor CLI installed in its standard Windows location even when the Bridge was started before installation. Keep Cursor separate from other providers that use the `agent` command.
+
 ## [2.2.2] - Release candidate
 
 - The Pro upgrade notice follows the saved licence entitlement.

@@ -34,6 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = Unreleased =
+* Preserve saved resources in verified encrypted storage on hosts that cannot create a private directory.
 * Recover renewed licences automatically while retaining strict proof verification and protecting resets from delayed responses.
 * Preserve newer retained replies when reopening chats while keeping revision and conflict protections.
 * Prevent live builder commands from becoming stuck behind stale WordPress object-cache entries.

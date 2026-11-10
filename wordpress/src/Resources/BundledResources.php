@@ -19,12 +19,30 @@ final class BundledResources
         $uploads = wp_upload_dir(null, false);
         if (!empty($uploads['error'])) return true;
         $legacy = rtrim((string) ($uploads['basedir'] ?? ''), '/\\') . '/pixflow-design/resource-packs';
-        if (file_exists($legacy) || is_link($legacy)) return true;
+        if ((file_exists($legacy) || is_link($legacy)) && !self::remove_empty_tree($legacy)) return true;
         foreach (self::COLLECTIONS as $collection) {
             $legacy = PIXFLOW_DESIGN_PLUGIN_DIR . $collection;
-            if (file_exists($legacy) || is_link($legacy)) return true;
+            if ((file_exists($legacy) || is_link($legacy)) && !self::remove_empty_tree($legacy)) return true;
         }
         return false;
+    }
+
+    /** Remove directories only: never unlink files, follow links or discard resources. */
+    public static function remove_empty_tree(string $path, int $depth = 0): bool
+    {
+        if ($depth > 32 || is_link($path) || !is_dir($path)) return false;
+        // A linked ancestor is just as unsafe as a linked leaf.
+        for ($parent = dirname($path); $parent !== dirname($parent); $parent = dirname($parent)) {
+            if (is_link($parent)) return false;
+        }
+        $entries = @scandir($path);
+        if ($entries === false) return false;
+        foreach ($entries as $name) {
+            if ($name === '.' || $name === '..') continue;
+            if (!self::remove_empty_tree($path . '/' . $name, $depth + 1)) return false;
+        }
+        // rmdir fails safely if a concurrent writer has added anything.
+        return @rmdir($path);
     }
 
     public static function root(string $collection, ?string $package_dir = null): string
@@ -48,6 +66,28 @@ final class BundledResources
     {
         $package_dir ??= PIXFLOW_DESIGN_PLUGIN_DIR;
         if (isset(self::$roots[$package_dir])) return;
+        $encrypted = (new ResourcePackPathService())->encrypted_tree();
+        if ($encrypted !== null) {
+            $archive = $package_dir . 'resources/bundled-library.zip';
+            $revision = is_file($archive) ? hash_file('sha256', $archive) : 'legacy';
+            if (is_file($archive)) {
+                $valid = (new ResourcePackInstallService())->validate_archive($archive);
+                if (is_wp_error($valid)) throw new \RuntimeException('Bundled library validation failed.');
+                $zip = new \ZipArchive();
+                if ($zip->open($archive) !== true) throw new \RuntimeException('Bundled library unavailable.');
+                try {
+                    for ($i = 0; $i < $zip->numFiles; $i++) {
+                        $name = $zip->getNameIndex($i);
+                        if (!is_string($name) || str_ends_with($name, '/')) continue;
+                        $bytes = $zip->getFromIndex($i);
+                        if (!is_string($bytes)) throw new \RuntimeException('Bundled library read failed.');
+                        $encrypted->put('_bundled/' . $revision . '/' . $name, $bytes);
+                    }
+                } finally { $zip->close(); }
+            }
+            self::$roots[$package_dir] = (new ResourcePackPathService())->base_dir() . '/_bundled/' . $revision;
+            return;
+        }
         $base = (new ResourcePackPathService())->base_dir();
         $archive = $package_dir . 'resources/bundled-library.zip';
         $revision = is_file($archive) ? hash_file('sha256', $archive) : 'legacy';

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Preserve existing resource files on restricted WordPress hosts with verified encrypted storage when a new private directory cannot be created.
+
 - Recover renewed licences without re-entering a saved key. Preserve credentials during temporary failures, reject invalid proofs, and prevent delayed validation from undoing a reset or newer activation.
 
 - Preserve and save a newer appended reply retained when reopening a chat, instead of replacing it with an earlier saved snapshot. Existing revision and conflict protections remain enforced.

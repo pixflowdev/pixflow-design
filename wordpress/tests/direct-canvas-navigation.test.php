@@ -9,12 +9,14 @@ function get_current_user_id(){return 1;}
 function get_current_blog_id(){return 1;}
 function current_user_can($cap,$id){return $id===10;}
 function maybe_serialize($value){return serialize($value);}
+function maybe_unserialize($value){return unserialize($value);}
 function wp_cache_delete(...$args){}
 function set_transient($key,$value,$ttl){$GLOBALS['transients'][$key]=$value;}
 function get_transient($key){return $GLOBALS['transients'][$key]??false;}
 $wpdb=new class {
  public $options='options';
  public function prepare($sql,...$args){return [$sql,$args];}
+ public function get_var($query){$key=$query[1][0];return isset($GLOBALS['options'][$key])?serialize($GLOBALS['options'][$key]):null;}
  public function query($query){[$sql,$args]=$query;[$key,$value]=$args;
   if(str_starts_with($sql,'INSERT')){if(isset($GLOBALS['options'][$key]))return 0;$GLOBALS['options'][$key]=unserialize($value);return 1;}
   if(serialize($GLOBALS['options'][$key]??false)!==$value)return 0;unset($GLOBALS['options'][$key]);return 1;

@@ -202,7 +202,7 @@ final class HistoryRepository
                 $this->check($wpdb->update(Table::name(Table::CHAT_CONVERSATIONS), ['updated_at' => (int) round(microtime(true) * 1000)], ['conversation_key' => $key]));
                 $this->check($wpdb->update(Table::name(Table::PROJECTS), ['updated_at' => gmdate('Y-m-d H:i:s')], ['uuid' => $project]));
                 if (!$row && ($message['role'] ?? '') === 'user' && $conversationRow['title'] === 'New chat' && is_string($message['content'] ?? null)) {
-                    $title = mb_substr(wp_trim_words(sanitize_text_field($message['content']), 8, '…'), 0, 191);
+                    $title = ChatTitle::from_prompt($message['content']);
                     if ($title !== '') {
                         $this->check($wpdb->update(Table::name(Table::CHAT_CONVERSATIONS), ['title' => $title], ['conversation_key' => $key]));
                         $this->check($wpdb->update(Table::name(Table::PROJECTS), ['title' => $title], ['uuid' => $project, 'title' => 'New chat']));

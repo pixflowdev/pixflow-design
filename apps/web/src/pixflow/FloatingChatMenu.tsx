@@ -1,10 +1,17 @@
+import { subscribeChatLibrary } from '../state/workspace-library-sync';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@open-design/components';
 import { IconLayoutSidebar, IconPlus } from '@tabler/icons-react';
 import { useT } from '../i18n';
-import { listChatHistory, readChatHistory, resolveChatHistory, type ChatHistoryBinding, type SavedChatHistory } from './chat-history-client';
+import { readChatHistory, resolveChatHistory, type ChatHistoryBinding } from './chat-history-client';
 import { selectFloatingConversation } from './floating-conversation';
+import { WorkspaceSidebar } from '../components/WorkspaceSidebar';
+import { useWorkspaceOrganization } from '../state/workspace-organization';
+import { listProjects, listConversations, patchProject } from '../state/projects';
+import type { Project } from '../types';
+import { readFloatingConversation } from './floating-conversation';
+import { conversationBinding } from './conversation-address';
 import styles from './FloatingChatMenu.module.css';
 
 /** A view of the existing permission-filtered chat library, never a separate history. */
@@ -15,8 +22,9 @@ export function FloatingChatMenu() {
   const request = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const [open, setOpen] = useState(false);
-  const [rows, setRows] = useState<SavedChatHistory[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [rows, setRows] = useState<Project[]>([]);
+  const library = useWorkspaceOrganization(open);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
@@ -36,17 +44,19 @@ export function FloatingChatMenu() {
     request.current?.abort(); generation.current++;
     setOpen(false); setPending(false);
   }
-  async function load(before?: string | null) {
+  async function load(background = false) {
     const id = ++generation.current;
-    setLoading(true); setError(false);
+    if (!background) setLoading(true); setError(false);
     try {
-      const result = await listChatHistory(before);
+      const result = await listProjects();
+      const active = conversationBinding(readFloatingConversation()?.historyKey ?? '');
       if (id !== generation.current) return;
-      setRows(current => before ? [...current, ...result.conversations] : result.conversations);
-      setCursor(result.hasMore ? result.nextCursor : null);
+      setRows(result);
+      setActiveChatId(active?.projectId ?? null);
     } catch { if (id === generation.current) setError(true); }
     finally { if (id === generation.current) setLoading(false); }
   }
+  useEffect(() => open ? subscribeChatLibrary(() => { void load(true); }) : undefined, [open]);
   function show() {
     setWaiting(false);
     const list = dialog.current?.querySelector('nav');
@@ -66,11 +76,12 @@ export function FloatingChatMenu() {
     return () => { observer.disconnect(); document.removeEventListener('keydown', key); };
   }, [open, panelHost]);
   useEffect(() => () => { request.current?.abort(); generation.current++; }, []);
-  async function choose(row?: ChatHistoryBinding) {
+  async function choose(row?: ChatHistoryBinding, projectId?: string | null) {
     const controller = new AbortController(); request.current?.abort(); request.current = controller;
     setPending(true); setWaiting(false); setError(false);
     try {
       row ??= await resolveChatHistory({sessionKey:`floating-new-${crypto.randomUUID()}`,title:t('workspaceSidebar.newChat')});
+      if (projectId) await library.mutate({ type: 'move-chat', chatId: row.projectId, projectId });
       await readChatHistory(row);
       if (controller.signal.aborted) return;
       await selectFloatingConversation(row, { signal: controller.signal, onWaiting: () => setWaiting(true) });
@@ -84,12 +95,18 @@ export function FloatingChatMenu() {
       <div className={styles.scrim} onClick={close} aria-hidden="true" />
       <div role="dialog" aria-label={t('chat.conversationsAria')} className={styles.drawer}>
       <header className={styles.header}><strong>{t('chat.conversationsAria')}</strong><Button variant="ghost" className={styles.newChat} disabled={pending} onClick={()=>void choose()}><IconPlus size={16}/><span>{t('workspaceSidebar.newChat')}</span></Button></header>
-      <nav className={styles.list} aria-label={t('chat.conversationsAria')} aria-busy={loading || pending}>
-        {rows.map(row => <Button variant="ghost" className={styles.row} key={`${row.projectId}:${row.conversationId}`} disabled={pending} onClick={() => void choose(row)} title={row.title || t('chat.conversationsAria')}><span>{row.title || t('chat.conversationsAria')}</span></Button>)}
-        {!loading && !error && !rows.length && <p>{t('chat.emptyConversations')}</p>}
-        {cursor && <Button variant="ghost" className={styles.more} disabled={loading || pending} onClick={() => void load(cursor)}>{t('history.moreChats')}</Button>}
-      </nav>
-      {(loading || pending) && <p className={styles.status} role="status"><span className={styles.spinner}/>{t(waiting ? 'history.switchWaiting' : 'common.loading')}</p>}
+      <WorkspaceSidebar chatOnly chats={rows} activeChatId={activeChatId}
+        organization={library.organization} loading={loading || library.loading} error={library.error}
+        onRetry={async () => { await Promise.all([load(), library.refresh()]); }} onMutate={library.mutate}
+        onOpenChat={id => { if (pending) return; void listConversations(id).then(conversations => {
+          const conversation = conversations[0];
+          if (conversation) return choose({ projectId: id, conversationId: conversation.id });
+          setError(true);
+        }); }}
+        onRenameChat={async (id, name) => { if (!await patchProject(id, { name })) throw new Error('Could not rename the chat.'); await load(); }}
+        onNewChat={projectId => { if (!pending) void choose(undefined, projectId); }}
+        onNavigate={() => {}} onSettings={() => {}}>{null}</WorkspaceSidebar>
+      {pending && <p className={styles.status} role="status"><span className={styles.spinner}/>{t(waiting ? 'history.switchWaiting' : 'common.loading')}</p>}
       {error && <div className={styles.status} role="alert">{t('history.switchError')}<Button variant="subtle" onClick={() => void load()}>{t('history.retry')}</Button></div>}
     </div></div>);
   const toggle = <Button variant="ghost" size="icon" aria-label={t('chat.conversationsAria')} title={t('chat.conversationsAria')} aria-haspopup="dialog" aria-expanded={open} onPointerDown={event => event.stopPropagation()} onClick={() => open ? close() : show()}><IconLayoutSidebar size={19} stroke={1.6}/></Button>;

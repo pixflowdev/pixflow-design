@@ -1,4 +1,4 @@
-.layout { --chat-sidebar-width:244px; --navigation-surface:color-mix(in srgb,var(--bg) 97%,var(--text) 3%); --navigation-hover:color-mix(in srgb,var(--text) 7%,transparent); display:grid; grid-template-columns:52px var(--chat-sidebar-width) minmax(0,1fr); grid-template-rows:40px minmax(0,1fr); height:100%; min-height:0; overflow:hidden; transition:grid-template-columns 200ms cubic-bezier(.23,1,.32,1); }
+.layout { font-family:var(--sans); --chat-sidebar-width:244px; --navigation-surface:color-mix(in srgb,var(--bg) 97%,var(--text) 3%); --navigation-hover:color-mix(in srgb,var(--text) 7%,transparent); display:grid; grid-template-columns:52px var(--chat-sidebar-width) minmax(0,1fr); grid-template-rows:40px minmax(0,1fr); height:100%; min-height:0; overflow:hidden; transition:grid-template-columns 200ms cubic-bezier(.23,1,.32,1); }
 .layout[data-collapsed=true] { grid-template-columns:52px 0 minmax(0,1fr); }
 .layout[data-chat-panel=false] { grid-template-columns:52px minmax(0,1fr); }
 .toolbar { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; padding:4px 8px; background:var(--navigation-surface); border-bottom:1px solid var(--border); }
@@ -36,7 +36,7 @@
 .row:hover, .row:focus-within, .row[data-active=true], .row:has(.actions[aria-expanded=true]) { background:var(--navigation-hover); }
 .layout .sidebar .rowMain { display:flex; align-items:center; gap:8px; flex:1; min-width:0; min-height:32px; padding:7px 8px; border-radius:10px; text-align:start; font-size:15px; line-height:18px; justify-content:flex-start; color:var(--text); background:transparent; }
 .rowMain svg { flex:none; }
-.rowMain span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.rowMain > span:not([data-chat-title]) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
 .rowMain .folderIcon { display:grid; place-items:center; width:16px; height:16px; flex:0 0 16px; overflow:visible; color:var(--text-muted); }
 .folderIcon > svg { grid-area:1/1; transition:opacity 140ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1); }
 .folderIcon .chevron { opacity:0; }
@@ -84,8 +84,8 @@
 .dialogActions button[type=submit] { background:var(--text); color:var(--bg); border:0; }
 @keyframes menuIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 @media (hover:none) { .layout .sidebar .actions,.sectionAdd,.sectionToggle .chevron { opacity:1; } .folderIcon > svg:first-child { opacity:0; } .folderIcon .chevron { opacity:1; } }
-@media (max-width:900px) { .layout { --chat-sidebar-width:218px; } }
-@media (max-width:640px) { .layout { --chat-sidebar-width:min(218px,40vw); } }
+@media (max-width:900px) { .layout { font-family:var(--sans); --chat-sidebar-width:218px; } }
+@media (max-width:640px) { .layout { font-family:var(--sans); --chat-sidebar-width:min(218px,40vw); } }
 @media (max-height:500px) { .rail { gap:2px; padding-block:6px; } .destination,.rail > button,.rail :global(.entry-help-menu__trigger) { height:30px; } }
 @media (prefers-reduced-motion:reduce) { .layout,.disclosure,.chevron { transition:none; } .menu,.dialog[open] { animation:none; } }
 
@@ -104,3 +104,8 @@
 .layout .sidebar :is(button,input,p,span), .menu :is(button,span), .dialog :is(p,input,button) { font-size:15px; }
 
 .dragPreview { position:fixed; z-index:1500; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; pointer-events:none; padding:9px 14px; border:1px solid var(--border-soft); border-radius:12px; corner-shape:squircle; background:var(--bg-elevated); color:var(--text); box-shadow:0 8px 28px #0004; font-size:15px; line-height:20px; }
+
+/* Floating panels share every chat row, menu and interaction style above. */
+.layout[data-chat-only=true] { display:flex; flex-direction:column; width:100%; flex:1; --chat-sidebar-width:100%; }
+.layout[data-chat-only=true] > :is(.toolbar,.rail,.content) { display:none; }
+.layout[data-chat-only=true] > .sidebar { flex:1; }

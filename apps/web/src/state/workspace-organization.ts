@@ -1,3 +1,4 @@
+import { notifyChatLibraryChanged, subscribeChatLibrary } from './workspace-library-sync';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WorkspaceOrganization, WorkspaceOrganizationAction } from '@open-design/contracts';
 import { isPixflowWordPressEmbed, requestWordPressRest } from '../pixflow/license';
@@ -22,6 +23,7 @@ async function request(method: 'GET' | 'POST', body?: Record<string, unknown>) {
 
 /** Persist per-user grouping separately from chat files and messages. Mutations serialize and retry one stale revision. */
 export function useWorkspaceOrganization(enabled = true) {
+  const origin = useRef(crypto.randomUUID()).current;
   const [organization, setOrganization] = useState<WorkspaceOrganization>(emptyWorkspaceOrganization);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export function useWorkspaceOrganization(enabled = true) {
     void refresh().catch((e: Error) => { if (alive.current) setError(e.message); }).finally(() => { if (alive.current) setLoading(false); });
     return () => { alive.current = false; };
   }, [refresh, enabled]);
+  useEffect(() => enabled ? subscribeChatLibrary(() => { void refresh().catch(() => {}); }, origin) : undefined, [enabled, refresh, origin]);
   const mutate = useCallback((action: WorkspaceOrganizationAction): Promise<WorkspaceOrganization> => {
     const pendingId = Symbol();
     if (enabled && isWorkspaceDisclosureAction(action)) {
@@ -71,7 +74,7 @@ export function useWorkspaceOrganization(enabled = true) {
       if (!enabled) throw new Error('Workspace organization is unavailable.');
       for (let attempt = 0; attempt < 2; attempt++) {
         const response = await request('POST', { revision: current.current.revision, action });
-        if (response.ok) return accept(response.body);
+        if (response.ok) { const next = accept(response.body); notifyChatLibraryChanged(origin); return next; }
         if (response.status === 409 && attempt === 0) { await refresh(); continue; }
         throw new Error(response.body.message || 'Could not update workspace organization.');
       }
@@ -82,6 +85,6 @@ export function useWorkspaceOrganization(enabled = true) {
       });
     serial.current = next;
     return next;
-  }, [accept, refresh, enabled, publish]);
+  }, [accept, refresh, enabled, publish, origin]);
   return { organization, loading, error, refresh, mutate };
 }

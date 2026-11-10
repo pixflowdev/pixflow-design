@@ -45,6 +45,11 @@ export type SharedChatInputMessage = {
   clarificationKind?: string;
 };
 
+/** Older floating panels saved builder handoff notices as assistant messages. */
+export function isLegacyBuilderHandoffNotice(message: SharedChatInputMessage): boolean {
+  return message.role === 'assistant' && /^handoff-(?:notice|status):\d+$/.test(message.id ?? '');
+}
+
 export type SharedChatAgentIdentity = {
   agentId?: string;
   agentName?: string;
@@ -103,6 +108,7 @@ export function SharedChatRows({
     conversationTodoInput, todoOwnerAssistantId, conversationUnfinishedTodos } = useMemo(() => {
     const semanticPreflightPendingIds = new Set<string>();
     const normalized = messages.flatMap((message, index) => {
+      if (isLegacyBuilderHandoffNotice(message)) return [];
       const id = message.id || `shared-chat-assistant-${index}`;
       const isSemanticPreflight = message.clarificationKind === 'semantic_preflight_pending'
         || String(message.id || '').startsWith('semantic-preflight-assistant:')

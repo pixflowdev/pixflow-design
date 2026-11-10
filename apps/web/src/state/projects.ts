@@ -1,3 +1,4 @@
+import { notifyChatLibraryChanged } from './workspace-library-sync';
 // Project / conversation / message / tab persistence — backed by the
 // daemon's SQLite store. All writes round-trip through HTTP so projects
 // stay coherent across multiple browser tabs and across restarts.
@@ -103,6 +104,7 @@ export async function createProject(input: {
       body: JSON.stringify({ id, ...input }),
     });
     if (!resp.ok) return null;
+    notifyChatLibraryChanged();
     return (await resp.json()) as {
       project: Project;
       conversationId: string;
@@ -260,6 +262,7 @@ export async function patchProject(
     });
     if (!resp.ok) return null;
     const json = (await resp.json()) as { project: Project };
+    notifyChatLibraryChanged();
     return json.project;
   } catch {
     return null;

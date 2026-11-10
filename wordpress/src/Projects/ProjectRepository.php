@@ -154,7 +154,7 @@ final class ProjectRepository
 
         $rows = $wpdb->get_results($wpdb->prepare($sql, ...$values), ARRAY_A);
 
-        return array_values(array_map([$this, 'normalize'], is_array($rows) ? $rows : []));
+        return array_values(array_map([$this, 'normalize'], \PixflowDesign\WordPress\Chat\ChatTitle::restore_project_rows(is_array($rows) ? $rows : [])));
     }
 
     public function set_current_version(int $project_id, int $version_id): void

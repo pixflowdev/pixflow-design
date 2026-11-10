@@ -622,6 +622,12 @@ describe('ProjectView API empty response handling', () => {
     expect(vi.mocked(runDirectSite).mock.calls[0]![0].voiceConnection).toBe(voice);
     await waitFor(() => expect(mockedSaveMessage.mock.calls.some(call => call[2].events?.some(event => event.kind === 'voice_transcript' && event.text === 'Hello from voice'))).toBe(true));
     expect(voice.finish).toHaveBeenCalled();
+    // Wait for delivery finalization, not only the streamed transcript. Otherwise
+    // its late save can leak into the next test after the mocks have been reset.
+    await waitFor(() => expect(hasSavedAssistantMessage(message =>
+      message.producedFiles !== undefined
+      && message.events?.some(event => event.kind === 'voice_transcript' && event.text === 'Hello from voice') === true,
+    )).toBe(true));
   });
 
   it('releases Workspace microphone access when voice preparation fails', async () => {

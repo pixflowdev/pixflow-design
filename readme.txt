@@ -34,6 +34,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = Unreleased =
+* Recover renewed licences automatically while retaining strict proof verification and protecting resets from delayed responses.
 * Preserve newer retained replies when reopening chats while keeping revision and conflict protections.
 * Prevent live builder commands from becoming stuck behind stale WordPress object-cache entries.
 * Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.

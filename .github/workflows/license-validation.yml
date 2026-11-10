@@ -31,3 +31,11 @@ jobs:
           php wordpress/tests/central-entitlements-cache-recovery.test.php
           php wordpress/tests/central-entitlements-atomic.test.php
           php wordpress/tests/licensing-staging-origin.test.php
+      - name: Saved licence renewal and reset regression
+        run: |
+          php wordpress/tests/license-retention.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/installation-recovery.test.php
+          php wordpress/tests/trial-site-verification.test.php
+          php wordpress/tests/signed-entitlement.test.php
+          php wordpress/tests/directory-license-http.test.php

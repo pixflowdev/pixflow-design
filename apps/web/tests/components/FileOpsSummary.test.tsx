@@ -48,7 +48,7 @@ describe('FileOpsSummary', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('opens by default once the run is no longer streaming and lists every touched file', () => {
+  it('keeps completed file details compact and lists every touched file on request', () => {
     render(
       <FileOpsSummary
         entries={[
@@ -59,12 +59,14 @@ describe('FileOpsSummary', () => {
       />,
     );
 
+    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('reopens once streaming flips to false unless the user collapsed it manually', () => {
+  it('does not jump open when streaming finishes', () => {
     const { rerender } = render(
       <FileOpsSummary
         entries={[entry({ path: 'a.ts' })]}
@@ -79,7 +81,7 @@ describe('FileOpsSummary', () => {
         streaming={false}
       />,
     );
-    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
   });
 
   it('shows the open button only for files that are present in the project file set', () => {
@@ -96,6 +98,7 @@ describe('FileOpsSummary', () => {
       />,
     );
 
+    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-open-a.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-open-missing.ts')).toBeNull();
 

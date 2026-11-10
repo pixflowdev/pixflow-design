@@ -1,6 +1,8 @@
+'use client';
+
+import { InputGroup, InputGroupAddon, InputGroupButton } from './chat/InputGroup';
 import { designCommandDescriptions } from '../pixflow/design-command-descriptions';
 import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
-'use client';
 
 import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
@@ -2362,7 +2364,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             if (!removed) return;
             restoreComposerDraft({ text: item.prompt, attachments: item.attachments, commentAttachments: item.comments, meta: item.meta });
           }} />}
-        <div className="composer-shell">
+        <InputGroup className="composer-shell">
           {/*
             Spec Â§8.4 â€” context bar above the composer input. The
             section now behaves as a pure context bar: it renders the
@@ -2529,7 +2531,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               t={t}
             />
           </CaretFloatingLayer>
-          <div className="composer-row">
+          <InputGroupAddon className="composer-row">
             <input
               ref={fileInputRef}
               data-testid="chat-file-input"
@@ -2782,7 +2784,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                 }}
               />
             )}
-              <button
+              <InputGroupButton
+                variant="ghost"
                 type="button"
                 className={`composer-send od-tooltip${showStopButton ? ' stop' : ''}`}
                 data-testid={showStopButton ? 'chat-stop' : 'chat-send'}
@@ -2802,9 +2805,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               >
                 {showStopButton ? <Icon name="stop" size={13} /> : compactAppearance ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : <Icon name="send" size={13} />}
                 <span>{primaryActionLabel}</span>
-              </button>
-          </div>
-        </div>
+              </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
         {uploadError ? <span className="composer-hint">{uploadError}</span> : null}
         {detailsRecord ? (
           <PluginDetailsModal

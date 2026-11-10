@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@open-design/components';
 import { IconLayoutSidebarRight, IconX, IconFile, IconPhoto, IconVideo, IconMusic, IconCode, IconDownload, IconChevronRight } from '@tabler/icons-react';
+import { isUserFacingProducedFile } from '../produced-files';
 import type { ProjectFile } from '../types';
 import { useT } from '../i18n';
 import { fetchProjectFileText, projectFileUrl, projectRawUrl } from '../providers/registry';
@@ -26,7 +27,7 @@ export function WorkspaceSummary({ open, projectId, files, selectedName, onSelec
   const panel = useRef<HTMLElement>(null);
   const [expanded, setExpanded] = useState(true);
   // Imported catalogue metadata stays on disk but is not a user-generated output.
-  const outputs = files.filter(file => file.type !== 'dir' && !/^plugin-assets[\\/]od-default[\\/]plugin-manifest\.json$/i.test(file.name));
+  const outputs = files.filter(file => file.type !== 'dir' && isUserFacingProducedFile(file));
   const selected = outputs.find(file => file.name === selectedName) ?? outputs[0];
   // Anchor the floating card to the visible chat viewport, independently of transcript scrolling.
   useLayoutEffect(() => {

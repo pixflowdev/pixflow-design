@@ -6,7 +6,7 @@ export function chatScrollBehavior(): ScrollBehavior {
 
 /** Keep the live edge in view until the reader scrolls away. */
 export function useFloatingChatScroll(
-  log: RefObject<HTMLDivElement>, spacer: RefObject<HTMLDivElement>, session: string,
+  log: RefObject<HTMLDivElement | null>, spacer: RefObject<HTMLDivElement | null>, session: string,
   messages: ReadonlyArray<{ id?: string; role?: string }>, running: boolean,
 ) {
   const state = useRef({ follow: true, moving: false, manual: false });

@@ -10,6 +10,8 @@ import { isInlineMedia, pendingMediaGenerations, transcriptImageCards } from './
 import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { activityAction, liveActivityLabel, completedActivityLabel } from './chat/activity-label';
+import { assistantProgress } from './chat/assistant-progress';
+import { observedSourceUrls } from './chat/observed-source-urls';
 import type { ActivityIconKind } from './chat/ActivityIcon';
 import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ToolCard } from "./ToolCard";
@@ -72,7 +74,8 @@ import { agentDisplayName, agentIconId, exactAgentDisplayName } from "../utils/a
 import { AgentIcon } from "./AgentIcon";
 import { VoiceOrb } from './VoiceOrb';
 import { AgentActivity } from "./AgentActivity";
-import { filterImplicitProducedFiles } from "../produced-files";
+import { Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentGroup } from './chat/Attachment';
+import { filterImplicitProducedFiles, isUserFacingProducedFile } from "../produced-files";
 import type {
   AgentEvent,
   ChatMessage,
@@ -484,7 +487,7 @@ function AssistantMessageImpl({
             fileOps,
             streaming,
           });
-      return mergeProjectFiles(baseFiles, linkedFiles);
+      return mergeProjectFiles(baseFiles, linkedFiles).filter(isUserFacingProducedFile);
     },
     [blocks, fileOps, message, produced, projectFiles, projectId, streaming],
   );
@@ -577,6 +580,7 @@ function AssistantMessageImpl({
     event.kind === 'activity' && event.phase === 'researching'
     || event.kind === 'tool_use' && toolFamily(event.name) === 'search');
   const roleIconId = assistantRoleIconId(message);
+  const citationUrls = useMemo(() => observedSourceUrls(events), [events]);
   const sources = useMemo(() => {
     if (streaming) return [];
     const links = new Map<string, { title: string; url: URL }>();
@@ -587,15 +591,15 @@ function AssistantMessageImpl({
         if (url && !links.has(url.href)) links.set(url.href, { title: source.title || url.hostname, url });
       }
     }
-    const prose = searchedWeb ? blocks.flatMap(block => block.kind === 'text'
+    const prose = searchedWeb || citationUrls.size ? blocks.flatMap(block => block.kind === 'text'
       ? splitRichAnswer(stripArtifact(block.text), false).flatMap(segment => segment.kind === 'text'
         ? splitSystemReminders(segment.text).filter(part => part.kind === 'text').map(part => part.text) : [])
       : []) : [];
-    for (const source of collectMarkdownSources(prose)) {
+    for (const source of collectMarkdownSources(prose, searchedWeb ? undefined : citationUrls)) {
       if (!links.has(source.url.href)) links.set(source.url.href, source);
     }
     return [...links.values()];
-  }, [blocks, events, searchedWeb, streaming]);
+  }, [blocks, events, searchedWeb, citationUrls, streaming]);
   const hasEmptyResponse = events.some(
     (e) => e.kind === "status" && e.label === "empty_response"
   );
@@ -657,17 +661,21 @@ function AssistantMessageImpl({
     !containsQuestionForm &&
     !!nextStepArtifactName &&
     (!!isLast && !!onToolboxAction);
-  // Pre-output vs working: before any real content (text / thinking / tools /
-  // files) the footer shimmers "Preparing…"; the moment content lands it
-  // flips to "Working". The elapsed clock stays anchored to the persisted run
-  // start so switching project tabs or remounting the message cannot restart it.
-  const hasContent = blocks.some((b) => b.kind !== "status") || fileOps.length > 0;
-  const working = hasContent || Boolean(message.content?.trim()) || Boolean(message.events?.some(event => event.kind === 'steering_message'));
+  // Lifecycle events distinguish local setup from a launched provider. Only
+  // supplied reasoning activates Thinking; elapsed time never implies thought.
+  const progress = assistantProgress(events);
+  const working = progress !== 'preparing' && progress !== 'waiting';
   const workedTurn = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     if (streaming && working) workedTurn.current = message.id;
   }, [message.id, streaming, working]);
   const preparing = streaming && !working && workedTurn.current !== message.id;
+  const progressLabel = progress === 'waiting'
+    ? message.agentName?.trim()
+      ? t('assistant.statusWaitingFor', { provider: message.agentName.split(' · ')[0]! })
+      : t('assistant.statusWaiting')
+    : progress === 'thinking' ? t('assistant.thinking')
+    : progress === 'finishing' ? t('assistant.statusFinishing') : undefined;
   const voiceStatus = [...events].reverse().find(event => event.kind === 'status' && event.code === 'voice_connection');
   const isVoiceMessage = !!voiceStatus || message.agentName === 'Codex Voice'
     || events.some(event => event.kind === 'voice_transcript');
@@ -709,6 +717,7 @@ function AssistantMessageImpl({
                 key={i}
                 text={b.text}
                 searchedWeb={searchedWeb}
+                citationUrls={citationUrls}
                 attachmentUrls={attachmentUrls}
                 hideRecoveredHtmlFallback={message.agentId === "grok-build" && !streaming}
                 assistantMessageId={message.id}
@@ -776,7 +785,7 @@ function AssistantMessageImpl({
             if (b.label === "error" && message.id === errorCardOwnerId) return null;
             // The pre-output "initializing" status is surfaced by the footer's
             // shimmering "Preparing…" label instead of its own pill.
-            if (b.label === "initializing" || b.label === "awaiting_user") return null;
+            if (['initializing', 'requesting', 'provider_waiting', 'response_complete', 'thinking', 'completed', 'awaiting_user'].includes(b.label)) return null;
             return <StatusPill key={i} label={b.label} detail={b.detail} />;
           }
           return null;
@@ -891,6 +900,7 @@ function AssistantMessageImpl({
                 interrupted={message.runStatus === "interrupted"}
                 canceled={message.runStatus === "canceled"}
                 preparing={preparing}
+                progressLabel={progressLabel}
                 voiceLabel={voiceLabel}
                 copyMarkdown={copyMarkdown}
                 onFork={canFork ? onForkFromMessage : undefined}
@@ -1280,6 +1290,7 @@ interface AssistantFooterProps {
   // Pre-output phase: streaming but nothing rendered yet. The label shimmers
   // "Preparing…"; once content lands it flips to "Working".
   preparing?: boolean;
+  progressLabel?: string;
   voiceLabel?: string;
   copyMarkdown?: string;
   onFork?: () => void;
@@ -1304,6 +1315,7 @@ function AssistantFooter({
   interrupted = false,
   canceled = false,
   preparing = false,
+  progressLabel,
   voiceLabel,
   copyMarkdown,
   onFork,
@@ -1335,9 +1347,9 @@ function AssistantFooter({
       data-last={isLast ? "true" : "false"}
     >
       <span className="dot" data-active={streaming ? "true" : "false"} />
-      <span role={streaming && voiceLabel ? 'status' : undefined} className={`assistant-label${streaming && preparing && !voiceLabel ? " shimmer-text shimmer-prepare" : ""}`}>
+      <span role={streaming && voiceLabel ? 'status' : undefined} className={`assistant-label${streaming && preparing && !voiceLabel ? " pixflow-shimmer-text" : ""}`}>
         {streaming
-          ? voiceLabel || (preparing
+          ? voiceLabel || progressLabel || (preparing
             ? t("assistant.statusPreparing")
             : t("assistant.workingLabel"))
           : hasEmptyResponse
@@ -1407,7 +1419,7 @@ function AssistantForkButton({
 function AssistantMarkdownCopyButton({ markdown }: { markdown: string }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -1898,40 +1910,23 @@ function ProducedFiles({
 }) {
   const t = useT();
   return (
-    <div className="produced-files">
-      <div className="produced-files-label">{t("assistant.producedFiles")}</div>
-      <div className="produced-files-list">
-        {files.map((f) => (
-          <div key={f.name} className="produced-file">
-            <span className="produced-file-icon" aria-hidden>
-              <Icon name={kindIconName(f.kind)} size={14} />
-            </span>
-            <span className="produced-file-name" title={f.name}>
-              {f.name}
-            </span>
-            <span className="produced-file-size">{humanBytes(f.size)}</span>
-            <div className="produced-file-actions">
-              {onRequestOpenFile ? (
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={() => onRequestOpenFile(f.name)}
-                >
-                  {t("assistant.openFile")}
-                </button>
-              ) : null}
-              <a
-                className="ghost-link"
-                href={projectFileUrl(projectId, f.name)}
-                download={f.name}
-              >
-                {t("assistant.downloadFile")}
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <AttachmentGroup>
+      {files.map((f) => (
+        <Attachment key={f.name}>
+          <AttachmentMedia><Icon name={kindIconName(f.kind)} size={18} /></AttachmentMedia>
+          <AttachmentContent>
+            <AttachmentTitle title={f.name}>{f.name.split(/[\\/]/).pop()}</AttachmentTitle>
+            <AttachmentDescription>{[f.name.split('.').pop()?.toUpperCase(), humanBytes(f.size)].filter(Boolean).join(' · ')}</AttachmentDescription>
+          </AttachmentContent>
+          <AttachmentActions>
+            {onRequestOpenFile ? <AttachmentAction onClick={() => onRequestOpenFile(f.name)} title={f.name}>{t('assistant.openFile')}</AttachmentAction> : null}
+            <AttachmentAction render={<a href={projectFileUrl(projectId, f.name)} download={f.name.split(/[\\/]/).pop()} />}>
+              <Icon name="download" size={14} />{t('assistant.downloadFile')}
+            </AttachmentAction>
+          </AttachmentActions>
+        </Attachment>
+      ))}
+    </AttachmentGroup>
   );
 }
 
@@ -2151,6 +2146,7 @@ function ProseBlock({
   text,
   attachmentUrls,
   searchedWeb,
+  citationUrls,
   hideRecoveredHtmlFallback,
   assistantMessageId,
   isLastAssistant,
@@ -2166,6 +2162,7 @@ function ProseBlock({
 }: {
   text: string;
   searchedWeb: boolean;
+  citationUrls: ReadonlySet<string>;
   attachmentUrls: ReadonlySet<string>;
   hideRecoveredHtmlFallback?: boolean;
   assistantMessageId: string;
@@ -2252,7 +2249,7 @@ function ProseBlock({
         if (seg.kind === "text") {
           return (
             <div className="stream-prose" key={seg.key}>
-              <StreamingMarkdown text={seg.text} attachmentUrls={attachmentUrls} onLinkClick={onLinkClick} searchedWeb={searchedWeb} live={Boolean(showStreamCursor && !live)} />
+              <StreamingMarkdown text={seg.text} attachmentUrls={attachmentUrls} onLinkClick={onLinkClick} searchedWeb={searchedWeb} citationUrls={citationUrls} live={Boolean(showStreamCursor && !live)} />
             </div>
           );
         }
@@ -2447,7 +2444,7 @@ function ThinkingBlock({
   // bounded prefix as partial so a protocol tag cut at the boundary stays hidden.
   const showDetail = open;
   const decoded = useMemo(() => splitRichAnswer(stripArtifact(showDetail ? text : text.slice(0, 2000)), isThinking || !showDetail), [text, isThinking, showDetail]);
-  const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').slice(0, 500).replace(/\s+/g, ' ').trim();
+  const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').replace(/\s+/g, ' ').trim().slice(0, 160);
   return (
     <TraceCollapsible className="thinking-block" data-trace-kind="reasoning" open={open}
       onOpenChange={setOverride}>
@@ -2473,7 +2470,7 @@ function PixflowWaitBlock({ text, detail }: { text: string; detail?: string }) {
     <div className="pixflow-wait-block" role="status" aria-live="polite">
       <span className="pixflow-wait-dot" aria-hidden />
       <span className="pixflow-wait-copy">
-        {trimmed ? <span className="pixflow-wait-text shimmer-text">{trimmed}</span> : null}
+        {trimmed ? <span className="pixflow-wait-text pixflow-shimmer-text">{trimmed}</span> : null}
         {detailText ? <span className="pixflow-wait-detail">{detailText}</span> : null}
       </span>
     </div>
@@ -2684,7 +2681,7 @@ function StreamingCodeCard({
         <span className="action-card-status op-status-running" aria-hidden>
           <Icon name="spinner" size={14} />
         </span>
-        <span className="op-title shimmer-text">{titleLabel}</span>
+        <span className="op-title pixflow-shimmer-text">{titleLabel}</span>
         {metaLabel ? <span className="op-meta">{metaLabel}</span> : null}
       </div>
       {code ? (
@@ -2793,7 +2790,8 @@ type Block =
   | { kind: "status"; label: string; detail?: string | undefined };
 
 function isCollapsibleActivity(block: Block): boolean {
-  if (block.kind === 'thinking' || block.kind === 'live-tool') return true;
+  // Provider-supplied reasoning is its own disclosure, never buried inside tools.
+  if (block.kind === 'live-tool') return true;
   if (block.kind === 'activity') return true;
   if (block.kind !== 'tool-group') return false;
   return block.items.every(item => !isTodoWriteToolName(item.use.name)

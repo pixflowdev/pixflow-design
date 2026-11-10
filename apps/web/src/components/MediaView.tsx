@@ -199,7 +199,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
   useEffect(() => () => batch.current?.abort(), []);
   const eligible = (item: PixflowMediaItem) => ['image/jpeg', 'image/png', 'image/webp'].includes(item.mimeType);
 
-  const lookup=useRef<AbortController>();
+  const lookup=useRef<AbortController | undefined>(undefined);
   const [selecting,setSelecting]=useState(false);
   useEffect(()=>{
     setSelecting(false);

@@ -7,6 +7,27 @@ import type { AgentEvent } from '../../src/types';
 
 afterEach(cleanup);
 
+it('cites a page read through Claude CLI while retaining unrelated navigation links', async () => {
+  const view = reply([
+    {kind:'tool_use',id:'fetch',name:'Bash',input:{command:"curl -sL --max-time 15 'https://pixflow.co.uk/'"}},
+    {kind:'tool_result',toolUseId:'fetch',content:'<title>Pixflow</title>',isError:false},
+  ], 'The live [homepage](https://pixflow.co.uk/) title identifies Pixflow. Open the [dashboard](https://pixflow.co.uk/wp-admin/) to edit it.');
+  const citation = view.getByRole('button',{name:'homepage (pixflow.co.uk)'});
+  expect(view.getByRole('link',{name:'dashboard'})).toBeTruthy();
+  fireEvent.click(citation);
+  expect((await view.findByRole('link',{name:/pixflow.co.uk ·/})).getAttribute('href')).toBe('https://pixflow.co.uk/');
+  expect(view.getByRole('button',{name:'Sources (1)'})).toBeTruthy();
+});
+
+it.each([
+  ['echo https://pixflow.co.uk/', false],
+  ['curl https://pixflow.co.uk/', true],
+])('does not turn a printed URL or failed fetch into a source: %s', (command, isError) => {
+  const view=reply([{kind:'tool_use',id:'fetch',name:'Bash',input:{command}},
+    {kind:'tool_result',toolUseId:'fetch',content:'No evidence',isError}], '[homepage](https://pixflow.co.uk/)');
+  expect(view.getByRole('link',{name:'homepage'})).toBeTruthy();
+});
+
 const content = 'Check the [dashboard](https://example.org/dashboard) first. The guide explains why. [Source guide](https://example.org/guide?hl=en)';
 function reply(events: AgentEvent[], prose = content) {
   return render(<AssistantMessage projectId={null} streaming={false} message={{

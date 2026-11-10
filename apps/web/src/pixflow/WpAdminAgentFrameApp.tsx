@@ -7,6 +7,7 @@ import { usePixflowFeatureRuntime } from './feature-runtime';
 import { usePixflowLicenseRefresh } from './use-license-refresh';
 import { useBuilderHandoffReceiver, builderHandoffPersistenceSurface, builderHandoffConversationKey, builderHandoffAttachments, assertBuilderHandoffTarget, finishBuilderHandoffReceipt, type BuilderHandoffExecution } from './builder-handoff-receiver';
 import { useDurableChatHistory } from './use-durable-chat-history';
+import { useConversationFiles } from './use-conversation-files';
 import { recoverDirectRunMessages } from './direct-run-history';
 import { ChatHistoryControls, ConversationTransitionStatus } from './ChatHistoryControls';
 import { chatHistoryOwnerScope, mergeChatHistory, type ChatHistoryPage } from './chat-history-client';
@@ -3219,6 +3220,10 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       });
     },
   });
+  const outputProjectId = durableHistory.binding?.projectId ?? conversationBinding(sessionKey)?.projectId ?? null;
+  const completedOutputTurn = [...durableHistory.messages].reverse().find(message => message.role === 'assistant' && message.endedAt);
+  const outputFiles = useConversationFiles(outputProjectId, completedOutputTurn ? `${completedOutputTurn.id}:${completedOutputTurn.endedAt}` : '');
+  const outputFileNames = useMemo(() => new Set(outputFiles.map(file => file.name)), [outputFiles]);
   useEffect(() => {
     if (!restoring && durableHistory.ready && durableHistory.binding && messages.length) rememberLastActiveChat(durableHistory.binding);
   }, [restoring, durableHistory.ready, durableHistory.binding, messages.length]);
@@ -4714,6 +4719,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     >
       <ConversationTransitionStatus active={!durableHistory.error && ((continuing && durableHistory.loading) || (navigationReconnecting && !siteAccess.error))} />
       <SharedMessageStream
+        scrollSessionKey={sessionKey}
         logRef={logRef as MutableRefObject<HTMLDivElement | null>}
         loading={streamLoading && !continuing && !navigationReconnecting}
         chatLogScrollable={chatScroll.scrollable}
@@ -4724,6 +4730,9 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           <ChatHistoryControls {...durableHistory} />
           <SharedChatRows
             messages={durableHistory.messages}
+            projectId={outputProjectId}
+            projectFiles={outputFiles}
+            projectFileNames={outputFileNames}
             fallbackAgentIdentity={fallbackAgentIdentity}
             paneStreaming={streaming}
             terminalReply={streaming ? terminalReply : undefined}

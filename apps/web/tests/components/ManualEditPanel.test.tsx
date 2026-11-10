@@ -1,9 +1,9 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import type { CSSProperties } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { Simulate } from 'react-dom/test-utils';
-import { JSDOM } from 'jsdom';
+import { fireEvent } from '@testing-library/react';
 import { ManualEditPanel, emptyManualEditDraft, manualEditPatchSummary, normalizeManualEditStyles, type ManualEditDraft } from '../../src/components/ManualEditPanel';
 import { emptyManualEditStyles, type ManualEditPatch, type ManualEditStyles, type ManualEditTarget } from '../../src/edit-mode/types';
 
@@ -32,26 +32,19 @@ type OnSaveDraft = () => void;
 type OnCancelDraft = () => void;
 
 describe('ManualEditPanel', () => {
-  let dom: JSDOM;
   let host: HTMLDivElement;
   let root: Root;
 
   beforeEach(() => {
-    dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>');
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
-    globalThis.HTMLElement = dom.window.HTMLElement;
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    host = dom.window.document.querySelector('#root') as HTMLDivElement;
+    host = document.createElement('div');
+    document.body.append(host);
     root = createRoot(host);
   });
 
   afterEach(() => {
     act(() => root.unmount());
-    dom.window.close();
-    Reflect.deleteProperty(globalThis, 'window');
-    Reflect.deleteProperty(globalThis, 'document');
-    Reflect.deleteProperty(globalThis, 'HTMLElement');
+    host.remove();
     Reflect.deleteProperty(globalThis, 'IS_REACT_ACT_ENVIRONMENT');
   });
 
@@ -118,7 +111,7 @@ describe('ManualEditPanel', () => {
     if (!deleteButton) throw new Error('Delete button not found');
 
     act(() => {
-      deleteButton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      deleteButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
 
     const confirmDeleteButton = host.querySelector(
@@ -143,8 +136,8 @@ describe('ManualEditPanel', () => {
     if (!cancel || !save) throw new Error('Footer action buttons not found');
 
     act(() => {
-      cancel.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-      save.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      cancel.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      save.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
 
     expect(onCancelDraft).toHaveBeenCalledTimes(1);
@@ -172,7 +165,7 @@ describe('ManualEditPanel', () => {
 
     act(() => {
       fontSelect.value = 'Georgia, serif';
-      fontSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      fontSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
     });
 
     expect(onDraftChange).toHaveBeenCalledWith(expect.objectContaining({
@@ -220,9 +213,9 @@ describe('ManualEditPanel', () => {
     if (!sizeIncrease || !lineIncrease || !trackingDecrease) throw new Error('Stepper button not found');
 
     act(() => {
-      sizeIncrease.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-      lineIncrease.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-      trackingDecrease.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      sizeIncrease.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      lineIncrease.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      trackingDecrease.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
 
     expect(onStyleChange).toHaveBeenCalledWith('hero-title', { fontSize: '33px' }, 'Style: Hero Title');
@@ -305,7 +298,7 @@ describe('ManualEditPanel', () => {
     if (!lineInput) throw new Error('Line input not found');
 
     act(() => {
-      lineInput.dispatchEvent(new dom.window.FocusEvent('blur', { bubbles: true }));
+      lineInput.dispatchEvent(new window.FocusEvent('blur', { bubbles: true }));
     });
 
     expect(onError).not.toHaveBeenCalled();
@@ -330,8 +323,7 @@ describe('ManualEditPanel', () => {
     if (!lineInput) throw new Error('Line input not found');
 
     act(() => {
-      lineInput.value = '49px';
-      Simulate.change(lineInput);
+      fireEvent.change(lineInput, { target: { value: '49px' } });
     });
 
     expect(onError).toHaveBeenCalledWith('');
@@ -362,12 +354,12 @@ describe('ManualEditPanel', () => {
     if (!bgSwatch) throw new Error('Background swatch not found');
 
     act(() => {
-      bgSwatch.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      bgSwatch.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
     const colorTile = host.querySelector('button[aria-label="#3b82f6"]') as HTMLButtonElement | null;
     if (!colorTile) throw new Error('Background color tile not found');
     act(() => {
-      colorTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      colorTile.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
 
     expect(onStyleChange).toHaveBeenCalledWith('__body__', { backgroundColor: '#3b82f6' }, 'Page styles');
@@ -392,7 +384,7 @@ describe('ManualEditPanel', () => {
 
     act(() => {
       fontSelect.value = 'Georgia, serif';
-      fontSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      fontSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
     });
 
     expect(onStyleChange).toHaveBeenCalledWith('__body__', { fontFamily: 'Georgia, serif' }, 'Page styles');
@@ -428,7 +420,7 @@ describe('ManualEditPanel', () => {
 
     act(() => {
       fontSelect.value = '';
-      fontSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      fontSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
     });
 
     expect(onStyleChange).toHaveBeenCalledWith('__body__', { fontFamily: '' }, 'Page styles');
@@ -484,9 +476,9 @@ describe('ManualEditPanel', () => {
     if (!gapIncrease) throw new Error('Gap increase control not found');
 
     act(() => {
-      gapIncrease.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      gapIncrease.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       directionSelect.value = 'column';
-      directionSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      directionSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
     });
 
     expect(onStyleChange).toHaveBeenCalledWith('hero-title', { gap: '9px' }, 'Style: Hero Title');

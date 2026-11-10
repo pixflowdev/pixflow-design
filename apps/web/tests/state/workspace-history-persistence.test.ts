@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { save, preserve, importing, config } = vi.hoisted(() => ({ save: vi.fn(), preserve: vi.fn(), importing: vi.fn(), config: {siteHash:'site',userId:1} }));
-vi.mock('../../src/pixflow/chat-history-client', () => ({saveChatHistoryMessage:save, importChatHistory:importing, historyMessageFingerprint:(value:unknown)=>JSON.stringify(value)}));
+vi.mock('../../src/pixflow/chat-history-client', async importOriginal => ({...await importOriginal<typeof import('../../src/pixflow/chat-history-client')>(),saveChatHistoryMessage:save, importChatHistory:importing, historyMessageFingerprint:(value:unknown)=>JSON.stringify(value)}));
 vi.mock('../../src/pixflow/wordpress-context', () => ({getPixflowWordPressConfig:()=>config}));
 vi.mock('../../src/pixflow/history-recovery',()=>({preserveHistoryCopies:preserve}));
-import {recoverWorkspaceHistoryWrites,queueWorkspaceHistoryMessage,retryWorkspaceHistoryWrites,workspaceHistoryWriteFailed,workspaceHistoryPendingMessages} from '../../src/state/workspace-history-persistence';
+import {recoverWorkspaceHistoryWrites,queueWorkspaceHistoryMessage,retryWorkspaceHistoryWrites,workspaceHistoryWriteFailed,workspaceHistoryWriteConflicted,workspaceHistoryPendingMessages} from '../../src/state/workspace-history-persistence';
 
 describe('Workspace durable write outbox', () => {
   beforeEach(() => { localStorage.clear(); save.mockReset(); config.userId=1; });
@@ -29,6 +29,7 @@ describe('Workspace durable write outbox', () => {
     save.mockRejectedValueOnce(new Error('offline'));
     await queueWorkspaceHistoryMessage('p1','c1',message);
     expect(workspaceHistoryWriteFailed('p1','c1')).toBe(true);
+    expect(workspaceHistoryWriteConflicted('p1','c1')).toBe(false);
     expect(workspaceHistoryPendingMessages('p1','c1')).toEqual([message]);
     expect(Object.keys(localStorage)).toHaveLength(1);
     save.mockResolvedValueOnce({...message,historyRevision:1});
@@ -92,4 +93,15 @@ it('retains Workspace conflicts when private recovery fails',async()=>{
   await queueWorkspaceHistoryMessage('failed-p','failed-c',copy);
   await expect(recoverWorkspaceHistoryWrites('failed-p','failed-c','Recovery')).rejects.toThrow('offline');
   expect(workspaceHistoryPendingMessages('failed-p','failed-c')).toEqual([copy]);
+});
+
+it('offers recovery only for an acknowledged revision conflict, until successfully saved', async () => {
+  const {ChatHistoryRequestError} = await import('../../src/pixflow/chat-history-client');
+  save.mockRejectedValueOnce(new ChatHistoryRequestError('Conflict',409,{}));
+  const item={id:'conflict-type',role:'user' as const,content:'Preserve'};
+  await queueWorkspaceHistoryMessage('typed-conflict','chat',item);
+  expect(workspaceHistoryWriteConflicted('typed-conflict','chat')).toBe(true);
+  save.mockResolvedValueOnce({...item,historyRevision:2});
+  await retryWorkspaceHistoryWrites('typed-conflict','chat');
+  expect(workspaceHistoryWriteConflicted('typed-conflict','chat')).toBe(false);
 });

@@ -568,7 +568,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('shows project files mentioned as plain filenames in the assistant summary', () => {
@@ -592,7 +592,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('does not recover old reference files as produced files', () => {

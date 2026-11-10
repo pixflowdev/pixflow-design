@@ -17,7 +17,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) throw new ChatHistoryRequestError(body.message || `Chat history request failed (${response.status})`, response.status, body);
   return body as T;
 }
-class ChatHistoryRequestError extends Error {
+export class ChatHistoryRequestError extends Error {
   constructor(message: string, readonly status: number, readonly body: {code?:string;data?:{message?:HistoryMessage}}) { super(message); }
 }
 

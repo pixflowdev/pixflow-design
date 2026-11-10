@@ -14,6 +14,7 @@ it.each(['direct','composio'] as const)('keeps selected guidance visible outside
  const guidance={revision:3,source:'custom',product:'Use the confirmed name: QA Bakery.',design:'Keep the saved blue palette.',instructions:'Use current saved guidance.'};
  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',designGuidance:guidance}));
  const systems:string[]=[];
+ const onUpdate = vi.fn();
  const provider=async(input:any)=>{systems.push(input.system);return {text:'Read-only answer.',calls:[],turns:[]};};
  composio.turn.mockImplementation(provider);
  vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
@@ -21,7 +22,10 @@ it.each(['direct','composio'] as const)('keeps selected guidance visible outside
   const body=JSON.parse(init.body);
   return Response.json(body.tool==='provider.turn'?await provider(body.arguments):{integrations:{bricks:false}});
  }));
- await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Audit this page without changes',context:{payload:'x'.repeat(30000)},history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Audit this page without changes',context:{payload:'x'.repeat(30000)},history:[],signal:new AbortController().signal,onUpdate});
+ const statuses = onUpdate.mock.calls.flatMap(([, events]) => events).filter(event => event.kind === 'status').map(event => event.label);
+ expect(statuses).toContain('provider_waiting');
+ expect(statuses).not.toContain('thinking');
  expect(systems.length).toBeGreaterThan(0);
  for(const system of systems){
   expect(system).toContain(JSON.stringify({siteDesignGuidance:guidance}));

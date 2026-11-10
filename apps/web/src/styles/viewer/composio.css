@@ -25,7 +25,7 @@
       color-mix(in srgb, var(--text-soft) 8%, var(--bg-subtle)) 100%
     );
   background-size: 200% 100%;
-  animation: settingsSkeletonShimmer 1.4s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
   border-radius: var(--radius-pill);
   padding: 0;
   color: transparent;
@@ -54,7 +54,7 @@
       transparent 100%
     );
   background-size: 220% 100%;
-  animation: settingsSkeletonShimmer 1.6s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 
 /* The whole credentials field gets a softened, "we're checking" feel
@@ -90,10 +90,6 @@
   flex-shrink: 0;
 }
 
-@keyframes settingsSkeletonShimmer {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
-}
 @media (prefers-reduced-motion: reduce) {
   .field-status-badge-skeleton,
   .field-input-skeleton-shimmer {

@@ -34,7 +34,7 @@ dependency on a separately installed Two-Factor plugin.
 
 ## Shared chat UI components
 
-Trace and Message compositions adapt shadcn/ui (https://github.com/shadcn-ui/ui).
+Trace, Message, Bubble, Attachment, Hover Card, Message Scroller, Questionnaire, Input Group and Code Block compositions adapt shadcn/ui (https://github.com/shadcn-ui/ui).
 
 MIT License
 

@@ -1780,6 +1780,11 @@ const PROVIDER_ACTIVITY_STATUS: Record<string, {
 // into the UI's AgentEvent union. Keep this liberal — unknown types just
 // return null so the UI ignores them instead of rendering garbage.
 export function translateAgentEvent(data: DaemonAgentPayload): AgentEvent | null {
+  // A provider can finish its reply before process cleanup/usage persistence.
+  // This is not a successful run receipt: tool-use pauses and failures stay live.
+  if (data.type === 'turn_end' && ['end_turn', 'stop'].includes(String(data.stopReason ?? data.stop_reason))) {
+    return {kind:'status',label:'response_complete'};
+  }
   if (data.type === 'assistant_message_boundary') return { ...data, kind: 'assistant_message_boundary' };
   if (data.type === 'steering_message') return { ...data, kind: 'steering_message' };
   if (data.type === 'voice_transcript') return { ...data, kind: 'voice_transcript' };

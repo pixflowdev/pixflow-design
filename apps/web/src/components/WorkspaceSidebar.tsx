@@ -179,7 +179,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
           <span className={styles.folderIcon} aria-hidden="true"><IconFolder size={16} stroke={1.6} /><IconChevronDown size={14} stroke={1.6} className={styles.chevron} data-closed={group.collapsed} /></span><span>{group.name}</span>
         </Button>{actions({ kind: 'project', item: group })}
       </div>
-      <div className={styles.disclosure} data-open={!group.collapsed} {...(group.collapsed ? { inert: '' } as Record<string, string> : {})} aria-hidden={group.collapsed || undefined}>
+      <div className={styles.disclosure} data-open={!group.collapsed} ref={node => { node?.toggleAttribute('inert', group.collapsed); }} aria-hidden={group.collapsed || undefined}>
         <div className={styles.disclosureInner}><div className={styles.members}>{members.map(chatRow)}{!members.length && <p className={styles.empty}>{t('workspaceSidebar.emptyProject')}</p>}</div></div>
       </div>
     </div>;
@@ -190,7 +190,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       <div className={styles.sectionHead}><Button variant="ghost" className={styles.sectionToggle} aria-expanded={!closed} onClick={() => void perform({ type: 'collapse-section', section: key, collapsed: !closed })}><span>{t(`workspaceSidebar.${key}`)}</span><IconChevronDown size={14} stroke={1.6} className={styles.chevron} data-closed={closed} /></Button>
         {key === 'projects' && <Button variant="ghost" size="icon" className={styles.sectionAdd} aria-label={t('workspaceSidebar.newProject')} onClick={event => { trigger.current = event.currentTarget; edit({ kind: 'create' }); }}><IconFolderPlus size={15} stroke={1.6} /></Button>}
       </div>
-      <div className={styles.disclosure} data-open={!closed} {...(closed ? { inert: '' } as Record<string, string> : {})} aria-hidden={closed || undefined}><div className={styles.disclosureInner}>{content}</div></div>
+      <div className={styles.disclosure} data-open={!closed} ref={node => { node?.toggleAttribute('inert', closed); }} aria-hidden={closed || undefined}><div className={styles.disclosureInner}>{content}</div></div>
     </section>;
   }
   return <div className={styles.layout} data-collapsed={collapsed} data-chat-panel={chatPanelVisible}>
@@ -206,7 +206,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       <Button variant="ghost" className={`${styles.destination} ${styles.settings}`} title={t('entry.openSettingsAria')} aria-label={t('entry.openSettingsAria')} onClick={onSettings}><LanguageUpdateIcon><IconSettings size={19} stroke={1.6} /></LanguageUpdateIcon></Button>
       {helpControl}
     </nav>
-    {chatPanelVisible && <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} {...(collapsed ? { inert: '' } as Record<string, string> : {})}>
+    {chatPanelVisible && <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} ref={node => { node?.toggleAttribute('inert', collapsed); }}>
       <div className={styles.sidebarInner}>
       <label className={styles.search}><IconSearch size={16} stroke={1.6} /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder={t('workspaceSidebar.search')} aria-label={t('workspaceSidebar.search')} /></label>
       <div className={styles.scroll}>

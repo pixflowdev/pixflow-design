@@ -1842,10 +1842,6 @@ button.filter-pill:hover:not(:disabled) .filter-pill-count,
    Loading primitives — spinner, skeletons, shimmer
    ============================================================ */
 @keyframes icon-spin { to { transform: rotate(360deg); } }
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
 .icon-spin { animation: icon-spin 0.9s linear infinite; transform-origin: center; }
 
 .loading-spinner {
@@ -1866,8 +1862,8 @@ button.filter-pill:hover:not(:disabled) .filter-pill-count,
     var(--bg-muted) 50%,
     var(--bg-subtle) 100%
   );
-  background-size: 800px 100%;
-  animation: shimmer 1.4s linear infinite;
+  background-size: 200% 100%;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 .skeleton-block + .skeleton-block { margin-top: 6px; }
 
@@ -1882,8 +1878,8 @@ button.filter-pill:hover:not(:disabled) .filter-pill-count,
     var(--bg-muted) 50%,
     var(--bg-subtle) 100%
   );
-  background-size: 800px 100%;
-  animation: shimmer 1.4s linear infinite;
+  background-size: 200% 100%;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 
 .centered-loader {

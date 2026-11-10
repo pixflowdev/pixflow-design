@@ -49,6 +49,7 @@ it.each([false, true])('stays at the bottom on Send and preserves scrollback (re
   view.rerender(<Panel rows={[...turn]} running />);
   paint();
   expect(offset).toBe(750);
+  expect(tail.offsetHeight).toBe(0);
   expect(move).not.toHaveBeenCalled();
   // Move away after the update has queued, before its animation frame runs.
   view.rerender(<Panel rows={[...turn]} running />);

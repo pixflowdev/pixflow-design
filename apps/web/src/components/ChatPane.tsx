@@ -1,3 +1,4 @@
+import { Bubble, BubbleContent } from './chat/Bubble';
 import { conversationDraftKey } from '../pixflow/conversation-address';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { ChatHistoryControls } from '../pixflow/ChatHistoryControls';
@@ -425,7 +426,7 @@ function chatArtifactKindLabel(kind: ProjectFile['kind'], t: TranslateFn): strin
 interface Props {
   messages: ChatMessage[];
   olderHistory?: { loading: boolean; error: boolean; load: () => Promise<void> };
-  historyPersistence?: { retry: () => Promise<void>; recover?: (title: string) => Promise<void>; recovering?: boolean };
+  historyPersistence?: { conflict?: boolean; retry: () => Promise<void>; recover?: (title: string) => Promise<void>; recovering?: boolean };
   streaming: boolean;
   loading?: boolean;
   error: string | null;
@@ -776,6 +777,7 @@ export function ChatPane({
     const anchor = historyScrollAnchor.current;
     const log = logRef.current;
     if (!anchor || !log || olderHistory?.loading) return;
+    if (log.dataset.slot === 'message-scroller-viewport') { historyScrollAnchor.current = null; return; }
     log.scrollTop = anchor.top + log.scrollHeight - anchor.height;
     historyScrollAnchor.current = null;
   }, [persistedMessages, olderHistory?.loading]);
@@ -1088,6 +1090,7 @@ export function ChatPane({
   };
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const el = logRef.current;
     if (!el || didInitialScrollRef.current || messages.length === 0) return;
     didInitialScrollRef.current = true;
@@ -1129,6 +1132,7 @@ export function ChatPane({
   // dead gap below it. Collapsing the spacer lets the bottom-anchored layout
   // settle the finished transcript against the composer.
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const was = prevStreamingRef.current;
     prevStreamingRef.current = streaming;
     // The tail spacer only ever holds the anchor-to-top reserve for an actively
@@ -1143,6 +1147,7 @@ export function ChatPane({
   }, [streaming]);
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const el = logRef.current;
     if (!el) return;
     // Auto-scroll only when the user was already pinned near the bottom,
@@ -1221,6 +1226,7 @@ export function ChatPane({
     { pinnedToBottom: true } | { pinnedToBottom: false; scrollTop: number } | null
   >(null);
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     if (tab !== 'chat') return;
     const el = logRef.current;
     if (!el) return;
@@ -1339,6 +1345,7 @@ export function ChatPane({
   }, [tab]);
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     if (tab !== 'chat') return;
     const el = logRef.current;
     if (!el) return;
@@ -2003,6 +2010,8 @@ export function ChatPane({
       {tab === 'chat' ? (
         <>
           <SharedMessageStream
+        modernScroller={sharedPanelChat}
+        scrollSessionKey={activeConversationId}
             logRef={logRef}
             loading={loading}
             chatLogScrollable={chatLogScrollable}
@@ -2018,7 +2027,7 @@ export function ChatPane({
                   void olderHistory.load();
                 }} /> : null}
               {chatRowsNode}
-              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /> : null}
+              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} conflict={historyPersistence.conflict} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /> : null}
             </>}
             errorNode={chatErrorNode}
             guidanceNode={amrGuidanceNode}
@@ -2846,7 +2855,7 @@ function UserMessageImpl({
       activeDesignSystem,
   );
   const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -2960,7 +2969,7 @@ function UserMessageImpl({
         </MessageContent>
       ) : message.content ? (
         <MessageContent className="user-text-wrap">
-          <div className="user-text user-bubble"><PageAnnotationMessage content={message.content} /></div>
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={message.content} /></BubbleContent></Bubble>
           <MessageFooter className="user-actions">
             {ts ? (
               <time

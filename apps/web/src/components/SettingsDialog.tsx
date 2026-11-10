@@ -3697,7 +3697,7 @@ export function SettingsDialog({
                   <span className={settingsStyles.cliScanIcon} aria-hidden="true">
                     <Icon name="terminal" size={18} />
                   </span>
-                  <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                  <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                 </div>
               ) : agents.length === 0 ? (
                 <div className="empty-card">
@@ -3744,7 +3744,7 @@ export function SettingsDialog({
                         >
                           {agentRescanRunning ? (
                             <>
-                              <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                              <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                             </>
                           ) : (
                             t('settings.rescan')
@@ -6857,7 +6857,7 @@ function buildSharedMcpJson(info: McpInstallInfo): string {
 // copy-snippet path still works for users who prefer to paste manually
 // or whose Codex CLI is not on PATH (button shows a disabled hint in
 // that case).
-function CodexInstallToggle(): JSX.Element | null {
+function CodexInstallToggle(): React.JSX.Element | null {
   const translateUi = usePixflowUiTranslation();
   const { t } = useI18n();
   const [available, setAvailable] = useState<boolean | null>(null);

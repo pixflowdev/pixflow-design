@@ -422,3 +422,17 @@ it('updates a single quiet route label and removes it on disconnect', () => {
   expect(within(menu).queryByText('bridge.connectedExtension')).toBeNull();
   cleanup();
 });
+
+it('shows only release numbers from CLI version banners', () => {
+  renderMenu({ agents: [
+    {...codexAgent, version: 'codex-cli 0.167.0-alpha.32'},
+    {...claudeAgent, version: '2.1.309 (Claude Code)'},
+    {...codexAgent, id: 'grok', name: 'Grok Build', version: 'grok 1.0.77 (50ca579fa996) [stable]'},
+  ] });
+  fireEvent.click(screen.getByRole('button', {name: 'avatar.title'}));
+  const menu = screen.getByRole('dialog', {name: 'avatar.title'});
+  expect(within(menu).getByText('2.1.309')).toBeTruthy();
+  expect(within(menu).getByText('1.0.77')).toBeTruthy();
+  expect(menu.textContent).toContain('0.167.0');
+  expect(menu.textContent).not.toMatch(/alpha|codex-cli|\(Claude Code\)|50ca579fa996|\[stable\]/);
+});

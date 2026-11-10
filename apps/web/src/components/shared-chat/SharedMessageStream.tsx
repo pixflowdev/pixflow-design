@@ -1,3 +1,4 @@
+import { MessageScroller, MessageScrollerProvider, MessageScrollerViewport, MessageScrollerContent, MessageScrollerButton, supportsMessageScroller } from '../chat/MessageScroller';
 import type {
   MouseEventHandler,
   MutableRefObject,
@@ -12,6 +13,8 @@ type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => 
 // rendered rows as children so the existing workspace renderer remains the
 // source of truth until the Bricks Agent has its own conversation state.
 export function SharedMessageStream({
+  scrollSessionKey,
+  modernScroller = true,
   logRef,
   loading,
   chatLogScrollable,
@@ -29,6 +32,8 @@ export function SharedMessageStream({
   loadingLabel,
   t,
 }: {
+  scrollSessionKey?: string | null;
+  modernScroller?: boolean;
   logRef: MutableRefObject<HTMLDivElement | null>;
   loading: boolean;
   chatLogScrollable: boolean;
@@ -46,6 +51,24 @@ export function SharedMessageStream({
   loadingLabel?: string;
   t: TranslateFn;
 }) {
+  if (modernScroller && supportsMessageScroller) return (
+    <MessageScrollerProvider key={scrollSessionKey} autoScroll defaultScrollPosition="end">
+      <MessageScroller className="chat-log-wrap">
+        <MessageScrollerViewport ref={logRef} className={`chat-log${loading ? ' is-loading' : ''}`}
+          aria-busy={loading} aria-label={jumpToLatestLabel} onClickCapture={onLogClickCapture}>
+          <MessageScrollerContent>
+            {loading ? <SharedChatConversationLoading t={t} label={loadingLabel} /> : null}
+            {emptyState}{rows}{errorNode}{guidanceNode}
+          </MessageScrollerContent>
+        </MessageScrollerViewport>
+        <MessageScrollerButton direction="end" className="chat-jump-btn chat-jump-btn-active"
+          title={scrollToLatestLabel} aria-label={jumpToLatestLabel}>
+          <Icon name="arrow-up" size={12} style={{ transform: 'rotate(180deg)' }} />
+          <span>{jumpToLatestLabel}</span>
+        </MessageScrollerButton>
+      </MessageScroller>
+    </MessageScrollerProvider>
+  );
   return (
     <div className="chat-log-wrap">
       <div

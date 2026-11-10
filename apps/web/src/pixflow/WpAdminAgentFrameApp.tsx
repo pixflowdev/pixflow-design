@@ -9,7 +9,7 @@ import { useBuilderHandoffReceiver, builderHandoffPersistenceSurface, builderHan
 import { useDurableChatHistory } from './use-durable-chat-history';
 import { recoverDirectRunMessages } from './direct-run-history';
 import { ChatHistoryControls, ConversationTransitionStatus } from './ChatHistoryControls';
-import { mergeChatHistory } from './chat-history-client';
+import { chatHistoryOwnerScope, mergeChatHistory, type ChatHistoryPage } from './chat-history-client';
 import { resolveEditorRunTarget } from './editor-run-target';
 import { wpAdminBootstrapContextStatus } from './wp-admin-bootstrap-context';
 import { useT as usePixflowUiTranslation } from '../i18n';
@@ -31,7 +31,7 @@ import { EnhancedDesignGuidance } from './EnhancedDesignGuidance';
 import { directSkillMentions, isDiscoverableSkillMention } from './direct-skill-mentions';
 import { directMcpMentionContext } from './mcp-mentions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SiteAccessNotice, runDirectSite, beginDirectPreparation, pendingDirectSiteRun, directRunStatus, useSiteAccess, useDirectAttachmentProject } from './direct-site';
+import { SiteAccessNotice, runDirectSite, preparePanelSession, beginDirectPreparation, pendingDirectSiteRun, directRunStatus, useSiteAccess, useDirectAttachmentProject } from './direct-site';
 import { directRunFailurePresentation } from './direct-run-presentation';
 import type { MutableRefObject } from 'react';
 import {
@@ -719,8 +719,9 @@ async function persistWpAdminConfig(next: AppConfig, changed?: Partial<AppConfig
   if (!response.ok) throw new Error(`Could not save shared settings (${response.status}).`);
   // WordPress owns these preferences. An offline optional Bridge must not
   // delay or prevent saving the full admin settings modal.
-  if (next.mode === 'daemon' && typeof next.codexImagegenOverride === 'boolean') {
-    void persistPixflowOptionalBridgeConfig({ codexImagegenOverride: next.codexImagegenOverride }).catch(() => undefined);
+  if (!changed || changed.mode !== undefined || changed.agentId !== undefined || changed.codexImagegenOverride !== undefined) {
+    void persistPixflowOptionalBridgeConfig({ mode: next.mode, agentId: next.agentId,
+      ...(next.mode === 'daemon' ? { codexImagegenOverride: next.codexImagegenOverride } : {}) }).catch(() => undefined);
   }
   window.dispatchEvent(new CustomEvent('pixflow-design:app-config-changed', {
     detail: notification.patch,
@@ -3167,6 +3168,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     filterWpAdminAgents(readCachedPixflowOptionalBridgeAgents())
   ));
   const [streaming, setStreaming] = useState(false);
+  const [terminalReply, setTerminalReply] = useState<{id: string; endedAt: number; awaitingInput: boolean}>();
   const siteAccess = useSiteAccess(streaming);
   const [contextStatus, setContextStatus] = useState<'loading' | 'ready' | 'unavailable'>(
     runtime.context && Object.keys(runtime.context).length > 0 ? 'ready' : 'loading',
@@ -3189,10 +3191,86 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   useEffect(() => { setDirectQuestion(null); }, [sessionKey]);
   const [hydratedSessionKey, setHydratedSessionKey] = useState(sessionKey);
   const legacyHistory = useMemo(() => readRawWpAdminHistory(sessionKey), [sessionKey]);
-  const durableHistory = useDurableChatHistory({ sessionKey, messages, legacyMessages: legacyHistory, onHydrate: setMessages, enabled: !restoring && hydratedSessionKey === sessionKey, scrollRef: logRef });
+  const reloadPreparation = useRef<ReturnType<typeof preparePanelSession> | undefined>(undefined);
+  const durableHistory = useDurableChatHistory<WpAdminMessage>({ sessionKey, messages, legacyMessages: legacyHistory, onHydrate: setMessages, enabled: !restoring && hydratedSessionKey === sessionKey, scrollRef: logRef,
+    restorePanel: async (address, throughMessageId, signal) => {
+      // On the admin dashboard the direct session has no canvas target. Both
+      // history restoration and Send can use its authenticated snapshot.
+      if (config.mode !== 'daemon' || !/\/wp-admin\/(?:index\.php)?$/.test(location.pathname)
+        || !document.querySelector('#pixflow-wp-admin-agent-shell.is-open') || pendingDirectSiteRun(persistenceSurface)) return;
+      return new Promise(resolve => {
+        const prep = preparePanelSession(Promise.resolve(undefined), { ...address, throughMessageId }, page => {
+          if (!page) release();
+          resolve(page as ChatHistoryPage<WpAdminMessage> | undefined);
+        });
+        reloadPreparation.current = prep;
+        function release() {
+          if (reloadPreparation.current === prep) {
+            reloadPreparation.current = undefined;
+            prep.dispose();
+          }
+          signal.removeEventListener('abort', release);
+          window.removeEventListener('pagehide', release);
+          window.removeEventListener('pixflow-design:wp-admin-panel-close', release);
+        }
+        signal.addEventListener('abort', release, { once: true });
+        window.addEventListener('pagehide', release, { once: true });
+        window.addEventListener('pixflow-design:wp-admin-panel-close', release, { once: true });
+      });
+    },
+  });
   useEffect(() => {
     if (!restoring && durableHistory.ready && durableHistory.binding && messages.length) rememberLastActiveChat(durableHistory.binding);
   }, [restoring, durableHistory.ready, durableHistory.binding, messages.length]);
+  const preparationRef = useRef<ReturnType<typeof preparePanelSession> | undefined>(undefined);
+  const [panelOpen, setPanelOpen] = useState(() => document.querySelector('#pixflow-wp-admin-agent-shell')?.classList.contains('is-open') === true);
+  useEffect(() => {
+    const open = () => setPanelOpen(true);
+    const close = () => setPanelOpen(false);
+    window.addEventListener('pixflow-design:wp-admin-panel-open', open);
+    window.addEventListener('pixflow-design:wp-admin-panel-close', close);
+    return () => {
+      window.removeEventListener('pixflow-design:wp-admin-panel-open', open);
+      window.removeEventListener('pixflow-design:wp-admin-panel-close', close);
+    };
+  }, []);
+  // The cached address is a hint for starting a read, never permission to Send.
+  // WordPress authorizes it; Send matches the actual hydrated cutoff and the Bridge verifies its revision.
+  const preparationAddress = durableHistory.binding ?? conversationBinding(sessionKey);
+  const preparationProject = preparationAddress?.projectId;
+  const preparationChat = preparationAddress?.conversationId;
+  const preparationCutoff = messages.at(-1)?.id;
+  const canPrepare = durableHistory.ready ? durableHistory.acknowledged && !durableHistory.hasPendingWrites()
+    : Boolean(preparationAddress && preparationCutoff);
+  useEffect(() => {
+    if (reloadPreparation.current || !panelOpen || streaming || restoring || selectionPending || config.mode !== 'daemon'
+      || siteAccess.guarded || siteAccess.error || contextStatus !== 'ready'
+      || !canPrepare || hydratedSessionKey !== sessionKey || pendingDirectSiteRun(persistenceSurface)) return;
+    const controller = new AbortController();
+    const target = resolveEditorRunTarget({ context: withGutenbergTarget(applyBuilderContext(contextRef.current)) }, controller.signal);
+    const binding = preparationProject && preparationChat && preparationCutoff
+      ? { projectId: preparationProject, conversationId: preparationChat, throughMessageId: preparationCutoff } : undefined;
+    const prep = preparePanelSession(target, binding);
+    if (!durableHistory.ready) prep.invalidateHistory();
+    preparationRef.current = prep;
+    const invalidate = () => prep.dispose();
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key.startsWith('pixflow:chat-history-outbox:')) prep.invalidateHistory();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pagehide', invalidate);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pagehide', invalidate);
+      // Send transfers the in-flight preparation before appending the new prompt.
+      if (preparationRef.current !== prep) return;
+      preparationRef.current = undefined;
+      controller.abort();
+      prep.dispose();
+    };
+  }, [panelOpen, streaming, restoring, selectionPending, config.mode, siteAccess.guarded, siteAccess.error,
+    contextStatus, contextIdentity?.objectId, contextIdentity?.objectKind, canPrepare, preparationProject, preparationChat, preparationCutoff,
+    hydratedSessionKey, sessionKey, persistenceSurface]);
   const directSessionKeyRef = useRef(sessionKey);
   directSessionKeyRef.current = sessionKey;
   const reattachedDirectRunRef = useRef('');
@@ -3295,9 +3373,10 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       const status = (event as CustomEvent<unknown>).detail;
       const signature = agentReadinessBridgeStatusSignature(status);
       if (readinessBridgeStatusSignatureRef.current === signature) return;
+      const reconnecting = Boolean(readinessBridgeStatusSignatureRef.current);
       readinessBridgeStatusSignatureRef.current = signature;
       if (!bridgeStatusCanWarmAgentReadiness(status)) return;
-      void fetchPixflowOptionalBridgeAgents({ force: true }).then((next) => {
+      void fetchPixflowOptionalBridgeAgents({ force: reconnecting }).then((next) => {
         setAgents(filterWpAdminAgents(next));
       }).catch(() => { /* Discovery status displays the failed refresh; retain saved providers. */ });
     };
@@ -3418,7 +3497,11 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     let terminalAt: number | undefined;
     setMessages(current => recoverDirectRunMessages(current, metadata.messages!, metadata.messageId!));setStreaming(true);
     void notifyFloatingCanvasDeparture(pending.metadata, contextIdentity?.objectKind === 'post' ? Number(contextIdentity.objectId) : 0, () => resolveEditorRunTarget({context: withGutenbergTarget(applyBuilderContext(context || {}))}, controller.signal), translateUi("history.editorTransitionFailed")).then(() => runDirectSite({config,agentId:'',prompt:'',history:[],mode:metadata.mode||'design',resume:pending,persistenceSurface,signal:controller.signal,
-      onOutcome: (_outcome, endedAt) => { terminalAt=endedAt; },
+      onOutcome: (outcome, endedAt) => {
+            terminalAt = endedAt;
+            if (directSessionKeyRef.current === owner && ['completed', 'answered', 'awaiting_input'].includes(outcome))
+              setTerminalReply({id: metadata.messageId!, endedAt: endedAt ?? Date.now(), awaitingInput: outcome === 'awaiting_input'});
+          },
       onUpdate:(next,nextEvents)=>{
         setNavigationReconnecting(false);
         content=next;events=nextEvents;
@@ -3467,6 +3550,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     }
   }, [contextUrl, runtime.restNonce, tabId]);
 
+  const catalogueOwner = chatHistoryOwnerScope();
   useEffect(() => {
     let cancelled = false;
     const loadSurfaceCatalogues = async () => {
@@ -3475,23 +3559,10 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           if (!cancelled) setAgents(filterWpAdminAgents(next));
         })
         .catch(() => undefined);
-      const [capabilityResult, skillResult, promptSkillResult, memoryResult] = await Promise.allSettled([
-        pixflowWordPressRestFetch('/wp-admin/capabilities', { cache: 'no-store' })
-          .then((response) => response.ok ? response.json() : null),
-        pixflowRuntimeFetch('/api/skills', { cache: 'no-store' })
-          .then((response) => response.ok ? response.json() : null),
-        pixflowWordPressRestFetch('/pixflow-mcp/prompt-skills', { cache: 'no-store' })
-          .then((response) => response.ok ? response.json() : null),
-        pixflowRuntimeFetch('/api/memory', { cache: 'no-store' })
-          .then((response) => response.ok ? response.json() : null),
-      ]);
+      const response = await pixflowWordPressRestFetch('/wp-admin/panel-catalogues', { cache: 'no-store', priority: 'low' }).catch(() => null);
+      const catalogues = response?.ok ? await response.json().catch(() => null) : null;
       if (cancelled) return;
-      const capabilityPayload = capabilityResult.status === 'fulfilled'
-        ? capabilityResult.value as { families?: PixflowCapabilityFamilySummary[] } | null
-        : null;
-      const skillPayload = skillResult.status === 'fulfilled' ? skillResult.value : null;
-      const promptSkillPayload = promptSkillResult.status === 'fulfilled' ? promptSkillResult.value : null;
-      const memoryPayload = memoryResult.status === 'fulfilled' ? memoryResult.value : null;
+      const { capabilities: capabilityPayload, skills: skillPayload, promptSkills: promptSkillPayload, memory: memoryPayload } = catalogues ?? {};
       const nextFamilies = Array.isArray(capabilityPayload?.families) ? capabilityPayload.families : [];
       const mergedSkills = mergeWpAdminSkillCatalogues(promptSkillPayload, skillPayload);
       const nextSkills = mergedSkills.skills.length ? mergedSkills.skills : filterWpAdminSkills(skillPayload);
@@ -3499,7 +3570,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       setSkills(nextSkills);
       setLockedSkills(readLockedSkills(skillPayload));
       setSkillBranches(mergedSkills.branches);
-      setMentions(buildWpAdminMentions(context, nextFamilies, nextSkills));
       setMemoryIndex(memoryIndexOf(memoryPayload));
     };
     void loadSurfaceCatalogues();
@@ -3507,7 +3577,8 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     window.addEventListener('pixflow-design:personal-skills-changed', refreshSkills);
     window.addEventListener('pixflow-design:saved-memory-changed', refreshSkills);
     return () => { cancelled = true; window.removeEventListener('pixflow-design:personal-skills-changed', refreshSkills); window.removeEventListener('pixflow-design:saved-memory-changed', refreshSkills); };
-  }, [context]);
+  // Catalogues are scoped to the signed-in site. Page context only changes the mentions derived below.
+  }, [runtime.restNonce, catalogueOwner]);
 
   useEffect(() => {
     setMentions(buildWpAdminMentions(context, families, skills));
@@ -3628,6 +3699,13 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         events: meta?.voice ? [{ kind: 'status', code: 'voice_connection', label: translateUi("ui.wpAdminAgentFrameApp.connecting") }] : [],
       }];
       rememberFloatingExecution({ ...config, agentId: agent?.id || config.agentId });
+      const panelPreparation = !handoff && !meta?.voice && config.mode === 'daemon' ? reloadPreparation.current ?? preparationRef.current : undefined;
+      if (panelPreparation) {
+        if (panelPreparation === reloadPreparation.current) reloadPreparation.current = undefined;
+        else preparationRef.current = undefined;
+      }
+      const priorSaved = !handoff && config.mode === 'daemon' && !durableHistory.acknowledged && durableHistory.ready && durableHistory.binding
+        ? durableHistory.acknowledgeForSend() : undefined;
       const finishPreparation = beginDirectPreparation(persistenceSurface,sessionKey,{messages:initial,messageId:id,mode:turnMode},controller);
       setMessages(initial); setStreaming(true); setPendingActions([]); setPendingClarification(null);
       let finalContent = '';
@@ -3635,6 +3713,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       let failure = '';
       let failureStatus = 'failed';
       let awaitingInput = false;
+      let plainReplyFinished = false;
       let terminalAt: number | undefined;
       const directOwner = sessionKey;
       try {
@@ -3656,10 +3735,24 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         if (handoff) {
           assertBuilderHandoffTarget(handoff, await resolveEditorRunTarget({ context: withGutenbergTarget(applyBuilderContext(context || {})) }, controller.signal));
         }
-        const outcome = await runDirectSite({ config, voiceConnection: meta?.voice,
-          ...(handoff ? { conversationId: `builder-handoff:${handoff.receipt.id}` } : { historySource: { sessionKey: directOwner, messages } }),
+        const outcome = await runDirectSite({ config, panelPreparation, voiceConnection: meta?.voice,
+          ...(handoff ? { conversationId: `builder-handoff:${handoff.receipt.id}` } : { historySource: {
+            sessionKey: directOwner, messages,
+            ...(durableHistory.ready && durableHistory.binding ? {
+              binding: durableHistory.binding, checkSavedPageFirst: durableHistory.acknowledged || await priorSaved,
+            } : {}),
+          } }),
           onAccepted: async () => { onAccepted?.(); await handoff?.accepted(); },
-          onOutcome: (_outcome, endedAt) => { terminalAt=endedAt; },
+          onPlainReplyFinished: () => {
+            plainReplyFinished = true;
+            if (!handoff && !meta?.voice && !controller.signal.aborted && directSessionKeyRef.current === directOwner)
+              setTerminalReply({id, endedAt: Date.now(), awaitingInput: false});
+          },
+          onOutcome: (outcome, endedAt) => {
+            terminalAt = endedAt;
+            if (directSessionKeyRef.current === directOwner && ['completed', 'answered', 'awaiting_input'].includes(outcome))
+              setTerminalReply({id: id, endedAt: endedAt ?? Date.now(), awaitingInput: outcome === 'awaiting_input'});
+          },
           agentId: resolvedAgent.id, model: prefs.model || undefined, reasoning: prefs.reasoning || undefined, fastMode: prefs.fastMode,
           attachments: routeAnnotationScreenshots([...(handoff ? [] : messages.flatMap(message => message.attachments || [])), ...attachments], annotationImages).map(item => {
             if (!item.projectId) throw new Error(translateUi("ui.wpAdminAgentFrameApp.feedback102", { value1: String(item.name) }));
@@ -3684,6 +3777,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         }
       }
       finally {
+        panelPreparation?.dispose();
         finishPreparation();
         meta?.voice?.finish();
         if(directSessionKeyRef.current===directOwner)setMessages(current => current.map(message => message.id === id ? {
@@ -3692,7 +3786,9 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           status: failure && failureStatus==='failed' ? 'error' : 'complete', runStatus: controller.signal.aborted || failureStatus === 'canceled' ? 'canceled' : failure ? failureStatus : 'succeeded', awaitingInput, endedAt: terminalAt ?? Date.now(),
         } : message));
         setStreaming(false); abortRef.current = null; stopRunRef.current = null;
-        void refreshContext();
+        // A confirmed text-only reply did not run a site tool. Keep the current
+        // page context ready for an immediate follow-up.
+        if (!plainReplyFinished || failure || controller.signal.aborted || handoff || meta?.voice) void refreshContext();
         if (handoff && failureStatus !== 'interrupted') await handoff.finished(failure || (controller.signal.aborted ? 'The request was stopped.' : undefined), awaitingInput);
       }
       return;
@@ -4630,6 +4726,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
             messages={durableHistory.messages}
             fallbackAgentIdentity={fallbackAgentIdentity}
             paneStreaming={streaming}
+            terminalReply={streaming ? terminalReply : undefined}
             onOpenQuestions={siteAccess.guarded ? undefined : request => setDirectQuestion(request?.form ? request : null)}
             footerActionForMessage={(message) => message.id === undoMessageId && !streaming ? (
               <button
@@ -4718,6 +4815,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               activeWorkspaceContext={activeWorkspaceContext}
               requireQueueAcceptance={!siteAccess.guarded}
               onSend={(prompt, attachments, comments, meta, onAccepted) => {
+                if (!streaming && !meta?.queueOnly) chatScroll.followOnSend();
                 const sent = sendPrompt(prompt, attachments, comments, meta, undefined, onAccepted);
                 if (onAccepted) return sent;
                 void sent;

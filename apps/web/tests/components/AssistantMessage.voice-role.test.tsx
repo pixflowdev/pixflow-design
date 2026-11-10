@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AssistantMessage } from '../../src/components/AssistantMessage';
 import type { ChatMessage } from '../../src/types';
 const wordpress = vi.hoisted(() => ({ active:false }));
-vi.mock('../../src/pixflow/wordpress-context', () => ({hasPixflowWordPressContext:()=>wordpress.active}));
+vi.mock('../../src/pixflow/wordpress-context', () => ({getPixflowWordPressConfig:()=> wordpress.active ? {} : null, hasPixflowWordPressContext:()=>wordpress.active}));
 
 vi.mock('../../src/components/VoiceOrb', () => ({ VoiceOrb: () => <span data-testid="voice-orb" /> }));
 afterEach(() => { cleanup(); wordpress.active=false; });

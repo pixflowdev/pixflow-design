@@ -61,6 +61,7 @@ export function SharedChatRows({
   fallbackAgentIdentity,
   liveToolInput,
   paneStreaming = false,
+  terminalReply,
   projectId = null,
   projectFiles = EMPTY_PROJECT_FILES,
   projectFileNames,
@@ -78,6 +79,7 @@ export function SharedChatRows({
   // main workspace ChatPane's pane-level streaming flag and prevents a
   // transient empty transport error from becoming a stopped footer.
   paneStreaming?: boolean;
+  terminalReply?: { id: string; endedAt: number; awaitingInput: boolean };
   projectId?: string | null;
   projectFiles?: ProjectFile[];
   projectFileNames?: Set<string>;
@@ -145,7 +147,10 @@ export function SharedChatRows({
   }, [messages, fallbackAgentIdentity?.agentId, fallbackAgentIdentity?.agentName]);
   return (
     <>
-      {normalized.map((message) => {
+      {normalized.map((row) => {
+        // An authenticated terminal event is authoritative even while transport cleanup is pending.
+        const settled = terminalReply?.id === row.id ? terminalReply : undefined;
+        const message = settled ? { ...row, runStatus: 'succeeded' as const, endedAt: settled.endedAt, awaitingInput: settled.awaitingInput } : row;
         const isLastAssistant = message.role === 'assistant' && message.id === lastAssistantId;
         // The host owns the run lifecycle. A Bricks media/mutation handoff can
         // outlive the runner's last stream event, so its message may already
@@ -161,7 +166,7 @@ export function SharedChatRows({
           // Its terminal acknowledgement is authoritative, even for a quiet call.
           && !message.events?.some(event => event.kind === 'status' && event.code === 'voice_connection')
           && !hasSubstantiveAssistantResponse(message);
-        const keepTransientTurnWorking = isLastAssistant && message.runStatus !== 'canceled' && (
+        const keepTransientTurnWorking = !settled && isLastAssistant && message.runStatus !== 'canceled' && (
           paneStreaming || terminalWithoutDeliveredResponse
         );
         const renderedMessage = keepTransientTurnWorking
@@ -189,7 +194,7 @@ export function SharedChatRows({
         return (
           <div
             key={semanticPreflightPending ? 'semantic-preflight-pending' : renderedMessage.id}
-            className={semanticPreflightPending ? styles.semanticPreflightPending : undefined}
+            className={semanticPreflightPending ? styles.semanticPreflightPending : !isLastAssistant ? styles.historyReply : undefined}
             data-semantic-preflight={semanticPreflightPending ? 'pending' : undefined}
           >
             <AssistantMessage

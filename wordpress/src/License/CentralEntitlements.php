@@ -426,6 +426,11 @@ final class CentralEntitlements
     /** Reject the whole grant pair. A late response cannot replace a newer denial or grant. */
     private function reject_unverified(array $expected, string $check): array
     {
+        // An unusable proof cannot downgrade a terminal refusal into a
+        // recoverable verification error. Explicit activation is still required.
+        if (!empty($expected['denied']) && !empty($expected['denial_code']) && !$this->is_verification_failure($expected)) {
+            return ['ok' => false, 'code' => (string) ($expected['denial_code'] ?? 'central_entitlement_denied')];
+        }
         $rejected = $expected;
         $rejected['tokens'] = [];
         $rejected['denied'] = true;

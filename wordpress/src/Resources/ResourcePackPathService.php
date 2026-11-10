@@ -65,6 +65,9 @@ final class ResourcePackPathService
         ))->directory(); } catch (\RuntimeException $error) {
             // Invalid configuration, symlinks and conflicting trees must still fail closed.
             if ($error->getMessage() !== 'Could not create private storage.') throw $error;
+            // An unavailable previously active private root may hold versions
+            // absent from uploads. Do not switch readers to an incomplete copy.
+            if (get_option('pixflow_design_private_resource_root', '') !== '') throw $error;
             if (class_exists('PixflowDesign\\WordPress\\CreativeSkills\\SkillLibrary')
                 && !method_exists('PixflowDesign\\WordPress\\CreativeSkills\\SkillLibrary', 'supports_encrypted_resources')) throw $error;
             $tree = \PixflowDesign\WordPress\Storage\EncryptedResourceMigration::prepare(
@@ -272,6 +275,9 @@ final class ResourcePackPathService
     public function remove_pack_version(string $slug, string $version): void
     {
         $target = wp_normalize_path($this->pack_version_dir($slug, $version));
+        if (\PixflowDesign\WordPress\Storage\EncryptedResourceReader::is_resource($target)) {
+            throw new \RuntimeException('Legacy resource packs in encrypted storage are preserved for existing references.');
+        }
         $base = trailingslashit(wp_normalize_path($this->base_dir()));
 
         if (!str_starts_with($target, $base) || !is_dir($target)) {

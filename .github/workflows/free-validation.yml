@@ -67,6 +67,19 @@ jobs:
           for test in encrypted-resource-store encrypted-resource-tree encrypted-resource-migration resource-private-storage resource-empty-recovery resource-notice bundled-guidance-storage-failure bundled-resources-private resource-asset-path resource-archive-security retired-resource-cleanup project-private-storage; do
             php "wordpress/tests/$test.test.php"
           done
+      - name: Licence retention and authorization recovery
+        run: |
+          php wordpress/tests/license-retention.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/signed-entitlement.test.php
+          php wordpress/tests/licensing-staging-origin.test.php
+          php wordpress/tests/directory-license-http.test.php
+      - name: Live canvas mailbox and handoff regression
+        run: |
+          php wordpress/tests/direct-canvas-mailbox-cache.test.php
+          php wordpress/tests/direct-canvas-navigation.test.php
+          php wordpress/tests/direct-canvas-reconnect.test.php
+          php wordpress/tests/builder-handoffs.test.php
       - name: Artifact authorization and licence recovery
         run: |
           php wordpress/tests/central-artifact-license-preservation.test.php
@@ -78,5 +91,3 @@ jobs:
 
       - name: Build Free browser assets
         run: pnpm wordpress:web
-
-

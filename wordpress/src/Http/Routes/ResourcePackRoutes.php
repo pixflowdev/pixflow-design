@@ -132,7 +132,8 @@ final class ResourcePackRoutes
 
     public function delete(\WP_REST_Request $request): \WP_REST_Response
     {
-        return $this->response($this->packs->uninstall((string) $request['slug']));
+        $result = $this->packs->uninstall((string) $request['slug']);
+        return $this->response($result, $this->status_for_result($result));
     }
 
     public function repair(\WP_REST_Request $request): \WP_REST_Response

@@ -18,3 +18,13 @@ foreach ([['pixflow_design_central_entitlements_v2','options'],['alloptions','op
     if (!in_array($entry,$deleted,true)) throw new RuntimeException('Rejected commit must invalidate stale persistent option cache');
 }
 echo "Rejected entitlement commit preserves storage and invalidates stale cache.\n";
+
+require dirname(__DIR__).'/src/License/LicenseCache.php';
+$deleted=[];
+$cache=new \PixflowDesign\WordPress\License\LicenseCache();
+$replace=new ReflectionMethod($cache,'replace');
+if ($replace->invoke($cache,['encrypted_license_key'=>'old'],['reset_marker'=>'stale'])!==false)
+    throw new RuntimeException('Stale licence write overwrote newer storage');
+foreach ([['pixflow_design_site_license_cache','options'],['alloptions','options']] as $entry) {
+    if (!in_array($entry,$deleted,true)) throw new RuntimeException('Rejected licence write retained stale cached credentials');
+}

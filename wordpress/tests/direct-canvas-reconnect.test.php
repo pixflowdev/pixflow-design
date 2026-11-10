@@ -14,6 +14,12 @@ namespace {
     define('ABSPATH', __DIR__);
     $options = [];
     function get_option($key) { return $GLOBALS['options'][$key] ?? false; }
+    function maybe_unserialize($value) { return unserialize($value); }
+    $wpdb = new class {
+        public $options = 'options';
+        public function prepare($sql, ...$args) { return [$sql, $args]; }
+        public function get_var($query) { $key = $query[1][0]; return isset($GLOBALS['options'][$key]) ? serialize($GLOBALS['options'][$key]) : null; }
+    };
     function update_option($key, $value, $autoload = false) { $GLOBALS['options'][$key] = $value; }
     function delete_option($key) { unset($GLOBALS['options'][$key]); }
     function get_current_user_id() { return 1; }

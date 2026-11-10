@@ -206,6 +206,12 @@ final class ResourcePackInstallService
     public function uninstall(string $slug): array
     {
         $slug = sanitize_key($slug);
+        // The retired catalogue has no encrypted delete operation. Preserve its
+        // records and pinned versions instead of reporting a partial deletion.
+        if ($this->paths->encrypted_tree() !== null) {
+            return ['ok' => false, 'status' => 'preserved', 'httpStatus' => 409,
+                'message' => 'Legacy resource packs in encrypted storage are preserved for existing references.'];
+        }
         $operation_id = $this->operation_id($slug, 'delete');
         if (!$this->begin_operation($operation_id, $slug, 'delete')) {
             return $this->operation_conflict($slug);

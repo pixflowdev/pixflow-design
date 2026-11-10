@@ -22,6 +22,18 @@ $legacy=ABSPATH.'uploads/pixflow-design/resource-packs';mkdir($legacy.'/custom',
 file_put_contents($legacy.'/custom/SKILL.md','# preserved');
 mkdir(PIXFLOW_DESIGN_PLUGIN_DIR.'skills');file_put_contents(PIXFLOW_DESIGN_PLUGIN_DIR.'skills/old.md','Older guidance');
 try{
+ $options['pixflow_design_private_resource_root']=$root.'/blocked/resources';
+ check(rejected(fn()=>(new ResourcePackPathService())->base_dir()),'An unavailable previously selected private root does not switch backends');
+ check(!isset($options['pixflow_design_resource_storage_backend'])&&is_file($legacy.'/custom/SKILL.md'),'Unavailable native root leaves storage and sources untouched');
+ unset($options['pixflow_design_private_resource_root']);
+ if(PHP_OS_FAMILY==='Linux'){
+  $external=$root.'/outside.md';file_put_contents($external,'outside the migration');
+  check(symlink($external,$legacy.'/custom/linked.md'),'Linux fixture creates a real symlink');
+  check(rejected(fn()=>(new ResourcePackPathService())->base_dir()),'Migration rejects linked files');
+  check(!isset($options['pixflow_design_resource_storage_backend'])&&is_link($legacy.'/custom/linked.md'),'Rejected symlink leaves native storage and source untouched');
+  check(file_get_contents($external)==='outside the migration','Link target untouched');
+  unlink($legacy.'/custom/linked.md');
+ }
  $paths=new ResourcePackPathService();$base=$paths->base_dir();
  check(str_starts_with($base,'pixflow-resource://'),'Restricted host automatically selects encrypted backend');
  check(file_get_contents($paths->resolve_record_path($legacy.'/custom/SKILL.md'))==='# preserved','Saved absolute path still reads');

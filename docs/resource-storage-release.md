@@ -38,6 +38,9 @@ requires compatible readers or a coordinated database-and-files backup restore.
 Same-path recovery is tested; relocation to a different absolute storage root is
 not covered. Individual resources above 16 MiB are retained and block migration
 instead of being discarded. These limits must remain visible in release review.
+If a previously active native root is unavailable, Pixflow keeps that storage
+selection until the root can be restored. Encrypted legacy catalogue records are
+kept for existing references; legacy pack deletion is unavailable on that backend.
 
 ## Acceptance evidence
 

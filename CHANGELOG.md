@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Preserve and save a newer appended reply retained when reopening a chat, instead of replacing it with an earlier saved snapshot. Existing revision and conflict protections remain enforced.
+- Prevent live builder commands from remaining stuck as busy when a persistent WordPress object cache hides the queued command. Preserve edits and command results without replaying operations.
+
 
 ## Unreleased
 

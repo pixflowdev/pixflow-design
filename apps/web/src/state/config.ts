@@ -1279,6 +1279,7 @@ export async function syncConfigToDaemon(
   options?: { throwOnError?: boolean },
 ): Promise<void> {
   const prefs: AppConfigPrefs = hasPixflowWordPressContext() ? {
+    mode: config.mode,
     agentId: config.agentId,
     agentModels: config.agentModels,
     agentCliEnv: config.agentCliEnv,

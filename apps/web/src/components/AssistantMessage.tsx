@@ -13,7 +13,7 @@ import { activityAction, liveActivityLabel, completedActivityLabel } from './cha
 import { assistantProgress } from './chat/assistant-progress';
 import { observedSourceUrls } from './chat/observed-source-urls';
 import type { ActivityIconKind } from './chat/ActivityIcon';
-import { Fragment, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ToolCard } from "./ToolCard";
 import { FileOpsSummary } from "./FileOpsSummary";
 import {
@@ -664,7 +664,12 @@ function AssistantMessageImpl({
   // Lifecycle events distinguish local setup from a launched provider. Only
   // supplied reasoning activates Thinking; elapsed time never implies thought.
   const progress = assistantProgress(events);
-  const preparing = streaming && (progress === 'preparing' || progress === 'waiting');
+  const working = progress !== 'preparing' && progress !== 'waiting';
+  const workedTurn = useRef<string | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (streaming && working) workedTurn.current = message.id;
+  }, [message.id, streaming, working]);
+  const preparing = streaming && !working && workedTurn.current !== message.id;
   const progressLabel = progress === 'waiting'
     ? message.agentName?.trim()
       ? t('assistant.statusWaitingFor', { provider: message.agentName.split(' · ')[0]! })

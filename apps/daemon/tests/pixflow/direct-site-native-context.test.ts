@@ -125,3 +125,36 @@ it('bounds direct-site instructions to its generated workspace while preserving 
   expect(native.calls[1]!.cwd).toBe(first.cwd);
   expect(JSON.parse(native.calls[1]!.prompt).history).toEqual([]);
 });
+
+it.each(['edit', 'delete', 'insert'])('rebuilds native context after an earlier history %s even when the last exchange is unchanged', async change => {
+  const { request, post } = await setup();
+  native.execute = async options => { options.onEvent({ type: 'text_delta', delta: 'Second answer' }); return 'saved-native'; };
+  await (await post('run-stream', request)).text();
+  const history = [...request.history, { role: 'user', content: request.prompt }, { role: 'assistant', content: 'Second answer' }];
+  if (change === 'edit') history[0] = { role: 'user', content: 'Corrected earlier instruction' };
+  if (change === 'delete') history.splice(0, 2);
+  if (change === 'insert') history.unshift({ role: 'user', content: 'Earlier imported context' });
+  await (await post('run-stream', { ...request, prompt: 'Continue after history changed', history, continuation: { id: '7'.repeat(32), token: '8'.repeat(64) } })).text();
+  expect(native.calls.at(-1)?.resumeSessionId).toBeNull();
+  expect(JSON.parse(native.calls.at(-1)!.prompt).history).toEqual(history);
+});
+
+it.each([false, true])('reports preparation and submission separately and counts only nonempty provider text (%s)', async withText => {
+  const { request, post } = await setup();
+  native.execute = async options => {
+    options.onPhase?.('initialized');
+    options.onPhase?.('thread_ready');
+    options.onPhase?.('submitted');
+    options.onEvent({ type: 'text_delta', delta: '' });
+    if (withText) options.onEvent({ type: 'text_delta', delta: 'Answer' });
+    return 'saved-native';
+  };
+  const output = await (await post('run-stream', request)).text();
+  const events = output.trim().split('\n').map(line => JSON.parse(line));
+  const timings = events.find(event => event.type === 'done').timings;
+  expect(timings).toMatchObject({ protocolReadyMs: expect.any(Number), threadReadyMs: expect.any(Number), providerSubmittedMs: expect.any(Number), totalMs: expect.any(Number), nativeSessionReused: true });
+  expect(timings.threadReadyMs).toBeGreaterThanOrEqual(timings.protocolReadyMs);
+  expect(timings.providerSubmittedMs).toBeGreaterThanOrEqual(timings.threadReadyMs);
+  if (withText) expect(timings.firstTextMs).toBeGreaterThanOrEqual(timings.providerSubmittedMs);
+  else expect(timings).not.toHaveProperty('firstTextMs');
+});

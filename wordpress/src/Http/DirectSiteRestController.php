@@ -54,7 +54,7 @@ final class DirectSiteRestController
     public function sessions(\WP_REST_Request $request): array|\WP_Error
     {
         $body = $request->get_json_params();
-        if (($body['purpose'] ?? '') !== 'guidance-draft') update_user_meta(get_current_user_id(), $this->setting_key(), false);
+        if (($body['purpose'] ?? '') !== 'guidance-draft' && get_user_meta(get_current_user_id(), $this->setting_key(), true)) update_user_meta(get_current_user_id(), $this->setting_key(), false);
         $token = 'pfdirect_' . bin2hex(random_bytes(32));
         // Legacy mode values are accepted but no longer restrict a new session.
         // Existing tokens retain their original permissions until expiration.
@@ -75,8 +75,55 @@ final class DirectSiteRestController
         // Premium guidance is resolved after authorization, never accepted from request JSON.
         // Do not retain an extra copy in the credential transient or expose guidance on draft/audio sessions.
         $guidance = $session['writable'] ? apply_filters('pixflow_design_run_guidance', null) : null;
+        $extra = [];
+        if (isset($body['historyBinding'])) {
+            $binding = $body['historyBinding'];
+            if (!is_array($binding) || !is_string($binding['projectId'] ?? null) || !is_string($binding['conversationId'] ?? null)) {
+                return new \WP_Error('pixflow_history_invalid', 'Invalid conversation.', ['status' => 400]);
+            }
+            if (!current_user_can('edit_posts')) {
+                return new \WP_Error('pixflow_history_forbidden', 'Chat history access is required.', ['status' => 403]);
+            }
+            // HistoryService enforces ownership of the conversation for the signed-in user.
+            $history = new \PixflowDesign\WordPress\Chat\HistoryService();
+            if (($body['restorePanel'] ?? false) === true && !isset($binding['throughMessageId'])) {
+                $latest = $history->page($binding['projectId'], $binding['conversationId'], 1);
+                if (is_wp_error($latest)) return $latest;
+                if (!empty($latest['messages'][0]['id'])) $binding['throughMessageId'] = $latest['messages'][0]['id'];
+            }
+            if (isset($binding['throughMessageId'])) {
+                $through = $binding['throughMessageId'];
+                if (!is_string($through) || $through === '' || strlen($through) > 191) return new \WP_Error('pixflow_history_invalid', 'Invalid history cutoff.', ['status' => 400]);
+                $revision = $history->prefix_revision($binding['projectId'], $binding['conversationId'], $through);
+                if (is_wp_error($revision)) return $revision;
+                $session['historyPrefix'] = [$binding['projectId'], $binding['conversationId'], $through, $revision];
+                $extra['historyRevision'] = $revision;
+                $extra['historyThrough'] = $through;
+            }
+            $restorePanel = isset($session['historyPrefix']) && ($body['restorePanel'] ?? false) === true;
+            $page = $history->page($binding['projectId'], $binding['conversationId'], $restorePanel || !isset($session['historyPrefix']) ? 50 : 100);
+            if (is_wp_error($page)) return $page;
+            if ($restorePanel) {
+                // The browser restores the latest 50 rows. Send may also need the older prefix.
+                $extra['historyWindow'] = ['nextCursor' => $page['nextCursor'], 'hasMore' => $page['hasMore']];
+            }
+            // Avoid a second WordPress bootstrap for moderately long chats. Keep the
+            // response bounded; larger transcripts continue with the normal cursor.
+            if (isset($session['historyPrefix']) && $page['hasMore']) {
+                $remainingBytes = 512 * 1024 - strlen((string) wp_json_encode($page['messages']));
+                $extraPages = 4;
+                for ($i = 0; $i < $extraPages && $remainingBytes > 0 && $page['hasMore']; ++$i) {
+                    $older = $history->page($binding['projectId'], $binding['conversationId'], 100, $page['nextCursor']);
+                    if (is_wp_error($older)) return $older;
+                    $remainingBytes -= strlen((string) wp_json_encode($older['messages']));
+                    if ($remainingBytes < 0) break;
+                    $page = ['messages' => array_merge($older['messages'], $page['messages']), 'hasMore' => $older['hasMore'], 'nextCursor' => $older['nextCursor']];
+                }
+            }
+            $extra['historyPage'] = $page;
+        }
         set_transient($this->key($token), $session, 3600);
-        return ['designGuidance' => is_array($guidance) ? $guidance : null, 'token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
+        return $extra + ['designGuidance' => is_array($guidance) ? $guidance : null, 'token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
     }
 
     public function session_permission(\WP_REST_Request $request): bool
@@ -174,7 +221,23 @@ final class DirectSiteRestController
     public function session(\WP_REST_Request $request): array
     {
         if ($request->get_method() === 'DELETE') return $this->close($request);
-        return ['siteTitle' => sanitize_text_field((string) get_bloginfo('name')), 'features' => ['composio' => \PixflowDesign\WordPress\Modules\ComposioAccess::configured(), 'image-generation' => \PixflowDesign\WordPress\Modules\ImageGenerationAccess::available(), 'external-mcp' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('external-mcp'), 'audio' => \PixflowDesign\WordPress\Modules\FeatureContributions::available('audio')], 'integrations' => ['bricks' => \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')], 'identity' => $this->identity($this->session ?? []), 'writable' => $this->session['writable'] ?? false, 'editorTarget' => $this->session['editorTarget'] ?? null, 'workspaceSource' => $this->session['workspaceSource'] ?? null];
+        // Take one authorized snapshot for this response. Tool execution and
+        // later ownership requests still evaluate their own current access.
+        $services = \PixflowDesign\WordPress\Modules\FeatureContributions::all();
+        $composio_status = $services['composio']['status'] ?? null;
+        $features = [
+            'composio' => is_callable($composio_status) && ($composio_status()['configured'] ?? false) === true,
+            'image-generation' => isset($services['assets']),
+            'external-mcp' => isset($services['external-mcp']),
+            'audio' => isset($services['audio']),
+        ];
+        $historyState = [];
+        if (isset($this->session['historyPrefix']) && $request->get_param('checkHistory')) {
+            [$project, $conversation, $through, $expected] = $this->session['historyPrefix'];
+            $current = (new \PixflowDesign\WordPress\Chat\HistoryService())->prefix_revision($project, $conversation, $through);
+            $historyState['historyCurrent'] = is_string($current) && hash_equals($expected, $current);
+        }
+        return $historyState + ['siteTitle' => sanitize_text_field((string) get_bloginfo('name')), 'features' => $features, 'integrations' => ['bricks' => \PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')], 'identity' => $this->identity($this->session ?? []), 'writable' => $this->session['writable'] ?? false, 'editorTarget' => $this->session['editorTarget'] ?? null, 'workspaceSource' => $this->session['workspaceSource'] ?? null];
     }
 
     private function identity(array $session): array

@@ -4,6 +4,25 @@ import { authenticateDirectOwner, redactDirectEvent, directSessionUrl } from '..
 const session={endpoint:'https://site.example/?rest_route=/pixflow-design/v1/wp-admin/direct/tools',token:'pfdirect_'+'a'.repeat(64),writable:false,expiresAt:9999999999};
 afterEach(()=>vi.unstubAllGlobals());
 describe('Direct recovery authorization',()=>{
+  it('checks the live owner and history again for each send with the same session', async () => {
+    const owner = { identity: { siteId: 'site', userId: 1, blogId: 1 }, writable: false };
+    const request = vi.fn()
+      .mockResolvedValueOnce(Response.json({ ...owner, historyCurrent: true }))
+      .mockResolvedValueOnce(Response.json({ ...owner, historyCurrent: false }))
+      .mockResolvedValueOnce(new Response(null, { status: 403 }));
+    vi.stubGlobal('fetch', request);
+    const revision = vi.fn();
+    const send = () => authenticateDirectOwner(session, true, undefined, undefined, undefined, undefined, revision);
+    await send();
+    await send();
+    await expect(send()).rejects.toMatchObject({ status: 403 });
+    expect(revision.mock.calls).toEqual([[true], [false]]);
+    expect(request).toHaveBeenCalledTimes(3);
+    for (const [url, init] of request.mock.calls) {
+      expect(url.searchParams.get('checkHistory')).toBe('1');
+      expect(init.headers.Authorization).toBe('Bearer ' + session.token);
+    }
+  });
   it('reports unavailable verification separately from rejected credentials and never leaks transport diagnostics', async () => {
     const request = vi.fn().mockRejectedValueOnce(new DOMException('private-network-details', 'TimeoutError'))
       .mockRejectedValueOnce(new DOMException('private-network-details', 'TimeoutError'))

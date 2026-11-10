@@ -15,7 +15,7 @@ function Panel({ rows, running }: { rows: Row[]; running: boolean }) {
 }
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-it.each([false, true])('follows the bottom without reserved space and preserves scrollback (reduced motion: %s)', reduced => {
+it.each([false, true])('stays at the bottom on Send and preserves scrollback (reduced motion: %s)', reduced => {
   const frames = new Map<number, FrameRequestCallback>();
   let nextId = 0;
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(++nextId, cb); return nextId; });
@@ -54,14 +54,16 @@ it.each([false, true])('follows the bottom without reserved space and preserves 
   // Move away after the update has queued, before its animation frame runs.
   view.rerender(<Panel rows={[...turn]} running />);
   fireEvent.wheel(el, { deltaY: -120 });
-  el.scrollTop = 500;
+  // A queued scroll from the previous pin can arrive before the wheel moves the log.
+  fireEvent.scroll(el);
+  el.scrollTop = 550;
   fireEvent.scroll(el);
   paint();
-  expect(offset).toBe(500);
+  expect(offset).toBe(550);
   height += 400;
   view.rerender(<Panel rows={[...turn]} running={false} />);
   paint();
-  expect(offset).toBe(500);
+  expect(offset).toBe(550);
   expect(tail.offsetHeight).toBe(0);
   fireEvent.click(view.getByText('Latest'));
   expect(offset).toBe(height - 400);

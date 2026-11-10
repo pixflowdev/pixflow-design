@@ -1,4 +1,7 @@
+import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 
+import type { CodexPromptParts } from './direct-site-run.js';
+import type { DirectCodexWorker } from './direct-codex-worker.js';
 import { watchExternalMcpAccess, authorizeExternalMcp, hasMcpMentions } from './external-mcp-authorization.js';
 import { audioSession, authorizeAudio, watchAudioAccess } from './audio-authorization.js';
 import { spawn } from 'node:child_process';
@@ -41,7 +44,7 @@ import type { PixflowDirectToolHistoryRequest, PixflowDirectToolHistoryResponse 
 
 interface DirectResources {
   helper: string;
-  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean, imageProviders?: string[]) => string;
+  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean, imageProviders?: string[], capture?: (parts: CodexPromptParts) => void) => string;
   skills: (input: PixflowDirectSiteRunRequest, signal: AbortSignal) => Promise<unknown>;
   attachments: (input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) => Promise<Array<{name:string;path:string;kind:string}>>;
 }
@@ -52,11 +55,14 @@ const validId = (id: unknown): id is string => typeof id === 'string' && /^[a-f0
 const validToken = (token: unknown): token is string => typeof token === 'string' && /^[a-f0-9]{64}$/.test(token);
 
 /** Durable records own output; in-memory state owns only the currently running process. */
-export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database, mediaRoot = dataDir): () => void {
+export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database, mediaRoot = dataDir, warmWorker?: DirectCodexWorker): () => void {
   const store = new DirectSiteStore(database ?? openDatabase(dataDir,{dataDir}));
   const parent = path.join(dataDir,'direct-site-runs');
   const managedWorkspace = (workspace: string) => path.dirname(path.resolve(workspace)) === path.resolve(parent) && path.basename(workspace).startsWith('run-');
   const runs = new Map<string,LiveRun>();
+  // Keep only the last completed Claude turn's hashes. Interleaved sites or a
+  // Bridge restart fall back to the full prompt on their next resume.
+  let lastClaude: { key: string; snapshot: ReturnType<typeof snapshotPrompt> } | undefined;
   let preparing = 0;
   const unconfirmedCanvas = new Set<string>();
   registerPixflowRuntimeWork(app, () => preparing > 0 || unconfirmedCanvas.size > 0 || [...runs.values()].some(run => !run.done));
@@ -242,10 +248,18 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(record)for(const client of runs.get(record.id)?.clients ?? []) {if(!client.destroyed)client.write(line);}
       else if(!res.destroyed)res.write(line);
     };
+    let sentReplyText = false;
     const send = (event: Record<string,unknown>) => {
       if(storageFailed)return;
       const clean=redactDirectEvent(event,[input.session?.token ?? '',input.continuation?.token ?? '']);
       eventBatch.push(clean);
+      // Persist and deliver the first reply immediately, including any preceding
+      // activity in the batch. Later text can share a frame.
+      if (!sentReplyText && clean.type === 'text_delta' && typeof clean.delta === 'string' && clean.delta.length) {
+        sentReplyText = true;
+        flushEvents();
+        return;
+      }
       // Only presentation deltas may wait. Tool/terminal boundaries flush synchronously.
       if(!['text_delta','thinking_delta'].includes(String(event.type)) || eventBatch.length>=64)flushEvents();
       else batchTimer ??= setTimeout(flushEvents,16);
@@ -263,12 +277,13 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if (input.taskId && !/^[\w:.-]{1,191}$/.test(input.taskId)) throw new Error('Invalid Direct task identity.');
       let externalMcpAllowed = false;
       let imageGenerationAllowed = false;
+      let historyCurrent = true;
       let composioConfigured = false;
       const owner = await authenticateDirectOwner(input.session,!!input.conversationId || !!input.session.identity,preparation.signal, integrations => {
         const context = input.context && typeof input.context === 'object' ? input.context as Record<string, unknown> : {};
         input.context = { ...context, bricksIntegrationActive: integrations.bricks };
         if (integrations.bricks === false) { delete input.canvasId; delete input.canvasPostId; }
-      }, input.voice ? 'audio' : undefined, features => { composioConfigured = features.composio === true; externalMcpAllowed = features['external-mcp'] === true; imageGenerationAllowed = features['image-generation'] === true; });
+      }, input.voice ? 'audio' : undefined, features => { composioConfigured = features.composio === true; externalMcpAllowed = features['external-mcp'] === true; imageGenerationAllowed = features['image-generation'] === true; }, current => { historyCurrent = current; });
       if (hasMcpMentions(input.context) && !externalMcpAllowed) throw new Error('External MCP requires Pixflow Design Pro. Remove the external-tool mention or reactivate Pro before sending.');
       timings.ownerReadyMs=elapsed();
       const id=input.continuation?.id ?? randomUUID().replaceAll('-','');
@@ -284,6 +299,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         observingExisting=true;
         ownsCredential=runs.get(id)?.credentialHash!==directDigest(input.session.token);
         attach(id,res);return;
+      }
+      if (!historyCurrent) {
+        res.status(409).json({ code: 'DIRECT_HISTORY_CHANGED', message: 'Saved conversation changed before Send.' });
+        return;
       }
       const conversationId=input.conversationId ?? id;
       const active=store.active(owner,conversationId);
@@ -411,8 +430,15 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       let usedTools=false;
       let missingSession=false;
       for(let attempt=0;attempt<2;attempt++) {
-        const prompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId,imageGenerationAllowed,composioConfigured,imageProviders)
+        let promptParts: CodexPromptParts | undefined;
+        const fullPrompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId && def.id !== 'claude' && !(def.id === 'codex' && warmWorker),imageGenerationAllowed,composioConfigured,imageProviders, parts => { promptParts = parts; })
           +(attachments.length?'\n\nUser reference files:\n'+JSON.stringify(attachments):'');
+        const snapshot = def.id === 'claude' && promptParts ? snapshotPrompt(promptParts) : undefined;
+        const priorKey = resumeSessionId && previousConversation && directDigest([conversationKey, compatibility, resumeSessionId, previousConversation.lineage]);
+        const previous = priorKey && lastClaude?.key === priorKey ? lastClaude.snapshot : undefined;
+        if (previous) lastClaude = undefined;
+        const prompt = previous && snapshot && promptParts && !attachments.length
+          ? changedPrompt(promptParts, snapshot, previous) : fullPrompt;
         // File-based CLIs need the complete composed request available until the child exits.
         // Each attempt owns its file so retries cannot read an earlier conversation seed.
         const promptFile=await preparePromptFileForAgent(def,prompt,id);
@@ -428,7 +454,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         const invocation=createCommandInvocation({command:launch.launchPath,args,env});
         const onEvent=(event:Record<string,unknown>)=>{
           timings.firstProviderEventMs ??= elapsed();
-          if(event.type==='text_delta') timings.firstTextMs ??= elapsed();
+          if(event.type==='text_delta' && typeof event.delta==='string' && event.delta.length) timings.firstTextMs ??= elapsed();
           if(typeof event.sessionId==='string' && /^[\w.-]{1,256}$/.test(event.sessionId))capturedSessionId=event.sessionId;
           if(event.type==='text_delta' && typeof event.delta==='string')assistant+=event.delta;
           if (event.type === 'assistant_message_boundary') {
@@ -463,11 +489,20 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         let stderr='';
         if(def.id==='codex'||def.id==='opencode') {
           try {
+          if (def.id === 'codex' && config.agentId === 'codex' && config.mode !== 'api') {
+            warmWorker?.refreshLaunch({ executable: launch.launchPath, env });
+          }
           capturedSessionId=await (def.id==='codex'?runCodexTurn:runOpenCodeTurn)({executable:launch.launchPath,env,cwd:workspace,prompt,images,
             ...(imageGenerationAllowed && input.session.writable && def.id === 'codex' ? {importImage: (item: Record<string,unknown>, threadId: string) => importNativeImage(item,threadId,env.CODEX_HOME,input.session,preparation.signal)} : {}),
             mcpServers: externalMcp.codex,
             isolateProjectInstructions: true,
             model:input.model,reasoning:input.reasoning,fastMode:input.fastMode,resumeSessionId,signal:preparation.signal,
+            ...(def.id === 'codex' ? { threadScope: directDigest([conversationKey, compatibility]), ...(promptParts && !attachments.length ? { promptParts } : {}),
+              onInput: (bytes: number) => { timings.promptBytes = bytes; }, ...(warmWorker ? { warmWorker } : {}), onWorkerAcquired: (warm: boolean) => { timings.warmWorkerUsed = warm; }, onChildReleased: () => { child = undefined; }, onPhase: (phase: 'initialized' | 'thread_ready' | 'submitted') => {
+              if (phase === 'initialized') timings.protocolReadyMs ??= elapsed();
+              if (phase === 'thread_ready') timings.threadReadyMs ??= elapsed();
+              if (phase === 'submitted') timings.providerSubmittedMs ??= elapsed();
+            } } : {}),
             onChild:value=>{child=value;timings.spawnMs=elapsed();send({type:'status',label:'provider_waiting'});},onEvent,
             onSteerReady:steer=>{const live=runs.get(id);if(live)live.steer=steer;},
           });
@@ -484,6 +519,8 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         child.stderr?.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-4000);});
         child.stdin?.on('error',()=>undefined);
         const completed=new Promise<number|null>((resolve,reject)=>{child!.once('error',reject);child!.once('close',resolve);});
+        // File/argument CLIs receive their input at spawn; stdin CLIs receive it below.
+        timings.providerSubmittedMs ??= elapsed();
         if(def.promptViaStdin) {
           if(def.promptInputFormat==='stream-json')child.stdin?.write(JSON.stringify({type:'user',message:{role:'user',content:prompt}})+'\n');
           else child.stdin?.end(prompt);
@@ -503,7 +540,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         if(!canceled) {
           const operationState=directOperationState(journal,id);
           const outcome=emittedRenderableQuestionForm(assistant)?'awaiting_input':operationState ?? (input.session.writable?'completed':'answered');
-          store.saveConversation({key:conversationKey,compatibility,lineage:directTurnLineage(input.history,input.prompt,assistant,acceptedSteering),workspace,nativeSessionId:capturedSessionId ?? (def.id==='claude'?newSessionId:null)});
+          const lineage = directTurnLineage(input.history,input.prompt,assistant,acceptedSteering);
+          const nativeSessionId = capturedSessionId ?? (def.id === 'claude' ? resumeSessionId ?? newSessionId : null);
+          store.saveConversation({key:conversationKey,compatibility,lineage,workspace,nativeSessionId});
+          if (snapshot && nativeSessionId) lastClaude = { key: directDigest([conversationKey, compatibility, nativeSessionId, lineage]), snapshot };
           finish(outcome,operationState==='interrupted'?'A site operation has no confirmed result. Inspect its command result and current site state before continuing.':operationState==='failed'?'A site tool reported a rejection without a later successful retry of that tool. Review the retained output before continuing.':undefined);
         }
         break;

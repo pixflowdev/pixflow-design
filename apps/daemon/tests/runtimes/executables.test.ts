@@ -1,7 +1,7 @@
 import { test } from 'vitest';
 import { relative, resolve } from 'node:path';
 import {
-  assert, chmodSync, claude, codex, deepseek, join, minimalAgentDef, mkdirSync, mkdtempSync, resolveAgentExecutable, rmSync, tmpdir, withEnvSnapshot, withPlatform, writeFileSync,
+  assert, chmodSync, claude, codex, cursorAgent, deepseek, join, minimalAgentDef, mkdirSync, mkdtempSync, resolveAgentExecutable, rmSync, tmpdir, withEnvSnapshot, withPlatform, writeFileSync,
 } from './helpers/test-helpers.js';
 import { codexAppBundleCandidates } from '../../src/runtimes/executables.js';
 
@@ -23,6 +23,40 @@ test('finds native Grok with a stale Windows PATH', async () => {
     }));
   } finally {
     rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('resolves the Windows Cursor launcher outside PATH without mistaking Grok for Cursor', () => {
+  const localAppData = mkdtempSync(join(tmpdir(), 'od-cursor-windows-cli-'));
+  try {
+    withEnvSnapshot(['PATH', 'PATHEXT', 'LOCALAPPDATA', 'CURSOR_AGENT_BIN', 'OD_AGENT_HOME'], () => withPlatform('win32', () => {
+      const pathDir = join(localAppData, 'grok', 'bin');
+      const cursorDir = join(localAppData, 'cursor-agent');
+      mkdirSync(pathDir, { recursive: true });
+      mkdirSync(cursorDir, { recursive: true });
+      writeFileSync(join(pathDir, 'agent.exe'), '');
+      const launcher = join(cursorDir, 'cursor-agent.cmd');
+      process.env.PATH = pathDir;
+      process.env.PATHEXT = '.EXE;.CMD;.BAT';
+      process.env.LOCALAPPDATA = localAppData;
+      process.env.OD_AGENT_HOME = localAppData;
+      delete process.env.CURSOR_AGENT_BIN;
+
+      assert.equal(resolveAgentExecutable(cursorAgent), null);
+      writeFileSync(launcher, '');
+      assert.equal(resolveAgentExecutable(cursorAgent), launcher);
+
+      const override = join(pathDir, 'cursor-custom.exe');
+      writeFileSync(override, '');
+      assert.equal(resolveAgentExecutable(cursorAgent, { CURSOR_AGENT_BIN: override }), override);
+
+      const pathLauncher = join(pathDir, 'cursor-agent.EXE');
+      writeFileSync(pathLauncher, '');
+      assert.equal(resolveAgentExecutable(cursorAgent), pathLauncher);
+      assert.equal(resolveAgentExecutable(cursorAgent, { CURSOR_AGENT_BIN: override }), override);
+    }));
+  } finally {
+    rmSync(localAppData, { recursive: true, force: true });
   }
 });
 

@@ -88,6 +88,15 @@ describe('SharedChatRows', () => {
     expect(screen.getByText('Keep our existing page.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Copy prompt' })).toBeTruthy();
   });
+  it('ends only the acknowledged turn while its transport is draining', () => {
+    const reply = { id: 'first', role: 'assistant', content: 'Answer', status: 'streaming' };
+    const terminalReply = { id: reply.id, endedAt: 100, awaitingInput: false };
+    const view = render(<SharedChatRows t={t} paneStreaming messages={[reply]} terminalReply={terminalReply} />);
+    expect(screen.getByTestId('assistant-first').getAttribute('data-streaming')).toBe('false');
+    view.rerender(<SharedChatRows t={t} paneStreaming messages={[reply, {...reply, id: 'second'}]} terminalReply={terminalReply} />);
+    expect(screen.getByTestId('assistant-second').getAttribute('data-streaming')).toBe('true');
+  });
+
   it.each([false, true])('ends an empty canceled preparation even when paneStreaming is %s', paneStreaming => {
     render(<SharedChatRows t={t} paneStreaming={paneStreaming} messages={[{
       id: 'canceled-preparation', role: 'assistant', content: '', status: 'streaming',

@@ -3,6 +3,7 @@ export interface PixflowSiteIntegrations { bricks?: boolean }
 /** Source bound by WordPress when the Workspace opens a tool session. */
 export interface PixflowWorkspaceSource { projectId: string; conversationId: string; requestId: string }
 export interface PixflowDirectSiteAuthorization {
+  historyCurrent?: boolean;
   /** WordPress's public site title at the time this Workspace session was checked. */
   siteTitle?: string;
   /** Current server-owned contributions, never taken from request JSON. */
@@ -57,11 +58,17 @@ export interface PixflowDirectSiteTimings {
   ownerReadyMs?: number;
   contextReadyMs?: number;
   spawnMs?: number;
+  /** Native protocol startup, when the provider exposes a persistent transport. */
+  protocolReadyMs?: number;
+  threadReadyMs?: number;
+  /** The first model request was written, distinct from process/protocol startup. */
+  providerSubmittedMs?: number;
   firstProviderEventMs?: number;
   firstTextMs?: number;
   totalMs: number;
   promptBytes?: number;
   nativeSessionReused?: boolean;
+  warmWorkerUsed?: boolean;
 }
 export interface PixflowDirectSiteRunIdentity {
   conversationId: string;

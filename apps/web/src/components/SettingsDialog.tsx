@@ -149,6 +149,7 @@ import { McpClientSection } from './McpClientSection';
 import { SkillsSection } from './SkillsSection';
 import { availableSkillUpdates, useSkillLibraryCatalogue } from './useSkillLibraryCatalogue';
 import { CodexVoiceSettings } from './CodexVoiceSettings';
+import { UpscalerSettings } from './UpscalerSettings';
 import { DictationSettings } from './DictationSettings';
 import settingsStyles from './SettingsDialog.module.css';
 import appearanceStyles from './AppearanceSection.module.css';
@@ -235,6 +236,7 @@ import {
 
 export type SettingsSection =
   | 'dictation'
+  | 'upscaler'
   | 'execution'
   | 'instructions'
   | 'media'
@@ -1198,6 +1200,8 @@ export function SettingsDialog({
   const bricksIntegrationActive = getPixflowWordPressConfig()?.bricksIntegrationActive ?? initial.bricksIntegrationActive ?? false;
   const freeSettings = isPixflowWordPressEmbed() && !assetsAvailable();
   const [freeLicenseStatus, setFreeLicenseStatus] = useState(pixflowLicenseStatus);
+  const [freeLicenseReadState, setFreeLicenseReadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [freeLicenseReadAttempt, setFreeLicenseReadAttempt] = useState(0);
   useEffect(() => {
     const closeForConversation = () => onClose();
     window.addEventListener('pixflow-design:conversation-opened', closeForConversation);
@@ -1597,7 +1601,7 @@ export function SettingsDialog({
     };
     applyPublishedStatus(readPixflowBridgeStatus());
     const unsubscribe = subscribePixflowBridgeStatus(applyPublishedStatus);
-    void probePixflowOptionalBridge({ force: true, timeoutMs: 2_500 }).then((health) => {
+    void probePixflowOptionalBridge({ force: true }).then((health) => {
       if (cancelled) return;
       const version = health.available ? String(health.version || '').trim() : '';
       setProbedBridgeVersion(version || null);
@@ -1612,11 +1616,17 @@ export function SettingsDialog({
   useEffect(() => {
     if (!freeSettings) return;
     let cancelled = false;
-    void fetchPixflowLicenseStatus().then(status => {
-      if (!cancelled) setFreeLicenseStatus(status);
-    }).catch(() => { /* Keep Free available if status cannot be fetched. */ });
+    setFreeLicenseReadState('loading');
+    void fetchPixflowLicenseStatus(freeLicenseReadAttempt ? { force: true } : undefined).then(status => {
+      if (!cancelled) {
+        setFreeLicenseStatus(status);
+        setFreeLicenseReadState('ready');
+      }
+    }).catch(() => {
+      if (!cancelled) setFreeLicenseReadState('error');
+    });
     return () => { cancelled = true; };
-  }, [freeSettings]);
+  }, [freeSettings, freeLicenseReadAttempt]);
 
   // A surface profile is an execution boundary, not only a navigation filter.
   // Resolve profile changes before the next paint so a disallowed section can
@@ -3064,6 +3074,7 @@ export function SettingsDialog({
   // BYOK content so "Local CLI" only renders once (in the seg-control tab),
   // not twice (heading + tab).
   const sectionHeader: Record<SettingsSection, { title: string; subtitle: string }> = {
+    upscaler: { title:t('media.upscale.settingsTitle'), subtitle:t('media.upscale.settingsHelp') },
     dictation: { title: t('dictationTitle'), subtitle: t('dictationLocal') },
     execution: { title: t('settings.title'), subtitle: hasPixflowWordPressContext() && composioAvailable() ? 'Choose Local CLI, API · BYOK or Composio.' : t('settings.subtitle') },
     instructions: {
@@ -3128,6 +3139,7 @@ export function SettingsDialog({
     { section: 'execution', icon: IconTerminal2, title: t('settings.envConfigure'), subtitle: `${t('settings.localCli')} / ${t('settings.modeApiMeta')}` },
     { section: 'media', icon: IconPhotoVideo, title: t('settings.mediaProviders'), subtitle: translateUi("ui.settingsDialog.imageVideoAudio") },
     ...(audioAvailable() ? [{ section: 'dictation' as const, icon: IconMicrophone, title: t('dictationTitle'), subtitle: t('dictationLocal') }] : []),
+    { section:'upscaler',icon:IconPhotoVideo,title:t('media.upscale.settingsTitle'),subtitle:t('media.upscale.settingsHelp') },
     { section: 'memory', icon: IconBrain, title: t('settings.memory'), subtitle: translateUi("ui.settingsDialog.rulesAndSavedContext") },
     ...(isWpAdminSurface || hasPixflowWordPressContext() ? [{
       section: 'bricksExtensions' as const,
@@ -3565,7 +3577,15 @@ export function SettingsDialog({
               </button>
             ))}
             </div>
-            {freeSettings && <div className={settingsStyles.sidebarUpgrade}>
+            {freeSettings && freeLicenseReadState === 'error' && !freeLicenseStatus && (
+              <div className={settingsStyles.sidebarUpgrade} role="status">
+                <span>{translateUi('ui.pixflowLicensePanel.feedback61')}</span>
+                <Button onClick={() => setFreeLicenseReadAttempt(attempt => attempt + 1)}>
+                  {translateUi('promptTemplates.retry')}
+                </Button>
+              </div>
+            )}
+            {freeSettings && freeLicenseStatus && <div className={settingsStyles.sidebarUpgrade}>
               <div className={settingsStyles.sidebarUpgradeCopy}>
                 <strong>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.pixflowProMigration.yourProAccess") : 'Pixflow Design Pro'}</strong>
                 <span>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.settingsDialog.yourLicenceIncludesTheProAddOn") : translateUi("ui.settingsDialog.moreToolsForYourNextIdea")}</span>
@@ -3677,7 +3697,7 @@ export function SettingsDialog({
                   <span className={settingsStyles.cliScanIcon} aria-hidden="true">
                     <Icon name="terminal" size={18} />
                   </span>
-                  <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                  <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                 </div>
               ) : agents.length === 0 ? (
                 <div className="empty-card">
@@ -3724,7 +3744,7 @@ export function SettingsDialog({
                         >
                           {agentRescanRunning ? (
                             <>
-                              <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                              <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                             </>
                           ) : (
                             t('settings.rescan')
@@ -3782,6 +3802,31 @@ export function SettingsDialog({
                             hoveredAgentCardId === a.id &&
                             amrCardStatus?.loggedIn !== true &&
                             amrCardStatus?.loginInFlight === true;
+                          const testButton = active && !isAmrAgent ? (
+                                  <button
+                                    type="button"
+                                    className={
+                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
+                                      (running ? ' loading' : '')
+                                    }
+                                    onClick={() => void handleTestAgent()}
+                                    disabled={running}
+                                    title={t('settings.testTitle')}
+                                  >
+                                    {running ? (
+                                      <>
+                                        <Icon
+                                          name="spinner"
+                                          size={13}
+                                          className="icon-spin"
+                                        />
+                                        <span>{t('settings.test')}</span>
+                                      </>
+                                    ) : (
+                                      t('settings.test')
+                                    )}
+                                  </button>
+                          ) : null;
                           const cardEl = (
                             <div
                               key={a.id}
@@ -3801,7 +3846,7 @@ export function SettingsDialog({
                                 setHoveredAgentCardId(null);
                               }}
                             >
-                              <div className={`agent-card-main${a.id === 'claude' && a.authStatus !== 'ok' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
+                              <div className={`agent-card-main${a.id === 'claude' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
                                 <button
                                   type="button"
                                   className="agent-card-select"
@@ -3939,33 +3984,9 @@ export function SettingsDialog({
                                     />
                                   )
                                 ) : null}
-                                {a.id === 'claude' && a.authStatus !== 'ok' ? (
+                                {a.id === 'claude' && a.authStatus === 'missing' ? (
                                   <ClaudeSignIn onConnected={() => { void handleRefreshAgents(); }} />
-                                ) : active && !isAmrAgent ? (
-                                  <button
-                                    type="button"
-                                    className={
-                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
-                                      (running ? ' loading' : '')
-                                    }
-                                    onClick={() => void handleTestAgent()}
-                                    disabled={running}
-                                    title={t('settings.testTitle')}
-                                  >
-                                    {running ? (
-                                      <>
-                                        <Icon
-                                          name="spinner"
-                                          size={13}
-                                          className="icon-spin"
-                                        />
-                                        <span>{t('settings.test')}</span>
-                                      </>
-                                    ) : (
-                                      t('settings.test')
-                                    )}
-                                  </button>
-                                ) : null}
+                                ) : testButton}
                               </div>
 
                               {(a.diagnostics ?? []).filter(diagnostic => !(a.id === 'claude' && diagnostic.reason === 'auth-missing')).map((diagnostic, i) => (
@@ -3976,7 +3997,7 @@ export function SettingsDialog({
                                 />
                               ))}
                               {active ? renderAgentModelConfig(a) : null}
-                              {active && (a.id === 'codex' || a.id === 'claude') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
+                              {active && (a.id === 'codex' || a.id === 'claude' || a.id === 'grok-build') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
                             </div>
                           );
                           if (active && agentTestState.status !== 'idle') {
@@ -4701,6 +4722,7 @@ export function SettingsDialog({
             </>
           ) : null}
 
+          {activeSection === 'upscaler' && <UpscalerSettings onDownloads={()=>setActiveSection('resourcePacks')}/>}
           {activeSection === 'dictation' && audioAvailable() ? <DictationSettings onInstallBridge={() => setActiveSection('resourcePacks')} /> : null}
           {activeSection === 'media' ? (
             <MediaProvidersSection
@@ -6835,7 +6857,7 @@ function buildSharedMcpJson(info: McpInstallInfo): string {
 // copy-snippet path still works for users who prefer to paste manually
 // or whose Codex CLI is not on PATH (button shows a disabled hint in
 // that case).
-function CodexInstallToggle(): JSX.Element | null {
+function CodexInstallToggle(): React.JSX.Element | null {
   const translateUi = usePixflowUiTranslation();
   const { t } = useI18n();
   const [available, setAvailable] = useState<boolean | null>(null);

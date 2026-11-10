@@ -70,6 +70,10 @@ describe('native Codex voice', () => {
     const controller = new AbortController(); controller.abort();
     await expect(runCodexVoice({ ...options(), signal: controller.signal })).rejects.toThrow('canceled'); expect(mocks.spawn).not.toHaveBeenCalled();
   });
+  it('rejects Ultra before starting a native process', async () => {
+    await expect(runCodexVoice({...options(),reasoning:'ultra'})).rejects.toThrow('Ultra reasoning is not supported');
+    expect(mocks.spawn).not.toHaveBeenCalled();
+  });
   it('does not start a call with an expired site session', async () => {
     await expect(runCodexVoice({ ...options(), expiresAt: Date.now() - 1000 })).rejects.toThrow('expired'); expect(mocks.spawn).not.toHaveBeenCalled();
   });
@@ -84,5 +88,13 @@ describe('native Codex voice', () => {
     expect(child.kill).not.toHaveBeenCalled();
     emit('turn/completed',{turn:{id:'busy',status:'completed'}});
     await running; expect(requests.some(item=>item.method==='thread/realtime/stop')).toBe(true); expect(mocks.stopTree).toHaveBeenCalledWith(child);
+  });
+});
+
+it('uses the native image call timestamp and drops result bytes before saving the event', () => {
+  const item = {id:'image-1', type:'imageGeneration', startedAtMs:1234};
+  expect(voiceProgress('item/started',{item})).toEqual({type:'tool_use',id:'image-1',name:'codex.imagegen',input:{startedAtMs:1234}});
+  expect(voiceProgress('item/completed',{item:{...item,status:'failed',failure:{message:'aborted'},result:'private-image'}})).toEqual({
+    type:'tool_result',toolUseId:'image-1',isError:true,content:'failed',
   });
 });

@@ -190,9 +190,9 @@ describe('renderMarkdown', () => {
 
   it('adds copy controls to fenced code blocks', () => {
     const out = html('```tsx\nexport const ok = true;\n```');
-    expect(out).toContain('class="md-code-block"');
-    expect(out).toContain('class="md-code-header"');
-    expect(out).toContain('class="md-code-actions"');
+    expect(out).toContain('data-slot="code-block"');
+    expect(out).toContain('data-slot="code-block-header"');
+    expect(out).toContain('data-slot="code-block-actions"');
     expect(out).toContain('class="md-code-action"');
     expect(out).toContain('<span>Copy</span>');
     expect(out).toContain('export const ok = true;');
@@ -293,6 +293,15 @@ describe('renderMarkdown', () => {
     // not have introduced a phantom third column.
     const bodyTd = (out.match(/<tbody>[\s\S]*<\/tbody>/)?.[0] ?? '').match(/<td/g) ?? [];
     expect(bodyTd.length).toBe(2);
+  });
+
+  it('leaves the attachment card as the only preview of its image and preserves unrelated images and text', () => {
+    const result = renderToStaticMarkup(<>{renderMarkdown('Saved ![gradient](/gradient.png) with ![reference](/other.png).', {
+      attachmentUrls: new Set(['/gradient.png']),
+    })}</>);
+    expect(result).not.toContain('src="/gradient.png"');
+    expect(result).toContain('src="/other.png"');
+    expect(result).toContain('Saved');
   });
 
   it('renders ![alt](url) as <img> for relative BYOK image URLs', () => {

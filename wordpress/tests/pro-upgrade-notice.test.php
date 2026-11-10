@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace PixflowDesign\WordPress\License {
-    class LicenseService { public function status(): array { return ['pro'=>$GLOBALS['pro']]; } }
+    class LicenseService { public function status(): array { return ['pro'=>$GLOBALS['pro']] + ($GLOBALS['license_status'] ?? []); } }
     class CentralEntitlements { public static function delivery_origin(): string { return 'https://pixflow.dev'; } }
 }
 namespace {
@@ -31,6 +31,9 @@ namespace {
     $GLOBALS['pro']=['eligible'=>false,'installation'=>'missing','trial_url'=>'https://pixflow.dev/account#pro-trial'];
     check($notice->offer()['label']==='Check Pro trial','Unknown account must not promise eligibility');
     $GLOBALS['pro']['trial_status']='eligible';
+    $GLOBALS['license_status'] = ['license'=>['present'=>true], 'central_entitlement'=>['code'=>'invalid_central_entitlement']];
+    check($notice->offer() === null, 'Saved licence awaiting verification must not be advertised an upgrade');
+    unset($GLOBALS['license_status']);
     check($notice->offer()['label']==='Try Pro for 7 days','Eligible trial CTA');
     foreach(['used','expired','ineligible','active'] as $state) {
         $GLOBALS['pro']['trial_status']=$state;
@@ -38,11 +41,11 @@ namespace {
     }
     $GLOBALS['pro']+=['plugins_url'=>'https://site.test/wp-admin/plugins.php','account_url'=>'https://pixflow.dev/account#pro-download'];
     $GLOBALS['pro']['eligible']=true;
-    check($notice->offer()['label']==='Download Pro','Paid customer download');
-    $GLOBALS['pro']['installation']='inactive';
-    check($notice->offer()['label']==='Activate Pro','Paid customer activation');
-    $GLOBALS['pro']['installation']='active';
-    check($notice->offer()===null,'No upsell for active paid users');
+    foreach (['missing','inactive','incomplete','incompatible','active'] as $installation) {
+        $GLOBALS['pro']['installation']=$installation;
+        check($notice->offer()===null, 'Paid licence must suppress the banner: '.$installation);
+        check($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')===[], 'Paid licence must suppress the upgrade link');
+    }
     $GLOBALS['pro']['eligible']=false;
     $GLOBALS['dismissed']=true;
     check($notice->offer()===null,'Dismissal respected');

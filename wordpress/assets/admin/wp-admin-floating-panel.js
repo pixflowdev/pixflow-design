@@ -476,6 +476,7 @@
         keepWorkspaceOnToolClose = false;
       }
     });
+    if (/^[1-9]\d*$/.test(new URLSearchParams(window.location.search).get('pixflow_media_id') || '') && workspaceAvailable()) open({type:'pixflow-design:open-workspace-tool', tool:'media'});
     trigger.setAttribute('role', 'button');
     trigger.setAttribute('aria-haspopup', 'menu');
     trigger.setAttribute('aria-expanded', 'false');
@@ -495,9 +496,9 @@
         designSystemLabel: 'Design systems',
         onToggleWorkspace: function () { if (overlay && !overlay.hidden) close(); else if (workspaceAvailable()) open(); },
         onOpenTool: function (tool) { if (!workspaceAvailable()) return; keepWorkspaceOnToolClose = false; open({ type: 'pixflow-design:open-workspace-tool', tool: tool === 'design-system' ? 'design-systems' : tool }); },
-        onOpenSettings: function () {
+        onOpenSettings: function (section) {
           keepWorkspaceOnToolClose = Boolean(overlay && !overlay.hidden);
-          open({ type: 'pixflow-design:open-settings', section: 'execution' }, keepWorkspaceOnToolClose);
+          open({ type: 'pixflow-design:open-settings', section: section || 'execution' }, keepWorkspaceOnToolClose);
         },
         onThemeChange: function (value) {
           theme = value;

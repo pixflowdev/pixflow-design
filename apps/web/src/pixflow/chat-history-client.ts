@@ -17,7 +17,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) throw new ChatHistoryRequestError(body.message || `Chat history request failed (${response.status})`, response.status, body);
   return body as T;
 }
-class ChatHistoryRequestError extends Error {
+export class ChatHistoryRequestError extends Error {
   constructor(message: string, readonly status: number, readonly body: {code?:string;data?:{message?:HistoryMessage}}) { super(message); }
 }
 
@@ -246,14 +246,15 @@ export const historyMessageFingerprint = (message: HistoryMessage) => {
   const { historyRevision: _revision, historySequence: _sequence, ...payload } = message;
   return JSON.stringify(payload);
 };
+export function resolveChatHistory<T extends HistoryMessage>(input: PixflowChatHistoryResolveRequest & { includePage: true; create?: true }): Promise<ChatHistoryBinding & { page?: ChatHistoryPage<T> }>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest & { create: false }): Promise<PixflowChatHistoryLookupResponse>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<ChatHistoryBinding>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<PixflowChatHistoryLookupResponse> {
   const selected = conversationBinding(input.sessionKey);
   return request('/chat-history/resolve', json('POST', selected ? { ...input, ...selected } : input));
 }
-export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null): Promise<ChatHistoryPage<T>> {
-  return request(`${base(binding)}?limit=50${before ? `&before=${encodeURIComponent(before)}` : ''}`);
+export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null, limit: 50 | 100 = 50): Promise<ChatHistoryPage<T>> {
+  return request(`${base(binding)}?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}`);
 }
 export async function importChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, messages: T[]): Promise<PixflowChatHistoryImportResponse<T>> {
   const owner = ownerScope();

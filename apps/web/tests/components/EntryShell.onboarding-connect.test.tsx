@@ -280,7 +280,7 @@ describe('Pixflow onboarding Connect step', () => {
       expect(screen.queryByText('Connect Pixflow Design Bridge')).toBeNull();
     });
     expect(watchEvents).toContain(true);
-    expect(watchEvents.at(-1)).toBe(false);
+    await waitFor(() => expect(watchEvents.at(-1)).toBe(false));
     window.removeEventListener('pixflow-design:bridge-onboarding-watch', onWatch);
   });
 

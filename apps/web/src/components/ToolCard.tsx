@@ -1,3 +1,8 @@
+import { IconListCheck, IconCircle } from '@tabler/icons-react';
+import { Button } from '@open-design/components';
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent } from './chat/CodeBlock';
+import type { ReactNode } from 'react';
+import { Trace, TraceIcon, TraceLine, TraceTitle, TraceDescription, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent } from './chat/Trace';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -10,7 +15,8 @@ import { useT as usePixflowUiTranslation } from '../i18n';
  *      Edit / Read / Bash / Glob / Grep / WebFetch / WebSearch)
  *   3. generic command/output fallback
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import styles from './ToolCard.module.css';
 import { useT } from '../i18n';
 import { isTodoWriteToolName, parseTodoWriteInput } from '../runtime/todos';
 import { getToolRenderer, toRenderProps } from '../runtime/tool-renderers';
@@ -197,7 +203,7 @@ function OpenInTabButton({ filePath, ctx }: { filePath: string; ctx: FileToolCtx
   if (!ctx.onRequestOpenFile) return null;
   if (!filePath || filePath === '(unnamed)') return null;
   // The agent uses absolute paths; the project-file API keys on basename.
-  const baseName = filePath.split('/').pop() ?? filePath;
+  const baseName = filePath.split(/[\\/]/).pop() ?? filePath;
   if (!baseName) return null;
   if (ctx.projectFileNames && !ctx.projectFileNames.has(baseName)) return null;
   const open = ctx.onRequestOpenFile;
@@ -242,63 +248,29 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
   const allComplete = completed === todos.length;
   const showDismiss = !!onDismiss && allComplete;
   return (
-    <div className={`op-card op-todo${expanded ? '' : ' op-todo-collapsed'}`}>
-      <div className="op-card-head op-todo-head">
-        <button
-          type="button"
-          className="op-todo-toggle"
-          aria-expanded={expanded}
-          onClick={() => setOverrideExpanded(!expanded)}
-          title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}
-        >
-          <span className="op-icon" aria-hidden>☐</span>
-          <span className="op-title">{t('tool.todos')}</span>
-          <span className="op-meta">
-            {done}/{todos.length}
-          </span>
-          {!expanded && inProgressTodo ? (
-            <span className="op-todo-current">
-              {inProgressTodo.activeForm || inProgressTodo.content}
-            </span>
-          ) : null}
-          <span className="op-todo-chev" aria-hidden>
-            {expanded ? '▾' : '▸'}
-          </span>
-        </button>
-        {showDismiss ? (
-          <button
-            type="button"
-            className="op-todo-done"
-            onClick={() => onDismiss?.()}
-            title={t('tool.todosDismiss')}
-          >
-            {t('tool.todosDone')}
-          </button>
-        ) : null}
-      </div>
-      <div className={`accordion-collapsible${expanded ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <ul className="todo-list">
-            {todos.map((todo, i) => (
-              <li key={i} className={`todo-item todo-${todo.status}`}>
-                <span className="todo-check" aria-hidden>
-                  {todo.status === 'completed'
-                    ? '✓'
-                    : todo.status === 'in_progress'
-                      ? '◐'
-                      : todo.status === 'stopped'
-                        ? '!'
-                        : '○'}
-                </span>
-                <span className="todo-text">
-                  {todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}
-                </span>
-              </li>
-            ))}
-          </ul>
+    <Trace className="op-todo" data-trace-kind="plan">
+      <TraceCollapsible open={expanded} onOpenChange={setOverrideExpanded}>
+        <div className={styles.planHeading}>
+          <TraceCollapsibleTrigger title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}>
+            <TraceLine><TraceIcon><IconListCheck size={14} /></TraceIcon>
+              <TraceTitle>{t('tool.todos')}</TraceTitle><TraceDescription>{done}/{todos.length}</TraceDescription>
+              {!expanded && inProgressTodo ? <TraceDescription>{inProgressTodo.activeForm || inProgressTodo.content}</TraceDescription> : null}
+            </TraceLine>
+          </TraceCollapsibleTrigger>
+          {showDismiss ? <Button variant="subtle" onClick={() => onDismiss?.()} title={t('tool.todosDismiss')}>{t('tool.todosDone')}</Button> : null}
         </div>
-      </div>
-    </div>
+        <TraceCollapsibleContent keepMounted>
+          <ul className="todo-list">
+            {todos.map((todo, i) => <li key={i} className={`todo-item todo-${todo.status}`}>
+              <TraceLine className={styles.planItem} status={todo.status === 'in_progress' ? 'running' : todo.status === 'stopped' ? 'error' : todo.status === 'pending' ? 'pending' : undefined}>
+                <TraceIcon>{todo.status === 'pending' ? <IconCircle size={14} /> : <Icon name={todo.status === 'completed' ? 'check' : todo.status === 'in_progress' ? 'spinner' : 'close'} size={14} />}</TraceIcon>
+                <TraceTitle>{todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}</TraceTitle>
+              </TraceLine>
+            </li>)}
+          </ul>
+        </TraceCollapsibleContent>
+      </TraceCollapsible>
+    </Trace>
   );
 }
 
@@ -316,33 +288,12 @@ function FileWriteCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; content?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
+  const baseName = file.split(/[\\/]/).pop() ?? file;
   const lines = typeof obj.content === 'string' ? obj.content.split('\n').length : null;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.write')}</span>
-        <span className="op-meta">{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  return <ToolTrace title={t('tool.write')} description={<>{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function FileEditCard({
@@ -359,7 +310,6 @@ function FileEditCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as {
     file_path?: string;
     filePath?: string;
@@ -368,31 +318,26 @@ function FileEditCard({
     new_string?: string;
     edits?: { old_string?: string; new_string?: string }[];
   };
-  const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
-  const editCount = Array.isArray(obj.edits) ? obj.edits.length : 1;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.edit')}</span>
-        <span className="op-meta">{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  const parsed = useMemo(() => {
+    const content = result?.content;
+    if (!content || result.isError || content.length > 262144 || !content.trimStart().startsWith('[')) return [];
+    try { return fileChanges(JSON.parse(content)); } catch { return []; }
+  }, [result]);
+  const changes = parsed.length ? parsed : fileChanges((input as { changes?: unknown } | null)?.changes);
+  const first = changes[0]?.path ?? [obj.file_path, obj.filePath, obj.path].find(path => typeof path === 'string' && path.trim());
+  const count = changes.length || obj.edits?.length || (first ? 1 : 0);
+  return <ToolTrace title={t('tool.edit')} description={first ? <>{first.split(/[\\/]/).pop()} · {count} {t(count === 1 ? 'tool.changeSingular' : 'tool.changePlural')}</> : null}
+    result={result} hideOutput={parsed.length > 0} runStreaming={runStreaming} runSucceeded={runSucceeded}
+    detail={first ? () => changes.length ? changes.map((row, index) => <div key={index}>
+      <code className="op-path">{row.path}</code>{typeof row.kind?.type === 'string' && <> · {row.kind.type}</>}<OpenInTabButton filePath={row.path} ctx={ctx} />
+      {row.diff && <pre className="op-output">{truncate(row.diff, 4000)}</pre>}
+    </div>) : <><code className="op-path">{first}</code><OpenInTabButton filePath={first} ctx={ctx} /></> : undefined} />;
+}
+
+function fileChanges(value: unknown): { path: string; diff?: string; kind?: { type?: string } }[] {
+  if (!Array.isArray(value) || !value.every(row => row && typeof row.path === 'string' && row.path.trim()
+    && (row.diff === undefined || typeof row.diff === 'string'))) return [];
+  return value;
 }
 
 function FileReadCard({
@@ -409,32 +354,11 @@ function FileReadCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
   const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string };
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
-  const baseName = file.split('/').pop() ?? file;
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.read')}</span>
-        <span className="op-meta">{baseName}</span>
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
-          </div>
-        </div>
-      </div>
-      <FileErrorDetail result={result} />
-    </div>
-  );
+  const baseName = file.split(/[\\/]/).pop() ?? file;
+  return <ToolTrace title={t('tool.read')} description={baseName} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
@@ -442,88 +366,38 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const obj = (input ?? {}) as { command?: string; description?: string };
   const command = obj.command ?? '';
   const desc = obj.description;
-  const [open, setOpen] = useState(false);
-  const isRunning = runStreaming && !result;
-  return (
-    <div className="op-card op-bash">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.bash')}</span>
-        {desc ? <span className="op-meta op-desc">{desc}</span> : null}
-        <span className="op-expand-chev" aria-hidden>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={11} />
-        </span>
-      </button>
-      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <div className="op-card-detail">
-            <pre className="op-command">{truncate(command, 400)}</pre>
-            {result?.content ? (
-              <pre className="op-output">{truncate(result.content, 4000)}</pre>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={desc || t('chat.designToolbox.context.terminal')} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<CodeBlock><CodeBlockContent><pre className="op-command"><code>{truncate(command, 400)}</code></pre></CodeBlockContent></CodeBlock>)} />;
 }
 
 function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string };
-  return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.glob')}</span>
-        <span className="op-meta">{obj.pattern ?? '*'}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.glob')} description={<>{obj.pattern ?? '*'}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function GrepCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const translateUi = usePixflowUiTranslation();
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string; glob?: string };
-  return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.grep')}</span>
-        <span className="op-meta">{obj.pattern ?? ''}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.grep')} description={<>{obj.pattern ?? ''}{obj.path ? translateUi("ui.toolCard.in", { value1: obj.path }) : ''}</>} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function WebFetchCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
   const obj = (input ?? {}) as { url?: string };
-  return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.fetch')}</span>
-        <span className="op-meta">{obj.url ?? ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.fetch')} description={obj.url} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function WebSearchCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
   const obj = (input ?? {}) as { query?: string };
-  return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.search')}</span>
-        <span className="op-meta">{obj.query ?? ''}</span>
-      </div>
-    </div>
-  );
+  return <ToolTrace title={t('tool.search')} description={obj.query} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 function GenericCard({
@@ -540,28 +414,63 @@ function GenericCard({
   runSucceeded: boolean;
 }) {
   const summary = describeInput(input);
-  return (
-    <div className="op-card op-generic">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{name}</span>
-        {summary ? <span className="op-meta">{truncate(summary, 200)}</span> : null}
-      </div>
-    </div>
-  );
+  return <ToolTrace title={name} description={summary ? truncate(summary, 200) : undefined} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
-function ResultBadge({ result, runStreaming, runSucceeded }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
+/** A tool only expands when there is real input detail or output to inspect.
+ * Keep large output unmounted until requested; source events remain untouched. */
+function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail, hideOutput }: {
+  title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
+  runSucceeded: boolean; detail?: (() => ReactNode) | undefined; hideOutput?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
   const t = useT();
-  if (!result && runStreaming) return <span className="op-status op-status-running" title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
-  if (!result && !runSucceeded) return <span className="op-status op-status-error" title={t('tool.error')}><Icon name="close" size={14} /></span>;
-  if (result?.isError) return <span className="op-status op-status-error" title={result.content || t('tool.error')}><Icon name="close" size={14} /></span>;
-  return <span className="op-status op-status-ok" title={t('tool.done')}><Icon name="check" size={14} /></span>;
+  const status = result?.isError ? 'error' : !result && runStreaming ? 'running' : undefined;
+  const label = result?.isError ? `${title} · ${t('tool.error')}` : title;
+  const line = <TraceLine status={status}>
+    <ResultBadge className={styles.status} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+    <TraceTitle title={label}>{label}</TraceTitle>
+    {description ? <TraceDescription>{description}</TraceDescription> : null}
+  </TraceLine>;
+  if (!detail && !result?.content) return <div data-trace-kind="tool">{line}</div>;
+  return <TraceCollapsible data-trace-kind="tool" open={open}
+    onOpenChange={setOpen}>
+    <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
+    <TraceCollapsibleContent className={styles.detail}>
+      {detail ? <ToolInput render={detail} /> : null}
+      {result?.content && !hideOutput ? <ToolOutput content={result.content} /> : null}
+    </TraceCollapsibleContent>
+  </TraceCollapsible>;
 }
 
-function FileErrorDetail({ result }: { result?: Props['result'] }) {
-  if (!result?.isError || !result.content.trim()) return null;
-  return <pre className="op-output">{truncate(result.content, 1200)}</pre>;
+function ToolInput({ render }: { render: () => ReactNode }) {
+  return <div className={styles.input}>{render()}</div>;
+}
+
+// Formatting is presentation-only: persisted provider output is never rewritten.
+// Bound parsing as well as rendering so unusually large results cannot stall a stream.
+function ToolOutput({ content }: { content: string }) {
+  const t = useT();
+  const formatted = useMemo(() => {
+    let value = content;
+    if (content.length <= 32_768 && /^\s*[\[{]/.test(content)) {
+      try { value = JSON.stringify(JSON.parse(content), null, 2); } catch { /* Plain tool output stays verbatim. */ }
+    }
+    return truncate(value, 4000);
+  }, [content]);
+  return <CodeBlock className={styles.output} size="sm">
+    <CodeBlockHeader><CodeBlockTitle className={styles.outputLabel}>{t('tool.output')}</CodeBlockTitle></CodeBlockHeader>
+    <CodeBlockContent><pre className="op-output"><code>{formatted}</code></pre></CodeBlockContent>
+  </CodeBlock>;
+}
+
+function ResultBadge({ result, runStreaming, runSucceeded, className = '' }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean; className?: string }) {
+  const t = useT();
+  if (!result && runStreaming) return <span className={`op-status op-status-running ${className}`} title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
+  if (!result && !runSucceeded) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
+  if (result?.isError) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
+  return <span className={`op-status op-status-ok ${className}`} title={t('tool.done')}><Icon name="check" size={14} /></span>;
 }
 
 function describeInput(input: unknown): string {
@@ -569,6 +478,8 @@ function describeInput(input: unknown): string {
   if (typeof input === 'string') return input;
   if (typeof input !== 'object') return String(input);
   const obj = input as Record<string, unknown>;
+  // Empty argument payloads carry no useful user-facing description.
+  if (Object.keys(obj).length === 0) return '';
   for (const key of ['file_path', 'path', 'pattern', 'url', 'query', 'name', 'command']) {
     const v = obj[key];
     if (typeof v === 'string') return v;

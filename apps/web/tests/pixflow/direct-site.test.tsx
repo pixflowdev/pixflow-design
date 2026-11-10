@@ -10,11 +10,114 @@ vi.mock('../../src/pixflow/optional-bridge', () => ({ fetchPixflowOptionalBridge
 vi.mock('../../src/pixflow/license', () => ({ ensurePixflowLicenseEntitlement: requests.entitlement }));
 vi.mock('../../src/pixflow/runtime-fetch', () => ({ pixflowWordPressRestFetch: requests.wordpress, pixflowRuntimeFetch: requests.daemon }));
 vi.mock('../../src/i18n', async (original) => { const actual = await original<typeof import('../../src/i18n')>(); return { ...actual, useT: () => (key: Parameters<typeof actual.translateLocale>[1]) => actual.translateLocale('en', key) }; });
-import { runDirectSite, steerDirectSite, pendingDirectSiteRun, DirectSiteRunError, directConversationId, DIRECT_BRICKS_RUN_STORAGE, SiteAccessNotice, useSiteAccess, useDirectAttachmentProject } from '../../src/pixflow/direct-site';
+import { preparePanelSession, runDirectSite, steerDirectSite, pendingDirectSiteRun, DirectSiteRunError, directConversationId, DIRECT_BRICKS_RUN_STORAGE, SiteAccessNotice, useSiteAccess, useDirectAttachmentProject } from '../../src/pixflow/direct-site';
 
 afterEach(() => { cleanup(); window.sessionStorage.clear(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
 describe('direct site panel', () => {
+  it('shows an admission rejection as a failed request rather than a lost Bridge connection', async () => {
+    requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true}));
+    const message = 'Direct mode does not yet support Grok Build transport.';
+    requests.daemon.mockResolvedValue(new Response(JSON.stringify({type:'error',message})+'\n'+JSON.stringify({type:'done',ok:false,outcome:'failed'})+'\n',{status:400,headers:{'Content-Type':'application/x-ndjson'}}));
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json({closed:true})));
+    const onOutcome=vi.fn(), onAccepted=vi.fn();
+    await expect(runDirectSite({agentId:'grok-build',prompt:'What is the current URL?',history:[],mode:'ask',persistenceMetadata:{id:'grok-admission'},signal:new AbortController().signal,onUpdate:vi.fn(),onOutcome,onAccepted})).rejects.toMatchObject({message,outcome:'failed'});
+    expect(onAccepted).not.toHaveBeenCalled();
+    expect(onOutcome).toHaveBeenCalledWith('failed');
+    expect(pendingDirectSiteRun()).toBeNull();
+    expect(requests.daemon).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not wait for a discarded preparation when the authoritative message cutoff changes', async () => {
+    let finish!: (response: Response) => void;
+    requests.wordpress.mockImplementation(() => new Promise<Response>(resolve => { finish = resolve; }));
+    const revoke = vi.fn().mockResolvedValue(new Response());
+    vi.stubGlobal('fetch', revoke);
+    const address = { projectId: 'project', conversationId: 'chat' };
+    const prep = preparePanelSession(Promise.resolve(undefined), { ...address, throughMessageId: 'old' });
+    await Promise.resolve();
+    expect(await prep.take({ historyBinding: { ...address, throughMessageId: 'new' } }, new AbortController().signal)).toBeUndefined();
+    finish(Response.json({ endpoint: 'https://site.example/tools', token: 'discarded', expiresAt: Date.now() / 1000 + 3600 }));
+    await waitFor(() => expect(revoke).toHaveBeenCalledTimes(1));
+  });
+  it.each(['last', 'different'])('claims a reload without a browser cutoff only for the confirmed last row (%s)', async cutoff => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response()));
+    const address = { projectId: 'project', conversationId: 'chat' };
+    requests.wordpress.mockResolvedValue(Response.json({
+      endpoint: 'https://site.example/tools', token: 'prepared', expiresAt: Date.now() / 1000 + 3600, historyRevision: 'revision',
+      historyThrough: 'last', historyWindow: { hasMore: false, nextCursor: null },
+      historyPage: { messages: [{id: 'last'}], hasMore: false, nextCursor: null },
+    }));
+    const restored = vi.fn();
+    const preparation = preparePanelSession(Promise.resolve(undefined), address, restored);
+    await waitFor(() => expect(restored).toHaveBeenCalledOnce());
+    const claimed = await preparation.take({ historyBinding: {...address, throughMessageId: cutoff} }, new AbortController().signal);
+    expect(claimed?.token).toBe(cutoff === 'last' ? 'prepared' : undefined);
+    preparation.dispose();
+  });
+
+  it('restores the latest history window and admits Send with the same credential and full prefix', async () => {
+    const messages = Array.from({ length: 120 }, (_, i) => ({ id: String(i + 1) }));
+    const binding = { projectId: 'project', conversationId: 'chat', throughMessageId: '120' };
+    requests.wordpress.mockResolvedValue(Response.json({
+      token: 'restored', expiresAt: Date.now() / 1000 + 3600, historyRevision: 'revision',
+      historyPage: { messages, nextCursor: null, hasMore: false },
+      historyWindow: { nextCursor: 'before-71', hasMore: true },
+    }));
+    const restore = vi.fn();
+    const prep = preparePanelSession(Promise.resolve(undefined), binding, restore);
+    const session = await prep.take({ historyBinding: binding }, new AbortController().signal);
+    expect(restore).toHaveBeenCalledExactlyOnceWith({ messages: messages.slice(-50), nextCursor: 'before-71', hasMore: true });
+    expect(session?.historyPage?.messages).toEqual(messages);
+    expect(session?.token).toBe('restored');
+    expect(requests.wordpress).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases history restoration when an earlier server cannot return the window', async () => {
+    const restore = vi.fn();
+    requests.wordpress.mockResolvedValue(Response.json({ token: 'legacy', expiresAt: Date.now() / 1000 + 3600 }));
+    const prep = preparePanelSession(Promise.resolve(undefined), undefined, restore);
+    await prep.take({}, new AbortController().signal);
+    expect(restore).toHaveBeenCalledExactlyOnceWith(undefined);
+  });
+
+  it('joins an in-flight session once and keeps the credential out of another send', async () => {
+    let resolve!: (response: Response) => void;
+    requests.wordpress.mockImplementation(() => new Promise<Response>(done => { resolve = done; }));
+    const prep = preparePanelSession(Promise.resolve(undefined));
+    const signal = new AbortController().signal;
+    const first = prep.take({}, signal);
+    await Promise.resolve();
+    resolve(Response.json({ endpoint: 'https://site.example/tools', token: 'one', expiresAt: Date.now() / 1000 + 3600 }));
+    expect(await first).toMatchObject({ token: 'one' });
+    expect(await prep.take({}, signal)).toBeUndefined();
+    expect(requests.wordpress).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, true])('handles another tab saving during preparation (revision support: %s)', async supported => {
+    const revoke = vi.fn().mockResolvedValue(new Response());
+    vi.stubGlobal('fetch', revoke);
+    requests.wordpress.mockResolvedValue(Response.json({ endpoint: 'https://site.example/tools', token: 'test',
+      expiresAt: Date.now() / 1000 + 3600, ...(supported ? { historyRevision: 'rev' } : {}) }));
+    const prep = preparePanelSession(Promise.resolve(undefined));
+    prep.invalidateHistory();
+    const credential = await prep.take({}, new AbortController().signal);
+    expect(Boolean(credential)).toBe(supported);
+    expect(revoke).toHaveBeenCalledTimes(supported ? 0 : 1);
+  });
+
+  it.each(['expired', 'different purpose', 'disposed during request'])('discards an unused session: %s', async reason => {
+    const revoke = vi.fn().mockResolvedValue(new Response());
+    vi.stubGlobal('fetch', revoke);
+    const expiresAt = Date.now() / 1000 + (reason === 'expired' ? -10 : 3600);
+    requests.wordpress.mockResolvedValue(Response.json({ endpoint: 'https://site.example/tools', token: 'unused', expiresAt }));
+    const prep = preparePanelSession(Promise.resolve(undefined));
+    await Promise.resolve();
+    if (reason === 'disposed during request') prep.dispose();
+    expect(await prep.take(reason === 'different purpose' ? { purpose: 'guidance-draft' } : {}, new AbortController().signal)).toBeUndefined();
+    await waitFor(() => expect(revoke).toHaveBeenCalledExactlyOnceWith(expect.any(URL), expect.objectContaining({ method: 'DELETE' })));
+  });
+
   it.each(['gutenberg', 'bricks'] as const)('does not resume, replace or clear an inherited %s checkpoint during a new handoff', async builder => {
     const regularSurface = builder === 'gutenberg' ? 'admin' : 'bricks';
     const input = {agentId:'codex',prompt:'Old page',history:[],mode:'design',persistenceMetadata:{id:'old-message'},signal:new AbortController().signal,onUpdate:vi.fn()};
@@ -253,8 +356,8 @@ describe('direct site panel', () => {
     expect(body).not.toHaveProperty('config');
     expect(JSON.stringify(body)).not.toContain('private-api-key');
   });
-  it('captures design guidance for each new request without rereading it during resume', async () => {
-    requests.config.mockResolvedValueOnce({ enhancedDesignGuidance: true }).mockResolvedValueOnce({ enhancedDesignGuidance: false });
+  it('uses Bridge-owned guidance without fetching config and preserves explicit overrides', async () => {
+    requests.config.mockResolvedValue({ enhancedDesignGuidance: true });
     requests.wordpress.mockImplementation(async () => Response.json({ endpoint: 'https://site.example/tools', token: 'session-token', writable: false }));
     requests.daemon.mockResolvedValueOnce(new Response('{"type":"text_delta","delta":"Before"}\n'))
       .mockResolvedValueOnce(new Response('{"type":"done","ok":true,"outcome":"answered"}\n'))
@@ -262,13 +365,13 @@ describe('direct site panel', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ closed: true })));
     const input = { agentId: 'codex', prompt: 'Inspect this page', history: [], mode: 'ask', signal: new AbortController().signal, onUpdate: vi.fn() };
     await expect(runDirectSite({ ...input, persistenceMetadata: { id: 'guidance' } })).rejects.toThrow('before completion');
-    expect(JSON.parse(requests.daemon.mock.calls[0]?.[1].body).enhancedDesignGuidance).toBe(true);
+    expect(JSON.parse(requests.daemon.mock.calls[0]?.[1].body)).not.toHaveProperty('enhancedDesignGuidance');
     await runDirectSite({ ...input, resume: pendingDirectSiteRun()! });
-    expect(requests.entitlement).toHaveBeenNthCalledWith(1,{allowSiteSwitch:true});
-    expect(requests.entitlement).toHaveBeenNthCalledWith(2,{allowSiteSwitch:false});
-    expect(requests.config).toHaveBeenCalledTimes(1);
-    await runDirectSite(input);
+    expect(requests.entitlement).toHaveBeenNthCalledWith(1,{allowSiteSwitch:true,reusePairing:true});
+    expect(requests.entitlement).toHaveBeenNthCalledWith(2,{allowSiteSwitch:false,reusePairing:true});
+    await runDirectSite({ ...input, enhancedDesignGuidance: false });
     expect(JSON.parse(requests.daemon.mock.calls[2]?.[1].body).enhancedDesignGuidance).toBe(false);
+    expect(requests.config).not.toHaveBeenCalled();
   });
   it('flushes pending text on cancel and ignores buffered terminal events after cancellation', async () => {
     requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:false}));
@@ -333,6 +436,14 @@ describe('direct site panel', () => {
     await runDirectSite({...base,canvasPostId:34,canvasId:'new-mailbox',history:[{role:'user',content:'Inspect'}]});
     expect(JSON.parse(requests.daemon.mock.calls[2]?.[1].body).conversationId).not.toBe(bodies[0].conversationId);
   });
+  it('reuses the settings read between ordinary turns', async () => {
+    requests.wordpress.mockResolvedValueOnce(Response.json({ guarded: false }));
+    const hook = renderHook(({ busy }) => useSiteAccess(busy), { initialProps: { busy: false } });
+    await waitFor(() => expect(hook.result.current.ready).toBe(true));
+    hook.rerender({ busy: true });
+    hook.rerender({ busy: false });
+    expect(requests.wordpress).toHaveBeenCalledTimes(1);
+  });
   it('keeps a connected canvas enabled while refreshing settings between turns', async () => {
     let finishRefresh!: (response: Response) => void;
     requests.wordpress.mockResolvedValueOnce(Response.json({ guarded: false }))
@@ -340,6 +451,7 @@ describe('direct site panel', () => {
     const hook = renderHook(({ busy }) => useSiteAccess(busy), { initialProps: { busy: false } });
     await waitFor(() => expect(hook.result.current.ready).toBe(true));
     hook.rerender({ busy: true });
+    window.dispatchEvent(new Event('focus'));
     hook.rerender({ busy: false });
     expect(requests.wordpress).toHaveBeenCalledTimes(2);
     expect(hook.result.current.ready && !hook.result.current.guarded).toBe(true);
@@ -545,4 +657,117 @@ it('reattaches the original CLI run from the destination panel without a second 
   await runDirectSite({...input,prompt:'',persistenceSurface:address.surface,resume:pending,onUpdate});
   expect(requests.daemon.mock.calls.map(call=>call[0])).toEqual(['/api/pixflow/direct-site/run-stream','/api/pixflow/direct-site/resume-stream']);
   expect(onUpdate.mock.calls.at(-1)?.[0]).toBe('Before.After.');
+});
+
+it.each(['codex', 'claude', 'grok', 'cursor-agent'])('measures %s from preparation through visible text without collecting private content', async agentId => {
+  let now = 10;
+  const measure = vi.fn();
+  vi.stubGlobal('performance', { now: () => now, clearMeasures: vi.fn(), measure });
+  const editor = await import('../../src/pixflow/editor-run-target');
+  const context = await import('../../src/pixflow/working-context');
+  const editorSpy = vi.spyOn(editor, 'resolveEditorRunTarget').mockImplementation(async () => { now = 30; return undefined; });
+  const historySpy = vi.spyOn(context, 'prepareHistorySource').mockImplementation(async () => {
+    now = 60;
+    return { binding: { projectId: 'private-project', conversationId: 'private-chat' }, throughMessageId: 'old', messages: [] };
+  });
+  requests.entitlement.mockImplementation(async () => { now = 80; });
+  requests.wordpress.mockImplementation(async () => { now = 100; return Response.json({ endpoint: 'https://private-site.example/tools', token: 'private-token', writable: false }); });
+  requests.daemon.mockImplementation(async () => {
+    now = 150;
+    return new Response(new ReadableStream({ start(controller) {
+      controller.enqueue(new TextEncoder().encode('{"type":"text_delta","delta":"Private response"}\n'));
+      controller.enqueue(new TextEncoder().encode('{"type":"done","ok":true,"timings":{"ownerReadyMs":11,"providerSubmittedMs":21,"firstTextMs":31,"totalMs":41,"warmWorkerUsed":true,"secret":"private-token"}}\n'));
+      controller.close();
+    } }));
+  });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ closed: true })));
+  try {
+    await runDirectSite({ agentId, prompt: 'Private prompt', history: [], historySource: { sessionKey: 'private-chat', messages: [{id:'saved', role:'user',content:'Previous'}] }, mode: 'ask', signal: new AbortController().signal, onUpdate: vi.fn() });
+    expect(measure).toHaveBeenCalledTimes(1);
+    const [name, entry] = measure.mock.calls[0]!;
+    expect(name).toBe('pixflow.direct-run');
+    expect(entry).toMatchObject({ start: 10, end: 150, detail: { editorReadyMs: expect.any(Number), historyReadyMs: expect.any(Number), licenseReadyMs: expect.any(Number), siteReadyMs: 90, bridgeRequestMs: 90, bridgeHeadersMs: 140, firstTextReceivedMs: 140, firstVisibleTextMs: 140, totalMs: 140, bridge: { ownerReadyMs: 11, providerSubmittedMs: 21, firstTextMs: 31, totalMs: 41, warmWorkerUsed: true } } });
+    expect(JSON.stringify(entry)).not.toMatch(/private|Private/);
+    expect(requests.config).not.toHaveBeenCalled();
+  } finally { editorSpy.mockRestore(); historySpy.mockRestore(); }
+});
+
+
+it('prepares editor context while authorizing and blocks a denied run before session creation', async () => {
+  const editor = await import('../../src/pixflow/editor-run-target');
+  let deny!: (error: Error) => void;
+  const gate = new Promise<void>((_, reject) => { deny = reject; });
+  requests.entitlement.mockReturnValue(gate);
+  const spy = vi.spyOn(editor, 'resolveEditorRunTarget').mockResolvedValue(undefined);
+  try {
+    const run = runDirectSite({ agentId: 'codex', mode: 'ask', prompt: 'Hello', history: [], signal: new AbortController().signal, onUpdate: vi.fn() });
+    await waitFor(() => { expect(spy).toHaveBeenCalled(); expect(requests.entitlement).toHaveBeenCalled(); });
+    expect(requests.wordpress).not.toHaveBeenCalled();
+    deny(new Error('Licence revoked'));
+    await expect(run).rejects.toThrow('Licence revoked');
+    expect(requests.wordpress).not.toHaveBeenCalled();
+    expect(requests.daemon).not.toHaveBeenCalled();
+  } finally { spy.mockRestore(); }
+});
+
+it.each([true, false])('only retries explicit pre-admission licence denial (recover=%s)', async recover => {
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'test',writable:true}));
+  requests.daemon.mockResolvedValueOnce(Response.json({error:{code:recover ? 'PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED' : 'DIRECT_SESSION_REJECTED'}}, {status:403}))
+    .mockResolvedValueOnce(new Response('{"type":"done","ok":true}\n'));
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({closed:true})));
+  const result = runDirectSite({agentId:'codex',prompt:'Hello',history:[],mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
+  if (recover) await expect(result).resolves.toBe('completed');
+  else await expect(result).rejects.toThrow();
+  expect(requests.daemon).toHaveBeenCalledTimes(recover ? 2 : 1);
+  if (recover) expect(requests.daemon.mock.calls[1]![1].body).toBe(requests.daemon.mock.calls[0]![1].body);
+});
+
+it('opens the authorized site session while loading history and revokes it if history fails', async () => {
+  const context = await import('../../src/pixflow/working-context');
+  let rejectHistory!: (error: Error) => void;
+  const loading = vi.spyOn(context, 'prepareHistorySource').mockImplementation(() => new Promise((_, reject) => { rejectHistory = reject; }));
+  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'temporary',writable:true}));
+  const close = vi.fn().mockResolvedValue(Response.json({closed:true}));
+  vi.stubGlobal('fetch',close);
+  try {
+    const run = runDirectSite({agentId:'codex',prompt:'Hello',history:[],historySource:{sessionKey:'chat',messages:[{id:'previous',role:'user',content:'Previous'}]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
+    await waitFor(() => { expect(requests.wordpress).toHaveBeenCalled(); expect(loading).toHaveBeenCalled(); });
+    rejectHistory(new Error('History conflict'));
+    await expect(run).rejects.toThrow('History conflict');
+    expect(close).toHaveBeenCalledWith(expect.any(URL),expect.objectContaining({method:'DELETE'}));
+    expect(requests.daemon).not.toHaveBeenCalled();
+  } finally { loading.mockRestore(); }
+});
+
+it('prepares an acknowledged follow-up with one WordPress request and sends only prompt history to the Bridge', async () => {
+  const binding = { projectId: 'a'.repeat(36), conversationId: 'saved-chat' };
+  const messages = [{ id: 'prior', role: 'user' as const, content: 'Recall maple' }];
+  requests.wordpress.mockResolvedValue(Response.json({ endpoint: 'https://site.example/tools', token: 'temporary', writable: true,
+    historyPage: { messages, hasMore: false, nextCursor: null } }));
+  requests.daemon.mockResolvedValue(new Response('{"type":"done","ok":true}\n'));
+  await runDirectSite({ agentId: 'codex', prompt: 'Which word?', history: [], historySource: {
+    binding, checkSavedPageFirst: true, messages,
+  }, mode: 'ask', signal: new AbortController().signal, onUpdate: vi.fn() });
+  expect(requests.wordpress).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(requests.wordpress.mock.calls[0]![1].body).historyBinding).toEqual({ ...binding, throughMessageId: 'prior' });
+  const payload = JSON.parse(requests.daemon.mock.calls[0]![1].body);
+  expect(payload.history).toEqual([{ role: 'user', content: 'Recall maple' }]);
+  expect(payload.session).not.toHaveProperty('historyPage');
+});
+
+it('refreshes once before admission and forwards the saved correction with the same run identity', async () => {
+  const binding = { projectId: 'a'.repeat(36), conversationId: 'saved-chat' };
+  const row = { id: 'first', role: 'user', content: 'Original' };
+  for (const content of ['Original', 'Corrected']) {
+    requests.wordpress.mockResolvedValueOnce(Response.json({ endpoint: 'https://site.example/tools', token: content,
+      writable: true, historyRevision: content, historyPage: { messages: [{ ...row, content }], hasMore: false } }));
+  }
+  requests.daemon.mockResolvedValueOnce(Response.json({ code: 'DIRECT_HISTORY_CHANGED' }, { status: 409 }))
+    .mockResolvedValueOnce(new Response('{"type":"done","ok":true}\n'));
+  await runDirectSite({ agentId: 'codex', prompt: 'Recall', history: [], historySource: {
+    binding, checkSavedPageFirst: true, messages: [row],
+  }, persistenceMetadata: {}, mode: 'ask', signal: new AbortController().signal, onUpdate: vi.fn() });
+  const [initial, retry] = requests.daemon.mock.calls.map(([, options]) => JSON.parse(options.body));
+  expect(retry.continuation).toEqual(initial.continuation);
+  expect(retry.history).toEqual([{ role: 'user', content: 'Corrected' }]);
 });

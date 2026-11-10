@@ -75,6 +75,18 @@ describe('generation lifecycle', () => {
   it('tracks concurrent explicit generation calls only', () => {
     expect(pendingMediaGenerations(events, true)).toEqual([{ id: 'image', kind: 'image' }, { id: 'video', kind: 'video' }]);
   });
+  it('only native Codex calls carry an estimate across both composers', () => {
+    const started = Date.now() - 45000;
+    const calls: AgentEvent[] = [
+      {kind:'tool_use', id:'native', name:'codex.imagegen', input:{startedAtMs:started}},
+      {kind:'tool_use', id:'provider', name:'generate_image', input:{startedAtMs:started}},
+    ];
+    expect(pendingMediaGenerations(calls,true)).toEqual([
+      {id:'native',kind:'image',startedAtMs:started},{id:'provider',kind:'image'},
+    ]);
+    render(<MediaGenerationPlaceholder kind="image" startedAtMs={started} />);
+    expect(screen.getByText(/90%/)).toBeTruthy();
+  });
   it('removes completion and failure placeholders and clears all on stop', () => {
     expect(pendingMediaGenerations([...events, { kind: 'tool_result', toolUseId: 'image', content: 'failed', isError: true }], true)).toEqual([{ id: 'video', kind: 'video' }]);
     expect(pendingMediaGenerations(events, false)).toEqual([]);

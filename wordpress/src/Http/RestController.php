@@ -132,10 +132,41 @@ class RestController
             'permission_callback' => [$this, 'can_use_wp_admin_surface'],
         ]);
 
+        // Load the panel catalogues in one WordPress bootstrap. Dispatch each
+        // fixed route normally so its permission callback still applies.
+        $this->register_site_route('/wp-admin/panel-catalogues', [
+            'methods' => 'GET',
+            'permission_callback' => [$this, 'can_use_wp_admin_surface'],
+            'callback' => function () {
+                $catalogues = [];
+                foreach (['capabilities' => 'wp-admin/capabilities', 'skills' => 'od/skills', 'promptSkills' => 'pixflow-mcp/prompt-skills', 'memory' => 'od/memory'] as $key => $path) {
+                    $response = rest_do_request(new \WP_REST_Request('GET', '/pixflow-design/v1/' . $path));
+                    $catalogues[$key] = $response->is_error() ? null : $response->get_data();
+                }
+                return new \WP_REST_Response($catalogues, 200, ['Cache-Control' => 'private, no-store']);
+            },
+        ]);
+
         $this->register_site_route( '/diagnostics/snapshot', [
             'methods' => 'GET',
             'callback' => [$this, 'handle_diagnostics_snapshot'],
             'permission_callback' => [$this, 'can_manage_site_settings'],
+        ]);
+        $this->register_site_route('/diagnostics/event', [
+            'methods' => 'POST',
+            'permission_callback' => static fn() => current_user_can('edit_posts'),
+            'callback' => static function ($request) {
+                $data = $request->get_json_params();
+                if (!is_array($data) || !in_array($data['area'] ?? null, ['licence','bridge','claude','browser'], true)
+                    || !in_array($data['event'] ?? null, ['request-failed','status-html','status-other','site-mismatch','disconnected','update-required','error','warning','recovered'], true)
+                    || !is_int($data['http'] ?? null) || $data['http'] < 0 || $data['http'] > 599) {
+                    return new \WP_Error('invalid_diagnostic_event', 'Invalid diagnostic event.', ['status'=>400]);
+                }
+                \PixflowDesign\WordPress\Diagnostics\SupportJournal::record($data['area'], $data['event'], $data['http'], '',
+                    is_string($data['operation'] ?? null) ? $data['operation'] : '',
+                    is_string($data['file'] ?? null) ? $data['file'] : '', is_int($data['line'] ?? null) ? $data['line'] : 0);
+                return new \WP_REST_Response(null, 204);
+            },
         ]);
 
         $this->register_site_route( '/diagnostics/prepare', [
@@ -305,6 +336,7 @@ class RestController
         $prepared = $this->diagnostics_archive->prepare(
             is_array($body['client'] ?? null) ? $body['client'] : [],
             is_array($body['context'] ?? null) ? $body['context'] : [],
+            is_array($body['bridge'] ?? null) ? $body['bridge'] : [],
         );
         if ($prepared instanceof \WP_Error) {
             return $this->json_response([

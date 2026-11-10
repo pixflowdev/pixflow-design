@@ -9,14 +9,15 @@ import { authorizeWorkspaceBuilderSession, stageWorkspaceBuilderHelper } from '.
 
 const source = { projectId: 'project-1', conversationId: 'conversation-1', requestId: 'message-1' };
 const session = { endpoint: 'https://site.test/?rest_route=/pixflow-design/v1/wp-admin/direct/tools', token: 'pfdirect_' + 'a'.repeat(64), expiresAt: 9999999999, writable: true, workspaceSource: source };
-const authorization = { identity: { siteId: 'site', userId: 1, blogId: 1 }, writable: true, workspaceSource: source };
+const authorization = { identity: { siteId: 'site', userId: 1, blogId: 1 }, writable: true, workspaceSource: source, siteTitle: 'Authorized site' };
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Workspace CLI builder connection', () => {
   it('takes the source binding from WordPress rather than client-supplied claims', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(authorization))));
-    const result = await authorizeWorkspaceBuilderSession(JSON.stringify({ ...session, workspaceSource: { ...source, requestId: 'forged' } }), source, 'https://site.test');
+    const result = await authorizeWorkspaceBuilderSession(JSON.stringify({ ...session, siteTitle: 'Forged', workspaceSource: { ...source, requestId: 'forged' } }), source, 'https://site.test');
     expect(result?.workspaceSource).toEqual(source);
+    expect(result?.siteTitle).toBe('Authorized site');
     expect(fetch).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ redirect: 'error', headers: { Authorization: 'Bearer ' + session.token } }));
   });
   it('rejects cross-site transport before sending credentials and mismatched source ownership', async () => {
@@ -45,6 +46,10 @@ describe('Workspace CLI builder connection', () => {
       expect(staged.prompt).toContain('Default page construction MUST happen visibly');
       const directory = path.join(root, 'workspace-builder-sessions', (await readdir(path.join(root, 'workspace-builder-sessions')))[0]!);
       const helper = path.join(directory, 'builder-tool.mjs');
+      const context = await promisify(execFile)(process.execPath, [helper, 'context']);
+      expect(JSON.parse(context.stdout)).toMatchObject({ scope: 'workspace', helper, siteTitle: null });
+      expect(context.stdout).not.toContain(session.token);
+      expect(calls).toHaveLength(0);
       expect(await readFile(helper, 'utf8')).not.toContain(session.token);
       const result = await promisify(execFile)(process.execPath, [helper, 'builder.handoff', JSON.stringify({ action: 'open', builder: 'gutenberg', postId: 44, brief: 'Preserve content' })]);
       expect(JSON.parse(result.stdout)).toEqual({ ok: true, handoff: { id: 'receipt-1' } });

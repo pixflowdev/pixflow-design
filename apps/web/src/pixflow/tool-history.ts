@@ -1,3 +1,4 @@
+import { isGeneratedMediaReceipt } from '../components/chat/media-generation';
 import { directTabStorageKey } from './direct-tab-storage';
 import { getPixflowWordPressConfig } from './wordpress-context';
 import { pixflowRuntimeFetch, pixflowWordPressRestFetch } from './runtime-fetch';
@@ -9,7 +10,7 @@ const commandEvent = 'pixflow:clear-tool-history';
 export function clearCompletedToolEvents<T extends { events?: unknown[]; status?: string; runStatus?: string }>(messages: T[]): T[] {
   return messages.map(message => {
     if (message.status === 'streaming' || ['running', 'interrupted'].includes(message.runStatus || '')) return message;
-    return {...message, events: message.events?.filter(event => !event || typeof event !== 'object' || !['tool_use','tool_result','tool_input_delta'].includes(String((event as {kind?:string}).kind)))};
+    return {...message, events: message.events?.filter(event => isGeneratedMediaReceipt(event) || !event || typeof event !== 'object' || !['tool_use','tool_result','tool_input_delta'].includes(String((event as {kind?:string}).kind)))};
   });
 }
 

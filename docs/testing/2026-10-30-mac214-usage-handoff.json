@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-30",
+  "version": "2.1.4",
+  "coreTestCommit": "601ab8f1d7d307b6211dc3e6ca4e9d64ab1b0ff0",
+  "coreTestBranch": "codex/tooltip-integrated-check",
+  "proTestCommit": "68995f19d42a005ca327e41186bba7c2a086c12b",
+  "proTestBranch": "codex/pro-repository-extraction",
+  "moduleApi": 14,
+  "corePullRequests": [
+    63,
+    65,
+    67
+  ],
+  "handoffBranch": "codex/mac214-usage-handoff",
+  "draftTag": "bridge-v2.1.4",
+  "buildArchitectures": [
+    "arm64",
+    "x64"
+  ],
+  "extensionId": "hbnbiboohlelmngadeolikeejamjlbkh",
+  "buildGate": "Targeted acceptance passes, then prepare clean 2.1.4 release-only commits and exact Pro Core pin; record full build pair before packaging",
+  "startingPairIsProductionVersioned": false,
+  "productionBuildAndDraftUploadAfterGate": true,
+  "publicPublicationAuthorized": false,
+  "teamChangesAllowed": false,
+  "extensionRebuildRequired": false,
+  "macReturn": {
+    "status": "complete",
+    "productionCore": "e1443e228ef68bc921298f5678d38e1af51dff5b",
+    "productionPro": "32a7946801d30e37f30bf35dda622f15335f3ec5",
+    "coreFixPr": 68,
+    "coreReleasePr": 69,
+    "proReleasePr": 33,
+    "draftReleaseId": 429347161,
+    "report": "evidence/mac214-usage-recovery/README.md",
+    "independentDownloadVerification": "all four assets passed",
+    "signing": "ad-hoc, not notarized",
+    "publicPublicationPerformed": false,
+    "reportPr": 70
+  }
+}

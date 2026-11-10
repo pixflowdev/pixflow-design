@@ -1,4 +1,7 @@
+import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 
+import type { CodexPromptParts } from './direct-site-run.js';
+import type { DirectCodexWorker } from './direct-codex-worker.js';
 import { watchExternalMcpAccess, authorizeExternalMcp, hasMcpMentions } from './external-mcp-authorization.js';
 import { audioSession, authorizeAudio, watchAudioAccess } from './audio-authorization.js';
 import { spawn } from 'node:child_process';
@@ -23,6 +26,10 @@ import { startBricksContextMirror } from './bricks-context-mirror.js';
 import { DirectSiteStore, directDigest, type DirectRunRecord } from './direct-site-store.js';
 import { authenticateDirectOwner, DirectSessionAuthorizationError, redactDirectEvent, revokeDirectSession } from './direct-site-session.js';
 import { directOperationState } from './direct-site-operation-state.js';
+import { generateMedia } from '../media.js';
+import { readMaskedConfig } from '../media-config.js';
+import { IMAGE_MODELS, MEDIA_PROVIDERS } from '../media-models.js';
+import { importNativeImage } from './native-image-import.js';
 import { runCodexTurn, type CodexSteer } from './codex-turn.js';
 import { runOpenCodeTurn } from './opencode-turn.js';
 import { isNativeSessionMissing } from './native-session-recovery.js';
@@ -37,22 +44,25 @@ import type { PixflowDirectToolHistoryRequest, PixflowDirectToolHistoryResponse 
 
 interface DirectResources {
   helper: string;
-  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean) => string;
+  prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean, imageProviders?: string[], capture?: (parts: CodexPromptParts) => void) => string;
   skills: (input: PixflowDirectSiteRunRequest, signal: AbortSignal) => Promise<unknown>;
   attachments: (input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) => Promise<Array<{name:string;path:string;kind:string}>>;
 }
-type LiveRun = { recordSteering?: (messageId: string, prompt: string, attachments: unknown, comments: unknown) => void; agentId: string; clients: Set<Response>; done: boolean; cancel: () => void; credentialHash: string; externalMcp?: boolean; legacyContinuation: boolean; storageFailure?: string; voice?: boolean; endVoiceRequested?: boolean; endVoice?: () => void; steer?: CodexSteer | undefined };
+type LiveRun = { generateImage?: (prompt: string, model?: string) => Promise<unknown>; recordSteering?: (messageId: string, prompt: string, attachments: unknown, comments: unknown) => void; agentId: string; clients: Set<Response>; done: boolean; cancel: () => void; credentialHash: string; externalMcp?: boolean; legacyContinuation: boolean; storageFailure?: string; voice?: boolean; endVoiceRequested?: boolean; endVoice?: () => void; steer?: CodexSteer | undefined };
 const storageFailureMessage = 'Bridge could not save this conversation. Work has stopped; changes already applied may remain. Free disk space or check storage access, then restart Bridge and inspect the site before continuing.';
 const storageFailureEvents = () => [{type:'error',message:storageFailureMessage},{type:'done',ok:false,outcome:'interrupted',message:storageFailureMessage}];
 const validId = (id: unknown): id is string => typeof id === 'string' && /^[a-f0-9]{32}$/.test(id);
 const validToken = (token: unknown): token is string => typeof token === 'string' && /^[a-f0-9]{64}$/.test(token);
 
 /** Durable records own output; in-memory state owns only the currently running process. */
-export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database): () => void {
+export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database, mediaRoot = dataDir, warmWorker?: DirectCodexWorker): () => void {
   const store = new DirectSiteStore(database ?? openDatabase(dataDir,{dataDir}));
   const parent = path.join(dataDir,'direct-site-runs');
   const managedWorkspace = (workspace: string) => path.dirname(path.resolve(workspace)) === path.resolve(parent) && path.basename(workspace).startsWith('run-');
   const runs = new Map<string,LiveRun>();
+  // Keep only the last completed Claude turn's hashes. Interleaved sites or a
+  // Bridge restart fall back to the full prompt on their next resume.
+  let lastClaude: { key: string; snapshot: ReturnType<typeof snapshotPrompt> } | undefined;
   let preparing = 0;
   const unconfirmedCanvas = new Set<string>();
   registerPixflowRuntimeWork(app, () => preparing > 0 || unconfirmedCanvas.size > 0 || [...runs.values()].some(run => !run.done));
@@ -77,6 +87,20 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
   // Long-running Bridges need the same retention as a freshly started Bridge.
   const retentionTimer = setInterval(() => { try { pruneHistory(); } catch { /* Retry next hour if the store is temporarily unavailable. */ } }, 60 * 60_000);
   retentionTimer.unref();
+
+  app.post('/api/pixflow/direct-site/image/:id', permission, async (req, res) => {
+    const live = runs.get(String(req.params.id));
+    const token = req.get('Authorization')?.replace(/^Bearer /, '');
+    if (!live?.generateImage || live.done || !token || live.credentialHash !== directDigest(token)) {
+      res.sendStatus(403); return;
+    }
+    const { prompt, model } = req.body ?? {};
+    if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 20000 || (model !== undefined && typeof model !== 'string')) {
+      res.status(400).json({message:'Invalid image request.'}); return;
+    }
+    try { res.json(await live.generateImage(prompt, model)); }
+    catch (error) { res.status(502).json({message:error instanceof Error ? error.message : 'Image generation failed.'}); }
+  });
 
   app.options('/api/pixflow/direct-site/history-clear',permission,(_req,res)=>{res.status(204).end();});
   app.post('/api/pixflow/direct-site/history-clear',permission,async(req,res)=>{
@@ -224,10 +248,18 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(record)for(const client of runs.get(record.id)?.clients ?? []) {if(!client.destroyed)client.write(line);}
       else if(!res.destroyed)res.write(line);
     };
+    let sentReplyText = false;
     const send = (event: Record<string,unknown>) => {
       if(storageFailed)return;
       const clean=redactDirectEvent(event,[input.session?.token ?? '',input.continuation?.token ?? '']);
       eventBatch.push(clean);
+      // Persist and deliver the first reply immediately, including any preceding
+      // activity in the batch. Later text can share a frame.
+      if (!sentReplyText && clean.type === 'text_delta' && typeof clean.delta === 'string' && clean.delta.length) {
+        sentReplyText = true;
+        flushEvents();
+        return;
+      }
       // Only presentation deltas may wait. Tool/terminal boundaries flush synchronously.
       if(!['text_delta','thinking_delta'].includes(String(event.type)) || eventBatch.length>=64)flushEvents();
       else batchTimer ??= setTimeout(flushEvents,16);
@@ -245,12 +277,13 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if (input.taskId && !/^[\w:.-]{1,191}$/.test(input.taskId)) throw new Error('Invalid Direct task identity.');
       let externalMcpAllowed = false;
       let imageGenerationAllowed = false;
+      let historyCurrent = true;
       let composioConfigured = false;
       const owner = await authenticateDirectOwner(input.session,!!input.conversationId || !!input.session.identity,preparation.signal, integrations => {
         const context = input.context && typeof input.context === 'object' ? input.context as Record<string, unknown> : {};
         input.context = { ...context, bricksIntegrationActive: integrations.bricks };
         if (integrations.bricks === false) { delete input.canvasId; delete input.canvasPostId; }
-      }, input.voice ? 'audio' : undefined, features => { composioConfigured = features.composio === true; externalMcpAllowed = features['external-mcp'] === true; imageGenerationAllowed = features['image-generation'] === true; });
+      }, input.voice ? 'audio' : undefined, features => { composioConfigured = features.composio === true; externalMcpAllowed = features['external-mcp'] === true; imageGenerationAllowed = features['image-generation'] === true; }, current => { historyCurrent = current; });
       if (hasMcpMentions(input.context) && !externalMcpAllowed) throw new Error('External MCP requires Pixflow Design Pro. Remove the external-tool mention or reactivate Pro before sending.');
       timings.ownerReadyMs=elapsed();
       const id=input.continuation?.id ?? randomUUID().replaceAll('-','');
@@ -267,6 +300,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         ownsCredential=runs.get(id)?.credentialHash!==directDigest(input.session.token);
         attach(id,res);return;
       }
+      if (!historyCurrent) {
+        res.status(409).json({ code: 'DIRECT_HISTORY_CHANGED', message: 'Saved conversation changed before Send.' });
+        return;
+      }
       const conversationId=input.conversationId ?? id;
       const active=store.active(owner,conversationId);
       if(active) {res.status(409).json({code:'DIRECT_CONVERSATION_BUSY',message:'This conversation already has a running request. Reconnect to it.'});return;}
@@ -274,6 +311,14 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(!def)throw new Error('Select an installed CLI agent in Settings â†’ Execution.');
       if(!['claude-stream-json','json-event-stream','stream-json'].includes(def.streamFormat))throw new Error(`Direct mode does not yet support ${def.name}'s ${def.streamFormat} transport. Select Codex, Claude, or OpenCode.`);
       const config=await readAppConfig(dataDir);
+      const imageProviders = imageGenerationAllowed ? await readMaskedConfig(mediaRoot).then(({providers}) =>
+        MEDIA_PROVIDERS.filter(provider => {
+          const setting = providers[provider.id];
+          if (!provider.integrated || provider.id === 'stub' || setting?.enabled === false ||
+              !IMAGE_MODELS.some(model => model.provider === provider.id)) return false;
+          return provider.id === 'custom-image' ? Boolean(setting?.baseUrl && setting.model) : setting?.configured === true;
+        }).map(provider => provider.id)
+      ).catch(() => undefined) : undefined;
       const externalMcp=await readDirectMcpConfiguration(dataDir,def.id,externalMcpAllowed);
       if (input.enhancedDesignGuidance !== undefined && typeof input.enhancedDesignGuidance !== 'boolean') throw new Error('Enhanced design guidance must be a boolean.');
       input.enhancedDesignGuidance ??= config.enhancedDesignGuidance !== false;
@@ -285,7 +330,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       compatibility=directDigest({agent:def.id,externalMcp,executable:launch.launchPath,model:input.model ?? 'default',mode:input.mode ?? (input.session.writable?'design':'ask'),writable:input.session.writable,canvasPostId:input.canvasPostId,
         // A page-pinned canvas is a replaceable transport, not conversation identity.
         // The real mailbox and renewed credentials are still refreshed for each turn.
-        instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured)});
+        instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders)});
       const compatible=previousConversation?.compatibility===compatibility && previousConversation.lineage===lineage(input.history);
       let resumeSessionId=compatible && def.resumesSessionViaCli ? previousConversation.nativeSessionId : null;
       await fs.mkdir(parent,{recursive:true});
@@ -313,6 +358,29 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         send({type:'steering_message',id:messageId,text:prompt,contentOffset:assistant.length,createdAt:Date.now(),
           ...(Array.isArray(attachments)?{attachments}:{}),...(Array.isArray(comments)?{commentAttachments:comments}:{})});
       },agentId:def.id,clients:new Set(),done:false,cancel,credentialHash:directDigest(input.session.token),externalMcp:!!(Object.keys(externalMcp.codex).length || externalMcp.claude || externalMcp.opencode),legacyContinuation:!input.conversationId,voice:!!input.voice});
+      const imageWorkspace = workspace;
+      const imageRun = runs.get(id)!;
+      if (imageGenerationAllowed && input.session.writable && imageProviders?.length) {
+        imageRun.generateImage = async (prompt, requestedModel) => {
+          const model = IMAGE_MODELS.find(candidate => imageProviders.includes(candidate.provider ?? '') && (!requestedModel || candidate.id === requestedModel));
+          if (!model) throw new Error('Select an available image model.');
+          const toolId = randomUUID();
+          send({type:'tool_use', id:toolId, name:'generate_image', input:{model:model.id}});
+          try {
+            const result = await generateMedia({projectRoot:mediaRoot, projectsRoot:parent, projectId:path.basename(imageWorkspace),
+              surface:'image', model:model.id, prompt, output:'image-'+toolId+'.png'});
+            if (result.usedStubFallback || result.intentionalStub) throw new Error('The image provider did not return a generated image.');
+            preparation.signal.throwIfAborted();
+            const bytes = await fs.readFile(path.join(imageWorkspace,result.name));
+            const media = await importNativeImage({result:bytes.toString('base64')},'',undefined,input.session,preparation.signal);
+            send({type:'tool_result',toolUseId:toolId,content:JSON.stringify({pixflowGeneratedMedia:media})});
+            return media;
+          } catch (error) {
+            send({type:'tool_result',toolUseId:toolId,isError:true,content:error instanceof Error ? error.message : 'Image generation failed.'});
+            throw error;
+          }
+        };
+      }
       store.saveConversation({key:conversationKey,compatibility,lineage:lineage(input.history),workspace,nativeSessionId:null});
       attach(id,res);
       send({type:'run',surface:record.surface,resuming:!!resumeSessionId});
@@ -323,7 +391,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(storageFailed)return;
       // All app access uses the WordPress session and its current account allowance.
       // No legacy Bridge connector grant or project credential is issued to the child.
-      await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
+      await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,imageEndpoint:imageRun.generateImage ? `http://127.0.0.1:${req.socket.localPort}/api/pixflow/direct-site/image/${id}` : undefined,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
       await fs.writeFile(path.join(workspace,'site-tool.mjs'),resources.helper);
       await fs.writeFile(path.join(workspace,'visual-capture.mjs'),AGENT_VISUAL_CAPTURE_SOURCE);
       if(input.canvasId)stopMirror=await startBricksContextMirror(workspace,input.session,input.canvasId,(input.context as {liveBuilderContext?:unknown}|undefined)?.liveBuilderContext);
@@ -341,7 +409,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           writable: input.session.writable, expiresAt: input.session.expiresAt, signal: preparation.signal,
           voice: input.voice.name,
           mcpServers: externalMcp.codex,
-          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured),
+          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders),
           onChild: value => {child=value;timings.spawnMs=elapsed();},
           onEndReady: end => {const live=runs.get(id);if(live){live.endVoice=end;if(live.endVoiceRequested)end();}},
           onEvent: event => {
@@ -362,8 +430,15 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       let usedTools=false;
       let missingSession=false;
       for(let attempt=0;attempt<2;attempt++) {
-        const prompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId,imageGenerationAllowed,composioConfigured)
+        let promptParts: CodexPromptParts | undefined;
+        const fullPrompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId && def.id !== 'claude' && !(def.id === 'codex' && warmWorker),imageGenerationAllowed,composioConfigured,imageProviders, parts => { promptParts = parts; })
           +(attachments.length?'\n\nUser reference files:\n'+JSON.stringify(attachments):'');
+        const snapshot = def.id === 'claude' && promptParts ? snapshotPrompt(promptParts) : undefined;
+        const priorKey = resumeSessionId && previousConversation && directDigest([conversationKey, compatibility, resumeSessionId, previousConversation.lineage]);
+        const previous = priorKey && lastClaude?.key === priorKey ? lastClaude.snapshot : undefined;
+        if (previous) lastClaude = undefined;
+        const prompt = previous && snapshot && promptParts && !attachments.length
+          ? changedPrompt(promptParts, snapshot, previous) : fullPrompt;
         // File-based CLIs need the complete composed request available until the child exits.
         // Each attempt owns its file so retries cannot read an earlier conversation seed.
         const promptFile=await preparePromptFileForAgent(def,prompt,id);
@@ -373,13 +448,13 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         timings.nativeSessionReused=!!resumeSessionId;
         const env=applyAgentLaunchEnv(spawnEnvForAgent(def.id,process.env,configuredEnv),launch);
         await configureDirectMcpProcess(externalMcp,def.id,workspace,env,args);
-        if(def.id==='claude'&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
+        if(['claude','grok-build'].includes(def.id)&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
         if(def.id==='codex')args.push('-c','sandbox_workspace_write.network_access=true','-c','approval_policy="never"');
         if(def.id==='opencode') {const inherited=env.OPENCODE_CONFIG_CONTENT?JSON.parse(env.OPENCODE_CONFIG_CONTENT):{};env.OPENCODE_CONFIG_CONTENT=JSON.stringify({...inherited,permission:'allow'});args.push('--title','Pixflow Direct');}
         const invocation=createCommandInvocation({command:launch.launchPath,args,env});
         const onEvent=(event:Record<string,unknown>)=>{
           timings.firstProviderEventMs ??= elapsed();
-          if(event.type==='text_delta') timings.firstTextMs ??= elapsed();
+          if(event.type==='text_delta' && typeof event.delta==='string' && event.delta.length) timings.firstTextMs ??= elapsed();
           if(typeof event.sessionId==='string' && /^[\w.-]{1,256}$/.test(event.sessionId))capturedSessionId=event.sessionId;
           if(event.type==='text_delta' && typeof event.delta==='string')assistant+=event.delta;
           if (event.type === 'assistant_message_boundary') {
@@ -414,11 +489,21 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         let stderr='';
         if(def.id==='codex'||def.id==='opencode') {
           try {
+          if (def.id === 'codex' && config.agentId === 'codex' && config.mode !== 'api') {
+            warmWorker?.refreshLaunch({ executable: launch.launchPath, env });
+          }
           capturedSessionId=await (def.id==='codex'?runCodexTurn:runOpenCodeTurn)({executable:launch.launchPath,env,cwd:workspace,prompt,images,
+            ...(imageGenerationAllowed && input.session.writable && def.id === 'codex' ? {importImage: (item: Record<string,unknown>, threadId: string) => importNativeImage(item,threadId,env.CODEX_HOME,input.session,preparation.signal)} : {}),
             mcpServers: externalMcp.codex,
             isolateProjectInstructions: true,
             model:input.model,reasoning:input.reasoning,fastMode:input.fastMode,resumeSessionId,signal:preparation.signal,
-            onChild:value=>{child=value;timings.spawnMs=elapsed();},onEvent,
+            ...(def.id === 'codex' ? { threadScope: directDigest([conversationKey, compatibility]), ...(promptParts && !attachments.length ? { promptParts } : {}),
+              onInput: (bytes: number) => { timings.promptBytes = bytes; }, ...(warmWorker ? { warmWorker } : {}), onWorkerAcquired: (warm: boolean) => { timings.warmWorkerUsed = warm; }, onChildReleased: () => { child = undefined; }, onPhase: (phase: 'initialized' | 'thread_ready' | 'submitted') => {
+              if (phase === 'initialized') timings.protocolReadyMs ??= elapsed();
+              if (phase === 'thread_ready') timings.threadReadyMs ??= elapsed();
+              if (phase === 'submitted') timings.providerSubmittedMs ??= elapsed();
+            } } : {}),
+            onChild:value=>{child=value;timings.spawnMs=elapsed();send({type:'status',label:'provider_waiting'});},onEvent,
             onSteerReady:steer=>{const live=runs.get(id);if(live)live.steer=steer;},
           });
           turnSucceeded=true;
@@ -429,10 +514,13 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         } else {
         child=spawn(invocation.command,invocation.args,{cwd:workspace,env,shell:false,windowsHide:true,windowsVerbatimArguments:invocation.windowsVerbatimArguments,stdio:['pipe','pipe','pipe']});
         timings.spawnMs=elapsed();
+        send({type:'status',label:'provider_waiting'});
         child.stdout?.on('data',(chunk:Buffer)=>{buffer+=decoder.write(chunk);const lines=buffer.split('\n');buffer=lines.pop()||'';lines.forEach(accept);});
         child.stderr?.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-4000);});
         child.stdin?.on('error',()=>undefined);
         const completed=new Promise<number|null>((resolve,reject)=>{child!.once('error',reject);child!.once('close',resolve);});
+        // File/argument CLIs receive their input at spawn; stdin CLIs receive it below.
+        timings.providerSubmittedMs ??= elapsed();
         if(def.promptViaStdin) {
           if(def.promptInputFormat==='stream-json')child.stdin?.write(JSON.stringify({type:'user',message:{role:'user',content:prompt}})+'\n');
           else child.stdin?.end(prompt);
@@ -452,7 +540,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         if(!canceled) {
           const operationState=directOperationState(journal,id);
           const outcome=emittedRenderableQuestionForm(assistant)?'awaiting_input':operationState ?? (input.session.writable?'completed':'answered');
-          store.saveConversation({key:conversationKey,compatibility,lineage:directTurnLineage(input.history,input.prompt,assistant,acceptedSteering),workspace,nativeSessionId:capturedSessionId ?? (def.id==='claude'?newSessionId:null)});
+          const lineage = directTurnLineage(input.history,input.prompt,assistant,acceptedSteering);
+          const nativeSessionId = capturedSessionId ?? (def.id === 'claude' ? resumeSessionId ?? newSessionId : null);
+          store.saveConversation({key:conversationKey,compatibility,lineage,workspace,nativeSessionId});
+          if (snapshot && nativeSessionId) lastClaude = { key: directDigest([conversationKey, compatibility, nativeSessionId, lineage]), snapshot };
           finish(outcome,operationState==='interrupted'?'A site operation has no confirmed result. Inspect its command result and current site state before continuing.':operationState==='failed'?'A site tool reported a rejection without a later successful retry of that tool. Review the retained output before continuing.':undefined);
         }
         break;

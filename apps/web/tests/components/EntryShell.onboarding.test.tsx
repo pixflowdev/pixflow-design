@@ -313,22 +313,33 @@ describe('Pixflow shared setup', () => {
     fireEvent.click(await screen.findByRole('button', {name:'Open Pixflow Design'}));
     await waitFor(() => expect(props.onCompleteOnboarding).toHaveBeenCalledOnce());
   });
-  it('offers only the two AI routes without requiring framework or resources', async () => {
-    renderOnboarding(licensed);
+  it('can finish without choosing an AI route or adding credentials', async () => {
+    const props = renderOnboarding(licensed);
     await next();
     await screen.findByRole('button', { name: /Use an API key/ });
-    expect(screen.queryByRole('button', { name: /Continue without AI/ })).toBeNull();
     expect(screen.getByRole('button', { name: /Connect an AI subscription/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Use an API key/ })).toBeTruthy();
     expect(screen.queryByText('Install resources')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue without AI' }));
+    await waitFor(() => expect(props.onCompleteOnboarding).toHaveBeenCalledOnce());
   });
-  it('requires an AI route when resuming a legacy no-AI selection', async () => {
+  it('can skip a resumed legacy no-AI setup', async () => {
     const props = renderOnboarding({ ...licensed, config: baseConfig({ onboardingRoute: 'none' }), agents: [], daemonLive: false });
     await next();
     await screen.findByRole('button', { name: /Use an API key/ });
-    expect(screen.queryByRole('button', { name: /Continue without AI/ })).toBeNull();
     expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(props.onCompleteOnboarding).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue without AI' }));
+    await waitFor(() => expect(props.onCompleteOnboarding).toHaveBeenCalledOnce());
+  });
+  it('can leave the API connection step without entering a key', async () => {
+    const props = renderOnboarding(licensed);
+    await next();
+    fireEvent.click(await screen.findByRole('button', { name: /Use an API key/ }));
+    await next();
+    const skip = await screen.findByRole('button', { name: 'Continue without AI' });
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveProperty('disabled', true);
+    fireEvent.click(skip);
+    await waitFor(() => expect(props.onCompleteOnboarding).toHaveBeenCalledOnce());
   });
   it('stays on setup and presents a retryable error when completion cannot be saved', async () => {
     const complete = vi.fn().mockRejectedValue(new Error('Could not save setup'));

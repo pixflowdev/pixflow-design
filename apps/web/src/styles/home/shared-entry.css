@@ -3926,7 +3926,7 @@
       color-mix(in srgb, #fff 30%, transparent) 50%,
       transparent 72%) 0 0 / 200% 100%,
     color-mix(in srgb, var(--bg-muted) 82%, var(--bg-panel));
-  animation: onboarding-skeleton-sheen 1.55s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 
 [data-theme="dark"] .onboarding-view__skeleton-line,
@@ -3997,12 +3997,6 @@
   /* Slightly stagger the sweep from the label so the two don't pulse in
      lockstep — reads as one surface loading, not two blinking blocks. */
   animation-delay: 160ms;
-}
-
-@keyframes onboarding-skeleton-sheen {
-  to {
-    background-position: -200% 0, 0 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,7 @@
+import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
+import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
+import { createHash } from 'node:crypto';
+import type { CodexPromptParts } from './direct-site-run.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { stopChildProcessTree } from '@open-design/platform';
@@ -6,6 +10,8 @@ import { codexNeedsDangerFullAccessSandbox } from '../runtimes/defs/codex.js';
 import { voiceProgress } from './codex-voice.js';
 import type { CodexMcpServers } from './direct-site-mcp.js';
 import { NativeSessionMissingError } from './native-session-recovery.js';
+
+import type { DirectCodexWorker } from './direct-codex-worker.js';
 
 type Message = Record<string, any>;
 export type CodexSteer = (messageId: string, prompt: string) => Promise<PixflowDirectSiteSteerResponse>;
@@ -18,18 +24,31 @@ export async function runCodexTurn(options: {
   /** Direct-site scratch workspaces own AGENTS.md; ancestor repository guidance is unrelated. */
   isolateProjectInstructions?: boolean;
   runtimeWorkspaceRoots?: string[];
+  importImage?: (item: Message, threadId: string) => Promise<Record<string, unknown>>;
   onSettled?: (threadId: string, error?: unknown) => void;
   model?: string | undefined; reasoning?: string | undefined; fastMode?: boolean | undefined; resumeSessionId: string | null;
   signal: AbortSignal; onChild: (child: ReturnType<typeof spawn>) => void;
+  warmWorker?: DirectCodexWorker;
+  threadScope?: string;
+  promptParts?: CodexPromptParts;
+  onInput?: (bytes: number, attached: boolean) => void;
+  onWorkerAcquired?: (warm: boolean) => void;
+  onChildReleased?: () => void;
+  onPhase?: (phase: 'initialized' | 'thread_ready' | 'submitted') => void;
   onEvent: (event: Message) => void; onSteerReady: (steer: CodexSteer | undefined) => void;
 }): Promise<string> {
-  const child = spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
+  assertCodexReasoningSupported(options.reasoning);
+  const lease = options.isolateProjectInstructions && !options.configArgs?.length ? options.warmWorker?.acquire(options, options.resumeSessionId, options.threadScope) : undefined;
+  let reusable = false;
+  const child = lease?.worker.child ?? spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
     ...(options.isolateProjectInstructions ? ['-c', 'project_root_markers=["AGENTS.md"]'] : [])], {
     cwd: options.cwd, env: options.env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   });
   options.onChild(child);
-  let sequence = 0, threadId = '', turnId = '', ended = false, buffer = '', completedCleanly = false;
-  let compacting = false;
+  options.onWorkerAcquired?.(Boolean(lease));
+  let sequence = lease?.worker.sequence ?? 0, threadId = '', turnId = '', ended = false, buffer = '', completedCleanly = false;
+  const imageImports: Promise<string | null>[] = [];
+  let compacting = false, compacted = false;
   let startedMessageId = '', outputMessageId = '', hasText = false, trailingNewlines = 0;
   let activeMessageId = '';
   const replyWaiters = new Set<() => void>();
@@ -54,9 +73,9 @@ export async function runCodexTurn(options: {
   // A process failure can arrive while initialize is pending.
   void completion.catch(() => undefined);
   const write = (message: Message) => child.stdin.write(JSON.stringify(message) + '\n');
-  const call = (method: string, params: Message): Promise<any> => new Promise((resolve, reject) => {
+  const call = (method: string, params: Message, timeout = 30_000): Promise<any> => new Promise((resolve, reject) => {
     const id = ++sequence;
-    const timer = setTimeout(() => { pending.delete(id); reject(new Error('Codex delivery could not be confirmed.')); }, 30_000);
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error('Codex delivery could not be confirmed.')); }, timeout);
     pending.set(id, { resolve, reject, timer });
     write({ id, method, params });
   });
@@ -68,10 +87,11 @@ export async function runCodexTurn(options: {
   const abort = () => { fail(new Error('Stopped.')); };
   options.signal.addEventListener('abort', abort, { once: true });
   child.on('error', fail);
-  child.on('close', () => { if (!ended) fail(new Error('Codex disconnected before the turn finished.')); });
+  const closed = () => fail(new Error('Codex disconnected before the turn finished.'));
+  child.on('close', closed);
   child.stdin.on('error', fail);
-  child.stderr.on('data', () => { /* Never expose native diagnostics containing private site data. */ });
-  child.stdout.on('data', (chunk: Buffer) => {
+  child.stderr.resume();
+  const accept = (chunk: Buffer) => {
     buffer += decoder.write(chunk);
     if (buffer.length > 8_000_000) { fail(new Error('Codex returned an oversized message.')); return; }
     let newline: number;
@@ -92,6 +112,7 @@ export async function runCodexTurn(options: {
       const params = message.params || {};
       if (params.threadId && threadId && params.threadId !== threadId) continue;
       if (params.item?.type === 'contextCompaction' && ['item/started','item/completed'].includes(message.method)) {
+        compacted = true;
         compacting = message.method === 'item/started';
         options.onEvent({type:'status',label:compacting?'Compacting working context':'Working context compacted',contextCompaction:compacting?'running':'completed'});
       }
@@ -102,7 +123,10 @@ export async function runCodexTurn(options: {
         ended = true;
         completedCleanly = params.turn?.status === 'completed';
         options.onSteerReady(undefined);
-        if (params.turn?.status === 'completed') resolveTurn();
+        if (params.turn?.status === 'completed') {
+          options.onEvent({type:'status',label:'response_complete'});
+          resolveTurn();
+        }
         else rejectTurn(new Error(params.turn?.error?.message || 'Codex did not complete this turn.'));
       }
       const event = voiceProgress(message.method, params);
@@ -127,21 +151,44 @@ export async function runCodexTurn(options: {
         const trailing = event.delta.match(/\n*$/)?.[0].length || 0;
         trailingNewlines = trailing === event.delta.length ? Math.min(2, trailingNewlines + trailing) : Math.min(2, trailing);
       }
-      if (event) options.onEvent(event);
+      if (message.method === 'item/completed' && params.item?.type === 'imageGeneration' && options.importImage && event && !event.isError) {
+        const imported = options.importImage(params.item, threadId).then(media => {
+          options.onEvent({...event, content:JSON.stringify({pixflowGeneratedMedia:media})});
+          return null;
+        }).catch((error: Error) => {
+          const detail = 'Image generated, but saving to Pixflow Media failed: ' + error.message;
+          options.onEvent({...event,isError:true,content:detail});
+          return detail;
+        });
+        imageImports.push(imported);
+      } else if (event) options.onEvent(event);
     }
-  });
+  };
+  child.stdout.on('data', accept);
   try {
     if (options.signal.aborted) throw new Error('Stopped.');
-    await call('initialize', { clientInfo: { name: 'pixflow_design', title: 'Pixflow Design', version: '2.0.3' }, capabilities: { experimentalApi: true } });
-    write({ method: 'initialized' });
+    if (lease) await lease.worker.ready;
+    options.signal.throwIfAborted();
+    if (!lease) {
+      await call('initialize', { clientInfo: { name: 'pixflow_design', title: 'Pixflow Design', version: '2.0.3' }, capabilities: { experimentalApi: true } });
+      write({ method: 'initialized' });
+    }
+    options.onPhase?.('initialized');
     const settings = {
       cwd: options.cwd, model: options.model, approvalPolicy: 'never',
       ...(options.runtimeWorkspaceRoots?.length ? { runtimeWorkspaceRoots: options.runtimeWorkspaceRoots } : {}),
       sandbox: codexNeedsDangerFullAccessSandbox(process.platform, options.env) ? 'danger-full-access' : 'workspace-write',
-      config: { model_reasoning_effort: options.reasoning ?? 'medium', 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
+      config: { model_reasoning_effort: clampCodexReasoning(options.model, options.reasoning && options.reasoning !== 'default' ? options.reasoning : 'medium'), 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
     };
-    const thread = await call(options.resumeSessionId ? 'thread/resume' : 'thread/start', {
-      ...settings, ...(options.resumeSessionId ? { threadId: options.resumeSessionId } : {}),
+    const settingsKey = createHash('sha256').update(JSON.stringify(settings)).digest('hex');
+    const prior = lease?.worker.attached;
+    const attached = !!prior && prior.settings === settingsKey;
+    if (prior && !attached) {
+      const detached = await call('thread/unsubscribe', { threadId: prior.id });
+      if (detached?.status !== 'unsubscribed') throw new Error('Could not reset the previous Codex thread settings.');
+    }
+    const thread = attached ? { thread: { id: prior.id } } : await call(options.resumeSessionId ? 'thread/resume' : 'thread/start', {
+      ...settings, ...(options.resumeSessionId ? { threadId: options.resumeSessionId, excludeTurns: true } : {}),
     }).catch((error: Error & {rejected?:boolean;rpcCode?:unknown}) => {
       // This boundary precedes turn/start, so no user work can have been accepted.
       if (options.resumeSessionId && error.rejected && (['thread_not_found','session_not_found'].includes(String(error.rpcCode))
@@ -149,10 +196,30 @@ export async function runCodexTurn(options: {
       throw error;
     });
     threadId = thread.thread.id;
+    options.onPhase?.('thread_ready');
     options.onEvent({ type: 'session', sessionId: threadId });
-    const result = await call('turn/start', {
-      threadId, input: [{ type: 'text', text: options.prompt }, ...options.images.map(path => ({ type: 'localImage', path }))],
+    const parts = options.promptParts;
+    const snapshot = parts && snapshotPrompt(parts);
+    const prompt = attached && prior.snapshot && parts && snapshot
+      ? changedPrompt(parts, snapshot, prior.snapshot) : options.prompt;
+    options.onInput?.(Buffer.byteLength(prompt, 'utf8'), attached);
+    const startTurn = (text: string) => call('turn/start', {
+      threadId, input: [{ type: 'text', text }, ...options.images.map(path => ({ type: 'localImage', path }))],
+      summary: 'auto',
       ...(options.fastMode ? { serviceTier: 'fast' } : {}),
+    });
+    const submission = startTurn(prompt);
+    options.onPhase?.('submitted');
+    const result = await submission.catch(async error => {
+      // A loaded thread can be evicted by App Server. Retry only an explicit
+      // pre-admission rejection, never a transport error or a timed-out turn.
+      if (!attached || !error.rejected || !(/^(?:thread not (?:loaded|found)|no rollout found for thread)\b/i.test(error.message)
+        || ['thread_not_loaded', 'thread_not_found'].includes(error.rpcCode))) throw error;
+      const resumed = await call('thread/resume', { ...settings, threadId, excludeTurns: true });
+      if (resumed.thread?.id !== threadId) throw new Error('Codex resumed an unexpected thread.');
+      options.signal.throwIfAborted();
+      options.onInput?.(Buffer.byteLength(options.prompt, 'utf8'), false);
+      return startTurn(options.prompt);
     });
     turnId = result.turn.id;
     if (!ended) options.onSteerReady((messageId, prompt) => {
@@ -191,6 +258,15 @@ export async function runCodexTurn(options: {
       return delivery;
     });
     await completion;
+    const importError = (await Promise.all(imageImports)).find(Boolean);
+    if (importError) throw new Error(importError);
+    if (lease && options.threadScope && !options.signal.aborted) {
+      lease.worker.attached = { id: threadId, scope: options.threadScope, settings: settingsKey, ...(snapshot && !compacted ? {snapshot} : {}) };
+      reusable = true;
+    } else if (lease && !options.signal.aborted) {
+      // Older servers can reject unsubscribe. Keep the completed answer and retire that worker.
+      try { reusable = (await call('thread/unsubscribe', { threadId }, 1_500))?.status === 'unsubscribed'; } catch { /* Retire on uncertain teardown. */ }
+    }
     options.onSettled?.(threadId);
     return threadId;
   } catch (error) {
@@ -203,7 +279,14 @@ export async function runCodexTurn(options: {
     options.signal.removeEventListener('abort', abort);
     for (const entry of pending.values()) { clearTimeout(entry.timer); entry.reject(new Error('Codex delivery could not be confirmed.')); }
     pending.clear();
-    await stopChildProcessTree(child).catch(() => child.kill());
-    child.stdin.end();
+    if (lease) {
+      child.off('error', fail); child.off('close', closed); child.stdin.off('error', fail); child.stdout.off('data', accept);
+      options.onChildReleased?.();
+      lease.worker.sequence = sequence;
+      lease.release(reusable && !options.signal.aborted);
+    } else {
+      await stopChildProcessTree(child).catch(() => child.kill());
+      child.stdin.end();
+    }
   }
 }

@@ -4,22 +4,34 @@ import type { RuntimeAgentDef } from '../types.js';
 
 const GROK_MODEL_ID_RE = /^\*?\s*-?\s*(grok-[a-z0-9][a-z0-9._-]*)(?:\s+\(default\))?\s*$/i;
 
+/** Picker choices and CLI arguments must agree on the model's supported efforts.
+ * Unknown/custom models and CLI-config defaults retain their own configuration.
+ * https://docs.x.ai/developers/model-capabilities/text/reasoning
+ */
+function grokReasoningOptions(model: string | null | undefined): NonNullable<RuntimeModelOption['reasoningOptions']> {
+  if (!model) return [];
+  const levels = /^grok-4\.[67](?:-build(?:-fast)?)?$/.test(model)
+    ? ['low', 'medium', 'high', 'xhigh']
+    : /^grok-4\.5(?:-build)?$/.test(model)
+      ? ['low', 'medium', 'high']
+      : [];
+  return levels.length ? [
+    { id: 'default', label: 'Default (Grok)' },
+    ...levels.map((id) => ({ id, label: id === 'xhigh' ? 'Extra high' : id.charAt(0).toUpperCase() + id.slice(1) })),
+  ] : [];
+}
+
 export function parseGrokBuildModels(stdout: string): RuntimeModelOption[] {
   const seen = new Set<string>();
-  const out: RuntimeModelOption[] = [DEFAULT_MODEL_OPTION];
+  const out: RuntimeModelOption[] = [{ ...DEFAULT_MODEL_OPTION, reasoningOptions: [] }];
   for (const rawLine of String(stdout || '').split('\n')) {
     const match = rawLine.trim().match(GROK_MODEL_ID_RE);
     const id = match?.[1];
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    out.push({ id, label: id });
+    out.push({ id, label: id, reasoningOptions: grokReasoningOptions(id) });
   }
   return out;
-}
-
-function grokModelSupportsReasoningEffort(model: string | null | undefined): boolean {
-  if (!model || model === DEFAULT_MODEL_OPTION.id || model === 'grok-build') return false;
-  return /reasoning/i.test(model);
 }
 
 // xAI's first-party CLI agent — https://x.ai/cli — distributed as the
@@ -37,13 +49,8 @@ function grokModelSupportsReasoningEffort(model: string | null | undefined): boo
 // require `-p/--single` to receive the prompt as an argv value and no longer
 // read piped stdin. OD's composed prompts often exceed safe argv limits, so
 // the daemon stages the prompt in a temp file and passes that path here. The
-// CLI also exposes `--output-format streaming-json`, but
-// the streaming-json schema is xAI-specific and we do not yet have a
-// daemon-side parser for it. To ship the runtime now and let users at
-// least chat with grok inside OD, this defaults to `plain` streamFormat
-// (single-turn text reply, no tool_use streaming). Upgrading to a
-// `grok-stream-json` event parser is follow-up work once the format is
-// stable enough to lock in.
+// Native streaming-json is normalized by grok-events.ts for both regular
+// chat and WordPress Direct runs. Plain output cannot carry tool progress.
 export const grokBuildAgentDef = {
   id: 'grok-build',
   name: 'Grok Build',
@@ -58,20 +65,8 @@ export const grokBuildAgentDef = {
     timeoutMs: 10_000,
     parse: parseGrokBuildModels,
   },
-  fallbackModels: [
-    DEFAULT_MODEL_OPTION,
-    { id: 'grok-build', label: 'grok-build (xAI · default)' },
-    { id: 'grok-4.3', label: 'grok-4.3 (xAI)' },
-    { id: 'grok-4.20-reasoning', label: 'grok-4.20-reasoning (xAI · deep)' },
-    {
-      id: 'grok-4.20-non-reasoning',
-      label: 'grok-4.20-non-reasoning (xAI · fast)',
-    },
-    {
-      id: 'grok-4.20-multi-agent',
-      label: 'grok-4.20-multi-agent (xAI · orchestration)',
-    },
-  ],
+  // A failed catalogue request must not advertise retired or unavailable models.
+  fallbackModels: [{ ...DEFAULT_MODEL_OPTION, reasoningOptions: [] }],
   // Grok Build CLI v0.1.212+ enforces `-p, --single <PROMPT>` as value-
   // required, while normal OD composed prompts exceed safe argv budgets.
   // Use the CLI's explicit prompt-file transport instead.
@@ -79,25 +74,24 @@ export const grokBuildAgentDef = {
     if (!runtimeContext.promptFilePath) {
       throw new Error('grok-build requires runtimeContext.promptFilePath');
     }
-    const args = ['--prompt-file', runtimeContext.promptFilePath];
+    const args = ['--prompt-file', runtimeContext.promptFilePath, '--output-format', 'streaming-json'];
+    if (runtimeContext.resumeSessionId) args.push('--resume', runtimeContext.resumeSessionId);
     if (options.model && options.model !== DEFAULT_MODEL_OPTION.id) {
       args.push('--model', options.model);
     }
-    if (options.reasoning && grokModelSupportsReasoningEffort(options.model)) {
+    if (options.reasoning && options.reasoning !== 'default' && grokReasoningOptions(options.model).some(({ id }) => id === options.reasoning)) {
       args.push('--effort', options.reasoning);
     }
     return args;
   },
-  reasoningOptions: [
-    { id: 'low', label: 'low' },
-    { id: 'medium', label: 'medium' },
-    { id: 'high', label: 'high' },
-    { id: 'xhigh', label: 'xhigh' },
-    { id: 'max', label: 'max' },
-  ],
+  reasoningOptions: [],
+  modelReasoningOptions: grokReasoningOptions,
   promptViaFile: true,
   promptViaStdin: false,
-  streamFormat: 'plain',
+  streamFormat: 'json-event-stream',
+  eventParser: 'grok-build',
+  resumesSessionViaCli: true,
+  capturesSessionIdFromStream: true,
   installUrl: 'https://x.ai/cli',
   docsUrl: 'https://x.ai/cli',
 } satisfies RuntimeAgentDef;

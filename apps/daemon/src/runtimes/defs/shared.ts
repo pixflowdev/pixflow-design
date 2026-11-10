@@ -6,10 +6,18 @@ import type { RuntimeModelOption } from '../types.js';
 
 export { detectAcpModels, parsePiModels, execAgentFile, DEFAULT_MODEL_OPTION };
 
+/** Pixflow has not validated Ultra's nested delegation lifecycle or usage accounting. */
+export function assertCodexReasoningSupported(effort: unknown): void {
+  if (typeof effort === 'string' && effort.trim().toLowerCase() === 'ultra') {
+    throw new Error('Ultra reasoning is not supported by Pixflow. Choose a supported reasoning level.');
+  }
+}
+
 export function clampCodexReasoning(
   modelId: string | null | undefined,
   effort: string | null | undefined,
 ) {
+  assertCodexReasoningSupported(effort);
   if (!effort) return effort;
   const raw = String(modelId ?? '').trim();
   const id = raw.includes('/') ? raw.split('/').pop() : raw;

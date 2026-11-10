@@ -20,8 +20,9 @@ export function agentRuntimeSource(launch: Pick<AgentLaunchResolution, 'selected
 export function resolveAgentLaunch(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup?: (bin: string) => string | null,
 ): AgentLaunchResolution {
-  const resolution = inspectAgentExecutableResolution(def, configuredEnv);
+  const resolution = inspectAgentExecutableResolution(def, configuredEnv, lookup);
   if (!resolution.selectedPath) {
     return { ...resolution, launchPath: null, launchKind: 'selected', childPathPrepend: [], diagnostic: null };
   }

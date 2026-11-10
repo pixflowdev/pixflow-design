@@ -1,3 +1,4 @@
+import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { stopChildProcessTree } from '@open-design/platform';
@@ -22,6 +23,16 @@ export function voiceProgress(method: string, params: Event): Event | null {
     type: 'voice_transcript', role: item.role === 'user' ? 'user' : 'assistant', text: String(item.text ?? ''), id: item.id,
   };
   if (!item || !['item/started', 'item/completed'].includes(method)) return null;
+  if (item.type === 'imageGeneration' && typeof item.id === 'string') {
+    // Full image bytes belong to the generated asset, never to saved chat events.
+    if (method === 'item/started') {
+      const started = item.startedAtMs ?? params.startedAtMs;
+      return { type: 'tool_use', id: item.id, name: 'codex.imagegen',
+        input: { startedAtMs: typeof started === 'number' && Number.isFinite(started) ? started : Date.now() } };
+    }
+    return { type: 'tool_result', toolUseId: item.id, content: String(item.status ?? 'completed'),
+      isError: item.status === 'failed' || !!item.failure };
+  }
   const name = item.type === 'commandExecution' ? 'Bash' : item.type === 'fileChange' ? 'Edit'
     : item.type === 'webSearch' ? 'WebSearch' : item.type === 'mcpToolCall' ? String(item.tool) : null;
   if (!name) return null;
@@ -41,6 +52,7 @@ export async function runCodexVoice(options: {
   onEndReady?: (end: () => void) => void;
   voice?: string | undefined;
 }): Promise<void> {
+  assertCodexReasoningSupported(options.reasoning);
   if (options.signal.aborted) throw new Error('Voice canceled.');
   const expires = options.expiresAt < 1e12 ? options.expiresAt * 1000 : options.expiresAt;
   if (!Number.isFinite(expires) || expires <= Date.now()) throw new Error('The WordPress voice session expired. Start a new call to reconnect.');
@@ -136,7 +148,7 @@ export async function runCodexVoice(options: {
       // Match typed Direct execution. The renewed WordPress session owns site
       // write authority; local workspace tools must still reach its HTTP helper.
       sandbox: codexNeedsDangerFullAccessSandbox(process.platform, options.env) ? 'danger-full-access' : 'workspace-write',
-      config: { model_reasoning_effort: options.reasoning ?? 'medium', default_permissions: ':workspace', 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
+      config: { model_reasoning_effort: clampCodexReasoning(options.model, options.reasoning && options.reasoning !== 'default' ? options.reasoning : 'medium'), default_permissions: ':workspace', 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
       ...(options.fastMode ? { serviceTier: 'fast' } : {}), developerInstructions: `${options.instructions}\n\n${VOICE_WORK_CONTROL_RULE}`,
       dynamicTools: [{ type: 'function', name: 'cancel_current_work', description: 'Cancel the current voice conversation’s active Codex work when the user requests it. Retains completed changes and leaves voice connected.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } }],
     });

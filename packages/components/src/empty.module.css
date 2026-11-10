@@ -1,0 +1,8 @@
+.root { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; min-width:0; padding:32px 24px; text-align:center; color:var(--text); }
+.header { display:flex; flex-direction:column; align-items:center; gap:10px; max-width:320px; }
+.media { display:flex; align-items:center; justify-content:center; flex:none; color:var(--text-muted); }
+.media[data-variant=icon] { width:40px; height:40px; border-radius:12px; corner-shape:squircle; background:var(--bg-fill-tertiary); }
+.media svg { width:22px; height:22px; flex:none; }
+.title { color:var(--text); font-size:17px; font-weight:550; line-height:1.4; }
+.description { margin:0; color:var(--text-muted); font-size:14px; line-height:1.5; }
+.content { display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; max-width:320px; }

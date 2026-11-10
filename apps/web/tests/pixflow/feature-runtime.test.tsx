@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { PixflowFeatureRuntime } from '@open-design/contracts';
-import { refreshPixflowFeatureRuntime, usePixflowFeatureRuntime, pixflowFeatureEnabled, validateFeatureRuntime, loadPixflowFeature, pixflowFeatureAdvertised, usePixflowFeatureAsset } from '../../src/pixflow/feature-runtime';
+import { refreshPixflowFeatureRuntime, usePixflowFeatureRuntime, pixflowFeatureEnabled, validateFeatureRuntime, loadPixflowFeature, pixflowFeatureAdvertised, usePixflowFeatureAsset, translationsShortcutLabel } from '../../src/pixflow/feature-runtime';
 
 const base = 'http://localhost/wp-content/plugins/pixflow-design-pro/assets/app/';
 const state = (active = true): PixflowFeatureRuntime => ({ schema: 'pixflow.feature-runtime.v1', features: active ? ['assets', 'audio'] : [], builders: { bricks: active, etch: false, elementor: false, generateblocks: false }, assets: [] });
@@ -13,6 +13,16 @@ beforeEach(() => {
 afterEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; vi.restoreAllMocks(); });
 
 describe('live Pro feature refresh', () => {
+  it('offers Translations only when the installed module grants management for this user', () => {
+    expect(translationsShortcutLabel()).toBeNull();
+    const runtime = { ...state(), features: ['site-translations'], configuration: { 'site-translations': { canManage: false } } };
+    Object.assign(window, { __PIXFLOW_FEATURE_RUNTIME__: runtime });
+    expect(translationsShortcutLabel()).toBeNull();
+    runtime.configuration['site-translations'].canManage = true;
+    expect(translationsShortcutLabel()).toBe('Translations');
+    runtime.features = [];
+    expect(translationsShortcutLabel()).toBeNull();
+  });
   it('does not publish a new capability revision for an unchanged server manifest', async () => {
     const listener = vi.fn(); window.addEventListener('pixflow-design:feature-runtime-changed', listener);
     await refreshPixflowFeatureRuntime(async () => ({ ok: true, body: state() }));

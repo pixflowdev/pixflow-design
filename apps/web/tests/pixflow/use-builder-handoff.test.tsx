@@ -33,8 +33,12 @@ describe('Workspace handoff coordination',()=>{
   ])('never opens historical, manual or already-started receipts: %j',async fields=>{
     vi.mocked(readBuilderHandoff).mockResolvedValue({...receipt,...fields});
     const view=renderHook(()=>useBuilderHandoff('project','chat',true,assets,{requestId:'user-turn',running:true}));
-    await waitFor(()=>expect(readBuilderHandoff).toHaveBeenCalledTimes(2));
+    // React 19 may reconcile the poll after receipt hydration in a separate commit.
+    // Assert the handoff outcome, not the scheduling-dependent request count.
+    await waitFor(()=>expect(view.result.current.receipt?.id).toBe(receipt.id));
     expect(view.result.current.agentReceiptToOpen).toBeNull();
+    expect(prepareBuilderDestination).not.toHaveBeenCalled();
+    expect(mutateBuilderHandoff).not.toHaveBeenCalled();
     view.unmount();
   });
   it('checks the final server receipt after the source run finishes',async()=>{

@@ -1,3 +1,4 @@
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockActions, CodeBlockContent } from '../components/chat/CodeBlock';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -17,6 +18,7 @@ import { Fragment, useEffect, useRef, useState, type MouseEvent, type ReactNode 
 import { useT } from '../i18n';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { Icon } from '../components/Icon';
+import { InlineCitation, citationSource } from '../components/chat/InlineCitation';
 
 export type MarkdownLinkClickHandler = (
   href: string,
@@ -33,6 +35,12 @@ export interface RenderMarkdownOptions {
    * behavior for every link.
    */
   onLinkClick?: MarkdownLinkClickHandler;
+  /** The assistant's turn includes a provider web search. */
+  searchedWeb?: boolean;
+  /** Exact URLs read successfully through a provider's HTTP/browser tools. */
+  citationUrls?: ReadonlySet<string>;
+  /** Images already represented by an interactive attachment in this message. */
+  attachmentUrls?: ReadonlySet<string>;
 }
 
 export function renderMarkdown(input: string, options?: RenderMarkdownOptions): ReactNode {
@@ -450,20 +458,18 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
   }
 
   return (
-    <div className="md-code-block" data-collapsed={collapsed ? 'true' : undefined}>
-      <div className="md-code-header">
-        <span className="md-code-lang">{lang || translateUi("ui.markdown.text")}</span>
-        <div className="md-code-actions">
+    <CodeBlock className="md-code-block" data-collapsed={collapsed ? 'true' : undefined}>
+      <CodeBlockHeader className="md-code-header">
+        <CodeBlockTitle className="md-code-lang">{lang || translateUi("ui.markdown.text")}</CodeBlockTitle>
+        <CodeBlockActions className="md-code-actions">
           {collapsible ? (
             <button
               type="button"
-              className="md-code-action md-code-action-icon"
+              className="md-code-action"
               onClick={() => setCollapsed((c) => !c)}
               aria-expanded={!collapsed}
-              aria-label={collapsed ? t('designFiles.expandGroup') : t('designFiles.collapseGroup')}
-              title={collapsed ? t('designFiles.expandGroup') : t('designFiles.collapseGroup')}
             >
-              <Icon name={collapsed ? 'chevron-right' : 'chevron-down'} size={13} />
+              {t(collapsed ? 'designFiles.expandGroup' : 'designFiles.collapseGroup')}
             </button>
           ) : null}
           <button
@@ -476,9 +482,9 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
             <Icon name={copied ? 'check' : 'copy'} size={12} />
             <span>{copyLabel}</span>
           </button>
-        </div>
-      </div>
-      <div className="md-code-body">
+        </CodeBlockActions>
+      </CodeBlockHeader>
+      <CodeBlockContent className="md-code-body">
         {highlightedHtml ? (
           <div
             className="md-code md-code-highlighted"
@@ -489,8 +495,8 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
             <code data-lang={lang ?? undefined}>{body}</code>
           </pre>
         )}
-      </div>
-    </div>
+      </CodeBlockContent>
+    </CodeBlock>
   );
 }
 
@@ -558,12 +564,7 @@ function renderColorToken(value: string, key: string): ReactNode {
 // and plain text. We walk the string with a regex that matches whichever
 // delimiter shows up next; everything between delimiters becomes a text
 // span (which itself still gets autolink scanning).
-function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode {
-  const out: ReactNode[] = [];
-  const onLinkClick = options?.onLinkClick;
-  const linkClickHandler = onLinkClick
-    ? (href: string) => (event: MouseEvent<HTMLAnchorElement>) => onLinkClick(href, event)
-    : undefined;
+function inlineTokenPattern(): RegExp {
   // Order matters:
   //  1. inline code first so its contents are not re-tokenized as bold/italic.
   //  2. image syntax `![alt](url)` BEFORE the link branch. Both share
@@ -585,8 +586,56 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
   //     `_conditions format: `...user_logged_in...``) can be misread as one
   //     long `_..._` emphasis span and consume the code-span delimiter.
   //  7. bold (**a** / __a__) before italic (*a* / _a_).
-  const re =
-    /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+  return /(`[^`]+`)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\((<[^>\r\n]+>|[^)\s]+)\)|(https?:\/\/[^\s)<>]+)|(\{[A-Za-z][^{}\n]*\})|(_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*(?![A-Za-z0-9_])|[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)|(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+}
+
+function unwrapMarkdownDestination(value: string): string {
+  return value.startsWith('<') && value.endsWith('>') ? value.slice(1, -1) : value;
+}
+
+function researchLinks(text: string, allowed?: ReadonlySet<string>): Map<number, { title: string; url: URL }> {
+  const inline = new Map<number, { title: string; url: URL }>();
+  const trailing = new Map<number, { title: string; url: URL }>();
+  for (const match of text.matchAll(inlineTokenPattern())) {
+    if (!match[4] || !match[5]) continue;
+    const url = citationSource(unwrapMarkdownDestination(match[5]));
+    if (!url) continue;
+    if (allowed && !allowed.has(url.href)) continue;
+    const source = { title: match[4], url };
+    inline.set(match.index, source);
+    if (/[.!?。！？]\s*[(（]?\s*$/.test(text.slice(0, match.index))) trailing.set(match.index, source);
+  }
+  // Explicit trailing citations distinguish sources from ordinary links in the same passage.
+  // Providers also cite sources directly in the sentence when there is no trailing reference.
+  return !allowed && trailing.size ? trailing : inline;
+}
+
+/** Collect the same labelled citations shown inline, in first-reference order. */
+export function collectMarkdownSources(prose: string[], allowed?: ReadonlySet<string>): Array<{ title: string; url: URL }> {
+  const sources = new Map<string, { title: string; url: URL }>();
+  for (const text of prose) {
+    for (const block of parseBlocks(text)) {
+      const runs = 'text' in block ? [block.text] : 'items' in block ? block.items
+        : block.kind === 'table' ? [...block.headers, ...block.rows.flat()] : [];
+      for (const run of runs) {
+        for (const source of researchLinks(run, allowed).values()) {
+          if (!sources.has(source.url.href)) sources.set(source.url.href, source);
+        }
+      }
+    }
+  }
+  return Array.from(sources.values());
+}
+
+function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode {
+  const out: ReactNode[] = [];
+  const onLinkClick = options?.onLinkClick;
+  const linkClickHandler = onLinkClick
+    ? (href: string) => (event: MouseEvent<HTMLAnchorElement>) => onLinkClick(href, event)
+    : undefined;
+  const sources = options?.searchedWeb ? researchLinks(text)
+    : options?.citationUrls?.size ? researchLinks(text, options.citationUrls) : undefined;
+  const re = inlineTokenPattern();
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   let key = 0;
@@ -600,6 +649,10 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
       // Image: m[2] = alt (may be empty), m[3] = src
       const src = m[3];
       const alt = m[2] || '';
+      if (options?.attachmentUrls?.has(src)) {
+        lastIndex = re.lastIndex;
+        continue;
+      }
       if (isSafeMarkdownImageSrc(src)) {
         out.push(
           <img
@@ -618,9 +671,10 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
         pushText(out, alt, key++, options);
       }
     } else if (m[4] && m[5]) {
-      const href = m[5];
+      const href = unwrapMarkdownDestination(m[5]);
+      const source = sources?.get(m.index)?.url;
       out.push(
-        <a
+        source ? <InlineCitation key={key++} source={source} title={m[4]} /> : <a
           key={key++}
           className="md-link"
           href={href}

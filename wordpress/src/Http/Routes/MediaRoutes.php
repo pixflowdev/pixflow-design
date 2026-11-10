@@ -23,6 +23,8 @@ final class MediaRoutes
 
     public function register(): void
     {
+        \PixflowDesign\WordPress\Media\DynamicFit::register();
+        \PixflowDesign\WordPress\Media\FitMedia::register_source_tracking();
         add_action('rest_api_init', [$this, 'register_routes']);
     }
 
@@ -56,6 +58,16 @@ final class MediaRoutes
                     ],
                 ],
             ],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/media/attachments/(?P<id>\d+)/overwrite', [
+            'methods' => 'POST',
+            'permission_callback' => static fn(\WP_REST_Request $request): bool =>
+                current_user_can('upload_files') && current_user_can('edit_post', (int) $request['id']),
+            'callback' => function (\WP_REST_Request $request): \WP_REST_Response {
+                $item = $this->media->overwrite_image((int) $request['id'], $request->get_file_params()['file'] ?? [], (string) $request->get_param('originalHash'));
+                return is_wp_error($item) ? $this->error_response($item) : $this->response(['ok' => true, 'item' => $item]);
+            },
         ]);
 
         register_rest_route(self::NAMESPACE, '/media/upload', [
@@ -107,8 +119,15 @@ final class MediaRoutes
         return current_user_can('upload_files');
     }
 
-    public function list(\WP_REST_Request $request): \WP_REST_Response
+    public function list(\WP_REST_Request $request): \WP_REST_Response|\WP_Error
     {
+        if ($request->has_param('attachmentId') || $request->has_param('attachmentUrl')) {
+            $id = $request->has_param('attachmentId')
+                ? absint($request->get_param('attachmentId'))
+                : attachment_url_to_postid(strtok((string) $request->get_param('attachmentUrl'), '?#') ?: '');
+            $item = $this->media->get($id);
+            return is_wp_error($item) ? $item : $this->response(['ok' => true, 'items' => [$item], 'total' => 1]);
+        }
         $result = $this->media->list([
             'page' => (int) $request->get_param('page'),
             'perPage' => (int) $request->get_param('perPage'),

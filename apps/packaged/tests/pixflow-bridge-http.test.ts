@@ -237,6 +237,23 @@ describe('Pixflow bridge HTTP gateway', () => {
     expect(await (await fetch(`${baseUrl}/api/health`)).json()).toMatchObject({ ok: false });
   });
 
+  it('keeps a paired site healthy while its worker is slow and detects a stopped worker', async () => {
+    const site = { key: 'slow', origin: 'https://staging.test', label: 'Staging', dataDir: '', syncRoot: '', url: 'https://staging.test' };
+    const worker = createServer((_req, res) => {
+      setTimeout(() => res.end(JSON.stringify({ ok: true, site })), 2000);
+    });
+    servers.push(worker);
+    await new Promise<void>(resolve => worker.listen(0, '127.0.0.1', resolve));
+    const workerUrl = `http://127.0.0.1:${(worker.address() as import('node:net').AddressInfo).port}`;
+    const siteOptions = { getState: () => 'running' as const, getDaemonUrl: () => workerUrl, getWebUrl: () => null, getSite: () => site };
+    const base = await startGateway({ ...siteOptions, version: 'test', resolveSite: () => siteOptions });
+    const read = () => fetch(base + '/api/health', { headers: { Origin: site.origin, 'X-Pixflow-Site-Key': site.key } }).then(r => r.json());
+    expect(await read()).toMatchObject({ ok: true, site });
+    worker.closeAllConnections();
+    await new Promise<void>(resolve => worker.close(() => resolve()));
+    expect(await read()).toMatchObject({ ok: false });
+  });
+
   it('reports runtime failure and then recovers without restarting the gateway', async () => {
     const failed = await listenJsonServer({ ok: false });
     const healthy = await listenJsonServer({ ok: true, site: { key: 'recovered' } });
@@ -310,6 +327,11 @@ describe('Pixflow bridge HTTP gateway', () => {
   it('allows the six-viewport visual acceptance capture to outlive the ordinary API timeout', () => {
     expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/visual-capture'))).toBeGreaterThanOrEqual(5 * 60_000);
     expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/website-clone-source'))).toBeGreaterThanOrEqual(5 * 60_000);
+  });
+
+  it('lets bounded translation generation finish without extending ordinary API deadlines', () => {
+    expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/agents/text'))).toBeGreaterThan(120_000);
+    expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/projects'))).toBe(25_000);
   });
 
   it('replaces a verified legacy Pixflow daemon that still owns the gateway port', async () => {
@@ -405,3 +427,13 @@ describe('Pixflow bridge HTTP gateway', () => {
 
 it('allows authenticated steering to wait for a reply boundary', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/pixflow/direct-site/steer'))).toBe(240_000); });
 it('uses the same steering budget in Workspace without widening unrelated routes', () => { expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/steer'))).toBe(240_000); expect(proxyTimeoutForPath(new URL('http://127.0.0.1/api/runs/test-run/cancel'))).toBe(25_000); });
+
+it.each(['ready','working','unavailable'] as const)('answers paired health from the managed process state (%s)', async state => {
+  const site = { key: 'paired', origin: 'https://hosted.test', label: 'Staging', url: 'https://hosted.test', dataDir: '', syncRoot: '' };
+  const worker = vi.fn(() => null);
+  const options = { getState: () => 'running' as const, getSite: () => site, getDaemonUrl: worker, getWebUrl: () => null, getRuntimeState: () => state };
+  const base = await startGateway({ ...options, version: 'test', resolveSite: () => options });
+  const response = await fetch(base + '/api/health', { headers: { Origin: site.origin, 'X-Pixflow-Site-Key': site.key } });
+  expect(await response.json()).toMatchObject({ ok: state !== 'unavailable', runtimeState: state, site: { key: site.key } });
+  expect(worker).not.toHaveBeenCalled();
+});

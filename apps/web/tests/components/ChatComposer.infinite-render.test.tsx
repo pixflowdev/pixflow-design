@@ -2,9 +2,10 @@
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
+import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatComposer } from '../../src/components/ChatComposer';
+import { ChatComposer, type ChatComposerHandle } from '../../src/components/ChatComposer';
 import { WorkspaceHomeComposer } from '../../src/components/WorkspaceHomeComposer';
 import { composerText, flushMounts, pressEnter, typeAndSettle } from '../helpers/lexical-composer';
 
@@ -62,7 +63,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       onSessionModeChange: vi.fn(), skills: [], onSubmit: async () => true };
     const view = render(<WorkspaceHomeComposer {...props}/>);
     await flushMounts();
-    await act(async () => { typeAndSettle('Home draft that must survive navigation'); });
+    await act(async () => { await typeAndSettle('Home draft that must survive navigation'); });
     await waitFor(() => expect(composerText()).toBe('Home draft that must survive navigation'));
     view.unmount();
     render(<WorkspaceHomeComposer {...props}/>);
@@ -82,7 +83,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     renderComposer({ streaming: true, onSend, onStop });
     await flushMounts();
 
-    typeAndSettle('change the font');
+    await typeAndSettle('change the font');
 
     // The editor's onChange → setDraft settles a tick after typeAndSettle
     // returns; wait for the send button (which only shows once the composer has
@@ -115,7 +116,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     });
     await flushMounts();
 
-    typeAndSettle('send then clear');
+    await typeAndSettle('send then clear');
 
     await waitFor(() => expect(window.localStorage.getItem(key)).toBe('send then clear'));
     pressEnter({ meta: true });
@@ -132,7 +133,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
     renderComposer({ onSend });
     await flushMounts();
 
-    typeAndSettle('keep this exact prompt');
+    await typeAndSettle('keep this exact prompt');
     await waitFor(() => expect(screen.getByTestId('chat-send')).toBeTruthy());
     fireEvent.click(screen.getByTestId('chat-send'));
 
@@ -154,7 +155,7 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       await flushMounts();
 
       for (const value of ['h', 'he', 'hel', 'hell', 'hello']) {
-        typeAndSettle(value);
+        await typeAndSettle(value);
       }
 
       const maxDepth = consoleError.mock.calls.find((args) =>
@@ -166,4 +167,47 @@ describe('ChatComposer infinite re-render regression (#2097)', () => {
       consoleError.mockRestore();
     }
   });
+});
+
+it('synchronizes drafts between simultaneously mounted composers', async () => {
+  const first = createRef<ChatComposerHandle>();
+  const second = createRef<ChatComposerHandle>();
+  const props = { projectId: 'project-1', onEnsureProject: async () => 'project-1', projectFiles: [], streaming: false, onSend: vi.fn(), onStop: vi.fn(), skills: [], draftStorageKey: 'two-surfaces' };
+  render(<><ChatComposer {...props} ref={first} /><ChatComposer {...props} ref={second} /></>);
+  await flushMounts();
+  act(() => first.current!.restoreDraft({ text: 'Shared mounted draft' }));
+  await waitFor(() => expect(screen.getAllByRole('combobox').filter(element => element.getAttribute('contenteditable') === 'true').map(element => element.textContent)).toEqual(['Shared mounted draft', 'Shared mounted draft']));
+});
+
+it('recovers a rejected send in its original chat after switching', async () => {
+  let rejectSend!: () => void;
+  const props = { projectId: 'project-1', onEnsureProject: async () => 'project-1', projectFiles: [], streaming: false, onSend: vi.fn(() => new Promise<void>((_, reject) => { rejectSend = () => reject(new Error('offline')); })), onStop: vi.fn(), skills: [] };
+  const view = render(<ChatComposer {...props} draftStorageKey="failed-a" queueStorageKey="queue-a" />);
+  await flushMounts();
+  await typeAndSettle('Preserve failed A');
+  fireEvent.click(screen.getByTestId('chat-send'));
+  await waitFor(() => expect(composerText().trim()).toBe(''));
+  view.rerender(<ChatComposer {...props} draftStorageKey="failed-b" queueStorageKey="queue-b" />);
+  await flushMounts();
+  await typeAndSettle('Keep B');
+  await act(async () => rejectSend());
+  expect(composerText()).toBe('Keep B');
+  view.rerender(<ChatComposer {...props} draftStorageKey="failed-a" queueStorageKey="queue-a" />);
+  await waitFor(() => expect(composerText()).toBe('Preserve failed A'));
+});
+
+it('keeps drafts isolated when the same composer switches conversations', async () => {
+  const props = { projectId: 'project-1', onEnsureProject: async () => 'project-1', projectFiles: [], streaming: false, onSend: vi.fn(), onStop: vi.fn(), skills: [] };
+  const view = render(<ChatComposer {...props} draftStorageKey="chat-a" />);
+  await flushMounts();
+  await typeAndSettle('Draft in A');
+  await waitFor(() => expect(localStorage.getItem('chat-a')).toBe('Draft in A'));
+  view.rerender(<ChatComposer {...props} draftStorageKey="chat-b" />);
+  await waitFor(() => expect(composerText().trim()).toBe(''));
+  await flushMounts();
+  await typeAndSettle('Draft in B');
+  await waitFor(() => expect(localStorage.getItem('chat-b')).toBe('Draft in B'));
+  view.rerender(<ChatComposer {...props} draftStorageKey="chat-a" />);
+  await waitFor(() => expect(composerText()).toBe('Draft in A'));
+  expect(localStorage.getItem('chat-b')).toBe('Draft in B');
 });

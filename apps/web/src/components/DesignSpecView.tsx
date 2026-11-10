@@ -48,7 +48,7 @@ const TOKEN_RE = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|#[0-9a-fA-F]{3,8}\b)/g;
 
 function renderInline(line: string) {
   if (!line) return null;
-  const out: (string | JSX.Element)[] = [];
+  const out: (string | React.JSX.Element)[] = [];
   let last = 0;
   let key = 0;
   for (const match of line.matchAll(TOKEN_RE)) {

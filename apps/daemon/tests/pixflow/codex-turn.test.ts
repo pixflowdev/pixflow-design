@@ -4,8 +4,26 @@ import { afterEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), stopTree: vi.fn(async () => {}) }));
 vi.mock('@open-design/platform', async original => ({ ...await original<typeof import('@open-design/platform')>(), stopChildProcessTree: mocks.stopTree }));
 vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), spawn: mocks.spawn }));
+import { DirectCodexWorker } from '../../src/pixflow/direct-codex-worker.js';
 import { runCodexTurn, type CodexSteer } from '../../src/pixflow/codex-turn.js';
 afterEach(() => vi.clearAllMocks());
+it.each(['default', undefined])('uses Medium for the composer reasoning choice %s', async (reasoning) => {
+  const run = fixture(false, undefined, {reasoning});
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  await run.done;
+  expect(run.requests.find(item=>item.method==='thread/start').params.config.model_reasoning_effort).toBe('medium');
+});
+it('requests readable reasoning summaries and forwards only the supplied summary events', async () => {
+  const run = fixture();
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({method:'item/reasoning/summaryTextDelta',params:{threadId:'thread-1',delta:'Checking the public page.'}});
+  run.emit({method:'item/reasoning/textDelta',params:{threadId:'thread-1',delta:'Not a public summary'}});
+  run.emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  await run.done;
+  expect(run.requests.find(item => item.method === 'turn/start').params.summary).toBe('auto');
+  expect(run.events.mock.calls.filter(([event]) => event.type === 'thinking_delta')).toEqual([[{type:'thinking_delta',delta:'Checking the public page.'}]]);
+});
 function fixture(reject = false, signal = new AbortController().signal, overrides: Record<string, unknown> = {}, resumeError?: {message:string;code?:string}) {
   const child = Object.assign(new EventEmitter(), { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() });
   const requests: any[] = [];
@@ -22,6 +40,50 @@ function fixture(reject = false, signal = new AbortController().signal, override
   const done = runCodexTurn({ executable: 'codex', env: {}, cwd: 'test', prompt: 'Build a hero', images: [], resumeSessionId: null, signal, onChild: vi.fn(), onEvent: events, onSteerReady: value => { steer = value; }, ...overrides });
   return { child, requests, emit, done, events, steer: () => steer };
 }
+it('reuses only the matching attached thread and sends changed and removed context', async () => {
+  const pool = new DirectCodexWorker('host');
+  const launch = { executable: 'codex', env: {} };
+  const child = Object.assign(new EventEmitter(), { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough(), exitCode: null, killed: false });
+  mocks.spawn.mockReturnValue(child);
+  const requests: any[] = [];
+  const emit = (value: unknown) => child.stdout.write(JSON.stringify(value) + '\n');
+  child.stdin.on('data', chunk => {
+    const msg = JSON.parse(chunk.toString());
+    requests.push(msg);
+    if (msg.id === undefined) return;
+    queueMicrotask(() => {
+      if (msg.method === 'turn/start') {
+        emit({ id: msg.id, result: { turn: { id: 'turn' } } });
+        emit({ method: 'turn/completed', params: { threadId: 'thread', turn: { id: 'turn', status: 'completed' } } });
+      } else emit({ id: msg.id, result: { thread: { id: 'thread' } } });
+    });
+  });
+  pool.select(launch);
+  try {
+    const run = (resumeSessionId: string | null, browser: Record<string, unknown>) => runCodexTurn({
+      ...launch, warmWorker: pool, isolateProjectInstructions: true, threadScope: 'site-user-chat',
+      cwd: 'test', images: [], resumeSessionId, prompt: 'full request',
+      promptParts: { instructions: 'fixed guidance', browser, request: 'follow-up' },
+      signal: new AbortController().signal, onChild: vi.fn(), onEvent: vi.fn(), onSteerReady: vi.fn(),
+    });
+    await run(null, { title: 'A', selection: 10, locale: 'en' });
+    await run('thread', { title: 'B', locale: 'en' });
+    await run('thread', { title: 'B', locale: 'en' });
+    expect(requests.filter(r => r.method.startsWith('thread/')).map(r => r.method)).toEqual(['thread/start']);
+    const inputs = requests.filter(r => r.method === 'turn/start').map(r => r.params.input[0].text);
+    expect(inputs).toEqual(['full request', 'Current browser context changes: {"changes":{"title":"B"},"removed":["selection"]}\n\nfollow-up', 'follow-up']);
+  } finally { pool.select(); }
+});
+
+it('separates protocol preparation from model submission without emitting artificial assistant text', async () => {
+  const onPhase = vi.fn();
+  const run = fixture(false, undefined, { onPhase });
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  expect(onPhase.mock.calls.map(([phase]) => phase)).toEqual(['initialized', 'thread_ready', 'submitted']);
+  expect(run.events.mock.calls.some(([event]) => event.type === 'text_delta')).toBe(false);
+  run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+  await run.done;
+});
 it.each([null, 'existing-thread'])('forwards saved external MCP servers when starting/resuming %s', async (resumeSessionId) => {
   const mcpServers = { docs: { url: 'https://example.com/mcp', enabled: true } };
   const run = fixture(false, undefined, { mcpServers, resumeSessionId });
@@ -173,4 +235,42 @@ it('does not add extra whitespace to an existing paragraph boundary', async () =
   run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
   await run.done;
   expect(run.events.mock.calls.map(([event]) => event.type === 'text_delta' ? event.delta : '').join('')).toBe('First.\n\nSecond.');
+});
+
+it('isolates direct-site project instructions without disabling personal skills or global config', async () => {
+  const run = fixture(false, undefined, { isolateProjectInstructions: true });
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+  await run.done;
+  expect(mocks.spawn.mock.calls[0]![1]).toContain('project_root_markers=["AGENTS.md"]');
+  expect(mocks.spawn.mock.calls[0]![2].env).toEqual({});
+});
+it('leaves ordinary workspace project discovery unchanged', async () => {
+  const run = fixture();
+  await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+  await run.done;
+  expect(mocks.spawn.mock.calls[0]![1]).not.toContain('project_root_markers=["AGENTS.md"]');
+});
+
+it('returns long reply guidance to the queue without a late or duplicate steer', async () => {
+  const run = fixture(); await vi.waitFor(() => expect(run.steer()).toBeTypeOf('function'));
+  vi.useFakeTimers();
+  try {
+    run.emit({ method: 'item/started', params: { threadId: 'thread-1', item: { id: 'long', type: 'agentMessage' } } });
+    const delivery = run.steer()!('long-guidance', 'Use blue');
+    await vi.advanceTimersByTimeAsync(120_001);
+    expect(await delivery).toMatchObject({state:'queued'});
+    run.emit({ method: 'item/completed', params: { threadId: 'thread-1', item: { id: 'long', type: 'agentMessage' } } });
+    await Promise.resolve();
+    expect(run.requests.some(request => request.method === 'turn/steer')).toBe(false);
+    run.emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+    await run.done;
+  } finally { vi.useRealTimers(); }
+});
+
+it('rejects Ultra before spawning a Codex process',async()=>{
+  const run=fixture(false,undefined,{reasoning:'ultra'});
+  await expect(run.done).rejects.toThrow('Ultra');
+  expect(mocks.spawn).not.toHaveBeenCalled();
 });

@@ -1,7 +1,10 @@
+import { Bubble, BubbleContent } from './chat/Bubble';
+import { conversationDraftKey } from '../pixflow/conversation-address';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { ChatHistoryControls } from '../pixflow/ChatHistoryControls';
 import { PageAnnotationMessage } from './PageAnnotationMessage';
 import { expandVoiceMessages } from '../pixflow/voice-messages';
+import { chatScrollBehavior } from './shared-chat/use-floating-chat-scroll';
 import {
   Fragment,
   memo,
@@ -63,6 +66,7 @@ import { repoConnectCopy } from './design-system-github-evidence';
 import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 import type { SettingsSection } from './SettingsDialog';
 import { SharedChatRows } from './shared-chat/SharedChatRows';
+import { Message, MessageContent, MessageHeader, MessageFooter } from './chat/Message';
 import { QuestionRequestCard, latestQuestionRequest } from './QuestionRequestCard';
 import { ComposerQueue } from './ComposerQueue';
 import queueLayout from './ChatPaneQueue.module.css';
@@ -422,7 +426,7 @@ function chatArtifactKindLabel(kind: ProjectFile['kind'], t: TranslateFn): strin
 interface Props {
   messages: ChatMessage[];
   olderHistory?: { loading: boolean; error: boolean; load: () => Promise<void> };
-  historyPersistence?: { retry: () => Promise<void> };
+  historyPersistence?: { conflict?: boolean; retry: () => Promise<void>; recover?: (title: string) => Promise<void>; recovering?: boolean };
   streaming: boolean;
   loading?: boolean;
   error: string | null;
@@ -753,7 +757,7 @@ export function ChatPane({
   compactComposer = false,
   codexVoiceEnabled = false,
   codexVoiceStartRequested,
-  bottomAligned = false,
+  bottomAligned = true,
   designSystemPicker,
   config,
   projectResolvedDir,
@@ -773,6 +777,7 @@ export function ChatPane({
     const anchor = historyScrollAnchor.current;
     const log = logRef.current;
     if (!anchor || !log || olderHistory?.loading) return;
+    if (log.dataset.slot === 'message-scroller-viewport') { historyScrollAnchor.current = null; return; }
     log.scrollTop = anchor.top + log.scrollHeight - anchor.height;
     historyScrollAnchor.current = null;
   }, [persistedMessages, olderHistory?.loading]);
@@ -790,6 +795,7 @@ export function ChatPane({
   // 80px cutoff: scrolling ~90px up is an intentional pause that
   // shouldn't be yanked back the moment the next chunk streams in.
   const pinnedToBottomRef = useRef(true);
+  const jumpingToLatestRef = useRef(false);
   const scrolledToFormRef = useRef<Set<string>>(new Set());
   // "Anchor the just-sent turn to the top" (ChatGPT-style). On send we pin
   // the user's message to the top of the viewport and let the reply stream
@@ -859,12 +865,17 @@ export function ChatPane({
   const [editingQueuedSendId, setEditingQueuedSendId] = useState<string | null>(null);
   // Reverse scan (no array copy) + memo so this and the maps below don't
   // recompute on every non-`messages` render (scroll, hover, toggles).
-  const lastAssistantId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i]!.role === 'assistant') return messages[i]!.id;
+  const { lastUser, lastAssistantMsg } = useMemo(() => {
+    let lastUser: ChatMessage | undefined;
+    let lastAssistantMsg: ChatMessage | undefined;
+    for (let i = messages.length - 1; i >= 0 && !(lastUser && lastAssistantMsg); i--) {
+      const message = messages[i]!;
+      if (message.role === 'assistant') lastAssistantMsg ??= message;
+      if (message.role === 'user') lastUser ??= message;
     }
-    return undefined;
+    return { lastUser, lastAssistantMsg };
   }, [messages]);
+  const lastAssistantId = lastAssistantMsg?.id;
   const hasActiveRunMessage = messages.some(
     (m) => m.role === 'assistant' && isActiveRunStatus(m.runStatus),
   );
@@ -991,7 +1002,7 @@ export function ChatPane({
   );
   const showImportedFolderArtifacts = projectMetadata?.importedFrom === 'folder';
   const composerDraftStorageKey = projectId && activeConversationId
-    ? `od:chat-composer:draft:${projectId}:${activeConversationId}`
+    ? hasPixflowWordPressContext() ? conversationDraftKey({projectId, conversationId: activeConversationId}) : `od:chat-composer:draft:${projectId}:${activeConversationId}`
     : undefined;
   // Only the first user message gets the active-plugin chip — the
   // plugin is project-scoped so re-stamping it on every reply would be
@@ -1079,13 +1090,13 @@ export function ChatPane({
   };
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const el = logRef.current;
     if (!el || didInitialScrollRef.current || messages.length === 0) return;
     didInitialScrollRef.current = true;
     requestAnimationFrame(() => {
       // If the last assistant message contains a question form, scroll to
       // the form instead of the bottom, so the user sees the form first.
-      const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
       if (lastAssistantMsg?.content.includes('<question-form')) {
         const assistantEls = el.querySelectorAll('.msg.assistant');
         const lastAssistantEl = assistantEls[assistantEls.length - 1];
@@ -1121,6 +1132,7 @@ export function ChatPane({
   // dead gap below it. Collapsing the spacer lets the bottom-anchored layout
   // settle the finished transcript against the composer.
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const was = prevStreamingRef.current;
     prevStreamingRef.current = streaming;
     // The tail spacer only ever holds the anchor-to-top reserve for an actively
@@ -1135,6 +1147,7 @@ export function ChatPane({
   }, [streaming]);
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     const el = logRef.current;
     if (!el) return;
     // Auto-scroll only when the user was already pinned near the bottom,
@@ -1151,16 +1164,17 @@ export function ChatPane({
 
     // A brand-new user turn from a local send: switch to "anchor to top"
     // mode and smooth-scroll their message to the top of the viewport.
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
     const prevUserId = prevLastUserIdRef.current;
     prevLastUserIdRef.current = lastUser?.id;
     if (anchorPendingRef.current && lastUser && lastUser.id !== prevUserId) {
+      jumpingToLatestRef.current = false;
       anchorPendingRef.current = false;
       resetTailSpacer();
       anchorActiveRef.current = true;
       pinnedToBottomRef.current = false;
       setScrolledFromBottom(true);
       requestAnimationFrame(() => {
+        if (!anchorActiveRef.current || logRef.current !== el) return;
         sizeAnchorSpacer();
         scrollAnchorToTop();
       });
@@ -1174,10 +1188,9 @@ export function ChatPane({
       return;
     }
 
-    if (pinnedToBottomRef.current) {
+    if (pinnedToBottomRef.current && !jumpingToLatestRef.current) {
       // If the last assistant message contains a question form, scroll to
       // the form instead of the bottom, so the user lands on the form.
-      const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
       if (lastAssistantMsg?.content.includes('<question-form')) {
         const assistantEls = el.querySelectorAll('.msg.assistant');
         const lastAssistantEl = assistantEls[assistantEls.length - 1];
@@ -1213,6 +1226,7 @@ export function ChatPane({
     { pinnedToBottom: true } | { pinnedToBottom: false; scrollTop: number } | null
   >(null);
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     if (tab !== 'chat') return;
     const el = logRef.current;
     if (!el) return;
@@ -1272,19 +1286,6 @@ export function ChatPane({
     function onScroll() {
       const target = logRef.current;
       if (!target) return;
-      // A genuine user scroll (one that moves away from where the anchored
-      // message currently sits) releases the auto-resize behavior. We do NOT
-      // collapse the tail spacer: the reserved blank below stays as real,
-      // scrollable space so scrolling down feels natural instead of snapping.
-      if (anchorActiveRef.current) {
-        const pinnedTop = lastUserMsgTopInContent(target);
-        if (
-          pinnedTop !== null &&
-          Math.abs(target.scrollTop - (pinnedTop - ANCHOR_TOP_PADDING)) > 40
-        ) {
-          anchorActiveRef.current = false;
-        }
-      }
       syncScrollable(target);
       markScrolling();
       snapshot(target);
@@ -1296,15 +1297,44 @@ export function ChatPane({
       // and trip React's "Maximum update depth exceeded" guard.
       const next = distance > 120;
       setScrolledFromBottom((prev) => (prev === next ? prev : next));
-      pinnedToBottomRef.current = distance < 80;
+      if (!jumpingToLatestRef.current) pinnedToBottomRef.current = distance < 80;
     }
     syncScrollable(el);
+    const releaseAnchor = () => {
+      anchorActiveRef.current = false;
+      jumpingToLatestRef.current = false;
+    };
+    function finishJump() {
+      if (!jumpingToLatestRef.current) return;
+      jumpingToLatestRef.current = false;
+      const target = logRef.current;
+      if (!target) return;
+      target.scrollTop = target.scrollHeight;
+      pinnedToBottomRef.current = true;
+      setScrolledFromBottom(false);
+    }
+    const releaseOnKey = (event: KeyboardEvent) => {
+      if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key)) releaseAnchor();
+    };
+    // Native smooth scrolling also emits intermediate scroll events. Release
+    // the turn only on user input, otherwise the animation cancels its anchor.
+    el.addEventListener('wheel', releaseAnchor, { passive: true });
+    el.addEventListener('touchstart', releaseAnchor, { passive: true });
+    el.addEventListener('pointerdown', releaseAnchor, { passive: true });
+    el.addEventListener('keydown', releaseOnKey);
     el.addEventListener('scroll', onScroll);
+    el.addEventListener('scrollend', finishJump);
     return () => {
       // Capture final scroll state before unmount; the ref normally
       // tracks via onScroll, but programmatic scrolls or layout shifts
       // right before unmount can leave it stale.
       snapshot(el);
+      jumpingToLatestRef.current = false;
+      el.removeEventListener('scrollend', finishJump);
+      el.removeEventListener('wheel', releaseAnchor);
+      el.removeEventListener('touchstart', releaseAnchor);
+      el.removeEventListener('pointerdown', releaseAnchor);
+      el.removeEventListener('keydown', releaseOnKey);
       el.removeEventListener('scroll', onScroll);
       if (chatLogScrollIdleTimerRef.current !== null) {
         window.clearTimeout(chatLogScrollIdleTimerRef.current);
@@ -1315,6 +1345,7 @@ export function ChatPane({
   }, [tab]);
 
   useEffect(() => {
+    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
     if (tab !== 'chat') return;
     const el = logRef.current;
     if (!el) return;
@@ -1333,11 +1364,11 @@ export function ChatPane({
         });
         return;
       }
-      if (!pinnedToBottomRef.current || followFrame !== null) return;
+      if (!pinnedToBottomRef.current || jumpingToLatestRef.current || followFrame !== null) return;
       followFrame = requestAnimationFrame(() => {
         followFrame = null;
         const target = logRef.current;
-        if (!target || !pinnedToBottomRef.current) return;
+        if (!target || !pinnedToBottomRef.current || jumpingToLatestRef.current) return;
         target.scrollTop = target.scrollHeight;
         setScrolledFromBottom(false);
       });
@@ -1395,19 +1426,17 @@ export function ChatPane({
 
     const mutationObserver =
       typeof MutationObserver !== 'undefined'
-        ? new MutationObserver(() => {
-            syncObservedChildren();
+        ? new MutationObserver(records => {
+            if (records.some(record => record.target === el)) syncObservedChildren();
             syncQueuedSendStrip();
             followLatestIfPinned();
           })
         : null;
-    // childList + subtree only — NOT characterData. Auto-follow during
-    // streaming is driven by the ResizeObserver on each message child (text
-    // growth changes height), so observing per-character text mutations would
-    // re-run the full sync sweep on every streamed frame for no extra benefit.
+    // Row resize already covers nested markdown and tool disclosures.
+    // Only row additions/removals change which elements need observing.
     mutationObserver?.observe(el, {
       childList: true,
-      subtree: true,
+      subtree: !resizeObserver,
     });
     // QueuedSendStrip lives outside the chat-log subtree (it is a sibling of
     // .chat-log-wrap inside .pane). The MutationObserver above only fires for
@@ -1458,6 +1487,10 @@ export function ChatPane({
     const contentBelow = el.scrollHeight - spacerH - msgTopInContent;
     const needed = Math.max(0, el.clientHeight - contentBelow - ANCHOR_TOP_PADDING);
     spacer.style.height = `${needed}px`;
+    if (!needed && el.scrollHeight - el.clientHeight - el.scrollTop <= 2) {
+      anchorActiveRef.current = false;
+      pinnedToBottomRef.current = true;
+    }
   }
 
   // Smooth-scroll the anchored message to the top. Called ONCE per turn (on
@@ -1470,7 +1503,7 @@ export function ChatPane({
     const msgTopInContent = lastUserMsgTopInContent(el);
     if (msgTopInContent === null) return;
     const target = Math.max(0, msgTopInContent - ANCHOR_TOP_PADDING);
-    el.scrollTo({ top: target, behavior: 'smooth' });
+    el.scrollTo({ top: target, behavior: chatScrollBehavior() });
   }
 
   function jumpToBottom() {
@@ -1479,7 +1512,10 @@ export function ChatPane({
     anchorActiveRef.current = false;
     pinnedToBottomRef.current = true;
     resetTailSpacer();
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    const behavior = chatScrollBehavior();
+    jumpingToLatestRef.current = behavior === 'smooth' && 'onscrollend' in el
+      && el.scrollHeight - el.clientHeight - el.scrollTop > 2;
+    el.scrollTo({ top: el.scrollHeight, behavior });
   }
 
   useEffect(() => {
@@ -1587,11 +1623,11 @@ export function ChatPane({
       sendDisabled={sendDisabled}
       initialDraft={initialDraft}
       draftStorageKey={composerDraftStorageKey}
+      draftStorageFallbackKey={projectId && activeConversationId ? `od:chat-composer:draft:${projectId}:${activeConversationId}` : undefined}
       onEnsureProject={onEnsureProject}
       commentAttachments={commentsToAttachments(attachedComments)}
       onRemoveCommentAttachment={onDetachComment}
       onSend={async (prompt, attachments, commentAttachments, meta): Promise<SharedChatSendOutcome> => {
-        pinnedToBottomRef.current = true;
         scrolledToFormRef.current = new Set();
         if (editingQueuedSendId && onUpdateQueuedSend) {
           const original = queuedItems.find((item) => item.id === editingQueuedSendId);
@@ -1974,6 +2010,8 @@ export function ChatPane({
       {tab === 'chat' ? (
         <>
           <SharedMessageStream
+        modernScroller={sharedPanelChat}
+        scrollSessionKey={activeConversationId}
             logRef={logRef}
             loading={loading}
             chatLogScrollable={chatLogScrollable}
@@ -1989,7 +2027,7 @@ export function ChatPane({
                   void olderHistory.load();
                 }} /> : null}
               {chatRowsNode}
-              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} /> : null}
+              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} conflict={historyPersistence.conflict} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /> : null}
             </>}
             errorNode={chatErrorNode}
             guidanceNode={amrGuidanceNode}
@@ -2817,7 +2855,7 @@ function UserMessageImpl({
       activeDesignSystem,
   );
   const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -2841,10 +2879,10 @@ function UserMessageImpl({
   const ts = messageTime(message);
 
   return (
-    <div className="msg user">
-      <div className="role">
+    <Message className="msg user" align="end">
+      <MessageHeader className="role">
         <span>{t('chat.you')}</span>
-      </div>
+      </MessageHeader>
       {hasRunContext ? (
         <div className="msg-run-context-row" data-testid="msg-run-context-row">
           {message.sessionMode ? (
@@ -2918,7 +2956,7 @@ function UserMessageImpl({
         </div>
       ) : null}
       {message.content && isDesignSystemWorkspaceRequest ? (
-        <div className="user-text-wrap user-status-wrap">
+        <MessageContent className="user-text-wrap user-status-wrap">
           <div className="user-status-card design-system-generation-status">
             <span className="user-status-card__icon">
               <Icon name="blocks" size={15} />
@@ -2928,11 +2966,11 @@ function UserMessageImpl({
               <span>{DESIGN_SYSTEM_WORKSPACE_DISPLAY_DESCRIPTION}</span>
             </span>
           </div>
-        </div>
+        </MessageContent>
       ) : message.content ? (
-        <div className="user-text-wrap">
-          <div className="user-text user-bubble"><PageAnnotationMessage content={message.content} /></div>
-          <div className="user-actions">
+        <MessageContent className="user-text-wrap">
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={message.content} /></BubbleContent></Bubble>
+          <MessageFooter className="user-actions">
             {ts ? (
               <time
                 className="user-actions-time"
@@ -2951,10 +2989,10 @@ function UserMessageImpl({
             >
               <Icon name={copied ? 'check' : 'copy'} size={13} />
             </button>
-          </div>
-        </div>
+          </MessageFooter>
+        </MessageContent>
       ) : null}
-    </div>
+    </Message>
   );
 }
 

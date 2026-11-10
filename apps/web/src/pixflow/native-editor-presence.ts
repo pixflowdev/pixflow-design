@@ -1,5 +1,6 @@
 import { createPresenceControls } from './native-presence-controls';
 import { reviewLabel, reviewSection, type ReviewArea } from './presence-review';
+import { nativeReviewTargetEvent, type NativeReviewTarget } from './native-review-target';
 export type PresenceTarget = { id: string; label: string; scope?: 'content' | 'layout' };
 type TrackedTarget = PresenceTarget & { fromContent?: boolean; node?: HTMLElement };
 export type PresenceState = 'hidden' | 'arriving' | 'working' | 'completed' | 'moving';
@@ -13,8 +14,8 @@ export function placePresenceCaption(target: Bounds, viewport: Bounds, width: nu
   const clampX = (x: number) => Math.max(viewport.left + gap, Math.min(x, viewport.right - w - gap));
   const clampY = (y: number) => Math.max(viewport.top + gap, Math.min(y, viewport.bottom - height - gap));
   const positions = [
-    { top: target.top - height - gap, placement: 'above' },
     { top: target.bottom + gap, placement: 'below' },
+    { top: target.top - height - gap, placement: 'above' },
     { top: target.bottom - height - gap, placement: 'inside' },
   ];
   for (const candidate of positions) {
@@ -57,6 +58,7 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
   let obstacles: Bounds[] = [], obstacleReadAt = 0, controlsReadAt = 0;
   let working = false, saved = false, reviewing = false, reviewIndex = 0, dismissed = false;
   let latest: TrackedTarget[] = [];
+  const retireReview = () => document.dispatchEvent(new CustomEvent(nativeReviewTargetEvent, { detail: null }));
   const history = new Map<string, TrackedTarget>();
   let hovering = false;
   const groupIds = new WeakMap<HTMLElement, string>();
@@ -77,6 +79,13 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
         groups.set(sectionNode, area);
       }
       area.elements.push({ id, label: reviewLabel(node, item.label) });
+    }
+    // Review a changed subtree itself when it contains the whole change group.
+    // An untouched containing section is only a fallback for separate siblings.
+    for (const area of groups.values()) {
+      const nodes = area.elements.map(item => doc && resolve(doc, item.id)).filter((node): node is HTMLElement => !!node);
+      const changedRoot = nodes.find(node => nodes.every(other => node === other || node.contains(other)));
+      if (changedRoot) { area.node = changedRoot; area.label = reviewLabel(changedRoot, area.label); area.target = { ...area.target, node: changedRoot, label: area.label }; }
     }
     areas = [...groups.values()]; reviewIndex = Math.min(reviewIndex, Math.max(0, areas.length - 1));
   };
@@ -101,7 +110,21 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
     hide(); hovering = hover; if (!hover) reviewing = true; stopped = false; finished = true;
     if (!hover) { reviewIndex = areas.indexOf(area!); yielded = false; }
     targets = [target]; frame = requestAnimationFrame(position); timer = setTimeout(hide, 4000);
-    if (!hover) syncControls();
+    if (!hover) {
+      syncControls();
+      const selectedPage = postId;
+      const detail: NativeReviewTarget = {
+        element: target.node || (getFrame()?.contentDocument && resolve(getFrame()!.contentDocument!, target.id))!,
+        builder: options.builder, postId, index: reviewIndex, count: areas.length, label: target.label,
+        navigate(direction) {
+          if (selectedPage !== getPostId()) { resetPage(); return; }
+          collectAreas(); if (areas.length) choose(areas[(reviewIndex + direction + areas.length) % areas.length]!.id);
+        },
+        dismiss() { if (selectedPage === getPostId()) { reviewing = false; hide(); retireReview(); syncControls(); } },
+      };
+      if (detail.element?.isConnected) document.dispatchEvent(new CustomEvent(nativeReviewTargetEvent, { detail, cancelable: true }));
+      else retireReview();
+    }
   };
   const controls = createPresenceControls(getFrame, {
     resume() { if (getPostId() !== postId) { resetPage(); return; } yielded = false; stopped = false; reviewing = false; if (latest.length) show(latest); syncControls(); },
@@ -125,10 +148,10 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
       document.dispatchEvent(new CustomEvent('pixflow:annotate-element', { detail: { element: node }, cancelable: true }));
       syncControls();
     },
-    dismiss() { dismissed = true; yielded = true; hide(); controls.hide(); },
+    dismiss() { dismissed = true; yielded = true; hide(); retireReview(); controls.hide(); },
   });
   controls.root.dataset.builder = options.builder;
-  const resetPage = () => { history.clear(); areas = []; latest = []; working = false; saved = false; reviewing = false; hide(); controls.reset(); };
+  const resetPage = () => { retireReview(); history.clear(); areas = []; latest = []; working = false; saved = false; reviewing = false; hide(); controls.reset(); };
   const animations = new Set<Animation>();
   const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = (value: PresenceState) => { root.dataset.state = value; };
@@ -144,7 +167,7 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
     targets = []; revealId = ''; previousCaption = undefined; group = lastNode = null;
     delete root.dataset.targetId; delete root.dataset.positioned;
   };
-  const clear = () => { stopped = true; working = false; changed = false; group = lastNode = null; hide(); syncControls(); };
+  const clear = () => { retireReview(); stopped = true; working = false; changed = false; group = lastNode = null; hide(); syncControls(); };
   const complete = () => {
     clearTimeout(transition); state('completed'); root.dataset.phase = 'updated';
     brand.textContent = reviewing || hovering ? 'Review' : saved ? 'Saved' : 'Updated';
@@ -230,9 +253,12 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
         obstacleReadAt = Date.now();
       }
       const caption = placePresenceCaption({ left, top, right, bottom }, { left: Math.max(0, viewport.left), top: Math.max(0, viewport.top), right: Math.min(innerWidth, viewport.right), bottom: Math.min(innerHeight, viewport.bottom) }, cursor.offsetWidth || 180, cursor.offsetHeight || 28, obstacles);
-      cursor.style.maxWidth = `${caption.maxWidth}px`; cursor.style.visibility = caption.placement === 'occluded' ? 'hidden' : '';
+      const maxWidth = `${caption.maxWidth}px`, visibility = caption.placement === 'occluded' ? 'hidden' : '';
+      if (cursor.style.maxWidth !== maxWidth) cursor.style.maxWidth = maxWidth;
+      if (cursor.style.visibility !== visibility) cursor.style.visibility = visibility;
       const destination = `translate(${caption.left}px,${caption.top}px)`;
-      cursor.style.transform = destination; cursor.dataset.placement = caption.placement;
+      if (cursor.style.transform !== destination) cursor.style.transform = destination;
+      if (cursor.dataset.placement !== caption.placement) cursor.dataset.placement = caption.placement;
       if (root.dataset.targetId !== id) {
         clearTimeout(transition);
         const current = root.dataset.positioned ? cursor.getBoundingClientRect() : null;
@@ -275,7 +301,7 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
     else if (next.every(item => item.scope === 'content') || (group && !nodes.every(node => group!.contains(node)))) group = null;
     lastNode = nodes[0] ?? null; lastEditAt = Date.now(); changed = true; finished = false;
     targets = next; clearTimeout(timer); cancelAnimationFrame(frame); root.dataset.phase = 'editing'; brand.textContent = 'Updating…';
-    detail.textContent = next[0]!.label;
+    if (detail.textContent !== next[0]!.label) detail.textContent = next[0]!.label;
     root.setAttribute('aria-label', `Pixflow editing ${detail.textContent}`);
     if (root.dataset.state === 'completed') settle();
     frame = requestAnimationFrame(position);
@@ -285,7 +311,7 @@ export function createNativeEditorPresence(getPostId: () => number | string, opt
   const visibility = () => { if (document.hidden) { hide(); controls.hide(); } else { if (getPostId() !== postId) resetPage(); else syncControls(); } };
   window.addEventListener('pixflow-design:agent-stop', clear); document.addEventListener('visibilitychange', visibility);
   return {
-    begin() { if (postId !== getPostId()) { resetPage(); yielded = false; } if (stopped) hide(); stopped = false; working = true; reviewing = false; changed = false; finished = false; postId = getPostId(); },
+    begin() { retireReview(); if (postId !== getPostId()) { resetPage(); yielded = false; } if (stopped) hide(); stopped = false; working = true; reviewing = false; changed = false; finished = false; postId = getPostId(); },
     show,
     finish(result?: { saved?: boolean }) { if (stopped) return; working = false; if (result?.saved) saved = true; syncControls(); if (!changed || !targets.length) return; finished = true; if (!['arriving', 'moving', 'hidden'].includes(root.dataset.state!)) complete(); },
     clear,

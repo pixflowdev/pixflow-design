@@ -23,10 +23,14 @@ import {
 import { runWpAdminCli } from './wp-admin-cli.js';
 import { requestWorkspaceOrganization } from './workspace-organization-cli.js';
 import { runDirectSiteCli } from './pixflow/direct-site-cli.js';
+import { runUpscalerCli } from './pixflow/upscaler-cli.js';
 import { runDictationCli } from './pixflow/dictation-cli.js';
 import { runBridgePairingCli } from './bridge-pairing-cli.js';
 import { runBridgeSitesCli } from './bridge-sites-cli.js';
 import { runBuilderDestinationsCli } from './pixflow/builder-destinations-cli.js';
+import { runSiteTranslationsCli } from './pixflow/site-translations-cli.js';
+import { runAgentTextCli } from './pixflow/agent-text-cli.js';
+import { runPageInspectionCli } from './pixflow/page-inspection-cli.js';
 import { readFile } from 'node:fs/promises';
 import { createCommandInvocation } from '@open-design/platform';
 import { resolveOnPath } from './runtimes/executables.js';
@@ -280,6 +284,7 @@ const PLUGIN_LIST_BOOLEAN_FLAGS = new Set([
 ]);
 
 const SUBCOMMAND_MAP = {
+  'inspect-page': runPageInspectionCli,
   artifacts: runArtifacts,
   media: runMedia,
   mcp: runMcp,
@@ -311,9 +316,12 @@ const SUBCOMMAND_MAP = {
   'wp-admin': runWpAdmin,
   'direct-site': runDirectSiteCli,
   'dictation': runDictationCli,
+  'upscaler': runUpscalerCli,
   'bridge-pair': runBridgePairingCli,
   'bridge-sites': runBridgeSitesCli,
   builder: runBuilderDestinationsCli,
+  'site-translations': runSiteTranslationsCli,
+  'agent-text': runAgentTextCli,
 };
 
 if (argv[0] === 'mcp' && argv[1] === 'live-artifacts') {
@@ -337,10 +345,12 @@ if (first && SUBCOMMAND_MAP[first]) {
   // These HTTP clients own undici fetch responses. Let Node drain their
   // socket before exiting on Windows; an immediate process.exit can trip
   // libuv's closing-handle assertion even after a successful response.
-  if (first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
+  if (first !== 'agents' && first !== 'wp-admin' && first !== 'bridge-pair' && first !== 'direct-site' && first !== 'config' && first !== 'diagnostics' && first !== 'dictation' && first !== 'upscaler' && first !== 'files' && first !== 'plugin' && first !== 'builder') process.exit(0);
 }
 
-if (!handledSubcommand && argv[0] === 'tools' && argv[1] === 'live-artifacts') {
+if (!handledSubcommand && argv[0] === 'tools' && (argv.length === 1 || (argv.length === 2 && ['--help', '-h', 'help'].includes(argv[1])))) {
+  console.log('Usage: od tools <live-artifacts|connectors|design-systems> <action> [options]\nWordPress Workspace: od wp-admin context --json shows the connected site; od wp-admin site-tool --tool help --json lists this run\'s builder tools.');
+} else if (!handledSubcommand && argv[0] === 'tools' && argv[1] === 'live-artifacts') {
   runLiveArtifactsToolCli(argv.slice(2))
     .then(({ exitCode }) => {
       process.exitCode = exitCode;
@@ -5052,6 +5062,8 @@ async function runAgents(args) {
     console.log(`Usage:
   od agents list [--force] [--json]
   od agents readiness <agentId> [--model <id>] [--force] [--json]
+  od agents sign-in claude [--status | --cancel | --open-browser | --prompt-file <path|->] [--json]
+  od agents usage <codex|claude|grok-build> [--model <model>] [--json]
 
 Checks are non-generating and do not consume provider usage.
 
@@ -5062,11 +5074,51 @@ Common options:
   }
   const sub = args[0];
   const rest = args.slice(1);
-  const stringFlags = new Set(['daemon-url', 'model']);
-  const booleanFlags = new Set(['force', 'json', 'help', 'h']);
+  const stringFlags = new Set(['daemon-url', 'model', 'prompt-file']);
+  const booleanFlags = new Set(['force', 'json', 'help', 'h', 'status', 'cancel', 'open-browser']);
   const flags = parseFlags(rest, { string: stringFlags, boolean: booleanFlags });
   const base = (await projectDaemonUrl(flags)).replace(/\/$/, '');
 
+  if (sub === 'sign-in') {
+    if ([flags.status, flags.cancel, flags['open-browser'], flags['prompt-file']].filter(Boolean).length > 1) throw new Error('Choose one sign-in action.');
+    const [agentId] = collectCliPositionals(rest, stringFlags);
+    if (agentId !== 'claude') throw new Error('Sign-in currently supports claude only.');
+    const url = new URL(base);
+    if (!['http:', 'https:'].includes(url.protocol) || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) || url.username || url.password) throw new Error('Sign-in requires a local Bridge URL.');
+    let input: Record<string, unknown> = {};
+    if (flags['prompt-file']) {
+      try {
+        const text = flags['prompt-file'] === '-' ? await readStdinText() : await readFile(flags['prompt-file'], 'utf8');
+        const value = JSON.parse(text);
+        if (!value || typeof value.attemptId !== 'string' || typeof value.code !== 'string') throw new Error();
+        input = { attemptId: value.attemptId, code: value.code };
+      } catch { throw new Error('The prompt file must contain an attemptId and code as JSON strings.'); }
+    } else if (flags['open-browser']) {
+      const current = await fetch(`${base}/api/agents/claude/sign-in`);
+      if (!current.ok) return structuredHttpFailure(current);
+      input = { attemptId: (await current.json()).attemptId };
+    }
+    const action = flags.cancel ? '/cancel' : flags['open-browser'] ? '/open-browser' : flags['prompt-file'] ? '/code' : '';
+    const resp = await fetch(`${base}/api/agents/claude/sign-in${action}`, {
+      method: flags.status ? 'GET' : 'POST',
+      ...(flags.status ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }),
+    });
+    if (!resp.ok) return structuredHttpFailure(resp);
+    const data = await resp.json();
+    process.stdout.write(flags.json ? JSON.stringify(data, null, 2) + '\n' : `${data.state}\n`);
+    return;
+  }
+  if (sub === 'usage') {
+    const [agentId] = collectCliPositionals(rest, stringFlags);
+    if (agentId !== 'codex' && agentId !== 'claude' && agentId !== 'grok-build') throw new Error('Usage supports codex, claude or grok-build.');
+    const resp = await fetch(`${base}/api/agents/${agentId}/usage?model=${encodeURIComponent(String(flags.model || ''))}`);
+    if (!resp.ok) return structuredHttpFailure(resp);
+    const data = await resp.json();
+    if (flags.json) return process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+    console.log(data.status);
+    for (const window of data.windows ?? []) console.log(`${window.bucket}\t${window.durationMinutes} minutes\t${window.remainingPercent}% remaining\t${window.resetsAt ? new Date(window.resetsAt * 1000).toISOString() : 'reset unavailable'}`);
+    return;
+  }
   if (sub === 'list') {
     const resp = await fetch(`${base}/api/agents${flags.force ? '?force=1' : ''}`);
     if (!resp.ok) return structuredHttpFailure(resp);
@@ -8005,3 +8057,4 @@ async function runAutomation(args) {
       process.exit(2);
   }
 }
+

@@ -1,17 +1,23 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
-import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
+import { ChatHistoryRequestError, chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type ChatHistoryPage, type HistoryMessage } from './chat-history-client';
+import { historicalRecoveryCopy, preserveHistoryCopies } from './history-recovery';
+import { conversationBinding } from './conversation-address';
 
 /** The browser outbox is a recovery copy, never an expiring transcript cache. */
-function readOutbox<T extends HistoryMessage>(key: string): { messages: T[]; readable: boolean } {
+function readOutbox<T extends HistoryMessage>(key: string): { messages: T[]; readable: boolean; migrationIds?: string[] } {
   try {
     const value = JSON.parse(localStorage.getItem(key) || '[]');
-    if (!Array.isArray(value) || value.some(item => !item || typeof item !== 'object' || typeof item.id !== 'string')) return { messages: [], readable: false };
-    return { messages: value as T[], readable: true };
+    const messages = Array.isArray(value) ? value : value?.version === 1 ? value.messages : null;
+    const migrationIds = Array.isArray(value) ? [] : value?.migrationIds;
+    if (!Array.isArray(messages) || messages.some(item => !item || typeof item !== 'object' || typeof item.id !== 'string')
+      || !Array.isArray(migrationIds) || migrationIds.some(id => typeof id !== 'string')) return { messages: [], readable: false };
+    return { messages: messages as T[], migrationIds, readable: true };
   } catch { return { messages: [], readable: false }; }
 }
-export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported }: {
-  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement>;
+export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported, restorePanel }: {
+  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement | null>;
+  restorePanel?: (address: ChatHistoryBinding, through: string | undefined, signal: AbortSignal) => Promise<ChatHistoryPage<T> | undefined>;
   legacyMessages?: T[]; onImported?: (ids: string[]) => void;
 }) {
   const initialOwner = useRef(chatHistoryOwnerScope());
@@ -24,20 +30,31 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   const [retryCount, setRetryCount] = useState(0);
   const [readyKey, setReadyKey] = useState('');
   const [emptyLookup, setEmptyLookup] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const conflicts = useRef(new Set<string>());
   const binding = useRef<ChatHistoryBinding | null>(null);
   const pending = useRef(new Map<string, T>());
+  const migrationSnapshots = useRef(new Map<string, T>());
+  const acknowledgedOutbox = useRef(new Map<string, string>());
+  const writtenOutbox = useRef(new Map<string, string>());
+  const removedOutbox = useRef(new Set<string>());
   const known = useRef(new Map<string, T>());
+  const matchedSnapshots = useRef(new WeakMap<T, T>());
   const latest = useRef(messages); latest.current = messages;
   const hydrate = useRef(onHydrate); hydrate.current = onHydrate;
   const legacy = useRef(legacyMessages); legacy.current = legacyMessages;
   const importedCallback = useRef(onImported); importedCallback.current = onImported;
   const flushing = useRef(false);
+  const refreshing = useRef(false);
+  const initialRefresh = useRef<{ owner: number; messages: T[] } | null>(null);
   const generation = useRef(0);
   const readableOutbox = useRef(false);
   const scrollAnchor = useRef<{ top: number; height: number } | null>(null);
   useLayoutEffect(() => {
     const node = scrollRef?.current;
     if (!node || !scrollAnchor.current) return;
+    if (node.dataset.slot === 'message-scroller-viewport') { scrollAnchor.current = null; return; }
     node.scrollTop = scrollAnchor.current.top + node.scrollHeight - scrollAnchor.current.height;
     scrollAnchor.current = null;
   }, [history, scrollRef]);
@@ -46,25 +63,80 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   const persistOutbox = useCallback(() => {
     if (!readableOutbox.current) { setError('save'); return false; }
     try {
-      if (pending.current.size) localStorage.setItem(outboxKey, JSON.stringify([...pending.current.values()]));
+      const shared = readOutbox<T>(outboxKey);
+      if (!shared.readable) { setError('save'); return false; }
+      // Another tab may have queued its final reply since this tab hydrated.
+      // Remove only exact server acknowledgements, never unrelated identities.
+      const merged = new Map(shared.messages.filter(item => !removedOutbox.current.has(item.id!)
+        && acknowledgedOutbox.current.get(item.id!) !== historyMessageFingerprint(item)).map(item => [item.id!, item]));
+      const displaced: T[] = [];
+      for (const [id, item] of pending.current) {
+        const prior = merged.get(id);
+        if (prior && historyMessageFingerprint(prior) !== historyMessageFingerprint(item)
+          && historyMessageFingerprint(prior) !== writtenOutbox.current.get(id)
+          && historyMessageFingerprint(prior) !== historyMessageFingerprint(known.current.get(id) || {})) displaced.push(prior);
+        merged.set(id, item);
+      }
+      if (displaced.length) {
+        // Preserve an alternate from another writer before replacing its slot.
+        // Do not auto-replay it, change its identity, or prune unacknowledged data.
+        // A failed archive write leaves the original outbox untouched.
+        const archiveKey = `${outboxKey}:alternates`;
+        const archive = readOutbox<T>(archiveKey);
+        if (!archive.readable) { setError('save'); return false; }
+        const copies = [...archive.messages];
+        const fingerprints = new Set(copies.map(historyMessageFingerprint));
+        for (const item of displaced) if (!fingerprints.has(historyMessageFingerprint(item))) {
+          copies.push(item); fingerprints.add(historyMessageFingerprint(item));
+        }
+        localStorage.setItem(archiveKey, JSON.stringify(copies));
+      }
+      if (merged.size) {
+        const messages = [...merged.values()];
+        const inheritedMigration = new Set(shared.migrationIds);
+        const migrationIds = messages.filter(item => pending.current.has(item.id!)
+          ? migrationSnapshots.current.get(item.id!) === item : inheritedMigration.has(item.id!)).map(item => item.id!);
+        // A crash-safe migration copy is insert-only input, not an unsaved edit.
+        // Carry that provenance across tabs until its import is acknowledged.
+        localStorage.setItem(outboxKey, JSON.stringify(migrationIds.length ? { version: 1, messages, migrationIds } : messages));
+      }
       else localStorage.removeItem(outboxKey);
+      writtenOutbox.current = new Map([...pending.current].map(([id, item]) => [id, historyMessageFingerprint(item)]));
       return true;
     } catch { setError('save'); return false; }
   }, [outboxKey]);
-  const flush = useCallback(async (): Promise<void> => {
-    if (!binding.current || flushing.current) return;
+  const activeWrite = useRef<Promise<void> | undefined>(undefined);
+  const flush = useCallback(async (onlyIds?: ReadonlySet<string>): Promise<void> => {
+    if (flushing.current) return activeWrite.current;
+    if (!binding.current) return;
     const owner = generation.current;
     const target = binding.current;
     if (initialOwner.current !== chatHistoryOwnerScope()) return;
     flushing.current = true;
+    let release!: () => void;
+    activeWrite.current = new Promise<void>(resolve => { release = resolve; });
     let failed = false;
     try {
       for (const [id, snapshot] of [...pending.current]) {
+        if (onlyIds && !onlyIds.has(id)) continue;
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
-        const saved = await saveChatHistoryMessage(target, snapshot);
+        let saved: T;
+        try {
+          saved = await saveChatHistoryMessage(target, snapshot);
+        } catch (error) {
+          // Each identity has its own revision. Preserve a conflicting recovery
+          // copy, but do not let it prevent unrelated replies from being saved.
+          failed = true;
+          if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+          if (error instanceof ChatHistoryRequestError && error.status === 409) { conflicts.current.add(id); setConflict(true); }
+          setError('save');
+          continue;
+        }
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        conflicts.current.delete(id); setConflict(conflicts.current.size > 0);
         const prior = known.current.get(id);
         known.current.set(id, saved);
+        acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot));
         setHistory(current => mergeChatHistory(current, [saved]));
         const live = latest.current.find(item => item.id === id);
         if (live && (historyMessageFingerprint(live) === historyMessageFingerprint(snapshot)
@@ -83,6 +155,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       if (pending.current.size === 0) setError(null);
     } catch { failed = true; if (owner === generation.current) setError('save'); }
     finally {
+      release();
       if (owner === generation.current) {
         flushing.current = false;
         if (!failed && pending.current.size) window.setTimeout(() => { if (owner === generation.current) void flush(); }, 400);
@@ -93,11 +166,13 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   useEffect(() => {
     if (!active) return;
     const owner = ++generation.current;
-    binding.current = null; flushing.current = false;
+    const restoreController = new AbortController();
+    binding.current = null; flushing.current = false; conflicts.current.clear(); setConflict(false);
     setReadyKey(''); setHistory([]); setHasMore(false); setCursor(null); setLoading(true);
     const initial = latest.current;
     const initialLegacy = legacy.current || [];
     known.current = new Map(initial.filter(item => item.id).map(item => [item.id!, item]));
+    acknowledgedOutbox.current = new Map(); writtenOutbox.current = new Map(); removedOutbox.current = new Set();
     const recovery = readOutbox<T>(outboxKey);
     readableOutbox.current = recovery.readable;
     if (!recovery.readable) {
@@ -107,40 +182,70 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       return () => { generation.current++; };
     }
     pending.current = new Map(recovery.messages.map(item => [item.id!, item]));
-    const recoveredIds = new Set(pending.current.keys());
+    const migrationIds = new Set(recovery.migrationIds);
+    const recoveredIds = new Set([...pending.current.keys()].filter(id => !migrationIds.has(id)));
     for (const item of initialLegacy) if (item.id && !pending.current.has(item.id)) pending.current.set(item.id, item);
     for (const item of initial) if (item.id && !pending.current.has(item.id)) pending.current.set(item.id, item);
     const migrationCopies = new Map(pending.current);
+    migrationSnapshots.current = new Map([...migrationCopies].filter(([id]) => !recoveredIds.has(id)));
     persistOutbox();
     void (async () => {
       try {
         const hasMessages = initial.length > 0 || initialLegacy.length > 0 || pending.current.size > 0;
-        const target = hasMessages ? await resolveChatHistory({ sessionKey }) : await resolveChatHistory({ sessionKey, create: false });
+        // A selected canonical address needs no alias lookup. The history read
+        // still authorizes access before hydration; migration/recovery retains
+        // the existing resolver path when there are local messages to preserve.
+        const address = conversationBinding(sessionKey);
+        const through = initial.at(-1)?.id;
+        const restoredPage = !recoveredIds.size && address
+          ? await restorePanel?.(address, through, restoreController.signal) : undefined;
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
-        if (!target.projectId || !target.conversationId) { setEmptyLookup(true); return; }
+        const snapshot = restoredPage && address ? { ...address, page: restoredPage }
+          : hasMessages && !recoveredIds.size ? await resolveChatHistory<T>({ sessionKey, includePage: true }) : null;
+        const prefetched = snapshot?.page;
+        const target = snapshot ? { projectId: snapshot.projectId, conversationId: snapshot.conversationId } : hasMessages ? await resolveChatHistory({ sessionKey }) : conversationBinding(sessionKey) ?? await resolveChatHistory({ sessionKey, create: false });
+        if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        if (!target.projectId || !target.conversationId) {
+          // A confirmed empty lookup is ready for its first message. Adopt the
+          // current transcript without creating a server chat or losing input
+          // that arrived while the lookup was pending.
+          setEmptyLookup(true);
+          hydrate.current?.(latest.current);
+          setReadyKey(sessionKey); setError(null);
+          return;
+        }
         setEmptyLookup(false);
         // Import only missing identities. A restored interrupted browser snapshot
         // must never downgrade a completed message already held by WordPress.
         const legacyCandidates = initialLegacy;
         // Preserve untouched legacy payloads before presentation reconciliation
         // converts an interrupted run or sanitizes a rendered event list.
-        if (legacyCandidates.length) await importChatHistory(target, legacyCandidates);
+        const storedIds = new Set(prefetched?.messages.map(item => item.id));
+        const missingLegacy = legacyCandidates.filter(item => !storedIds.has(item.id));
+        if (missingLegacy.length) await importChatHistory(target, missingLegacy);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         const importCandidates = mergeChatHistory(legacyCandidates, mergeChatHistory(initial, [...pending.current.values()]));
-        const imported = await importChatHistory(target, importCandidates);
+        const missing = importCandidates.filter(item => !storedIds.has(item.id));
+        const imported = missing.length ? await importChatHistory(target, missing) : { messages: [], deletedMessageIds: [] };
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         importedCallback.current?.(importCandidates.map(item => item.id!).filter(Boolean));
-        const page = await readChatHistory<T>(target);
+        const page = prefetched && !missing.length && !missingLegacy.length ? prefetched : await readChatHistory<T>(target);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         binding.current = target;
+        initialRefresh.current = { owner, messages: page.messages };
         const deleted = new Set(imported.deletedMessageIds);
+        removedOutbox.current = deleted;
         for (const id of deleted) pending.current.delete(id);
         for (const item of [...imported.messages, ...page.messages]) known.current.set(item.id!, item);
         for (const [id, snapshot] of pending.current) {
           const canonical = known.current.get(id);
-          if (canonical && historyMessageFingerprint(canonical) === historyMessageFingerprint(snapshot)) pending.current.delete(id);
+          if (canonical && historyMessageFingerprint(canonical) === historyMessageFingerprint(snapshot)) {
+            acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot)); pending.current.delete(id);
+          }
           // An unchanged legacy cache was insert-only input, never an edit.
-          else if (!recoveredIds.has(id) && migrationCopies.get(id) === snapshot) pending.current.delete(id);
+          else if (!recoveredIds.has(id) && migrationCopies.get(id) === snapshot) {
+            acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot)); pending.current.delete(id);
+          }
         }
         const changed = latest.current.filter(item => item.id && !deleted.has(item.id) && historyMessageFingerprint(item) !== historyMessageFingerprint(initial.find(old => old.id === item.id) || {})).map(item => {
           const baseline = initial.find(old => old.id === item.id);
@@ -159,7 +264,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       } catch { if (owner === generation.current) setError('load'); }
       finally { if (owner === generation.current) setLoading(false); }
     })();
-    return () => { generation.current++; };
+    return () => { restoreController.abort(); generation.current++; };
   // Retry reads the same durable outbox; it never clears an unacknowledged write.
   }, [active, sessionKey, retryCount]);
 
@@ -172,7 +277,13 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     for (const item of messages) {
       if (!item.id) continue;
       const previous = known.current.get(item.id);
-      if (previous && historyMessageFingerprint(previous) === historyMessageFingerprint(item)) continue;
+      // Each stream update replaces the active message. Finished immutable
+      // snapshots only need comparing again when their server copy changes.
+      if (previous && (previous === item || matchedSnapshots.current.get(item) === previous)) continue;
+      if (previous && historyMessageFingerprint(previous) === historyMessageFingerprint(item)) {
+        matchedSnapshots.current.set(item, previous);
+        continue;
+      }
       // Never borrow a newer server revision for a snapshot produced by an old
       // tab. Only acknowledgements of this outbox may advance its expected CAS.
       pending.current.set(item.id, item);
@@ -180,6 +291,12 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     if (!pending.current.size) return;
     persistOutbox();
     if (readyKey !== sessionKey) return;
+    const last = messages.at(-1) as (T & { status?: string }) | undefined;
+    const finished = last?.role === 'assistant' && (last.status === 'complete' || last.status === 'error');
+    if (finished && last.id && pending.current.has(last.id)) {
+      void flush();
+      return;
+    }
     const timer = window.setTimeout(() => { void flush(); }, 400);
     return () => window.clearTimeout(timer);
   }, [active, messages, readyKey, sessionKey, flush, persistOutbox]);
@@ -192,6 +309,71 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     const timer = window.setInterval(retry, 15000);
     return () => { window.removeEventListener('online', retry); window.removeEventListener('pagehide', retry); window.clearInterval(timer); };
   }, [active, flush]);
+
+  // Passive tabs consume server revisions; they must never replay an observed
+  // reply as a local edit or replace an unacknowledged local snapshot.
+  useEffect(() => {
+    if (!active || readyKey !== sessionKey) return;
+    const owner = generation.current;
+    const controller = new AbortController();
+    const refresh = async (hydrated?: T[]) => {
+      const target = binding.current;
+      if (!target || refreshing.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+      refreshing.current = true;
+      try {
+        const page = hydrated ? { messages: [...hydrated] } : await readChatHistory<T>(target);
+        if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        for (let index = 0; index < page.messages.length; index++) {
+          const item = page.messages[index];
+          if (!item) continue;
+          const execution = item as T & { runId?: string; runStatus?: string; endedAt?: number };
+          if (!execution.runId || execution.endedAt || !['queued', 'running'].includes(execution.runStatus || '') || pending.current.has(item.id!)) continue;
+          const prior = known.current.get(item.id!);
+          const local = latest.current.find(message => message.id === item.id);
+          if (local && (!prior || historyMessageFingerprint(local) !== historyMessageFingerprint(prior))) continue;
+          const { recoverCompletedWorkspaceRun } = await import('./completed-workspace-run');
+          const recovered = await recoverCompletedWorkspaceRun(target, item, controller.signal);
+          if (controller.signal.aborted || owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+          const current = latest.current.find(message => message.id === item.id);
+          if (current && (!prior || historyMessageFingerprint(current) !== historyMessageFingerprint(prior))) continue;
+          if (recovered && !pending.current.has(item.id!)) {
+            // Revision-checked write: an active owner or another tab wins a race.
+            // Failed replay never replaces the existing partial transcript.
+            try { page.messages[index] = await saveChatHistoryMessage(target, recovered); } catch { /* Next refresh reads the winning revision. */ }
+          }
+        }
+        if (controller.signal.aborted || owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        const accepted = page.messages.filter(item => {
+          if (!item.id || pending.current.has(item.id)) return false;
+          const prior = known.current.get(item.id);
+          const local = latest.current.find(message => message.id === item.id);
+          if (local && (!prior || historyMessageFingerprint(local) !== historyMessageFingerprint(prior))) return false;
+          return !prior || Number(item.historyRevision || 0) > Number(prior.historyRevision || 0);
+        });
+        if (!accepted.length) return;
+        for (const item of accepted) known.current.set(item.id!, item);
+        const merged = mergeChatHistory(latest.current, accepted);
+        latest.current = merged;
+        setHistory(current => mergeChatHistory(current, accepted));
+        hydrate.current?.(merged);
+      } catch { /* Keep the last readable history; a background read is not a save failure. */ }
+      finally { refreshing.current = false; }
+    };
+    const focus = () => { void refresh(); };
+    const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    window.addEventListener('focus', focus);
+    document.addEventListener('visibilitychange', visible);
+    const timer = window.setInterval(visible, 15000);
+    // Run recovery against the authorized page just hydrated. Subsequent focus and timer checks read fresh revisions.
+    void refresh(initialRefresh.current?.owner === owner ? initialRefresh.current.messages : undefined);
+    initialRefresh.current = null;
+    return () => {
+      controller.abort();
+      window.removeEventListener('focus', focus);
+      document.removeEventListener('visibilitychange', visible);
+      window.clearInterval(timer);
+    };
+  }, [active, readyKey, sessionKey]);
 
   const loadEarlier = useCallback(async () => {
     if (!binding.current || !cursor || loading) return;
@@ -207,10 +389,60 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     } catch { if (owner === generation.current) setError('load'); }
     finally { if (owner === generation.current) setLoading(false); }
   }, [cursor, loading, scrollRef]);
+  const recover = useCallback(async (title: string) => {
+    if (!binding.current || flushing.current || recovering) return;
+    const owner = generation.current;
+    const target = binding.current;
+    const captured = [...pending.current.values()];
+    const archive = readOutbox<T>(`${outboxKey}:alternates`);
+    if (!archive.readable) { setError('save'); return; }
+    setRecovering(true);
+    try {
+      await preserveHistoryCopies(target, [...captured, ...archive.messages.map(historicalRecoveryCopy)], title);
+      if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+      const canonical = await importChatHistory(target, captured);
+      if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+      const accepted = new Map(canonical.messages.map(item => [item.id, item as T]));
+      for (const snapshot of captured) {
+        const saved = accepted.get(snapshot.id);
+        if (!saved || pending.current.get(snapshot.id!) !== snapshot) continue;
+        acknowledgedOutbox.current.set(snapshot.id!, historyMessageFingerprint(snapshot));
+        pending.current.delete(snapshot.id!); known.current.set(snapshot.id!, saved);
+        conflicts.current.delete(snapshot.id!); setConflict(conflicts.current.size > 0);
+      }
+      const restored = latest.current.map(item => {
+        const before = captured.find(snapshot => snapshot.id === item.id);
+        return before && historyMessageFingerprint(before) === historyMessageFingerprint(item)
+          ? accepted.get(item.id) || item : item;
+      });
+      latest.current = restored; hydrate.current?.(restored);
+      setHistory(current => mergeChatHistory(current, canonical.messages as T[]));
+      if (persistOutbox() && !pending.current.size) setError(null);
+    } catch { if (owner === generation.current) setError('save'); }
+    finally { if (owner === generation.current) setRecovering(false); }
+  }, [outboxKey, persistOutbox, recovering]);
+  const visibleMessages = useMemo(() => readyKey === sessionKey
+    ? mergeChatHistory(history, messages) : messages, [readyKey, sessionKey, history, messages]);
   return {
-    messages: readyKey === sessionKey ? mergeChatHistory(history, messages) : messages,
+    binding: readyKey === sessionKey ? binding.current : null,
+    ready: active && readyKey === sessionKey,
+    messages: visibleMessages,
+    // Read after the persistence effect has queued any changed snapshots.
+    async acknowledgeForSend(): Promise<boolean> {
+      if (!active || readyKey !== sessionKey || error || !binding.current) return false;
+      const owner = generation.current;
+      const prior = new Set(pending.current.keys());
+      const saved = () => owner === generation.current && initialOwner.current === chatHistoryOwnerScope()
+        && [...prior].every(id => !pending.current.has(id));
+      if (saved()) return true;
+      // An in-flight save may contain the previous streaming version of this reply.
+      await flush(prior);
+      if (!saved() && owner === generation.current && !flushing.current) await flush(prior);
+      return saved();
+    },
+    hasPendingWrites: () => pending.current.size > 0,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,
-    hasMore, loading, error, loadEarlier,
+    hasMore, loading, error, conflict, loadEarlier, recover, recovering,
     retry: () => { if (binding.current && pending.current.size) void flush(); else setRetryCount(value => value + 1); },
   };
 }

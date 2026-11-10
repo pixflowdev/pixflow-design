@@ -1,3 +1,8 @@
+import { cliVersionLabel } from '../utils/cli-version-label';
+import { CodexUsageIndicator } from './CodexUsageIndicator';
+import { agentReasoningOptions } from '../utils/agentReasoning';
+import { LanguageUpdateDot } from './LanguageUpdateDot';
+import { useBridgeConnectionRoute } from '../pixflow/bridge-connection-route';
 import { composioAvailable } from '../pixflow/composio-contribution';
 import { usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 import { useT as usePixflowUiTranslation } from '../i18n';
@@ -182,6 +187,7 @@ export function AvatarMenu({
   );
 
   const installedAgents = agents.filter((a) => a.available);
+  const connectionRoute = useBridgeConnectionRoute();
   const localCliAvailable = daemonLive && installedAgents.length > 0;
   const localCliActive = config.mode === 'daemon' && localCliAvailable;
   const localCliUnavailable = config.mode === 'daemon' && !localCliAvailable;
@@ -202,8 +208,9 @@ export function AvatarMenu({
     (config.agentId && config.agentModels?.[config.agentId]) || {};
   const currentModelId =
     currentChoice.model ?? currentAgent?.models?.[0]?.id ?? null;
+  const reasoningOptions = agentReasoningOptions(currentAgent, currentModelId);
   const currentReasoningId =
-    currentChoice.reasoning ?? currentAgent?.reasoningOptions?.[0]?.id ?? null;
+    (reasoningOptions.some(option => option.id === currentChoice.reasoning) ? currentChoice.reasoning : reasoningOptions[0]?.id) ?? null;
   const currentModelLabel = currentAgent?.models?.find(
     (m) => m.id === currentModelId,
   )?.label;
@@ -258,6 +265,7 @@ export function AvatarMenu({
   );
 
   return (
+    <>
     <div className={`avatar-menu avatar-menu--${placement}`} ref={wrapRef}>
       <button
         ref={triggerRef}
@@ -311,8 +319,8 @@ export function AvatarMenu({
                   ? t('avatar.metaOffline')
                 : currentAgent
                   ? `${displayAgentName(currentAgent)}${
-                      currentAgent.id !== 'amr' && currentAgent.version
-                        ? ` · ${currentAgent.version}`
+                      currentAgent.id !== 'amr' && cliVersionLabel(currentAgent.version)
+                        ? ` · ${cliVersionLabel(currentAgent.version)}`
                         : ''
                     }${
                       currentModelLabel && currentModelId !== 'default'
@@ -321,8 +329,15 @@ export function AvatarMenu({
                     }`
                   : t('avatar.noAgentSelected')}
             </span>
+            {config.mode === 'daemon' && connectionRoute && <span className={styles.connectionRoute}>
+              {t(connectionRoute === 'chrome-extension' ? 'bridge.connectedExtension' : 'bridge.connectedDirect')}
+            </span>}
           </div>
           <div className={styles.scrollArea}>
+            {config.mode === 'daemon' && discovery.phase === 'error' && discovery.error && (
+              <p className={styles.connectionError} role="alert">{discovery.error}</p>
+            )}
+
           {showAmrAccountShortcut ? (
             <a
               className="avatar-amr-account-link"
@@ -427,8 +442,8 @@ export function AvatarMenu({
                       <span className="avatar-item-meta">
                         {t('avatar.metaSelected')}
                       </span>
-                    ) : a.id !== 'amr' && a.version ? (
-                      <span className="avatar-item-meta">{a.version}</span>
+                    ) : a.id !== 'amr' && cliVersionLabel(a.version) ? (
+                      <span className="avatar-item-meta">{cliVersionLabel(a.version)}</span>
                     ) : null}
                     {selected ? (
                       <RemixIcon name="check-line" size={14} className="avatar-item-check" />
@@ -439,8 +454,8 @@ export function AvatarMenu({
               {currentAgent &&
               currentAgent.available &&
               ((currentAgent.models && currentAgent.models.length > 0) ||
-                (currentAgent.reasoningOptions &&
-                  currentAgent.reasoningOptions.length > 0)) ? (
+                (reasoningOptions &&
+                  reasoningOptions.length > 0)) ? (
                 <div className="avatar-model-section">
                   {currentAgent.models && currentAgent.models.length > 0 ? (
                     <label className="avatar-select-row">
@@ -478,8 +493,8 @@ export function AvatarMenu({
                       />
                     </label>
                   ) : null}
-                  {currentAgent.reasoningOptions &&
-                  currentAgent.reasoningOptions.length > 0 ? (
+                  {reasoningOptions &&
+                  reasoningOptions.length > 0 ? (
                     <label className="avatar-select-row">
                       <span className="avatar-select-label">
                         {t('avatar.reasoningLabel')}
@@ -489,7 +504,7 @@ export function AvatarMenu({
                         aria-label={t('avatar.reasoningLabel')}
                         value={currentReasoningId ?? ''}
                         onChange={(value) => onAgentModelChange(currentAgent.id, { reasoning: value })}
-                        models={currentAgent.reasoningOptions}
+                        models={reasoningOptions}
                         searchPlaceholder={t('avatar.reasoningLabel')}
                         popoverTestId="avatar-reasoning-popover"
                         popoverClassName="avatar-model-select-popover"
@@ -588,7 +603,7 @@ export function AvatarMenu({
             <span className="avatar-item-icon" aria-hidden>
               <RemixIcon name="settings-3-line" size={15} />
             </span>
-            <span>{t('inlineSwitcher.openFullSettings')}</span>
+            <span>{t('inlineSwitcher.openFullSettings')}<LanguageUpdateDot /></span>
           </button>
 
           {onBack ? (
@@ -613,6 +628,8 @@ export function AvatarMenu({
         portalTarget,
       ) : null}
     </div>
+    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude' || config.agentId === 'grok-build') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
+    </>
   );
 }
 
@@ -623,3 +640,6 @@ function safeHost(url: string): string {
     return url;
   }
 }
+
+
+

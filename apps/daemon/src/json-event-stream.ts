@@ -1,4 +1,5 @@
 import { createAntigravityEvents } from './antigravity-events.js';
+import { createGrokEvents } from './grok-events.js';
 type JsonObject = Record<string, unknown>;
 type StreamEvent = Record<string, unknown>;
 type StreamEventHandler = (event: StreamEvent) => void;
@@ -600,6 +601,20 @@ function handleCodexEvent(obj: unknown, onEvent: StreamEventHandler, state: Pars
     return true;
   }
 
+  const image = obj.item;
+  if (isRecord(image) && (image.type === 'image_generation' || image.type === 'image_generation_call')
+    && typeof image.id === 'string' && (obj.type === 'item.started' || obj.type === 'item.completed')) {
+    if (!state.codexToolUses.has(image.id)) {
+      state.codexToolUses.add(image.id);
+      onEvent({ type: 'tool_use', name: 'codex.imagegen', id: image.id, input: { startedAtMs: Date.now() } });
+    }
+    if (obj.type === 'item.completed') {
+      onEvent({ type: 'tool_result', toolUseId: image.id, isError: image.status === 'failed',
+        content: typeof image.saved_path === 'string' ? image.saved_path : String(image.status ?? 'completed') });
+    }
+    return true;
+  }
+
   if (obj.type === 'error') {
     const message = extractErrorMessage(obj.message ?? obj.error, 'Codex error');
     // Reconnecting events are recoverable — treat as status warning, not fatal
@@ -841,6 +856,7 @@ function handleCodexEvent(obj: unknown, onEvent: StreamEventHandler, state: Pars
 
 export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEventHandler) {
   const antigravity = createAntigravityEvents(onEvent);
+  const grok = kind === 'grok-build' ? createGrokEvents(onEvent) : null;
   let buffer = '';
   const state: ParserState = {
     cursorTextSoFar: '',
@@ -861,10 +877,12 @@ export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEv
     try {
       obj = JSON.parse(line);
     } catch {
+      if (grok) return; // Native login/diagnostic prose is not assistant content.
       onEvent({ type: 'raw', line });
       return;
     }
 
+    if (grok?.accept(obj)) return;
     if (kind === 'antigravity' && antigravity(obj)) return;
     if (kind === 'opencode' && handleOpenCodeEvent(obj, onEvent, state)) return;
     if (kind === 'gemini' && handleGeminiEvent(obj, onEvent, state)) return;
@@ -889,6 +907,7 @@ export function createJsonEventStreamHandler(kind: ParserKind, onEvent: StreamEv
     const rem = buffer.trim();
     buffer = '';
     if (rem) handleLine(rem);
+    grok?.flush();
     flushPendingArtifactText(state, onEvent);
   }
 

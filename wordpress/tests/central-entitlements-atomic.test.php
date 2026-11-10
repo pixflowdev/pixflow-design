@@ -31,6 +31,7 @@ try {
     atomic_check($wpdb->update($table, ['option_value'=>maybe_serialize($denied)], ['option_name'=>$option])===1, 'Concurrent reset fixture failed');
     atomic_check(get_option($option)===$before, 'Fixture did not reproduce stale per-request cache');
     atomic_check($method->invoke($client, $before, $grant)===false, 'Stale grant overwrote concurrent database reset');
+    atomic_check(get_option($option)===$denied, 'Rejected commit left the stale cached grant available');
     atomic_check(maybe_unserialize($wpdb->get_var($wpdb->prepare("SELECT option_value FROM `{$table}` WHERE option_name=%s",$option)))===$denied, 'Reset state changed');
     $renewed = ['epoch'=>3, 'denied'=>false, 'tokens'=>['wordpress'=>'renewed']];
     atomic_check($method->invoke($client, $denied, $renewed)===true, 'Matching state failed to commit');

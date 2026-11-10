@@ -289,6 +289,14 @@ final class WpAdminWordPressCapabilityService
         foreach (['parent' => 'post_parent'] as $input_key => $wp_key) {
             if (array_key_exists($input_key, $fields)) $postarr[$wp_key] = (int) $fields[$input_key];
         }
+        // WordPress saves the new state after an update. A page created outside
+        // the editor may have no revision yet, so retain its current state first.
+        // Respect sites that disable revisions; the recorded before-state remains
+        // available to the capability rollback adapter in that case.
+        if (function_exists('wp_save_post_revision')) {
+            $before_revision = wp_save_post_revision($post_id);
+            if (is_wp_error($before_revision)) return $before_revision;
+        }
         $updated = wp_update_post($postarr, true);
         if (is_wp_error($updated)) return $updated;
         if ($terms !== null) {

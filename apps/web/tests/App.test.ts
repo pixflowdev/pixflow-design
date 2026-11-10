@@ -6,6 +6,7 @@ import {
   isAutosaveDraftOnlyChange,
   persistComposioConfigChange,
   resolveSettingsCloseConfig,
+  mergeIncomingWordPressConfig,
 } from '../src/App';
 import type { AppConfig } from '../src/types';
 
@@ -20,6 +21,20 @@ const baseConfig: AppConfig = {
   skillId: null,
   designSystemId: null,
 };
+
+describe('WordPress shared settings credential preservation', () => {
+  it('hydrates the latest saved credential before a public settings notification can overwrite it', () => {
+    const stale = { ...baseConfig, apiKey: '' };
+    const saved = { ...baseConfig, apiKey: 'synthetic-new-key', model: 'new-model' };
+    const merged = mergeIncomingWordPressConfig(stale, saved, { model: 'new-model' });
+    expect(merged.apiKey).toBe('synthetic-new-key');
+    expect(merged.model).toBe('new-model');
+  });
+  it('honours an explicit saved credential removal rather than resurrecting stale state', () => {
+    const saved = { ...baseConfig, apiKey: '' };
+    expect(mergeIncomingWordPressConfig(baseConfig, saved, { model: 'new-model' }).apiKey).toBe('');
+  });
+});
 
 describe('persistComposioConfigChange', () => {
   it('does not update local saved state when the daemon save fails', async () => {
@@ -152,4 +167,16 @@ describe('resolveSettingsCloseConfig', () => {
       orbit: { enabled: true, time: '11:30', templateSkillId: 'fresh-template' },
     });
   });
+});
+
+it('adopts WordPress provider preferences even when the browser cache selected CLI', () => {
+  vi.stubGlobal('window', { __PIXFLOW_DESIGN_WORDPRESS__: { version: '2.0.8', restBaseUrl: 'http://localhost/wp-json/pixflow-design/v1' } });
+  try {
+    const cached = { ...baseConfig, mode: 'daemon' as const, apiTransport: 'direct' as const };
+    const merged = mergeIncomingWordPressConfig(cached, cached, {mode:'api',apiTransport:'composio',composioProvider:'openai',composioModel:'test-model'});
+    expect(merged.mode).toBe('api');
+    expect(merged.apiTransport).toBe('composio');
+    expect(merged.composioModel).toBe('test-model');
+    expect(merged.apiKey).toBe(cached.apiKey);
+  } finally { vi.unstubAllGlobals(); }
 });

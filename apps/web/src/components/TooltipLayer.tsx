@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { workspacePortalTarget } from './workspacePortalTarget';
+import { workspacePortalThemeStyle } from './workspacePortalTarget';
 
 type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right';
 type InputModality = 'keyboard' | 'pointer';
@@ -13,6 +13,7 @@ interface TooltipState {
     x: number;
     y: number;
     visibility: 'hidden' | 'visible';
+    zIndex: number;
   };
 }
 
@@ -52,6 +53,11 @@ function positionTooltip(
   const viewportHeight = window.innerHeight;
   const maxLeft = Math.max(TOOLTIP_MARGIN, viewportWidth - tip.width - TOOLTIP_MARGIN);
   const maxTop = Math.max(TOOLTIP_MARGIN, viewportHeight - tip.height - TOOLTIP_MARGIN);
+  let zIndex = 4000;
+  for (let ancestor: HTMLElement | null = target; ancestor; ancestor = ancestor.parentElement) {
+    const layer = Number.parseInt(window.getComputedStyle(ancestor).zIndex, 10);
+    if (Number.isFinite(layer)) zIndex = Math.max(zIndex, layer + 1);
+  }
 
   let left = rect.left + rect.width / 2 - tip.width / 2;
   let top = rect.top - tip.height - TOOLTIP_GAP;
@@ -70,6 +76,7 @@ function positionTooltip(
     x: Math.round(clamp(left, TOOLTIP_MARGIN, maxLeft)),
     y: Math.round(clamp(top, TOOLTIP_MARGIN, maxTop)),
     visibility: 'visible',
+    zIndex,
   };
 }
 
@@ -79,7 +86,8 @@ function sameStyle(
 ): boolean {
   return left.x === right.x
     && left.y === right.y
-    && left.visibility === right.visibility;
+    && left.visibility === right.visibility
+    && left.zIndex === right.zIndex;
 }
 
 export function TooltipLayer() {
@@ -143,7 +151,7 @@ export function TooltipLayer() {
         target,
         text,
         placement,
-        style: { x: 0, y: 0, visibility: 'hidden' },
+        style: { x: 0, y: 0, visibility: 'hidden', zIndex: 4000 },
       };
     });
   }, [suppressNativeTitle]);
@@ -292,17 +300,24 @@ export function TooltipLayer() {
   if (!state || typeof document === 'undefined') return null;
 
   return createPortal(
+    // The scope enables WordPress's tooltip CSS. A viewport-sized paint boundary
+    // keeps the tooltip out of host layout and escapes transformed editor roots.
+    <div className="pixflow-design-portal-scope" style={{
+      position: 'fixed', inset: 0,
+      pointerEvents: 'none', contain: 'layout paint', zIndex: state.style.zIndex,
+    }}>
     <div
       ref={tooltipRef}
       className="od-tooltip-layer"
       role="tooltip"
       style={{
+        ...workspacePortalThemeStyle(state.target), color: 'var(--text-strong)',
         transform: `translate3d(${state.style.x}px, ${state.style.y}px, 0)`,
         visibility: state.style.visibility,
       }}
     >
       {state.text}
-    </div>,
-    workspacePortalTarget() ?? document.body,
+    </div></div>,
+    document.body,
   );
 }

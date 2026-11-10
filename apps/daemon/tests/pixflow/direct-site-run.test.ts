@@ -9,9 +9,9 @@ import { promisify } from 'node:util';
 
 const runner = vi.hoisted(() => ({ script: '', imageGeneration: false, imagePaths: [] as string[], contexts: [] as Record<string, unknown>[], prompts: [] as string[], writable: true, userId:1, siteId:'fixture-site', authorized:true, parser:'codex', streamInput:false, filePrompt:false, failArgs:false }));
 vi.mock('../../src/agents.js', () => ({
-  getAgentDef: () => ({ id: 'fixture-cli', name: 'Fixture CLI', streamFormat: runner.parser==='claude'?'claude-stream-json':'json-event-stream', eventParser: runner.parser, promptInputFormat:runner.streamInput?'stream-json':'text', promptViaStdin: !runner.filePrompt, promptViaFile: runner.filePrompt, resumesSessionViaCli: true, capturesSessionIdFromStream: true, buildArgs: (prompt: string, images: string[], _dirs: string[], _options: unknown, context: Record<string, unknown>) => {
+  getAgentDef: () => ({ id: 'fixture-cli', name: 'Fixture CLI', streamFormat: runner.parser==='grok-build'?grokBuildAgentDef.streamFormat:runner.parser==='claude'?'claude-stream-json':'json-event-stream', eventParser: runner.parser, promptInputFormat:runner.streamInput?'stream-json':'text', promptViaStdin: !runner.filePrompt, promptViaFile: runner.filePrompt, resumesSessionViaCli: true, capturesSessionIdFromStream: true, buildArgs: (prompt: string, images: string[], _dirs: string[], _options: unknown, context: Record<string, unknown>) => {
     runner.imagePaths = images; runner.contexts.push(context); runner.prompts.push(prompt);
-    if (runner.filePrompt) antigravityAgentDef.buildArgs(prompt, images, [], {}, context);
+    if (runner.filePrompt) (runner.parser==='grok-build'?grokBuildAgentDef:antigravityAgentDef).buildArgs(prompt, images, [], {}, context);
     if (runner.failArgs) throw new Error('Fixture argument failure');
     return ['--input-type=module', '-e', `const resumed=${JSON.stringify(context.resumeSessionId)};const promptFile=${JSON.stringify(context.promptFilePath)};`+runner.script];
   } }),
@@ -25,6 +25,7 @@ import { DIRECT_SITE_TOOL_SOURCE, directSitePrompt, directSkillContext, register
 import { closeDatabase } from '../../src/db.js';
 import { emittedRenderableQuestionForm } from '../../src/question-form-detect.js';
 import { antigravityAgentDef } from '../../src/runtimes/defs/antigravity.js';
+import { grokBuildAgentDef } from '../../src/runtimes/defs/grok-build.js';
 import { AGENT_VISUAL_CAPTURE_SOURCE } from '../../src/pixflow/agent-visual-capture.js';
 
 const servers: Server[] = [];
@@ -49,6 +50,40 @@ afterEach(async () => {
 });
 
 describe('direct site agent connection', () => {
+  it('treats CLI help as discovery without executing the named operation', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-help-')); dirs.push(dir);
+    const app = express(); app.use(express.json());
+    const calls: unknown[] = [];
+    app.post('/tools', (req, res) => { calls.push(req.body); res.json({ tools: [] }); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'fixture' }));
+    for (const args of [['--help'], ['elementor.run', '--help'], ['bricks.run', '--help', '--code-file', 'absent.js']]) {
+      await promisify(execFile)(process.execPath, ['site-tool.mjs', ...args], { cwd: dir });
+    }
+    expect(calls).toEqual([{ tool: 'help', arguments: {} }, { tool: 'help', arguments: { topic: 'elementor' } }, { tool: 'help', arguments: { topic: 'bricks' } }]);
+  });
+  it.each([false, true])('describes saved result envelopes without flattening data (wrapped=%s)', async wrapped => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-envelope-')); dirs.push(dir);
+    const value = { inspection: { nodes: [] } };
+    const result = wrapped ? { ok: true, result: { value } } : { ok: true, inspection: value.inspection };
+    const app = express(); app.use(express.json()); app.post('/tools', (_req, res) => res.json(result));
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'fixture' }));
+    const { stdout } = await promisify(execFile)(process.execPath, ['site-tool.mjs', 'bricks.read', '--output', 'result.json'], { cwd: dir });
+    expect(JSON.parse(stdout)).toMatchObject({ keys: Object.keys(result), ...(wrapped ? { valuePath: 'result.value' } : {}) });
+    if (!wrapped) expect(JSON.parse(stdout)).not.toHaveProperty('valuePath');
+    expect(JSON.parse(await fs.readFile(path.join(dir, 'result.json'), 'utf8'))).toEqual(result);
+  });
+  it.each(['gutenberg', 'bricks', 'etch', 'elementor'])('provides file-based quoting guidance in %s', (editor) => {
+    const prompt = directSitePrompt({ agentId: 'codex', prompt: 'Inspect this page', history: [], context: { editor }, session: { endpoint: 'http://127.0.0.1/tools', token: 'fixture', writable: true, expiresAt: 0 } });
+    expect(prompt).toContain('Write multiline JSON or code using your file-editing tool');
+    expect(prompt).toContain('Gutenberg native operations use argument files');
+    expect(prompt).toContain('Local helper scripts that themselves use require belong in .cjs');
+  });
   it('gives CLI agents a normal Pro availability result with the explanation link', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-pro-boundary-')); dirs.push(dir);
     const app = express(); app.use(express.json());
@@ -78,6 +113,35 @@ describe('direct site agent connection', () => {
     return {dir,url,request,post,app};
   }
   const answerScript=`for await(const chunk of process.stdin) {}; console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'First answer'}}));`;
+
+  it('admits Grok file prompts, streams real tool shapes, and resumes the captured session', async () => {
+    runner.parser='grok-build';runner.filePrompt=true;
+    runner.script=`import fs from 'node:fs';for await(const chunk of process.stdin){};if(!fs.readFileSync(promptFile,'utf8').includes('First request'))throw new Error('Prompt missing');
+      for(const event of [{type:'tool_call',toolCallId:'read-1',toolName:'read_file',rawInput:{target_file:'page.txt'}},
+      {type:'tool_call_update',toolCallId:'read-1',status:'completed',content:[{type:'content',content:{type:'text',text:'Page URL'}}]},
+      {type:'text',data:'First answer'},{type:'end',stopReason:'end_turn',sessionId:'saved-grok'}])console.log(JSON.stringify(event));`;
+    const {request,post}=await fixture();request.agentId='grok-build';
+    const response=await post('run-stream',request);
+    expect(response.status).toBe(200);
+    const output=await response.text();
+    expect(output).toContain('"delta":"First answer"');
+    expect(output).toContain('"name":"Read"');
+    expect(output).toContain('"outcome":"answered"');
+    runner.script=`for await(const chunk of process.stdin){};console.log(JSON.stringify({type:'text',data:resumed||'NO SESSION'}));console.log(JSON.stringify({type:'end',stopReason:'end_turn',sessionId:'saved-grok'}));`;
+    const next=await(await post('run-stream',{...request,prompt:'Follow up',history:[{role:'user',content:'First request'},{role:'assistant',content:'First answer'}],continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
+    expect(next).toContain('"delta":"saved-grok"');
+    expect(next).toContain('"outcome":"answered"');
+  });
+
+  it('fails a truncated Grok stream even if its child exits successfully', async () => {
+    runner.parser='grok-build';runner.filePrompt=true;
+    runner.script=`for await(const chunk of process.stdin){};console.log(JSON.stringify({type:'text',data:'Partial reply'}));`;
+    const {request,post}=await fixture();
+    const output=await(await post('run-stream',{...request,agentId:'grok-build'})).text();
+    expect(output).toContain('without a completion event');
+    expect(output).toContain('"outcome":"failed"');
+    expect(output).not.toContain('"outcome":"answered"');
+  });
 
   it('keeps Workspace voice on the live-handoff policy on fresh and resumed turns', async () => {
     const { request } = await fixture();
@@ -192,16 +256,17 @@ describe('direct site agent connection', () => {
     const {request, post} = await fixture(false);
     await (await post('run-stream', {...request, context:{imageGenerationAllowed:!allowed}})).text();
     expect(runner.prompts.at(-1)?.includes('Image generation and generated-image import are unavailable')).toBe(!allowed);
-    expect(runner.prompts.at(-1)?.includes('Use the configured Pixflow media providers')).toBe(allowed);
+    expect(runner.prompts.at(-1)?.includes('No Pixflow image provider is configured')).toBe(allowed);
   });
 
   it('enables design guidance for an unset preference and preserves explicit opt-out', async () => {
     runner.script=answerScript;
     const {request,post}=await fixture(false);
+    Object.assign(request.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{}}}});
     await(await post('run-stream',request)).text();
-    expect(runner.prompts.at(-1)).toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).toContain('OPTIONAL FOUNDATION');
     await(await post('run-stream',{...request,enhancedDesignGuidance:false,continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
-    expect(runner.prompts.at(-1)).not.toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).not.toContain('OPTIONAL FOUNDATION');
   });
 
   it('documents the optional JSON question format accepted by the panels', async () => {
@@ -221,14 +286,15 @@ describe('direct site agent connection', () => {
 
   it('keeps guidance in compatible follow-ups and removes it after disabling', async () => {
     const {post, request}=await fixture(); runner.script=answerScript;
+    Object.assign(request.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{}}}});
     await(await post('run-stream',{...request,enhancedDesignGuidance:true})).text();
-    expect(runner.prompts[0]).toContain('Design polish is enabled');
+    expect(runner.prompts[0]).toContain('OPTIONAL FOUNDATION');
     const followup={...request,prompt:'Follow up',history:[{role:'user',content:request.prompt},{role:'assistant',content:'First answer'}]};
     await(await post('run-stream',{...followup,enhancedDesignGuidance:true,continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
     expect(runner.contexts.at(-1)?.resumeSessionId).toBe('saved-native');
     await(await post('run-stream',{...followup,enhancedDesignGuidance:false,continuation:{id:'5'.repeat(32),token:'6'.repeat(64)}})).text();
     expect(runner.contexts.at(-1)?.resumeSessionId).toBeNull();
-    expect(runner.prompts.at(-1)).not.toContain('Design polish is enabled');
+    expect(runner.prompts.at(-1)).not.toContain('OPTIONAL FOUNDATION');
     expect(runner.prompts.at(-1)).toContain('First answer');
   });
 
@@ -498,6 +564,8 @@ describe('direct site agent connection', () => {
       await expect(run(process.execPath, ['site-tool.mjs', 'skills.read', ...flags], { cwd: dir })).rejects.toMatchObject({ code: 1 });
     }
     expect(calls).toHaveLength(2);
+    await expect(run(process.execPath, ['site-tool.mjs', 'batch', '{calls:[]}'], { cwd: dir })).rejects.toMatchObject({stdout:expect.stringContaining('No site operation was dispatched')});
+    expect(calls).toHaveLength(2);
   });
   it('reports invalid argument-file encoding without sending replacement characters to WordPress', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-encoding-')); dirs.push(dir);
@@ -655,14 +723,23 @@ describe('direct site agent connection', () => {
   it.each(['bricks', 'etch', 'elementor'])('routes design polish to the active %s editor, including follow-ups', editor => {
     const input = { agentId: 'codex', prompt: 'Improve this page', history: [], enhancedDesignGuidance: true, canvasId: 'legacy', context: { editor, bricksIntegrationActive: true, etchIntegrationActive: true, elementorIntegrationActive: true }, session: { endpoint: 'https://example.test/tools', token: 'unused', writable: true, expiresAt: 0 } };
     const path = editor === 'bricks' ? 'bricks/workflows/enhanced-design.md' : `${editor}/design-polish.md`;
+    Object.assign(input.session, {designGuidance:{revision:0,source:'existing',product:'',instructions:'',extension:{instructions:path,commands:{}}}});
     expect(directSitePrompt(input)).toContain(path);
     expect(directSitePrompt(input, false, true, true)).toContain(path);
     expect(directSitePrompt({ ...input, enhancedDesignGuidance: false })).not.toContain(path);
   });
-  it('only enables the imagegen preference for opted-in Codex runs', () => {
+  it('uses native images for opted-in Codex or when there is no image provider', () => {
     const input = { agentId: 'codex', prompt: 'Generate an image', history: [], session: { endpoint: 'https://site.example/tools', token: '', writable: true, expiresAt: 0 } };
-    expect(directSitePrompt(input, true)).toContain('node site-tool.mjs media.import');
-    expect(directSitePrompt(input, true)).toContain('Videos still use the configured video provider');
+    expect(directSitePrompt(input, true)).toContain('Bridge imports the result');
+    for (const resumed of [false, true]) {
+      const native = directSitePrompt(input, false, true, resumed, true, false, []);
+      expect(native).toContain('No Pixflow image provider is configured');
+      expect(native).toContain('invoke native imagegen immediately');
+      const configured = directSitePrompt(input, false, true, resumed, true, false, ['openai']);
+      expect(configured).toContain('Configured Pixflow image providers: openai');
+      expect(configured).not.toContain('invoke native imagegen immediately');
+      expect(directSitePrompt({...input, agentId: 'claude'}, false, true, resumed, true, false, [])).toContain('an image provider must be configured');
+    }
     expect(directSitePrompt(input)).not.toContain('Image generation preference:');
     expect(directSitePrompt({ ...input, agentId: 'claude' }, true)).not.toContain('Image generation preference:');
   });
@@ -802,4 +879,17 @@ describe('direct site agent connection', () => {
     expect(stopped.status).toBe(200);
     await vi.waitFor(async()=>{expect(()=>process.kill(pid,0)).toThrow();await expect(fs.access(path.join(runDir,'site-connection.json'))).rejects.toThrow();},{timeout:15000});
   });
+});
+
+it('CLI uses only the current optional server guidance and preserves off', () => {
+ const input = {session:{endpoint:'https://example.test/tools',token:'fixture',writable:true},context:{},history:[],prompt:'Help with this page',enhancedDesignGuidance:true} as any;
+ expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
+ input.session.designGuidance={revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{'/operation check':'FOCUSED CHECK'}}};
+ expect(directSitePrompt(input)).toContain('OPTIONAL FOUNDATION');
+ input.enhancedDesignGuidance=false;
+ expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
+ input.prompt='/operation check this';
+ expect(directSitePrompt(input)).toContain('FOCUSED CHECK');
+ delete input.session.designGuidance;
+ expect(directSitePrompt(input)).not.toContain('FOCUSED CHECK');
 });

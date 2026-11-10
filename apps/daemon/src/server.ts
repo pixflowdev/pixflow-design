@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { resolveRuntimeReasoning } from './runtimes/claude-models.js';
 import type { DesktopExportPdfInput, DesktopExportPdfResult } from '@open-design/sidecar-proto';
 import express from 'express';
 import { mayClaimPixflowDaemonSite } from './pixflow-site-switch-authority.js';
@@ -78,7 +79,9 @@ import { sanitizePixflowBricksIntentContract } from './pixflow/bricks-intent-con
 
 export { resolveProjectRoot };
 import { createCommandInvocation } from '@open-design/platform';
+import { DirectCodexWorker } from './pixflow/direct-codex-worker.js';
 import { registerDirectSiteRunRoutes } from './pixflow/direct-site-run.js';
+import { registerUpscalerRoutes } from './pixflow/upscaler.js';
 import { registerDictationRoutes } from './pixflow/dictation-routes.js';
 import { installPixflowRuntimeIdle, registerPixflowRuntimeWork } from './pixflow/runtime-idle.js';
 import { SIDECAR_DEFAULTS, SIDECAR_ENV } from '@open-design/sidecar-proto';
@@ -421,6 +424,11 @@ import {
   setToken,
 } from './mcp-tokens.js';
 import { agentCliEnvForAgent, readAppConfig, readAppConfigSync, readPluginEnvKnobs, writeAppConfig } from './app-config.js';
+import { registerClaudeSignInRoutes } from './routes/claude-sign-in.js';
+import { registerClaudeUsageRoute } from './routes/claude-usage.js';
+import { registerCodexUsageRoute } from './routes/codex-usage.js';
+import { registerGrokUsageRoute } from './routes/grok-usage.js';
+import { registerAgentTextRoute } from './routes/agent-text.js';
 import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
@@ -5273,6 +5281,8 @@ export async function startServer({
 
   const app = express();
   installRouteRegistrationGuard(app);
+  // Normalised PNG pixels travel as base64 JSON on this route only.
+  app.post('/api/pixflow/upscaler/run', requireLocalDaemonRequest, express.json({ limit: '24mb' }));
   app.use(express.json({ limit: '4mb' }));
   installPixflowRuntimeIdle(app, {
     token: process.env.PIXFLOW_DESIGN_RUNTIME_CONTROL_TOKEN,
@@ -7632,8 +7642,29 @@ export async function startServer({
   // prompts run as one hybrid agent conversation. The selected CLI decides
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
-  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db);
+  const directWarmWorker = new DirectCodexWorker(RUNTIME_DATA_DIR);
+  const selectWarmWorker = (prefs: ReturnType<typeof readAppConfigSync>) => {
+    const def = prefs.mode !== 'api' && prefs.agentId === 'codex' ? getAgentDef('codex') : undefined;
+    if (!def) return directWarmWorker.select();
+    const configured = agentCliEnvForAgent(prefs.agentCliEnv, def.id);
+    const launch = resolveAgentLaunch(def, configured);
+    directWarmWorker.select(launch.launchPath ? { executable:launch.launchPath, env:applyAgentLaunchEnv(spawnEnvForAgent(def.id,process.env,configured),launch) } : undefined);
+  };
+  selectWarmWorker(readAppConfigSync(RUNTIME_DATA_DIR));
+  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db, PROJECT_ROOT, directWarmWorker);
+  const claudeLogin = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'), () => pixflowBridgeSiteInfo()?.key ?? '', RUNTIME_DATA_DIR,
+    () => pixflowBridgeSiteInfo()?.origin ?? '');
+  registerClaudeUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'));
+  registerCodexUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'codex'));
+  registerGrokUsageRoute(app, requireLocalDaemonRequest,
+    () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'grok-build'));
+  registerUpscalerRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
   registerDictationRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest);
+  registerAgentTextRoute(app, requireLocalDaemonRequest, RUNTIME_DATA_DIR,
+    agent => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, agent));
   app.post('/api/pixflow/bricks-agent/run-stream', async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const requestedMode = String(body.mode || '').trim().toLowerCase();
@@ -10486,6 +10517,7 @@ export async function startServer({
         runsDir: path.join(RUNTIME_DATA_DIR, 'runs'),
         dataDir: RUNTIME_DATA_DIR,
         profile: 'pixflow',
+        bridgeSupport: claudeLogin.support,
       })(req, res, next);
     },
   );
@@ -10875,7 +10907,12 @@ export async function startServer({
     StockImageRequestError,
     testUnsplashConnection,
   };
-  const appConfigDeps = { readAppConfig, writeAppConfig };
+  const writeRuntimeConfig: typeof writeAppConfig = async (...args) => {
+    const config = await writeAppConfig(...args);
+    if (args[0] === RUNTIME_DATA_DIR) selectWarmWorker(config);
+    return config;
+  };
+  const appConfigDeps = { readAppConfig, writeAppConfig: writeRuntimeConfig };
   const orbitDeps = { orbitService };
   const nativeDialogDeps = { openNativeFolderDialog };
   const researchDeps = { searchResearch, researchStatus, ResearchError };
@@ -15323,6 +15360,7 @@ export async function startServer({
     }
     try {
       const config = await writeAppConfig(RUNTIME_DATA_DIR, req.body);
+      selectWarmWorker(config);
       orbitService.configure(config.orbit);
       res.json({ config });
     } catch (err) {
@@ -16440,12 +16478,14 @@ export async function startServer({
       ? String(chatBody.projectMetadata.toolPolicy || '')
       : '';
     let workspaceBuilderPrompt = '';
+    let workspaceDiscovery = '';
     if (run.workspaceBuilderSession) {
       const staged = await stageWorkspaceBuilderHelper(RUNTIME_DATA_DIR, run.workspaceBuilderSession);
       if (run.cancelRequested || ['succeeded', 'failed', 'canceled'].includes(run.status)) { await staged.cleanup(); throw new Error('Workspace run was cancelled before handoff tools were ready.'); }
       const previousFinalize = run.onFinalize;
       run.onFinalize = () => { previousFinalize?.(); void staged.cleanup().catch(() => undefined); };
       workspaceBuilderPrompt = staged.prompt;
+      workspaceDiscovery = staged.discovery;
     }
     const runtimeToolPrompt = [createAgentRuntimeToolPrompt(daemonUrl, toolTokenGrant, runtimeToolPolicy || null), composioSkillPrompt(), workspaceBuilderPrompt].filter(Boolean).join('\n\n');
     const commentHint = renderCommentAttachmentHint(safeCommentAttachments);
@@ -16830,10 +16870,7 @@ export async function startServer({
       process.env,
       requestedLiveModelScope,
     );
-    const safeReasoning =
-      typeof reasoning === 'string' && Array.isArray(def.reasoningOptions)
-        ? (def.reasoningOptions.find((r) => r.id === reasoning)?.id ?? null)
-        : null;
+    const safeReasoning = resolveRuntimeReasoning(def, safeModel, reasoning) ?? null;
     const requestedFastMode = fastMode === true;
     const safeFastMode = requestedFastMode
       ? modelSupportsFastMode(def, safeModel, requestedLiveModelScope)
@@ -17823,6 +17860,8 @@ export async function startServer({
       undefined,
       { resolvedBin: agentLaunch.selectedPath },
     );
+    if (workspaceDiscovery) agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY = workspaceDiscovery;
+    else delete agentSpawnEnv.PIXFLOW_WORKSPACE_DISCOVERY;
     if (def.id === 'amr') {
       const loginStatus = readVelaLoginStatus(agentSpawnEnv, configuredAgentSpawnEnv);
       if (!loginStatus.loggedIn) {
@@ -17955,6 +17994,7 @@ export async function startServer({
         processSpawnedAt: Date.now(),
       };
       run.child = child;
+      send('agent', { type: 'status', label: 'provider_waiting' });
       run.childPid = typeof child.pid === 'number' ? child.pid : null;
       run.processGroupId =
         process.platform !== 'win32' && typeof child.pid === 'number'
@@ -20775,7 +20815,9 @@ export async function startServer({
   return await new Promise((resolve, reject) => {
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
+      directWarmWorker.select();
       stopDirectHistoryRetention();
+      claudeLogin.stop();
       composioConnectorProvider.stopCatalogRefreshLoop();
       orbitService.stop();
       routineService?.stop();
@@ -20907,3 +20949,4 @@ export function rewriteSkillAssetUrls(html: string, skillId: string): string {
     },
   );
 }
+

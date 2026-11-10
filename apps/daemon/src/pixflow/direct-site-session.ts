@@ -16,11 +16,13 @@ export function directSessionUrl(endpoint: string): URL {
 /** Verification is a read-only GET. Retry one transient failure, never a denial;
  * the caller's cancellation/deadline still bounds both attempts. No result is
  * cached and no operation is authorized until WordPress returns valid access. */
-async function verifyDirectSession(session: PixflowDirectSiteSession, signal?: AbortSignal): Promise<Response> {
+async function verifyDirectSession(session: PixflowDirectSiteSession, signal?: AbortSignal, checkHistory = false): Promise<Response> {
   const lifetime = signal ? AbortSignal.any([signal, AbortSignal.timeout(16_000)]) : AbortSignal.timeout(16_000);
+  const url = directSessionUrl(session.endpoint);
+  if (checkHistory) url.searchParams.set('checkHistory', '1');
   for (let attempt = 0; ; attempt++) {
     try {
-      const response = await fetch(directSessionUrl(session.endpoint), {method:'GET',redirect:'error',
+      const response = await fetch(url, {method:'GET',redirect:'error',
         headers:{Authorization:`Bearer ${session.token}`},signal:AbortSignal.any([lifetime,AbortSignal.timeout(8000)])});
       if (attempt === 0 && !lifetime.aborted && (response.status >= 500 || [408, 429].includes(response.status))) {
         await response.body?.cancel().catch(() => undefined);
@@ -35,11 +37,11 @@ async function verifyDirectSession(session: PixflowDirectSiteSession, signal?: A
 }
 
 /** Verify ownership with WordPress, never trust identity fields in client JSON. */
-export async function authenticateDirectOwner(session: PixflowDirectSiteSession, requireIdentity: boolean, signal?: AbortSignal, onIntegrations?: (value: PixflowSiteIntegrations) => void, requiredFeature?: 'audio' | 'external-mcp', onFeatures?: (value: NonNullable<PixflowDirectSiteAuthorization['features']>) => void): Promise<string> {
+export async function authenticateDirectOwner(session: PixflowDirectSiteSession, requireIdentity: boolean, signal?: AbortSignal, onIntegrations?: (value: PixflowSiteIntegrations) => void, requiredFeature?: 'audio' | 'external-mcp', onFeatures?: (value: NonNullable<PixflowDirectSiteAuthorization['features']>) => void, onHistory?: (current: boolean) => void): Promise<string> {
   const endpoint = new URL(session?.endpoint);
   if (!['http:', 'https:'].includes(endpoint.protocol) || endpoint.username || endpoint.password || !/^pfdirect_[a-f0-9]{64}$/.test(session?.token ?? ''))
     throw new Error('A valid WordPress direct session is required.');
-  const response = await verifyDirectSession(session, signal);
+  const response = await verifyDirectSession(session, signal, Boolean(onHistory));
   if (response.status === 404 && !requireIdentity && !requiredFeature) return 'legacy:'+directDigest(endpoint.toString());
   if (!response.ok) throw new DirectSessionAuthorizationError(response.status >= 500 || [408, 429].includes(response.status) ? 503 : 403,
     response.status >= 500 || [408, 429].includes(response.status) ? 'DIRECT_AUTH_UNAVAILABLE' : 'DIRECT_SESSION_REJECTED',
@@ -57,6 +59,7 @@ export async function authenticateDirectOwner(session: PixflowDirectSiteSession,
   if (value.workspaceSource) session.workspaceSource = value.workspaceSource;
   else delete session.workspaceSource;
   onIntegrations?.(typeof value.integrations?.bricks === 'boolean' ? { bricks: value.integrations.bricks } : {});
+  onHistory?.(value.historyCurrent !== false);
   onFeatures?.(value.features ?? {});
   return 'wp:'+directDigest([endpoint.origin,endpoint.pathname,value.identity.siteId,value.identity.blogId,value.identity.userId]);
 }

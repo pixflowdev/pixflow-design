@@ -8,7 +8,17 @@ vi.mock('../../src/pixflow/chat-history-client',()=>({
   historyMessageFingerprint:(message:Record<string,unknown>)=>{const {historyRevision,historySequence,...payload}=message;return JSON.stringify(payload);},
 }));
 vi.mock('../../src/pixflow/runtime-fetch',()=>({pixflowWordPressRestFetch:mocks.fetch}));
-import { compactWorkingContext, compactWorkingRun, prepareHistorySource, workingContextBytes } from '../../src/pixflow/working-context';
+import { compactWorkingContext, compactWorkingRun, prepareHistorySource, workingContextBytes, workingRunContextBytes } from '../../src/pixflow/working-context';
+
+it('counts completed history once without opaque reasoning or static instructions', () => {
+  const request = {role:'user',content:'Audit the page'};
+  const state = {messages:[request],turns:[{role:'system',content:'x'.repeat(60000)},request,{type:'reasoning',encrypted_content:'y'.repeat(60000)}],results:[]};
+  const original = structuredClone(state);
+  expect(workingRunContextBytes(state)).toBeLessThan(200);
+  expect(workingContextBytes(state)).toBeGreaterThan(120000);
+  expect(state).toEqual(original);
+  expect(workingRunContextBytes({...state,results:[{id:'result',content:'z'.repeat(60000)}]})).toBeGreaterThan(60000);
+});
 
 const binding={projectId:'project',conversationId:'conversation'};
 const message=(index:number)=>({id:`m-${index}`,role:index%2?'user':'assistant',content:`Preserved ${index}`,historySequence:index,historyRevision:1});
@@ -35,6 +45,31 @@ it('loads every 50-message page and preserves original snapshots before executio
  expect(result.messages).toHaveLength(125);expect(result.messages[0]?.content).toBe('Preserved 1');expect(result.messages.at(-1)?.content).toBe('Preserved 125');
  expect(mocks.read.mock.calls.map(call=>call[1])).toEqual([undefined,'before-76','before-26']);expect(source).toEqual(original);
 });
+it('uses the saved correction outside the reloaded window without writing an older copy back', async () => {
+  const saved = Array.from({ length: 125 }, (_, index) => message(index + 1));
+  const stale = saved.map(row => ({ ...row }));
+  saved[0] = { ...saved[0]!, content: 'Corrected in a second tab', historyRevision: 2 };
+  for (const visible of [stale, stale.slice(-50)]) {
+    const result = await prepareHistorySource({ binding, messages: visible, checkSavedPageFirst: true }, signal(),
+      { messages: [...saved, message(126)], hasMore: false, nextCursor: null }, true);
+    expect(result.messages).toHaveLength(125);
+    expect(result.messages[0]?.content).toBe('Corrected in a second tab');
+  }
+  expect(mocks.save).not.toHaveBeenCalled();
+  expect(mocks.import).not.toHaveBeenCalled();
+  expect(mocks.read).not.toHaveBeenCalled();
+});
+
+it('continues an acknowledged partial snapshot without reimporting stale rows', async () => {
+  mocks.read.mockResolvedValue({ messages: [{ ...message(1), content: 'Corrected elsewhere' }], hasMore: false, nextCursor: null });
+  const result = await prepareHistorySource({binding, messages: [message(2)], checkSavedPageFirst: true}, signal(),
+    {messages: [message(2), message(3)], hasMore: true, nextCursor: 'older'}, true);
+  expect(result.messages.map(row => row.content)).toEqual(['Corrected elsewhere', 'Preserved 2']);
+  expect(mocks.read.mock.calls.map(call => call[1])).toEqual(['older']);
+  expect(mocks.import).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
 it('excludes newer queued messages beyond this request’s snapshot',async()=>{
  mocks.read.mockResolvedValue({messages:[message(124),message(125),message(126)],hasMore:false,nextCursor:null});
  const result=await prepareHistorySource(source,signal());
@@ -151,4 +186,17 @@ it('runs Composio summary inference through WordPress without forwarding direct 
  const [url,options]=mocks.fetch.mock.calls[0]!;
  expect(url).toBe('/chat-history/project/conversation/working-context/run');
  expect(JSON.parse(options.body)).toEqual({...runState,transport:'composio',provider:'openai',model:'model-two'});
+});
+
+it('uses a matching complete saved page and excludes later queued messages',async()=>{
+ mocks.read.mockResolvedValue({messages:[message(124),message(125),message(126)],hasMore:false,nextCursor:null});
+ const result=await prepareHistorySource({...source,checkSavedPageFirst:true},signal());
+ expect(result.messages.map(row=>row.content)).toEqual(['Preserved 124','Preserved 125']);
+ expect(mocks.import).not.toHaveBeenCalled();
+});
+it('reconciles a changed saved page using the normal revision check',async()=>{
+ const stale={...message(125),content:'Older text'};
+ mocks.import.mockResolvedValue({messages:[message(125)],deletedMessageIds:[]});
+ mocks.save.mockRejectedValue(new Error('Revision conflict'));
+ await expect(prepareHistorySource({binding,messages:[stale],checkSavedPageFirst:true},signal())).rejects.toThrow('Revision conflict');
 });

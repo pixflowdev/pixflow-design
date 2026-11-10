@@ -132,6 +132,10 @@ export function normalizePixflowBricksAgentFailureNotice(
   const agentId = fallbackAgentId.trim();
   const label = agentLabel(agentId);
 
+  if (/^(Pixflow could not reach Design Bridge\.|The browser reported that local access to Pixflow Design Bridge is blocked\.|The Pixflow Design Bridge request timed out\.|The connection to Pixflow Design Bridge was refused\.)/u.test(message)) {
+    return fallbackNotice('bridge', 'Bridge connection needs attention', message, 'rescan', 'Reconnect and rescan', agentId, 'BRIDGE_UNAVAILABLE');
+  }
+
   if (
     /auth(?:entication|orization)? (?:failed|required)|failed to authenticate|oauth session expired|access token (?:could not|cannot|can't) be refreshed|refresh token (?:was|has been|is)?[ _-]?(?:revoked|invalid|expired)|token refresh (?:failed|was rejected)|not (?:logged|signed) in|login required|invalid api key|unauthorized|\b401\b/iu.test(message)
   ) {
@@ -229,6 +233,8 @@ export function normalizePixflowBricksAgentFailureNotice(
       'PROVIDERS_NOT_READY',
     );
   }
+
+
 
   if (/bridge|failed to fetch|connection refused|networkerror|load failed/iu.test(message)) {
     return fallbackNotice(

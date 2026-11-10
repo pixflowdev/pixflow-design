@@ -42,9 +42,9 @@ final class WorkingContextService
         $valid = WorkingContext::valid($saved, $messages);
         $previous = $valid ? $saved : [];
         $response = $this->response($messages, $previous, $valid ? 'reused' : 'unchanged');
-        $cutoff = WorkingContext::cutoff($messages);
+        $cutoff = WorkingContext::preservationCutoff($messages);
         $covered = $valid ? $saved['coveredMessages'] : 0;
-        if ($cutoff <= $covered || (($input['force'] ?? false) !== true && strlen((string) wp_json_encode($response['messages'])) < WorkingContext::TRIGGER_BYTES)) return $response;
+        if ($cutoff <= $covered || (($input['force'] ?? false) !== true && strlen((string) wp_json_encode($response['messages'])) < ContextBudget::bytes($input))) return $response;
         try {
             $complete ??= function (string $system, string $text) use ($input): string {
                 if (($input['transport'] ?? 'api') === 'composio') {
@@ -52,8 +52,11 @@ final class WorkingContextService
                 }
                 return (new \PixflowDesign\WordPress\Http\Routes\ProviderSettingsRoutes())->summarize($input, $system, $text);
             };
-            $summary = WorkingContext::summarize(array_slice($messages, $covered, $cutoff - $covered), $previous['summary'] ?? '', $complete);
-            $checkpoint = ['version' => 1, 'summary' => $summary, 'coveredMessages' => $cutoff,
+            $partition = WorkingContext::partition(array_slice($messages, $covered, $cutoff - $covered));
+            if (!$partition['summaryMessages']) return $response;
+            $summary = WorkingContext::summarize($partition['summaryMessages'], $previous['summary'] ?? '', $complete, ContextBudget::bytes($input) > 48000 ? ContextBudget::bytes($input) : WorkingContext::CHUNK_BYTES + WorkingContext::SUMMARY_BYTES);
+            $checkpoint = ['version' => 2, 'summary' => $summary, 'coveredMessages' => $cutoff,
+                'preserved' => WorkingContext::partition(array_slice($messages, 0, $cutoff))['preserved'],
                 'prefixDigest' => WorkingContext::digest(array_slice($messages, 0, $cutoff)), 'createdAt' => time()];
             $result = $this->repository->locked(HistoryRepository::key($project, $conversation), function () use ($project, $conversation, $throughMessageId, $messages, $saved, $checkpoint): array {
                 $latest = $this->messages($project, $conversation, $throughMessageId);
@@ -102,7 +105,10 @@ final class WorkingContextService
                     ? \PixflowDesign\WordPress\Modules\ComposioAccess::summarize($input, $system, $text)
                     : (new \PixflowDesign\WordPress\Http\Routes\ProviderSettingsRoutes())->summarize($input, $system, $text);
             };
-            return ['status' => 'compacted', 'summary' => WorkingContext::summarize($source, '', $complete)];
+            // Completed run evidence was already carried by this provider. A
+            // model-sized input avoids sequential calls for ordinary tool
+            // cycles while retaining the 64 KB fallback for unknown models. Failure still returns the intact original checkpoint.
+            return ['status' => 'compacted', 'summary' => WorkingContext::summarizeText($source[0]['content'], '', $complete, max(64000, ContextBudget::bytes($input)))];
         } catch (\Throwable $error) {
             return ['status' => 'fallback', 'reason' => 'compaction_unavailable'];
         }

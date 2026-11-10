@@ -1,3 +1,4 @@
+import { stageNativeTransport } from '../tools/pack/src/native-transport.ts';
 import { createHash } from 'node:crypto';
 import { copyFile, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
@@ -10,6 +11,11 @@ import { assertZipBufferProductIsolation } from './product-isolation.mjs';
 import { resolveWordPressBuild } from './wordpress-build-contract.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const nativePayload = process.env.PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR;
+if (!nativePayload) throw new Error('Release runtime requires PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR.');
+const nativeConfig = JSON.parse(await readFile(join(nativePayload, 'config.json'), 'utf8'));
+if (nativeConfig.hostName !== 'dev.pixflow.bridge' || nativeConfig.extensionOrigin !== 'chrome-extension://hbnbiboohlelmngadeolikeejamjlbkh/') throw new Error('Release runtime requires the permanent Pixflow native host identity.');
+
 const proRoot = resolveWordPressBuild(root, { target: 'pro' }).proRoot;
 const workflowSources = resolveBridgeWorkflowSources(root, { proRoot, requirePro: true });
 const distDir = join(root, 'dist');
@@ -81,6 +87,7 @@ await writeFile(
   'utf8',
 );
 
+await stageNativeTransport(runtimeRoot, nativePayload);
 await writeRuntimePackageJson();
 await writeRuntimePostinstall();
 

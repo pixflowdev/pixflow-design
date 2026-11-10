@@ -686,7 +686,7 @@ Expected output:
   });
 
   it('keeps a newly sent Workspace turn at the bottom without reserving blank space', () => {
-    const pane = (messages: ChatMessage[], streaming = false) => <ChatPane bottomAligned
+    const pane = (messages: ChatMessage[], streaming = false) => <ChatPane
       messages={messages} streaming={streaming} error={null} projectId="project-1" projectFiles={[]}
       onEnsureProject={async () => 'project-1'} onSend={vi.fn()} onStop={vi.fn()} conversations={[]}
       activeConversationId="conv-1" onSelectConversation={vi.fn()} onDeleteConversation={vi.fn()} />;

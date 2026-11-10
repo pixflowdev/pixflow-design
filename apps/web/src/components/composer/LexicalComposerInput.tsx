@@ -1,5 +1,7 @@
 'use client';
 
+import { ContextAttachmentNode } from './ContextAttachmentNode';
+
 import {
   forwardRef,
   useEffect,
@@ -333,7 +335,7 @@ function TriggerPlugin({
         }
         const before = textBeforeCaretOnLine(node, sel.anchor.offset);
         const m = /(^|\s)@([^\s@]*)$/.exec(before);
-        const s = /^\/([^\s/]*)$/.exec(before);
+        const s = /(?:^|\s)\/([^\s/]*)$/.exec(before);
         const active = Boolean(m) || Boolean(s);
         // Only pay for the DOM read when a trigger is live; otherwise the rect
         // is unused. Viewport coords (position:fixed portal) — no scroll add.
@@ -680,7 +682,7 @@ export const LexicalComposerInput = forwardRef<
   const initialConfig: InitialConfigType = {
     namespace: 'chat-composer',
     editable: true,
-    nodes: [MentionNode, AnnotationNode, AnnotationBatchNode],
+    nodes: [MentionNode, AnnotationNode, AnnotationBatchNode, ContextAttachmentNode],
     theme: EDITOR_THEME,
     onError(err) {
       if (process.env.NODE_ENV !== 'production') {

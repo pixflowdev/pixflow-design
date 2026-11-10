@@ -99,7 +99,9 @@ final class CentralArtifacts
 
     private function failure(int $status): \WP_Error
     {
-        if (in_array($status, [401, 403], true)) (new CentralEntitlements())->deny('protected_artifact_denied');
+        // Artifact authorization is scoped to this request. A local identity
+        // mismatch or an HTTP 401/403 does not establish licence revocation.
+        // CentralEntitlements owns authoritative denial and signed-grant expiry.
         return new \WP_Error('protected_artifact_unavailable', 'The protected artifact could not be authorized or verified.', ['status' => $status]);
     }
 }

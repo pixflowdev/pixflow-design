@@ -154,14 +154,17 @@ async function navigatePixflowCapturePage(
 ): Promise<void> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= CAPTURE_NAVIGATION_ATTEMPTS; attempt += 1) {
+    let terminalResponse = false;
     try {
       const response = await page.goto(url, { waitUntil: 'commit', timeout: navigationTimeoutMs });
       if (response && response.status() >= 400) {
-        throw new Error(`Visual capture target returned HTTP ${response.status()}.`);
+        terminalResponse = response.status() < 500 && ![408, 429].includes(response.status());
+        throw new Error(`Visual capture target returned HTTP ${response.status()}. Capture is anonymous; private drafts require authenticated editor inspection. No screenshot was captured.`);
       }
       await page.locator('body').waitFor({ state: 'attached', timeout: navigationTimeoutMs });
       return;
     } catch (error) {
+      if (terminalResponse) throw error;
       lastError = error;
       if (attempt < CAPTURE_NAVIGATION_ATTEMPTS) {
         await page.waitForTimeout(750);

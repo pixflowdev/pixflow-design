@@ -1,8 +1,8 @@
 import type { AppConfig } from '../types';
 import { sanitizeApiProtocolConfigsForPrefs } from '../state/config';
 
-export function buildPixflowWordPressAppConfigPrefs(config: AppConfig): Record<string, unknown> {
-  return {
+export function buildPixflowWordPressAppConfigPrefs(config: AppConfig, changed?: Partial<AppConfig>): Record<string, unknown> {
+  const prefs: Record<string, unknown> = {
     theme: config.theme ?? 'dark',
     accentColor: config.accentColor,
     mode: config.mode,
@@ -40,4 +40,9 @@ export function buildPixflowWordPressAppConfigPrefs(config: AppConfig): Record<s
     skillId: config.skillId,
     designSystemId: config.designSystemId,
   };
+  // A composer selection owns only its changed fields, never the rest of a
+  // potentially stale mounted panel's settings snapshot.
+  return changed === undefined ? prefs : Object.fromEntries(
+    Object.entries(prefs).filter(([key]) => Object.prototype.hasOwnProperty.call(changed, key)),
+  );
 }

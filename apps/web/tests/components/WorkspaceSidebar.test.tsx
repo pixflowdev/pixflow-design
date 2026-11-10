@@ -74,6 +74,24 @@ describe('WorkspaceSidebar organization and content preservation', () => {
     expect(screen.getByText('Active chat content')).toBeTruthy();
   });
 
+  it.each(['media', 'sitemap', 'design-systems', 'translations'] as const)('hides chat chrome on %s without changing the saved sidebar preference', activeView => {
+    const { props, update, container } = setup({ activeView });
+    expect(screen.queryByRole('complementary', { name: 'Chats' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^(Collapse|Expand) sidebar$/ })).toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Workspace' })).toBeTruthy();
+    expect(screen.getByText('Active chat content')).toBeTruthy();
+    expect(container.querySelector('[data-chat-panel="false"]')).toBeTruthy();
+    expect(props.onMutate).not.toHaveBeenCalled();
+    update({ activeView: 'home' });
+    expect(screen.getByRole('complementary', { name: 'Chats' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Collapse sidebar' })).toBeTruthy();
+    update({ activeView, organization: { ...initial(), sidebarCollapsed: true } });
+    expect(screen.queryByRole('button', { name: /^(Collapse|Expand) sidebar$/ })).toBeNull();
+    update({ activeView: undefined });
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeTruthy();
+    expect(props.onMutate).not.toHaveBeenCalled();
+  });
+
   it('keeps the sidebar toggle usable while its preference is saving', () => {
     const { props, update } = setup({ onMutate: vi.fn(() => new Promise(() => {})) });
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));

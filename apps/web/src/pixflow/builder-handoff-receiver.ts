@@ -1,6 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatAttachment, PixflowBuilderHandoff, PixflowBuilderHandoffResult, PixflowBuilderId, PixflowEditorTarget } from '@open-design/contracts';
 import { mutateBuilderHandoff, readBuilderHandoff } from './builder-handoff-client';
+import { conversationSessionKey } from './conversation-address';
+
+/** Blog Studio continues its article chat; execution receipts remain editor/tab scoped. */
+export function useBuilderHandoffHistory(fallback: string, surface: string) {
+  const id = /^(?:admin|bricks)-handoff:([a-f0-9]{64}):/.exec(surface)?.[1];
+  const [resolved, setResolved] = useState<{id:string;key:string;error?:string}|null>(null);
+  useEffect(() => {
+    if (!id) return;
+    const controller=new AbortController();
+    void readBuilderHandoff({id},controller.signal).then(receipt=>{
+      if(controller.signal.aborted)return;
+      const key=receipt?.continueConversation || receipt?.conversationId?.startsWith('blog-build-') ? conversationSessionKey(receipt) : fallback;
+      setResolved({id,key});
+    }).catch(error=>{if(!controller.signal.aborted)setResolved({id,key:fallback,error:String(error.message)});});
+    return ()=>controller.abort();
+  },[id,fallback]);
+  return {key:id&&resolved?.id===id?resolved.key:fallback,ready:!id||(resolved?.id===id&&!resolved.error),error:resolved?.error};
+}
 
 export interface BuilderHandoffExecution {
   receipt: PixflowBuilderHandoff;
@@ -23,7 +41,7 @@ export function builderHandoffAttachments(receipt: PixflowBuilderHandoff): ChatA
 /** A receipt can only recover on its original page and named destination tab. */
 function handoffPageIdentity(source: Window): string | null {
   const url = new URL(source.location.href);
-  const post = url.searchParams.get('post') || url.searchParams.get('page_id') || url.searchParams.get('post_id');
+  const post = url.searchParams.get('post') || url.searchParams.get('page_id') || url.searchParams.get('post_id') || url.searchParams.get('p');
   return post && /^[1-9]\d*$/.test(post) ? `${url.origin}${url.pathname}:${post}` : null;
 }
 
@@ -40,7 +58,7 @@ export function builderHandoffDocumentAddress(source: Window): { id: string; tab
   if (launch && typeof launch === 'object') {
     const { id, tabId, postId } = launch as Record<string, unknown>;
     const currentUrl = new URL(source.location.href);
-    const currentPost = currentUrl.searchParams.get('post') || currentUrl.searchParams.get('post_id') || currentUrl.searchParams.get('page_id');
+    const currentPost = currentUrl.searchParams.get('post') || currentUrl.searchParams.get('post_id') || currentUrl.searchParams.get('page_id') || currentUrl.searchParams.get('p');
     if (typeof id === 'string' && /^[a-f0-9]{64}$/.test(id)
       && typeof tabId === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(tabId)
       && Number(postId) > 0 && String(postId) === currentPost) {
@@ -73,10 +91,10 @@ export function builderHandoffPersistenceSurface(builder: PixflowBuilderId, sour
   return `${base}-handoff:${address.id}:${address.tabId}`;
 }
 
-/** New native-builder handoffs own a transcript, so another admin panel cannot
- * replace it. Ordinary history and existing Gutenberg/Bricks recovery stay put. */
+/** Every handoff owns a transcript. Unrelated editor chats must never become
+ * the article's build history; ordinary editor history keeps its existing key. */
 export function builderHandoffConversationKey(baseKey: string, persistenceSurface: string, builder: PixflowBuilderId): string {
-  if ((builder !== 'etch' && builder !== 'elementor') || !/^admin-handoff:[a-f0-9]{64}:[A-Za-z0-9_-]{16,128}$/.test(persistenceSurface)) return baseKey;
+  if (!/^(?:admin|bricks)-handoff:[a-f0-9]{64}:[A-Za-z0-9_-]{16,128}$/.test(persistenceSurface)) return baseKey;
   return `${baseKey}:${builder}:${persistenceSurface}`;
 }
 
@@ -128,12 +146,15 @@ export async function receiveBuilderHandoff(
 }
 
 export function useBuilderHandoffReceiver(options: {
-  builder: PixflowBuilderId; enabled: boolean; busy: boolean;
+  builder: PixflowBuilderId; enabled: boolean; historyReady: boolean; busy: boolean;
   target(): Promise<PixflowEditorTarget | undefined>;
   start(execution: BuilderHandoffExecution): Promise<boolean> | boolean;
   notice(message: string): void;
 }): void {
-  const latest = useRef(options); latest.current = options;
+  // Initial history hydration replaces the transcript. Starting before it ends
+  // would let that replacement erase the new handoff's progress messages.
+  const enabled=options.enabled&&options.historyReady;
+  const latest = useRef({...options,enabled}); latest.current = {...options,enabled};
   const attempted = useRef(false);
   const waitingForConnection = useRef<{ id: string; tabId: string; page: string | null } | null>(null);
   const [connectionRetry, setConnectionRetry] = useState(0);
@@ -155,7 +176,7 @@ export function useBuilderHandoffReceiver(options: {
     return () => window.removeEventListener(name, connected);
   }, [options.builder]);
   useEffect(() => {
-    if (!options.enabled || options.busy || attempted.current) return;
+    if (!enabled || options.busy || attempted.current) return;
     let host: Window = window;
     let address = builderHandoffDocumentAddress(host);
     try { if (!address) { host = window.parent; address = builderHandoffDocumentAddress(host); } } catch { /* Never inspect another origin. */ }
@@ -213,7 +234,7 @@ export function useBuilderHandoffReceiver(options: {
       } }
     })();
     return () => { cancelled = true; };
-  }, [options.enabled, options.builder, options.busy, connectionRetry]);
+  }, [enabled, options.builder, options.busy, connectionRetry]);
 }
 
 /** A page change after claim must fail before the agent can start. */

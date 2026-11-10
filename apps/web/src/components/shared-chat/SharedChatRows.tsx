@@ -1,8 +1,12 @@
+import { HandoffMessage } from '../chat/HandoffMessage';
+import { Bubble, BubbleContent } from '../chat/Bubble';
+import { ChatTranscriptItem } from '../chat/MessageScroller';
+import { Message, MessageContent, MessageFooter } from '../chat/Message';
 import { PageAnnotationMessage } from '../PageAnnotationMessage';
 import { questionAnswerDisplayText } from '../../artifacts/question-form';
 // Pixflow-owned: canonical rows for the floating panels and WordPress Workspace.
 // Host callbacks extend file actions without forking message/activity rendering.
-import { memo, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import type { ChatAttachment, ChatCommentAttachment, ChatMessage, ProjectFile } from '../../types';
 import type { Dict } from '../../i18n/types';
 import type { ChatSessionMode } from '@open-design/contracts';
@@ -22,6 +26,7 @@ const EMPTY_PROJECT_FILES: ProjectFile[] = [];
 
 export type SharedChatInputMessage = {
   historyOrigin?: ChatMessage['historyOrigin'];
+  handoffPresentation?: { title: string; summary: string };
   id?: string;
   role?: string;
   content?: string;
@@ -60,6 +65,7 @@ export function SharedChatRows({
   fallbackAgentIdentity,
   liveToolInput,
   paneStreaming = false,
+  terminalReply,
   projectId = null,
   projectFiles = EMPTY_PROJECT_FILES,
   projectFileNames,
@@ -77,6 +83,7 @@ export function SharedChatRows({
   // main workspace ChatPane's pane-level streaming flag and prevents a
   // transient empty transport error from becoming a stopped footer.
   paneStreaming?: boolean;
+  terminalReply?: { id: string; endedAt: number; awaitingInput: boolean };
   projectId?: string | null;
   projectFiles?: ProjectFile[];
   projectFileNames?: Set<string>;
@@ -92,58 +99,62 @@ export function SharedChatRows({
   const normalizedCache = useRef(new WeakMap<SharedChatInputMessage, {
     index: number; agentId?: string; agentName?: string; rows: ChatMessage[];
   }>());
-  const semanticPreflightPendingIds = new Set(messages
-    .filter((message) => (
-      message.clarificationKind === 'semantic_preflight_pending'
-      || String(message.id || '').startsWith('semantic-preflight-assistant:')
-      || String(message.id || '').startsWith('semantic-preflight-external:')
-      || String(message.content || '').trim() === 'Understanding what you want me to do…'
-    ))
-    .map((message, index) => message.id || `shared-chat-assistant-${index}`));
-  const normalized = messages.flatMap((message, index) => {
-    const cached = normalizedCache.current.get(message);
-    if (cached && (message.id || cached.index === index)
-      && cached.agentId === fallbackAgentIdentity?.agentId
-      && cached.agentName === fallbackAgentIdentity?.agentName) return cached.rows;
-    const id = message.id || `shared-chat-assistant-${index}`;
-    const isSemanticPreflight = semanticPreflightPendingIds.has(id);
-    const safeMessage = isSemanticPreflight
-      ? normalizeSharedSemanticPreflightMessage(message, id)
-      : message;
-    const rows = expandVoiceMessages(expandSteeringMessages([
-      normalizeSharedChatMessage(safeMessage, index, fallbackAgentIdentity),
-    ]));
-    normalizedCache.current.set(message, { index, agentId: fallbackAgentIdentity?.agentId,
-      agentName: fallbackAgentIdentity?.agentName, rows });
-    return rows;
-  });
-  const nextUserContentByAssistantId = new Map<string, string>();
-  for (let index = 0; index < normalized.length - 1; index += 1) {
-    const message = normalized[index]!;
-    const nextMessage = normalized[index + 1]!;
-    if (message.role === 'assistant' && nextMessage.role === 'user') {
-      nextUserContentByAssistantId.set(message.id, nextMessage.content);
+  const { normalized, nextUserContentByAssistantId, semanticPreflightPendingIds, lastAssistantId,
+    conversationTodoInput, todoOwnerAssistantId, conversationUnfinishedTodos } = useMemo(() => {
+    const semanticPreflightPendingIds = new Set<string>();
+    const normalized = messages.flatMap((message, index) => {
+      const id = message.id || `shared-chat-assistant-${index}`;
+      const isSemanticPreflight = message.clarificationKind === 'semantic_preflight_pending'
+        || String(message.id || '').startsWith('semantic-preflight-assistant:')
+        || String(message.id || '').startsWith('semantic-preflight-external:')
+        || String(message.content || '').trim() === 'Understanding what you want me to do…';
+      if (isSemanticPreflight) semanticPreflightPendingIds.add(id);
+      const cached = normalizedCache.current.get(message);
+      if (cached && (message.id || cached.index === index)
+        && cached.agentId === fallbackAgentIdentity?.agentId
+        && cached.agentName === fallbackAgentIdentity?.agentName) return cached.rows;
+      const safeMessage = isSemanticPreflight
+        ? normalizeSharedSemanticPreflightMessage(message, id)
+        : message;
+      const rows = expandVoiceMessages(expandSteeringMessages([
+        normalizeSharedChatMessage(safeMessage, index, fallbackAgentIdentity),
+      ]));
+      normalizedCache.current.set(message, { index, agentId: fallbackAgentIdentity?.agentId,
+        agentName: fallbackAgentIdentity?.agentName, rows });
+      return rows;
+    });
+    const nextUserContentByAssistantId = new Map<string, string>();
+    for (let index = 0; index < normalized.length - 1; index += 1) {
+      const message = normalized[index]!;
+      const nextMessage = normalized[index + 1]!;
+      if (message.role === 'assistant' && nextMessage.role === 'user') {
+        nextUserContentByAssistantId.set(message.id, nextMessage.content);
+      }
     }
-  }
-  const lastAssistantId = [...normalized].reverse().find((message) => message.role === 'assistant')?.id;
-  // Pixflow-owned: mirror ChatPane's canonical TodoWrite handling so the
-  // Bricks Agent panel shows one task card instead of stripping all TODOs from
-  // assistant rows.
-  const conversationTodoInput = latestTodoWriteInputForPinnedCard(normalized);
-  const todoOwnerAssistantId = firstTodoWriteAssistantMessageId(normalized);
-  // Cancellation ends that work scope. Keep its historical task card, but do
-  // not label a later answer unfinished unless the agent starts a new plan.
-  let lastCanceledIndex = -1;
-  normalized.forEach((message, index) => { if (message.runStatus === 'canceled') lastCanceledIndex = index; });
-  const activeTodoInput = lastCanceledIndex >= 0
-    ? latestTodoWriteInputForPinnedCard(normalized.slice(lastCanceledIndex + 1))
-    : conversationTodoInput;
-  const conversationUnfinishedTodos = parseTodoWriteInput(activeTodoInput)
-    .filter((todo) => todo.status !== 'completed');
-
+    const lastAssistantId = [...normalized].reverse().find((message) => message.role === 'assistant')?.id;
+    // Pixflow-owned: mirror ChatPane's canonical TodoWrite handling so the
+    // Bricks Agent panel shows one task card instead of stripping all TODOs from
+    // assistant rows.
+    const conversationTodoInput = latestTodoWriteInputForPinnedCard(normalized);
+    const todoOwnerAssistantId = firstTodoWriteAssistantMessageId(normalized);
+    // Cancellation ends that work scope. Keep its historical task card, but do
+    // not label a later answer unfinished unless the agent starts a new plan.
+    let lastCanceledIndex = -1;
+    normalized.forEach((message, index) => { if (message.runStatus === 'canceled') lastCanceledIndex = index; });
+    const activeTodoInput = lastCanceledIndex >= 0
+      ? latestTodoWriteInputForPinnedCard(normalized.slice(lastCanceledIndex + 1))
+      : conversationTodoInput;
+    const conversationUnfinishedTodos = parseTodoWriteInput(activeTodoInput)
+      .filter((todo) => todo.status !== 'completed');
+    return { normalized, nextUserContentByAssistantId, semanticPreflightPendingIds, lastAssistantId,
+      conversationTodoInput, todoOwnerAssistantId, conversationUnfinishedTodos };
+  }, [messages, fallbackAgentIdentity?.agentId, fallbackAgentIdentity?.agentName]);
   return (
     <>
-      {normalized.map((message) => {
+      {normalized.map((row) => {
+        // An authenticated terminal event is authoritative even while transport cleanup is pending.
+        const settled = terminalReply?.id === row.id ? terminalReply : undefined;
+        const message = settled ? { ...row, runStatus: 'succeeded' as const, endedAt: settled.endedAt, awaitingInput: settled.awaitingInput } : row;
         const isLastAssistant = message.role === 'assistant' && message.id === lastAssistantId;
         // The host owns the run lifecycle. A Bricks media/mutation handoff can
         // outlive the runner's last stream event, so its message may already
@@ -159,7 +170,7 @@ export function SharedChatRows({
           // Its terminal acknowledgement is authoritative, even for a quiet call.
           && !message.events?.some(event => event.kind === 'status' && event.code === 'voice_connection')
           && !hasSubstantiveAssistantResponse(message);
-        const keepTransientTurnWorking = isLastAssistant && message.runStatus !== 'canceled' && (
+        const keepTransientTurnWorking = !settled && isLastAssistant && message.runStatus !== 'canceled' && (
           paneStreaming || terminalWithoutDeliveredResponse
         );
         const renderedMessage = keepTransientTurnWorking
@@ -175,19 +186,17 @@ export function SharedChatRows({
         );
         if (message.role === 'user') {
           return (
-            <SharedUserMessage
-              key={message.id}
-              message={message}
-              t={t}
-            />
+            <ChatTranscriptItem key={message.id} messageId={message.id}>
+              <SharedUserMessage message={message} t={t} />
+            </ChatTranscriptItem>
           );
         }
 
         const semanticPreflightPending = semanticPreflightPendingIds.has(message.id) && streaming;
         return (
-          <div
+          <ChatTranscriptItem messageId={renderedMessage.id}
             key={semanticPreflightPending ? 'semantic-preflight-pending' : renderedMessage.id}
-            className={semanticPreflightPending ? styles.semanticPreflightPending : undefined}
+            className={semanticPreflightPending ? styles.semanticPreflightPending : !isLastAssistant ? styles.historyReply : undefined}
             data-semantic-preflight={semanticPreflightPending ? 'pending' : undefined}
           >
             <AssistantMessage
@@ -208,7 +217,7 @@ export function SharedChatRows({
               {...assistantPropsForMessage?.(renderedMessage)}
               projectId={renderedMessage.historyOrigin?.projectId ?? projectId}
             />
-          </div>
+          </ChatTranscriptItem>
         );
       })}
     </>
@@ -327,7 +336,7 @@ const SharedUserMessage = memo(function SharedUserMessage({
   t: TranslateFn;
 }) {
   const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -349,9 +358,10 @@ const SharedUserMessage = memo(function SharedUserMessage({
 
   const ts = messageTime(message);
   const attachments = message.attachments ?? [];
+  if (message.handoffPresentation) return <HandoffMessage message={message} t={t} />;
 
   return (
-    <div className="msg user">
+    <Message align="end" className="msg user" data-chat-user-id={message.id}>
       {message.sessionMode && !hasPixflowWordPressContext() ? (
         <div className="msg-run-context-row" data-testid="msg-run-context-row">
           <div
@@ -385,9 +395,9 @@ const SharedUserMessage = memo(function SharedUserMessage({
         </div>
       ) : null}
       {message.content ? (
-        <div className="user-text-wrap">
-          <div className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} /></div>
-          <div className="user-actions">
+        <MessageContent className="user-text-wrap">
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} /></BubbleContent></Bubble>
+          <MessageFooter className="user-actions">
             {ts ? (
               <time
                 className="user-actions-time"
@@ -406,10 +416,10 @@ const SharedUserMessage = memo(function SharedUserMessage({
             >
               <Icon name={copied ? 'check' : 'copy'} size={13} />
             </button>
-          </div>
-        </div>
+          </MessageFooter>
+        </MessageContent>
       ) : null}
-    </div>
+    </Message>
   );
 });
 

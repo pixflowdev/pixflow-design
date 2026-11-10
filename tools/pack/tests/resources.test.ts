@@ -47,7 +47,9 @@ describe("copyBundledResourceTrees", () => {
     ];
     const excluded = ["craft/sample.md", "design-templates/sample/SKILL.md", "design-systems/sample/DESIGN.md",
       "plugins/_official/sample/open-design.json", "plugins/registry/community/manifest.json",
-      "data/plugin-previews/manifest.json", "skills/retired/SKILL.md", ".od/app.sqlite", ".od/projects/customer/content.md"];
+      "data/plugin-previews/manifest.json", "skills/retired/SKILL.md", ".od/app.sqlite", ".od/projects/customer/content.md",
+      "tools/pixflow-design-bridge/native-messaging/config.json",
+      "tools/pixflow-design-bridge/tests/native-status.test.ts"];
     try {
       for (const [source] of essential) {
         await mkdir(dirname(join(workspaceRoot, source)), { recursive: true });

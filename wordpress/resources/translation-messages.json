@@ -2,7 +2,9 @@
   {
     "message": "Open settings",
     "domain": "pixflow-design",
-    "references": ["wordpress/src/Admin/WpAdminFloatingPanel.php"],
+    "references": [
+      "wordpress/src/Admin/WpAdminFloatingPanel.php"
+    ],
     "key": "entry.openSettingsAria"
   },
   {
@@ -1948,5 +1950,853 @@
       "wordpress/src/License/LicenseService.php:339"
     ],
     "key": "wp.trialVerification.retry"
+  },
+  {
+    "message": "Above",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:26"
+    ],
+    "key": "wp.message.ee447046487e"
+  },
+  {
+    "message": "Active background",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:16",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:18"
+    ],
+    "key": "wp.message.b7ad36cafcfe"
+  },
+  {
+    "message": "Alignment",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:25"
+    ],
+    "key": "wp.message.134d1f9ade32"
+  },
+  {
+    "message": "Appearance",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:17"
+    ],
+    "key": "settings.appearance"
+  },
+  {
+    "message": "Automatic",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:26"
+    ],
+    "key": "ui.finalDesignFlow.d461a493a3"
+  },
+  {
+    "message": "Below",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:26"
+    ],
+    "key": "wp.message.5ffeb3f1be43"
+  },
+  {
+    "message": "Border colour",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:16",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:18"
+    ],
+    "key": "annotationStyle.field.border-color"
+  },
+  {
+    "message": "Centre",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:25"
+    ],
+    "key": "wp.message.6582173af45a"
+  },
+  {
+    "message": "Choose language. Current language: %s",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:75"
+    ],
+    "key": "wp.message.7b52bd8e12e1"
+  },
+  {
+    "message": "Choose your language",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/VisitorExperience.php:17"
+    ],
+    "key": "wp.message.ecc6e71a4211"
+  },
+  {
+    "message": "Configured names",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:19"
+    ],
+    "key": "wp.message.589fe3d2fc44"
+  },
+  {
+    "message": "Corner radius",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:17",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:19"
+    ],
+    "key": "annotationStyle.field.border-radius"
+  },
+  {
+    "message": "Dropdown",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:15"
+    ],
+    "key": "wp.message.224962bcc5b0"
+  },
+  {
+    "message": "Dropdown width",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:17",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:19"
+    ],
+    "key": "wp.message.1ea5df170c02"
+  },
+  {
+    "message": "End",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:25"
+    ],
+    "key": "wp.message.77998453245e"
+  },
+  {
+    "message": "Hide",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:16",
+      "pro/wordpress-pro/src/Translations/Switcher.php:17",
+      "pro/wordpress-pro/src/Translations/Switcher.php:18",
+      "pro/wordpress-pro/src/Translations/Switcher.php:20",
+      "pro/wordpress-pro/src/Translations/Switcher.php:21",
+      "pro/wordpress-pro/src/Translations/Switcher.php:22",
+      "pro/wordpress-pro/src/Translations/Switcher.php:23",
+      "pro/wordpress-pro/src/Translations/Switcher.php:24"
+    ],
+    "key": "settings.hide"
+  },
+  {
+    "message": "Hover background",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:16",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:18"
+    ],
+    "key": "wp.message.c9ecdee69441"
+  },
+  {
+    "message": "Icon gap",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:17",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:19"
+    ],
+    "key": "wp.message.10d20b226f81"
+  },
+  {
+    "message": "Inline",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:15"
+    ],
+    "key": "ui.fontLabels.inline"
+  },
+  {
+    "message": "Keep current language",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/VisitorExperience.php:20"
+    ],
+    "key": "wp.message.516c336d3dc1"
+  },
+  {
+    "message": "Language names",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:19"
+    ],
+    "key": "wp.message.922b8cc9df41"
+  },
+  {
+    "message": "Language switcher",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:12",
+      "pro/wordpress-pro/src/Translations/SwitcherIntegrations.php:73"
+    ],
+    "key": "wp.message.c00b395e9bbd"
+  },
+  {
+    "message": "Language switcher (Pixflow)",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:10",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:8"
+    ],
+    "key": "wp.message.7cf09f9e10dc"
+  },
+  {
+    "message": "Languages",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:74",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:14"
+    ],
+    "key": "siteTranslations.tab.languages"
+  },
+  {
+    "message": "Layout",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:15"
+    ],
+    "key": "annotationStyle.group.layout"
+  },
+  {
+    "message": "Menu: show flags",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:20"
+    ],
+    "key": "wp.message.9001aa765f40"
+  },
+  {
+    "message": "Menu: show language codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:22"
+    ],
+    "key": "wp.message.43a22e3c0fbc"
+  },
+  {
+    "message": "Menu: show language names",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:21"
+    ],
+    "key": "wp.message.a2fdffa3e648"
+  },
+  {
+    "message": "Native names",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:19"
+    ],
+    "key": "wp.message.38a9ae0554ac"
+  },
+  {
+    "message": "Open direction",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:26"
+    ],
+    "key": "wp.message.609fd4e04c0a"
+  },
+  {
+    "message": "Show",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:16",
+      "pro/wordpress-pro/src/Translations/Switcher.php:17",
+      "pro/wordpress-pro/src/Translations/Switcher.php:18",
+      "pro/wordpress-pro/src/Translations/Switcher.php:20",
+      "pro/wordpress-pro/src/Translations/Switcher.php:21",
+      "pro/wordpress-pro/src/Translations/Switcher.php:22",
+      "pro/wordpress-pro/src/Translations/Switcher.php:23",
+      "pro/wordpress-pro/src/Translations/Switcher.php:24"
+    ],
+    "key": "settings.show"
+  },
+  {
+    "message": "Show dropdown arrow",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:24"
+    ],
+    "key": "wp.message.f53176ef9e14"
+  },
+  {
+    "message": "Show flags",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:16"
+    ],
+    "key": "wp.message.7ba296d6b49f"
+  },
+  {
+    "message": "Show globe icon",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:23"
+    ],
+    "key": "wp.message.556ae897bd37"
+  },
+  {
+    "message": "Show language codes",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:18"
+    ],
+    "key": "wp.message.92c5be0d4608"
+  },
+  {
+    "message": "Show language names",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:17"
+    ],
+    "key": "wp.message.bad511e40a1a"
+  },
+  {
+    "message": "Start",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/Switcher.php:25"
+    ],
+    "key": "wp.message.f78dc1c3aca2"
+  },
+  {
+    "message": "Switch to {language}",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/VisitorExperience.php:19"
+    ],
+    "key": "wp.message.fca3b13eba24"
+  },
+  {
+    "message": "Text",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:16",
+      "pro/wordpress-pro/src/Translations/SwitcherElementor.php:18"
+    ],
+    "key": "chat.comments.targetText"
+  },
+  {
+    "message": "This page is available in {language}.",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/VisitorExperience.php:18"
+    ],
+    "key": "wp.message.e61c1384aed3"
+  },
+  {
+    "message": "Typography",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/Translations/SwitcherBricks.php:18"
+    ],
+    "key": "annotationStyle.group.typography"
+  },
+  {
+    "message": "Image optimisation",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.title"
+  },
+  {
+    "message": "Import & optimise",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.import"
+  },
+  {
+    "message": "Optimise dynamic images",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.dynamic"
+  },
+  {
+    "message": "Reoptimise dynamic images",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.redoDynamic"
+  },
+  {
+    "message": "Reoptimise image",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.redo"
+  },
+  {
+    "message": "Revert to original",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.fit.revert"
+  },
+  {
+    "message": "Optimise image",
+    "domain": "pixflow-design-pro",
+    "references": [
+      "pro/wordpress-pro/src/AssetManagement/DynamicFitEditors.php"
+    ],
+    "key": "media.optimise.action"
+  },
+  {
+    "message": "Cache unavailable.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgee7e927eb0"
+  },
+  {
+    "message": "Calculate",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg2121cc15af"
+  },
+  {
+    "message": "Calculate the image sizes for this placement. Each row keeps its own image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg5854cb777c"
+  },
+  {
+    "message": "Calculated from the editor preview.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgd47148b3a5"
+  },
+  {
+    "message": "Calculating image sizes…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgb620beb93b"
+  },
+  {
+    "message": "Cancel",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "guidance.cancel"
+  },
+  {
+    "message": "Cannot edit this attachment.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgb562590e4b"
+  },
+  {
+    "message": "Choose a JPEG, PNG or WebP image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgdb45c47380"
+  },
+  {
+    "message": "Choose a JPEG, PNG or WebP up to 32 megapixels.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msg50a4b78fe8"
+  },
+  {
+    "message": "Could not create cache directory.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msg1bf924e544"
+  },
+  {
+    "message": "Could not import this image. Check the URL and file size.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msg707ed1d500"
+  },
+  {
+    "message": "Could not optimise this image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgcff480b190"
+  },
+  {
+    "message": "Could not read this image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg8574699b07"
+  },
+  {
+    "message": "Could not save image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgc3f37257cd"
+  },
+  {
+    "message": "Could not stage image.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgee1478f9b4"
+  },
+  {
+    "message": "Desktop",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg9bd88f2485"
+  },
+  {
+    "message": "Disable",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "ui.composioSiteApps.disable"
+  },
+  {
+    "message": "Enter a size for each visible placement.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg03625d4f1d"
+  },
+  {
+    "message": "Enter a valid image URL.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgc5d19e5512"
+  },
+  {
+    "message": "Enter width × height in pixels, for example 480 × 320.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg75de4d7f7c"
+  },
+  {
+    "message": "Finished. Responsive image sizes are set.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg91719c7742"
+  },
+  {
+    "message": "Fit & optimise",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgb6815b65cc"
+  },
+  {
+    "message": "Fit this image to its placement across screen sizes.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg5d64c054d0"
+  },
+  {
+    "message": "Image optimisation",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.title"
+  },
+  {
+    "message": "Image size has changed and needs reoptimising.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg6e26cfc978"
+  },
+  {
+    "message": "Image sizes updated. Saving…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgd2aa296784"
+  },
+  {
+    "message": "Import & optimise",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.import"
+  },
+  {
+    "message": "Import already in progress. Try again.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msge99bff8002"
+  },
+  {
+    "message": "Incorrect image dimensions.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msg1c1329f245"
+  },
+  {
+    "message": "Invalid image upload.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msg789571f356"
+  },
+  {
+    "message": "Job expired.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msga18c9acf22"
+  },
+  {
+    "message": "Measuring placement…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgd29095a532"
+  },
+  {
+    "message": "Mobile",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgcbaad3cf4a"
+  },
+  {
+    "message": "Optimise dynamic images",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.dynamic"
+  },
+  {
+    "message": "Optimise image",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.optimise.action"
+  },
+  {
+    "message": "Placement sizes",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgbfc7a83eac"
+  },
+  {
+    "message": "Recalculating image sizes…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgd40cd16e57"
+  },
+  {
+    "message": "Reoptimise dynamic images",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.redoDynamic"
+  },
+  {
+    "message": "Reoptimise image",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.redo"
+  },
+  {
+    "message": "Revert to original",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.revert"
+  },
+  {
+    "message": "Save",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg1509f561f2"
+  },
+  {
+    "message": "Save to disable optimisation for this placement.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg2e482fa335"
+  },
+  {
+    "message": "Saving with existing sizes for images that could not be checked.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgacbf07dcdb"
+  },
+  {
+    "message": "Select the image again to import it.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg02808a7098"
+  },
+  {
+    "message": "Select the image and try again.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg9b87a422af"
+  },
+  {
+    "message": "Tablet",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msge34a879c8b"
+  },
+  {
+    "message": "Temporary storage unavailable.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msgda3368e736"
+  },
+  {
+    "message": "The placement has changed.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/DynamicFit.php"
+    ],
+    "key": "media.fit.msge836275a9a"
+  },
+  {
+    "message": "The selected placement has no measurable size.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgf2665953c8"
+  },
+  {
+    "message": "Upscaled image saved. %s",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgdde5f79251"
+  },
+  {
+    "message": "Upscaling image… %s",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msgda9b2ddd34"
+  },
+  {
+    "message": "Upscaling interrupted. Remaining sizes will be retried.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg079ad799f6"
+  },
+  {
+    "message": "Widths are in pixels. You can adjust each size before saving.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg930edbc570"
+  },
+  {
+    "message": "Choose a static, single-image placement.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msge43d53f0cd"
+  },
+  {
+    "message": "Choose image…",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/Media/FitMedia.php"
+    ],
+    "key": "media.fit.msg44ce6e4a2f"
   }
 ]

@@ -1,4 +1,5 @@
 import { accessSync, constants, existsSync, statSync, readdirSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { delimiter } from 'node:path';
 import path from 'node:path';
 import { homedir } from 'node:os';
@@ -9,6 +10,7 @@ import { wellKnownUserToolchainBins } from '@open-design/platform';
 import { resolveSandboxRuntimeConfigFromEnv } from '../sandbox-mode.js';
 import { expandHomePath } from './paths.js';
 import type { RuntimeAgentDef } from './types.js';
+import { claudeDesktopCandidates } from './claude-desktop.js';
 
 const RUNTIME_PROJECT_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -124,11 +126,14 @@ export function agentBinEnvKey(agentId: string | undefined): string | null {
   return AGENT_BIN_ENV_KEYS.get(agentId) ?? null;
 }
 
+function pathExtensions(): string[] {
+  return process.platform === 'win32'
+    ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
+    : [''];
+}
+
 export function resolveOnPath(bin: string): string | null {
-  const exts =
-    process.platform === 'win32'
-      ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
-      : [''];
+  const exts = pathExtensions();
   const dirs = resolvePathDirs();
   for (const dir of dirs) {
     for (const ext of exts) {
@@ -137,6 +142,41 @@ export function resolveOnPath(bin: string): string | null {
     }
   }
   return null;
+}
+
+/** Probe one directory at a time, preserving PATH and PATHEXT precedence without
+ * blocking the site's HTTP server on filesystem or antivirus latency. */
+export async function resolveOnPathAsync(bin: string): Promise<string | null> {
+  const extensions = pathExtensions();
+  for (const dir of resolvePathDirs()) {
+    const candidates = extensions.map(ext => path.join(dir, bin + ext));
+    const hits = await Promise.all(candidates.map(file => access(file).then(() => file, () => null)));
+    const found = hits.find(file => file !== null);
+    if (found) return found;
+  }
+  return null;
+}
+
+export async function discoveryPathLookup(def: RuntimeAgentDef, configuredEnv: Record<string, string>) {
+  const paths = new Map<string, string>();
+  for (const bin of [def.bin, ...(def.fallbackBins ?? [])]) {
+    const resolved = await resolveOnPathAsync(bin);
+    if (resolved && !isAntigravityIdeShim(def, resolved)) {
+      paths.set(bin, resolved);
+      break;
+    }
+  }
+  if (def.id === 'amr' && process.env.OD_RESOURCE_ROOT &&
+      !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }, () => null)) {
+    for (const bin of ['opencode-cli', 'opencode']) {
+      const resolved = await resolveOnPathAsync(bin);
+      if (resolved) {
+        paths.set(bin, resolved);
+        break;
+      }
+    }
+  }
+  return (bin: string) => paths.get(bin) ?? null;
 }
 
 function looksExecutableOnWindows(filePath: string): boolean {
@@ -182,6 +222,7 @@ function configuredExecutableOverride(
 
 export function resolveAmrOpenCodeExecutable(
   env: Record<string, string | undefined> = process.env,
+  lookup = resolveOnPath,
 ): string | null {
   const configured = executableFilePath(env.VELA_OPENCODE_BIN);
   if (configured) return configured;
@@ -204,7 +245,7 @@ export function resolveAmrOpenCodeExecutable(
       if (bundled) return bundled;
     }
   }
-  return resolveOnPath('opencode-cli') ?? resolveOnPath('opencode');
+  return lookup('opencode-cli') ?? lookup('opencode');
 }
 
 // `tools/pack/tests/resources.test.ts` ships the AMR OpenCode companion as a
@@ -236,12 +277,13 @@ function packagedVelaOpenCodeCompanionTree(resourceRoot: string): string | null 
 function packagedBuiltInExecutable(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup = resolveOnPath,
 ): string | null {
   if (def.id !== 'amr') return null;
   const resourceRoot = process.env.OD_RESOURCE_ROOT?.trim();
   if (!resourceRoot) return null;
   if (
-    !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }) &&
+    !resolveAmrOpenCodeExecutable({ ...process.env, ...configuredEnv }, lookup) &&
     !packagedVelaOpenCodeCompanionTree(resourceRoot)
   ) {
     return null;
@@ -264,9 +306,17 @@ function packagedBuiltInExecutable(
   }
 }
 
-// Codex App owns the preferred CLI. Detection, model discovery and execution
+// Desktop apps own the preferred CLI. Detection, model discovery and execution
 // all use this resolver; scoped detection never searches host applications.
-function codexAppBundleExecutable(def: RuntimeAgentDef): string | null {
+function appBundleExecutable(def: RuntimeAgentDef): string | null {
+  if (def.id === 'claude') {
+    const { home, hasOverride } = resolveDetectionHome();
+    for (const candidate of claudeDesktopCandidates({ platform: process.platform, home, scoped: hasOverride })) {
+      const resolved = executableFilePath(candidate);
+      if (resolved) return resolved;
+    }
+    return null;
+  }
   if (def.id !== 'codex') return null;
   for (const candidate of codexAppBundleCandidates()) {
     const resolved = executableFilePath(candidate);
@@ -370,16 +420,20 @@ export function resolveAgentExecutable(
   return inspectAgentExecutableResolution(def, configuredEnv).selectedPath;
 }
 
-function antigravityStandaloneCliCandidates(def: RuntimeAgentDef): string[] {
-  if (def.id !== 'antigravity' || process.platform !== 'win32') return [];
-  // The official standalone installer always uses the signed-in Windows
-  // user's LOCALAPPDATA. OD_AGENT_HOME scopes agent workspace/config data,
-  // but it is not a synthetic Windows profile and must not redirect this
-  // executable lookup inside the packaged bridge sandbox.
+function windowsStandaloneCliCandidates(def: RuntimeAgentDef): string[] {
+  if (process.platform !== 'win32') return [];
+  // Official installers use the signed-in Windows profile, even when the
+  // packaged Bridge scopes agent workspace/config data to OD_AGENT_HOME.
   const windowsHome = process.env.USERPROFILE?.trim() || homedir();
   const localAppData = process.env.LOCALAPPDATA?.trim()
     || path.join(windowsHome, 'AppData', 'Local');
-  return [path.join(localAppData, 'agy', 'bin', 'agy.exe')];
+  if (def.id === 'antigravity') return [path.join(localAppData, 'agy', 'bin', 'agy.exe')];
+  if (def.id === 'cursor-agent') {
+    // Use Cursor's own update-aware launcher; the generic `agent` name is
+    // also installed by other providers (including Grok Build).
+    return ['cursor-agent.exe', 'cursor-agent.cmd'].map(bin => path.join(localAppData, 'cursor-agent', bin));
+  }
+  return [];
 }
 
 function isAntigravityIdeShim(def: RuntimeAgentDef, executablePath: string): boolean {
@@ -391,6 +445,7 @@ function isAntigravityIdeShim(def: RuntimeAgentDef, executablePath: string): boo
 export function inspectAgentExecutableResolution(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup = resolveOnPath,
 ): {
   configuredOverridePath: string | null;
   appBundlePath: string | null;
@@ -412,24 +467,28 @@ export function inspectAgentExecutableResolution(
   ];
   let pathResolvedPath: string | null = null;
   for (const bin of candidates) {
-    const resolved = resolveOnPath(bin);
+    const resolved = lookup(bin);
     if (resolved && !isAntigravityIdeShim(def, resolved)) {
       pathResolvedPath = resolved;
       break;
     }
   }
   let standaloneCliPath: string | null = null;
-  for (const candidate of antigravityStandaloneCliCandidates(def)) {
+  for (const candidate of windowsStandaloneCliCandidates(def)) {
     standaloneCliPath = executableFilePath(candidate);
     if (standaloneCliPath) break;
   }
-  const builtInPath = packagedBuiltInExecutable(def, configuredEnv);
-  const appBundlePath = codexAppBundleExecutable(def);
+  const builtInPath = packagedBuiltInExecutable(def, configuredEnv, lookup);
+  const appBundlePath = appBundleExecutable(def);
+  // A Cursor-specific launcher already on PATH can be a deliberate install.
+  const resolvedCliPath = def.id === 'cursor-agent'
+    ? pathResolvedPath || standaloneCliPath
+    : standaloneCliPath || pathResolvedPath;
   return {
     configuredOverridePath,
     appBundlePath,
     pathResolvedPath,
     selectedPath:
-      appBundlePath || configuredOverridePath || builtInPath || standaloneCliPath || pathResolvedPath,
+      appBundlePath || configuredOverridePath || builtInPath || resolvedCliPath,
   };
 }

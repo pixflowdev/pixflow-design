@@ -1,0 +1,53 @@
+{
+  "codex": {
+    "status": "available",
+    "source": "desktop",
+    "checkedAt": "2026-10-30T02:07:06.163Z",
+    "windows": [
+      {
+        "bucket": "codex",
+        "durationMinutes": 10080,
+        "remainingPercent": 11,
+        "resetsAt": 1793784989
+      }
+    ]
+  },
+  "claudeSonnet": {
+    "status": "available",
+    "source": "desktop",
+    "checkedAt": "2026-10-30T02:07:07.171Z",
+    "windows": [
+      {
+        "bucket": "claude",
+        "durationMinutes": 300,
+        "remainingPercent": 0,
+        "resetsAt": 1793331600.16
+      },
+      {
+        "bucket": "claude",
+        "durationMinutes": 10080,
+        "remainingPercent": 91,
+        "resetsAt": 1793376000.16
+      }
+    ]
+  },
+  "claudeOpus": {
+    "status": "available",
+    "source": "desktop",
+    "checkedAt": "2026-10-30T02:07:08.453Z",
+    "windows": [
+      {
+        "bucket": "claude",
+        "durationMinutes": 300,
+        "remainingPercent": 0,
+        "resetsAt": 1793331600.16
+      },
+      {
+        "bucket": "claude",
+        "durationMinutes": 10080,
+        "remainingPercent": 91,
+        "resetsAt": 1793376000.16
+      }
+    ]
+  }
+}

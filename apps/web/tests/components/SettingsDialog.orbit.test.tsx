@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { StrictMode } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ConnectorDetail } from '@open-design/contracts';
 
@@ -425,17 +425,17 @@ describe('SettingsDialog Orbit connector gate refresh', () => {
       />,
     );
 
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => { await vi.runOnlyPendingTimersAsync(); });
     expect(screen.getByText('Legacy unscoped summary')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Orbit prompt template'), {
       target: { value: 'orbit-editorial' },
     });
 
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => { await vi.runOnlyPendingTimersAsync(); });
     expect(screen.queryByText('Legacy unscoped summary')).toBeNull();
 
-    await vi.advanceTimersByTimeAsync(3000);
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
     expect(statusRequestCount).toBeGreaterThan(1);
     expect(screen.queryByText('Legacy unscoped summary')).toBeNull();
   });

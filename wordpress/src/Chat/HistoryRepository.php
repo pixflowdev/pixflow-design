@@ -128,6 +128,24 @@ final class HistoryRepository
             'message_key' => hash('sha256', $message['id']), 'message_id' => $message['id'], 'payload' => HistoryPayload::encode($payload)]);
     }
 
+    /** Excludes the pending prompt and placeholder already appended by the sending tab. */
+    public function prefix_revision(string $project, string $conversation, string $through): string|\WP_Error
+    {
+        global $wpdb;
+        $key = self::key($project, $conversation);
+        $table = Table::name(Table::CHAT_MESSAGES);
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT m.sequence_id, m.revision FROM $table AS m JOIN $table AS cutoff
+             ON cutoff.conversation_key = m.conversation_key AND m.sequence_id <= cutoff.sequence_id
+             WHERE m.conversation_key = %s AND cutoff.message_key = %s
+             AND cutoff.deleted = 0 AND m.deleted = 0 ORDER BY m.sequence_id", $key, hash('sha256', $through)
+        ), ARRAY_A);
+        if (!$rows) return new \WP_Error('pixflow_history_changed', 'The preceding chat message is unavailable. Reopen this conversation.', ['status' => 409]);
+        $hash = hash_init('sha256');
+        foreach ($rows as $row) hash_update($hash, $row['sequence_id'] . ':' . $row['revision'] . "\n");
+        return hash_final($hash);
+    }
+
     public function page(string $project, string $conversation, ?int $limit, string $before): array|\WP_Error
     {
         global $wpdb;
@@ -159,6 +177,16 @@ final class HistoryRepository
             if (!$conversationRow || (int) $conversationRow['deleted']) return new \WP_Error('pixflow_history_deleted', 'This conversation was deleted.', ['status' => 410]);
             $row = $this->row($key, $message['id']);
             if ($row && (int) $row['deleted']) return new \WP_Error('pixflow_history_deleted', 'This message was deleted.', ['status' => 410]);
+            // Recovery evidence belongs to the durable message. Older clients
+            // may omit this metadata, but ordinary saves must not discard it.
+            if ($row) {
+                $prior = $this->payload($row);
+                $copies = is_array($prior['historyRecoverySnapshots'] ?? null) ? $prior['historyRecoverySnapshots'] : [];
+                foreach (is_array($message['historyRecoverySnapshots'] ?? null) ? $message['historyRecoverySnapshots'] : [] as $copy) {
+                    if (!in_array($copy, $copies, true)) $copies[] = $copy;
+                }
+                if ($copies !== []) $message['historyRecoverySnapshots'] = $copies;
+            }
             $changed = !$row;
             if (!$row) $this->insert($key, $message);
             elseif (!$importOnly && $this->clean($this->payload($row)) != $this->clean($message)) {

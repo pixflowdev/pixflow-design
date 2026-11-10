@@ -103,3 +103,13 @@ describe('BricksAgentFailureBanner', () => {
     expect(result?.message).not.toContain('requestId');
   });
 });
+
+it('keeps diagnosed Bridge recovery steps visible instead of calling every failure offline', () => {
+  const message='Pixflow could not reach Design Bridge. The browser cannot determine the cause. Check that Bridge is running.';
+  expect(normalizePixflowBricksAgentFailureNotice(null,message)).toMatchObject({title:'Bridge connection needs attention',message,action:'rescan'});
+});
+
+it('does not turn a Bridge timeout into a CLI retry instruction', () => {
+  const message='The Pixflow Design Bridge request timed out. Check Bridge status and rescan Local CLI.';
+  expect(normalizePixflowBricksAgentFailureNotice(null,message)).toMatchObject({message,action:'rescan'});
+});

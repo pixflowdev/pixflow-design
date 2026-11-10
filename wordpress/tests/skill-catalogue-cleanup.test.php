@@ -35,6 +35,9 @@ foreach ($policy['skills'] as $entry) {
     }
 }
 $list = $catalog->call('skills.list', []);
+$search = $catalog->call('skills.list', ['query'=>'gutenberg wordpress']);
+check(in_array('wp-admin/gutenberg/SKILL.md', $search['paths'], true), 'Multi-word skill search matches terms across path and title');
+check($catalog->call('skills.list', ['query'=>'zz-no-such-skill-zz'])['paths'] === [], 'Unknown search does not expose unrelated skills');
 foreach ($list['paths'] as $path) {
     $body = $catalog->call('skills.read', ['path'=>$path])['content'];
     check(!str_contains($body, 'This catalogue entry advertises the skill'), 'No stub readable');

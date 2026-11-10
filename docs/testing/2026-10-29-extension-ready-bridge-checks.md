@@ -1,0 +1,44 @@
+# Extension-ready Bridge v2.1.1 checks
+
+29 October 2026. Release preparation only: no published packages, updater pointers or customer settings changed. Team changes remain excluded. The extension-ready installer is the sole intended release build for each platform; direct connections do not require the extension.
+
+## Windows
+
+Core `037a867b5f207ffcd754c3582c0d501f2c6c8691`; Pro `697a8117000a9c06ea102304cd22df665f8e9610`.
+
+Artifact: `pixflow-design-bridge-2.1.1-win-x64-setup.exe`, 248,213,769 bytes, SHA256 `0577b160e3e861a9564f8f7d7d3a164291d4abd78f5e33bc19604d214ac84fd4`.
+
+- Production installer built with the permanent-ID native payload.
+- Exact production payload archives and native hooks exercised through an isolated QA installer identity/path/shortcuts. Upgrade and repair passed; all 10 pre-existing fixture data files remained byte-identical after both operations.
+- All 11,418 installed payload files matched archive CRCs. Compiled host/config/install files matched the build inputs and registered extension `hbnbiboohlelmngadeolikeejamjlbkh`.
+- Installed tray runtime reported 2.1.1. Direct HTTP/CORS health, native enrollment and framed health streaming with acknowledgements passed. Unapproved origin rejected; direct health remained available after closing native transport.
+- Maintainer verified in the browser that page refresh, a new tab and actual tray Restart Bridge reconnect through the extension without pressing Connect again.
+- Initial direct-route observation preceded an explicit Connect action. Chrome permission was retained (no new Allow prompt). A saved direct preference is possible but was not inspected, so no root cause or product fix is claimed.
+- Browser observations above are maintainer-confirmed; automation API returned `browser.user is unavailable`. Earlier permanent-ID UI evidence remains separate from this exact-payload transport check.
+
+## Linux runtime
+
+Core `5f9f2105870dc304c8ef31bcef6cb508988af3e3`, focused PR #36, adds compiled native payload staging and automatic registration to the runtime installer. It does not change the Mac/Windows tray implementation.
+
+Artifact: `pixflow-design-bridge-2.1.1-9e28485f2b69.zip`, 4,655,123 bytes, SHA256 `9e28485f2b69c85bf58f14233e4f15334a813931ab014cb29a951d3470c668f1`.
+
+- 57 native tests, 3 existing source-install tests, repository guard and full typecheck passed.
+- Website chat's isolated Linux receipt: website commit `b192cdf`, `docs/releases/2.1.1-linux-native-check-2026-10-29.md`.
+- Install, dependency build, direct health/version, stop/restart and synthetic-data preservation passed.
+- Automatic native registration/payload equality; framed discovery/enrollment after explicit local CLI provisioning; health relay with acknowledgements; wrong-extension/unapproved-site rejection; unregister/repair and conflict no-overwrite passed.
+- Direct connectivity remained available without registration and after registration failure. Synthetic Chrome Preferences and Secure Preferences stayed byte-identical.
+- A fresh daemon correctly rejected first claim from a browser Origin. This test does not establish first-time browser provisioning of the standalone daemon.
+- Headless container checks do not establish Linux desktop browser UI, desktop login or provider authentication acceptance.
+
+## Remaining release gates
+
+1. Review/merge the remaining stacked Core/Pro changes and reconcile source pins before promotion. Exact Linux commit CI passed: Free validation `40795433003` and Native transport `40795435791`.
+2. Independently verify downloaded Mac bytes against the new build report. Both extension-ready DMGs are now present in the draft: arm64 asset `686838822` (209,966,857 bytes; SHA256 `6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f`) and x64 asset `686840916` (221,084,602 bytes; SHA256 `d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf`). Report `686841977` matches the approved Core/Pro pair, correct native architectures, permanent-ID helper, hdiutil and ad-hoc signature verification. Full Mac acceptance is already complete per the maintainer; do not repeat it.
+3. Combined private release acceptance passed on 29 October: 794 assertions, 22 exact plugin downloads, 9 full installer GET/hash checks and 18 HEAD checks, exact Linux runtime GET/hash, all 90 language-pack GET/hash checks, Mac unsigned disclosure, Bridge-first compatibility, authorization, older updaters, history, rollback and customer-row preservation. Snapshot SHA256: `8dbe300e41d9ae6673510ae858cf62e5bb24c1e87dda89b48635a07db0ea9c12`. Website independently downloaded and hashed both new Mac assets; item 2's download gate is complete. These checks ran on a disposable internal Docker network; live files and pointers were unchanged.
+4. Preserve older draft assets as historical evidence; publish only the intended single extension-ready installer for each platform. Extension approval is independent of the direct Bridge release path.
+
+No live promotion is authorized by this evidence document.
+
+Windows and Linux draft uploads were independently reconciled to the local build digests: Windows asset `686852863` and Linux asset `686868564`. Draft release `427088978` remains unpublished. Preserve historical draft assets; the deployment manifest must select only these intended artifacts and the two Mac assets above.
+
+QA-only desktop, Start Menu and startup shortcuts were archived after installation checks to prevent the isolated installer from changing normal login behavior. Normal Bridge shortcuts and data were not changed. The isolated candidate remains available for the current session.

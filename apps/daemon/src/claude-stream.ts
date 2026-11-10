@@ -46,10 +46,9 @@ export function createClaudeStreamHandler(onEvent: EventSink) {
 
   // Per-content-block scratch, keyed by `${messageId}:${blockIndex}`.
   const blocks = new Map<string, BlockState>();
-  // Tool uses already emitted from streamed `input_json_delta` data.
-  // Claude Code still repeats them in the final assistant wrapper, often with
-  // empty `{}` inputs, so we suppress that duplicate emission.
-  const streamedToolUseIds = new Set<string>();
+  // One execution identity may appear in partial blocks and repeated assistant
+  // wrappers, in either order. Retain identity for the lifetime of this stream.
+  const emittedToolUseIds = new Set<string>();
   // Most recent assistant message id so content_block_* events without an id
   // can be attributed correctly.
   let currentMessageId: string | null = null;
@@ -162,6 +161,10 @@ export function createClaudeStreamHandler(onEvent: EventSink) {
   }
 
   function emitToolUse(id: unknown, name: unknown, input: unknown): void {
+    if (typeof id === 'string') {
+      if (emittedToolUseIds.has(id)) return;
+      emittedToolUseIds.add(id);
+    }
     if (emitCanonicalTaskSnapshot(id, name, input)) return;
     if (isFileWriteToolUse(name, input)) {
       suppressNextArtifactText = true;
@@ -360,10 +363,6 @@ export function createClaudeStreamHandler(onEvent: EventSink) {
       for (const block of obj.message.content) {
         if (!isRecord(block)) continue;
         if (block.type === 'tool_use') {
-          if (typeof block.id === 'string' && streamedToolUseIds.has(block.id)) {
-            streamedToolUseIds.delete(block.id);
-            continue;
-          }
           emitToolUse(block.id, block.name, block.input ?? null);
         } else if (
           !textAlreadyStreamed &&
@@ -538,7 +537,6 @@ export function createClaudeStreamHandler(onEvent: EventSink) {
       if (state && state.type === 'tool_use' && typeof state.id === 'string' && state.input.trim()) {
         try {
           emitToolUse(state.id, state.name, JSON.parse(state.input));
-          streamedToolUseIds.add(state.id);
         } catch {
           // Fall through to the final assistant wrapper's input if the
           // streamed JSON is malformed or incomplete.
@@ -550,7 +548,6 @@ export function createClaudeStreamHandler(onEvent: EventSink) {
         state.inputValue !== undefined
       ) {
         emitToolUse(state.id, state.name, state.inputValue);
-        streamedToolUseIds.add(state.id);
       }
       blocks.delete(key);
       return;

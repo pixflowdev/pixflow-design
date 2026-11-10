@@ -43,6 +43,7 @@ export function PixflowLicensePanel({ status, mode = 'settings', onStatusChange,
   const [licenseKey, setLicenseKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [readAttempt, setReadAttempt] = useState(0);
   const recoveryId = useId();
   const [recoveryOpen, setRecoveryOpen] = useState(mode !== 'settings');
   const [recovery, setRecovery] = useState<PixflowInstallationRecovery | null>(null);
@@ -61,6 +62,7 @@ export function PixflowLicensePanel({ status, mode = 'settings', onStatusChange,
     const sync = (event: Event) => {
       setCurrent((event as CustomEvent<PixflowLicenseStatus>).detail);
       setLoading(false);
+      setError('');
     };
     window.addEventListener('pixflow-design:license-changed', sync);
     return () => window.removeEventListener('pixflow-design:license-changed', sync);
@@ -70,7 +72,8 @@ export function PixflowLicensePanel({ status, mode = 'settings', onStatusChange,
     if (status || !isPixflowWordPressEmbed()) return;
     let cancelled = false;
     setLoading(true);
-    void fetchPixflowLicenseStatus()
+    setError('');
+    void fetchPixflowLicenseStatus(readAttempt ? { force: true } : undefined)
       .then((next) => {
         if (cancelled) return;
         setCurrent(next);
@@ -87,7 +90,7 @@ export function PixflowLicensePanel({ status, mode = 'settings', onStatusChange,
     return () => {
       cancelled = true;
     };
-  }, [onStatusChange, status]);
+  }, [onStatusChange, status, readAttempt]);
 
   useEffect(() => {
     if (
@@ -175,6 +178,17 @@ export function PixflowLicensePanel({ status, mode = 'settings', onStatusChange,
   if (!isPixflowWordPressEmbed()) {
     return <section className={styles.panel}>
       <p role="status">{translateUi('ui.pixflowLicensePanel.openWordPressAdmin')}</p>
+    </section>;
+  }
+
+  if (!current && !checking) {
+    return <section className={styles.panel}>
+      <div className={styles.licenseCard}>
+        <h3>{translateUi("ui.pixflowLicensePanel.pixflowDesignProLicense")}</h3>
+        <span className={styles.badge}>{translateUi("connectors.unavailable")}</span>
+        <p role="alert">{error || translateUi("ui.pixflowLicensePanel.feedback61")}</p>
+        <Button disabled={busy} onClick={() => setReadAttempt(attempt => attempt + 1)}>{translateUi("promptTemplates.retry")}</Button>
+      </div>
     </section>;
   }
 

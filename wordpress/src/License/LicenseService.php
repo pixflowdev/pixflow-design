@@ -115,7 +115,13 @@ final class LicenseService
             && (string) ($body['status'] ?? '') === 'active';
 
         if (!$valid) {
-            $this->cache->clear();
+            // A temporary authority failure cannot authorize this operation
+            // or erase the saved key needed for the next validation.
+            $explicit_denial = ($body['valid'] ?? null) === false && ($body['access_granted'] ?? null) === false
+                && !empty($body['status']) && $status >= 200 && $status < 500 && !in_array($status, [408, 429], true);
+            if ($explicit_denial && hash_equals((string) ($this->cache->private_payload()['license_key'] ?? ''), $license_key)) {
+                $this->cache->clear();
+            }
             return array_merge($this->denied(
                 (string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),
                 (string) ($body['message'] ?? 'Pixflow license validation failed.'),
@@ -176,9 +182,6 @@ final class LicenseService
 
         $expected_fingerprint = $this->site_identity->fingerprint($this->site_identity->current_payload());
         if (!hash_equals($expected_fingerprint, (string) ($payload['site_fingerprint'] ?? ''))) {
-            // Pixflow-owned: license keys are site scoped. A copied option or a
-            // bridge/site switch must not grant access to another WP install.
-            $this->cache->clear();
             return [];
         }
 
@@ -231,20 +234,7 @@ final class LicenseService
         if (($license['validation_url'] ?? self::VALIDATION_URL) !== $this->validation_url()) {
             return ['valid' => false, 'present' => false, 'status' => 'authority_changed'];
         }
-        if (($license['valid'] ?? false) !== true) {
-            return $license;
-        }
-
-        $expected_fingerprint = $this->site_identity->fingerprint($this->site_identity->current_payload());
-        if (hash_equals($expected_fingerprint, (string) ($license['site_fingerprint'] ?? ''))) {
-            return $license;
-        }
-
-        // Pixflow-owned: never reuse a cached license across WP sites. Clear
-        // mismatches so the wizard asks for a site-specific activation.
-        $this->cache->clear();
-
-        return $this->cache->summary();
+        return $license;
     }
 
     private static function legacy_upgrade_key(array $payload, string $fingerprint, string $target): string

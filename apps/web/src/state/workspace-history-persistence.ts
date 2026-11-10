@@ -1,11 +1,13 @@
 import type { ChatMessage } from '../types';
-import { saveChatHistoryMessage } from '../pixflow/chat-history-client';
+import { ChatHistoryRequestError, historyMessageFingerprint, importChatHistory, saveChatHistoryMessage } from '../pixflow/chat-history-client';
+import { preserveHistoryCopies } from '../pixflow/history-recovery';
 import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
 
 type Pending = { projectId: string; conversationId: string; message: ChatMessage };
 const pending = new Map<string, Pending>();
 const running = new Map<string, Promise<void>>();
 const failures = new Set<string>();
+const conflicts = new Set<string>();
 const listeners = new Set<() => void>();
 const notify = () => { for (const listener of listeners) listener(); };
 const scope = () => {
@@ -22,6 +24,11 @@ export function subscribeWorkspaceHistoryWrites(listener: () => void): () => voi
 export function workspaceHistoryWriteFailed(projectId: string, conversationId: string): boolean {
   const key = owner(projectId,conversationId);
   return [...failures].some(value => value.startsWith(key));
+}
+/** Recovery is for a confirmed divergent revision, not network or storage failures. */
+export function workspaceHistoryWriteConflicted(projectId: string, conversationId: string): boolean {
+  const key = owner(projectId, conversationId);
+  return [...conflicts].some(value => value.startsWith(key));
 }
 
 /** Keep the newest unacknowledged snapshot, including attachments and execution state. */
@@ -60,8 +67,9 @@ function flush(projectId: string, conversationId: string): Promise<void> {
           latest.message.historyRevision = saved.historyRevision;
           try { localStorage.setItem(key,JSON.stringify(latest)); } catch { /* In-memory retry remains available. */ }
         }
-        failures.delete(key); notify();
-      } catch {
+        failures.delete(key); conflicts.delete(key); notify();
+      } catch (error) {
+        if (error instanceof ChatHistoryRequestError && error.status === 409) conflicts.add(key);
         failures.add(key); notify();
         break;
       }
@@ -94,4 +102,26 @@ export async function retryWorkspaceHistoryWrites(projectId: string, conversatio
 export function workspaceHistoryPendingMessages(projectId: string, conversationId: string): ChatMessage[] {
   const group = owner(projectId,conversationId);
   return [...pending].filter(([key]) => key.startsWith(group)).map(([,entry]) => entry.message);
+}
+
+/** Explicit recovery saves divergent copies privately before acknowledging canonical history. */
+export async function recoverWorkspaceHistoryWrites(projectId: string, conversationId: string, title: string): Promise<ChatMessage[]> {
+  const group = owner(projectId, conversationId), account = scope();
+  if (running.has(group)) return [];
+  const captured = [...pending].filter(([key]) => key.startsWith(group));
+  const source = {projectId, conversationId};
+  await preserveHistoryCopies(source, captured.map(([,entry]) => entry.message), title);
+  if (scope() !== account) throw new Error('The signed-in account changed.');
+  const canonical = await importChatHistory(source, captured.map(([,entry]) => entry.message));
+  if (scope() !== account) throw new Error('The signed-in account changed.');
+  const restored: ChatMessage[] = [];
+  for (const [key, entry] of captured) {
+    const saved = canonical.messages.find(item => item.id === entry.message.id);
+    if (!saved || pending.get(key) !== entry) continue;
+    const local = localStorage.getItem(key);
+    if (local && historyMessageFingerprint(JSON.parse(local).message) !== historyMessageFingerprint(entry.message)) continue;
+    localStorage.removeItem(key); pending.delete(key); failures.delete(key); conflicts.delete(key);
+    restored.push(saved as ChatMessage);
+  }
+  notify(); return restored;
 }

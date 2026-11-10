@@ -5,4 +5,5 @@ export * from './SharedChatComposer';
 export * from './SharedComposerDock';
 export * from './SharedChatRows';
 export * from './SharedMessageStream';
+export { useFloatingChatScroll } from './use-floating-chat-scroll';
 export * from './SharedRunFailureCard';

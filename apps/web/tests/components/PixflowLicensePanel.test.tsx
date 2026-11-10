@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PixflowLicensePanel } from '../../src/components/PixflowLicensePanel';
-import { isPixflowWordPressEmbed, resetPixflowLicense, validatePixflowLicense, completePixflowInstallationRecovery, preparePixflowInstallationRecovery } from '../../src/pixflow/license';
+import { fetchPixflowLicenseStatus, isPixflowWordPressEmbed, resetPixflowLicense, validatePixflowLicense, completePixflowInstallationRecovery, preparePixflowInstallationRecovery } from '../../src/pixflow/license';
 import type { PixflowLicenseStatus } from '../../src/pixflow/license';
 
 vi.mock('../../src/pixflow/license', async (importOriginal) => {
@@ -36,6 +36,16 @@ const activeLicense: PixflowLicenseStatus = {
 };
 
 describe('PixflowLicensePanel', () => {
+  it('shows unavailable and retries without asking for a key when a status read fails', async () => {
+    vi.mocked(fetchPixflowLicenseStatus).mockRejectedValueOnce(new Error('Could not read Pixflow license status.')).mockResolvedValueOnce(activeLicense);
+    render(<PixflowLicensePanel />);
+    expect(await screen.findByText('Unavailable')).toBeTruthy();
+    expect(screen.queryByText('Inactive')).toBeNull();
+    expect(screen.queryByLabelText('License key')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Active')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
   it.each([
     { ...activeLicense, license: { ...activeLicense.license, valid: false } },
     { ...activeLicense, central_entitlement: { enabled: true, valid: false } },

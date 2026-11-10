@@ -1,4 +1,5 @@
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
+import { observeLicenceRequest } from './support-timeline';
 import { pixflowWordPressRestFetch } from './runtime-fetch';
 import { PIXFLOW_LICENSE_CHANGED, refreshPixflowFeatureRuntime } from './feature-runtime';
 import { ensurePixflowOptionalBridgeSiteContext, pixflowOptionalBridgeSiteHeaders } from './optional-bridge';
@@ -51,17 +52,22 @@ export type PixflowLicenseStatus = {
 const LICENSE_STATUS_SESSION_CACHE_KEY = 'pixflow-design:license-status-cache';
 const LICENSE_STATUS_CACHE_MS = 30_000;
 
+function hasLicenseDecision(status: PixflowLicenseStatus | null | undefined): status is PixflowLicenseStatus {
+  // Older sites can return a decision without the newer display metadata.
+  return typeof status?.license?.valid === 'boolean';
+}
+
 function readCachedPixflowLicenseStatus(): PixflowLicenseStatus | null {
   if (typeof window === 'undefined') return null;
   const cached = window.__PIXFLOW_DESIGN_LICENSE_STATUS_CACHE__;
-  if (cached && Date.now() - cached.checkedAt < LICENSE_STATUS_CACHE_MS) {
+  if (cached && hasLicenseDecision(cached.value) && Date.now() - cached.checkedAt < LICENSE_STATUS_CACHE_MS) {
     return cached.value;
   }
   try {
     const raw = window.sessionStorage.getItem(LICENSE_STATUS_SESSION_CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { checkedAt?: number; value?: PixflowLicenseStatus };
-    if (!parsed.value || Date.now() - Number(parsed.checkedAt || 0) >= LICENSE_STATUS_CACHE_MS) return null;
+    if (!hasLicenseDecision(parsed.value) || Date.now() - Number(parsed.checkedAt || 0) >= LICENSE_STATUS_CACHE_MS) return null;
     window.__PIXFLOW_DESIGN_LICENSE_STATUS_CACHE__ = {
       value: parsed.value,
       checkedAt: Number(parsed.checkedAt || Date.now()),
@@ -109,9 +115,36 @@ let listenerInstalled = false;
 let licenseMutationGeneration = 0;
 let latestLicenseMutation: Promise<PixflowLicenseStatus> | null = null;
 let featureRuntimeSignature = '';
+// This hint skips browser setup only. The Bridge enforces its current grant on
+// every protected request, including when another tab changes the pairing.
+const CHAT_PAIRING_KEY = 'pixflow-design:chat-pairing';
+let pairedChatSite: string | undefined;
+
+function rememberChatPairing(scope: string): void {
+  pairedChatSite = scope;
+  try {
+    if (scope) window.sessionStorage.setItem(CHAT_PAIRING_KEY, scope);
+    else window.sessionStorage.removeItem(CHAT_PAIRING_KEY);
+  } catch { /* A restricted tab can still reuse its in-memory pairing. */ }
+}
+
+function currentChatPairing(): string {
+  if (pairedChatSite !== undefined) return pairedChatSite;
+  try {
+    return window.sessionStorage.getItem(CHAT_PAIRING_KEY) || '';
+  } catch { /* Missing or invalid hints go through normal licence setup. */ }
+  return '';
+}
+
+function chatPairingScope(): string {
+  const config = getPixflowWordPressConfig();
+  if (!config?.siteHash || !config.bridgeBaseUrl || !config.userId) return '';
+  return JSON.stringify([config.siteHash, config.restBaseUrl, config.bridgeBaseUrl, config.userId, licenseMutationGeneration]);
+}
 
 async function publishLicenseStatus(status: PixflowLicenseStatus, generation: number, force = false): Promise<void> {
   const signature = JSON.stringify([status.license.valid, status.central_entitlement?.valid, status.pro?.installation, status.pro?.eligible]);
+  if (featureRuntimeSignature && featureRuntimeSignature !== signature) rememberChatPairing('');
   if (force || featureRuntimeSignature !== signature) {
     await refreshPixflowFeatureRuntime(() => requestWordPressRest('license/features'), () => generation === licenseMutationGeneration);
     if (generation !== licenseMutationGeneration) return;
@@ -321,7 +354,7 @@ export async function requestWordPressRest<T>(
       },
       { requestId },
     ), '*');
-    return promise as Promise<WordPressRestResponse<T>>;
+    return observeLicenceRequest(path, () => promise as Promise<WordPressRestResponse<T>>, () => 'proxied');
   }
 
   // Pixflow-owned: all license calls go through the parent Bricks/WP shell so
@@ -336,7 +369,7 @@ export async function requestWordPressRest<T>(
     keepalive: options.keepalive === true,
   }, '*');
 
-  return promise as Promise<WordPressRestResponse<T>>;
+  return observeLicenceRequest(path, () => promise as Promise<WordPressRestResponse<T>>, () => 'proxied');
 }
 
 export async function requestWordPressAjax<T>(
@@ -450,10 +483,16 @@ async function clearBridgeEntitlement(): Promise<void> {
  * Bridge is already running, so this explicit path uses the configured
  * loopback URL instead of waiting for the optional health probe to settle.
  */
-export async function ensurePixflowLicenseEntitlement(options: {allowSiteSwitch?: boolean} = {}): Promise<void> {
+export async function ensurePixflowLicenseEntitlement(options: {allowSiteSwitch?: boolean; reusePairing?: boolean} = {}): Promise<void> {
   if (!isPixflowWordPressEmbed()) return;
 
-  const status = await fetchPixflowLicenseStatus({ force: true });
+  const scope = chatPairingScope();
+  if (options.reusePairing && scope && currentChatPairing() === scope) {
+    await ensurePixflowOptionalBridgeSiteContext(options);
+    return;
+  }
+  rememberChatPairing('');
+  const status = await readPixflowLicenseStatus({ force: true }, options.reusePairing === true);
   const token = String(status.bridge_entitlement?.token || '').trim();
   const central = status.central_entitlement?.enabled === true;
   if (status.requires_license !== false && (status.license.valid !== true || (central ? status.runtime_ready !== true || status.central_entitlement?.valid !== true : !token))) {
@@ -482,6 +521,7 @@ export async function ensurePixflowLicenseEntitlement(options: {allowSiteSwitch?
     if (!response.ok || body?.valid !== true || proRenewed) {
       await pairPixflowBridge({ notifyReconnect: false,allowSiteSwitch:options.allowSiteSwitch });
     }
+    if (scope && scope === chatPairingScope()) rememberChatPairing(scope);
     return;
   }
   const response = await bridgeFetch(`${bridgeBaseUrl}/api/pixflow/license-entitlement`, {
@@ -499,6 +539,15 @@ export async function ensurePixflowLicenseEntitlement(options: {allowSiteSwitch?
 
 export async function fetchPixflowLicenseStatus(
   options: { force?: boolean } = {},
+): Promise<PixflowLicenseStatus> {
+  return readPixflowLicenseStatus(options, false);
+}
+
+// Chat admission needs a current server decision. Refreshing feature menus and
+// announcing settings changes belongs to the settings/status refresh path.
+async function readPixflowLicenseStatus(
+  options: { force?: boolean },
+  forAdmission: boolean,
 ): Promise<PixflowLicenseStatus> {
   if (!isPixflowWordPressEmbed()) {
     // Pixflow-owned: Pixflow Design licensing is always WordPress-site scoped.
@@ -541,6 +590,8 @@ export async function fetchPixflowLicenseStatus(
     }
   }
 
+  if (!hasLicenseDecision(response.body)) throw new Error('Could not read Pixflow license status.');
+  if (forAdmission) return response.body;
   writeCachedPixflowLicenseStatus(response.body);
   await syncBridgeEntitlement(response.body);
   await publishLicenseStatus(response.body, requestGeneration, options.force);
@@ -607,6 +658,7 @@ export function resetPixflowLicense(): Promise<PixflowLicenseStatus> {
 
 /** Only the most recent user mutation may publish license state into this session. */
 function mutatePixflowLicense(operation: 'validate' | 'reset' | 'recovery/complete', body?: Record<string, unknown>): Promise<PixflowLicenseStatus> {
+  rememberChatPairing('');
   const generation = ++licenseMutationGeneration;
   const mutation = (async (): Promise<PixflowLicenseStatus> => {
     let response = await requestWordPressRest<PixflowLicenseStatus & { message?: string }>(`license/${operation}`, {
@@ -618,6 +670,7 @@ function mutatePixflowLicense(operation: 'validate' | 'reset' | 'recovery/comple
     if (generation !== licenseMutationGeneration && latestLicenseMutation) return latestLicenseMutation;
     if (!response.ok) throw new Error(response.body?.message ?? `Pixflow license ${operation} failed.`);
     const committedGeneration = ++licenseMutationGeneration;
+    if (!hasLicenseDecision(response.body)) throw new Error('Could not read Pixflow license status.');
     writeCachedPixflowLicenseStatus(response.body);
     if (operation === 'reset') {
       if (!response.body.central_entitlement?.enabled) await clearBridgeEntitlement();

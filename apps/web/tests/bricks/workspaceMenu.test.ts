@@ -28,7 +28,7 @@ afterEach(() => {
 
 function mountMenu(
   resolveDesignSystemVisibility: () => Promise<boolean>,
-  options: { isOnboardingCompleted?: () => boolean; isWorkspaceOpen?: () => boolean } = {},
+  options: { isOnboardingCompleted?: () => boolean; isWorkspaceOpen?: () => boolean; onOpenTool?: (tool: string) => void } = {},
 ) {
   const dom = new JSDOM('<button id="trigger">Pixflow</button>', {
     runScripts: 'outside-only',
@@ -47,7 +47,7 @@ function mountMenu(
     isOnboardingCompleted: options.isOnboardingCompleted ?? (() => true),
     onToggleWorkspace: () => undefined,
     onThemeChange: () => undefined,
-    onOpenTool: () => undefined,
+    onOpenTool: options.onOpenTool ?? (() => undefined),
     onOpenSettings: () => undefined,
     initialDesignSystemVisible: true,
     resolveDesignSystemVisibility,
@@ -83,6 +83,35 @@ function mountMenu(
 }
 
 describe('Bricks toolbar workspace menu', () => {
+  it('opens the translated Workspace destination and removes access when the Pro capability changes', () => {
+    const openTool = vi.fn();
+    const { dom, controller } = mountMenu(async () => true, { onOpenTool: openTool });
+    const grid = dom.window.document.querySelector('.pixflow-design-toolbar-menu__tools')!;
+    const shortcut = () => grid.querySelector<HTMLButtonElement>('[data-tool="translations"]');
+    expect(shortcut()?.parentElement?.hidden).toBe(true);
+    const label = vi.fn().mockReturnValue('Traductions');
+    let notify!: (status: { needsUpdate: boolean }) => void;
+    const stop = vi.fn();
+    const watch = vi.fn((listener: typeof notify) => { notify = listener; return stop; });
+    Object.assign(dom.window, { PixflowDesignApp: { translationsShortcutLabel: label, watchTranslationUpdates: watch } });
+    controller.refreshWorkspaceState();
+    expect(shortcut()?.parentElement?.hidden).toBe(false);
+    expect(shortcut()?.querySelector('.inline-switcher__agent-name')?.textContent).toBe('Traductions');
+    const dot = shortcut()!.querySelector<HTMLElement>('.pixflow-design-toolbar-menu__translation-update')!;
+    expect(dot.hidden).toBe(true);
+    notify({ needsUpdate: true });
+    expect(dot.hidden).toBe(false);
+    notify({ needsUpdate: false });
+    expect(dot.hidden).toBe(true);
+    shortcut()!.click();
+    expect(openTool).toHaveBeenCalledExactlyOnceWith('translations');
+    expect(stop).toHaveBeenCalledOnce();
+    expect(dom.window.document.querySelector<HTMLElement>('[role="menu"]')!.hidden).toBe(true);
+    label.mockReturnValue(null);
+    controller.toggle();
+    expect(shortcut()?.parentElement?.hidden).toBe(true);
+    expect(watch).toHaveBeenCalledOnce();
+  });
   it.each([false, true])('keeps admin Settings usable in Free with onboardingCompleted=%s and reveals Workspace immediately when Pro activates', (onboardingCompleted) => {
     const dom = new JSDOM('<div id="wp-admin-bar-pixflow-design-menu"><a class="ab-item" href="#">Settings</a></div>', { runScripts: 'outside-only', url: 'http://localhost/wp-admin/' });
     openDoms.push(dom);

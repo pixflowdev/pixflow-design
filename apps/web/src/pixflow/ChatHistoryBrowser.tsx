@@ -7,8 +7,9 @@ import styles from './ChatHistoryBrowser.module.css';
 import { exactDateTime } from '../utils/chatTime';
 import { CenteredLoader } from '../components/Loading';
 import { ChatExportButton } from './ChatExportButton';
+import { ConversationActions } from './ConversationActions';
 
-/** History browsing never changes the live editor, draft, run or conversation owner. */
+/** Browsing is read-only; continuing is an explicit permission-checked selection. */
 export function ChatHistoryBrowser() {
   const t = useT();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -69,6 +70,7 @@ export function ChatHistoryBrowser() {
         {failed && <p role="status">{t('history.loadError')} <Button variant="subtle" onClick={() => { void load(selected, failedBefore.current); }}>{t('history.retry')}</Button></p>}
         {loading && <div className={styles.loading}><CenteredLoader label={t('common.loading')} /></div>}
         {selected ? <>
+          <ConversationActions binding={selected} disabled={loading || failed} onOpened={() => setOpen(false)} />
           {cursor && <Button variant="subtle" disabled={loading} onClick={() => { void load(selected, cursor); }}>{t('history.loadEarlier')}</Button>}
           <SharedChatRows messages={messages} projectId={selected.projectId} t={t} />
         </> : <div className={styles.list}>

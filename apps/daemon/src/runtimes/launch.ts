@@ -12,11 +12,17 @@ export type AgentLaunchResolution = ReturnType<typeof inspectAgentExecutableReso
   diagnostic: string | null;
 };
 
+/** Report the selected runtime's provenance; an installed app alone is not evidence. */
+export function agentRuntimeSource(launch: Pick<AgentLaunchResolution, 'selectedPath' | 'appBundlePath'>): 'desktop' | 'cli' {
+  return launch.appBundlePath && launch.selectedPath === launch.appBundlePath ? 'desktop' : 'cli';
+}
+
 export function resolveAgentLaunch(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
+  lookup?: (bin: string) => string | null,
 ): AgentLaunchResolution {
-  const resolution = inspectAgentExecutableResolution(def, configuredEnv);
+  const resolution = inspectAgentExecutableResolution(def, configuredEnv, lookup);
   if (!resolution.selectedPath) {
     return { ...resolution, launchPath: null, launchKind: 'selected', childPathPrepend: [], diagnostic: null };
   }

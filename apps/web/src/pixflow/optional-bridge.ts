@@ -49,7 +49,13 @@ type PublishedBridgeStatus = {
 export const PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE =
   'Pixflow Design Bridge disconnected. Restart Bridge, then rescan Local CLI settings. API and BYOK features can continue without Bridge.';
 export const PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE =
-  'Chrome blocked or could not reach Pixflow Design Bridge access for this site. Allow Apps on device or local network access for this site, confirm Bridge is running, then rescan Local CLI.';
+  'The browser reported that local access to Pixflow Design Bridge is blocked. Allow Apps on device or local network access in this site\'s browser permissions, then rescan Local CLI.';
+
+export class PixflowProviderScanIncompleteError extends Error {}
+
+function isRequestTimeout(error: unknown): boolean {
+  return error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError');
+}
 
 export class PixflowOptionalBridgeUnavailableError extends Error {
   cause?: unknown;
@@ -74,6 +80,7 @@ let cachedHealth: {
 } | null = null;
 
 const HEALTH_CACHE_MS = 30_000;
+const SITE_HEALTH_TIMEOUT_MS = 5_500;
 const HEALTH_FAILURE_CACHE_MS = 2_000;
 const AGENTS_CACHE_MS = 60_000;
 const PERSISTED_AGENTS_CACHE_TTL_MS = 24 * 60 * 60_000;
@@ -252,39 +259,34 @@ export function isPixflowIntentionalAbort(error: unknown, signal?: AbortSignal |
   return signal?.aborted === true || (error instanceof Error && error.name === 'AbortError');
 }
 
+/** Only explicit local-access policy evidence justifies a blocked-permission diagnosis.
+ * Fetch deliberately hides network/CORS failure details; a localhost URL alone is not evidence.
+ */
 export function isPixflowOptionalBridgeLoopbackAccessError(error: unknown): boolean {
   if (error instanceof PixflowOptionalBridgeLoopbackAccessError) return true;
   if (!(error instanceof Error)) return false;
-  const message = String(error.message || '').toLowerCase();
+  const message = error.message.toLowerCase();
   return error.name === 'PixflowOptionalBridgeLoopbackAccessError'
-    || message.includes('loopback')
-    || message.includes('local network')
-    || message.includes('private network')
-    || message.includes('address space')
-    || message.includes('targetaddressspace')
-    || message.includes('apps on device')
-    || message.includes('permission was denied');
-}
-
-function isPixflowOptionalBridgeLoopbackFetchFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = String(error.message || '').toLowerCase();
-  if (!message.includes('failed to fetch') && !message.includes('load failed')) return false;
-  try {
-    const base = new URL(getPixflowOptionalBridgeBaseUrl());
-    return base.hostname === '127.0.0.1'
-      || base.hostname === 'localhost'
-      || base.hostname === '[::1]'
-      || base.hostname === '::1';
-  } catch {
-    return false;
-  }
+    || (/(local network|private network|loopback|address space|apps on device)/.test(message)
+      && /(blocked|denied|not allowed)/.test(message));
 }
 
 export function normalizePixflowOptionalBridgeError(error: unknown): Error {
   if (error instanceof PixflowOptionalBridgeUnavailableError) return error;
-  if (isPixflowOptionalBridgeLoopbackAccessError(error) || isPixflowOptionalBridgeLoopbackFetchFailure(error)) {
+  if (isPixflowOptionalBridgeLoopbackAccessError(error)) {
     return new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE, error);
+  }
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      return new PixflowOptionalBridgeUnavailableError('The Pixflow Design Bridge request timed out. Check Bridge status and rescan Local CLI. A timeout does not confirm whether an action completed; check the current chat or page before retrying an edit.', error);
+    }
+    if (/connection[ _]refused/.test(message)) {
+      return new PixflowOptionalBridgeUnavailableError('The connection to Pixflow Design Bridge was refused. Open Bridge and check that its address and port match Local CLI settings, then rescan.', error);
+    }
+    if (/failed to fetch|load failed|networkerror/.test(message)) {
+      return new PixflowOptionalBridgeUnavailableError('Pixflow could not reach Design Bridge. The browser cannot determine the cause. Check that Bridge is running and its address and port match Local CLI settings, then rescan. If it remains unreachable, check the local-network permission and browser or security-software restrictions.', error);
+    }
   }
   if (isPixflowOptionalBridgeUnavailableError(error)) {
     return new PixflowOptionalBridgeUnavailableError(PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE, error);
@@ -308,6 +310,13 @@ export function notifyPixflowOptionalBridgeDisconnected(error?: unknown): void {
 }
 
 let connectivityCheck: Promise<PixflowOptionalBridgeHealth> | null = null;
+
+/** Endpoint failure is not a connection-state verdict; health owns that state. */
+export async function confirmPixflowOptionalBridgeConnectivity(error: unknown): Promise<void> {
+  if (!(normalizePixflowOptionalBridgeError(error) instanceof PixflowOptionalBridgeUnavailableError)) return;
+  connectivityCheck ??= probePixflowOptionalBridge({ force: true }).finally(() => { connectivityCheck = null; });
+  await connectivityCheck;
+}
 
 export function pixflowOptionalBridgeSiteHeaders(initial: HeadersInit = {}): Headers {
   const headers = new Headers(initial);
@@ -341,13 +350,13 @@ function requestWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 3_5
     const normalized = normalizePixflowOptionalBridgeError(error);
     if (normalized instanceof PixflowOptionalBridgeUnavailableError) {
       if (url === pixflowOptionalBridgeApiUrl('health')) {
-        notifyPixflowOptionalBridgeDisconnected(error);
+        if (!isRequestTimeout(error) || !cachedHealth?.value.available || Date.now() - cachedHealth.checkedAt > HEALTH_CACHE_MS) {
+          notifyPixflowOptionalBridgeDisconnected(error);
+        }
       } else {
         // A slow endpoint or endpoint-specific CORS failure is not proof that
         // the Bridge is offline. Health owns the shared connection state.
-        connectivityCheck ??= probePixflowOptionalBridge({ force: true })
-          .finally(() => { connectivityCheck = null; });
-        await connectivityCheck;
+        await confirmPixflowOptionalBridgeConnectivity(error);
       }
     }
     throw normalized;
@@ -384,7 +393,7 @@ export async function ensurePixflowOptionalBridgeSiteContext(options?: {
     const isReady = (value: SiteReadiness) => String(value?.site?.key || '') === siteKey
       && value.ok !== false && (!value.state || value.state === 'running')
       && !['sleeping', 'waking', 'releasing', 'unavailable'].includes(value.runtimeState || '');
-    const health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: 3_500 });
+    const health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: Math.min(timeoutMs, SITE_HEALTH_TIMEOUT_MS) });
     const publishRuntime = (state: string) => window.dispatchEvent(new CustomEvent('pixflow-design:bridge-runtime-state', { detail: { state } }));
     publishRuntime(health.runtimeState || 'ready');
     if (isReady(health)) { refreshFailedProvidersAfterReconnect(); return; }
@@ -409,7 +418,10 @@ export async function ensurePixflowOptionalBridgeSiteContext(options?: {
     while (Date.now() - startedAt < timeoutMs) {
       await new Promise((resolve) => window.setTimeout(resolve, 300));
       try {
-        const next = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: 2_500 });
+        const remainingMs = Math.max(1, timeoutMs - (Date.now() - startedAt));
+        const next = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, {
+          timeoutMs: Math.min(SITE_HEALTH_TIMEOUT_MS, remainingMs),
+        });
         if (isReady(next)) {
           publishRuntime('ready');
           cachedHealth = null;
@@ -480,7 +492,8 @@ export async function pixflowOptionalBridgeJson<T>(
     const detail = await response.json().catch(() => null) as {message?:unknown;error?:unknown} | null;
     const nested = detail?.error && typeof detail.error === 'object' ? (detail.error as {message?:unknown}).message : detail?.error;
     const message = typeof detail?.message === 'string' ? detail.message : typeof nested === 'string' ? nested : '';
-    throw new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`);
+    // Callers can distinguish an unsupported endpoint from transport or authorization failures.
+    throw Object.assign(new Error(message || `Pixflow Design Bridge returned HTTP ${response.status}`), { status: response.status });
   }
   return response.json() as Promise<T>;
 }
@@ -507,10 +520,13 @@ export async function probePixflowOptionalBridge(options?: {
     const response = await requestWithTimeout(
       pixflowOptionalBridgeApiUrl('health'),
       {},
-      options?.timeoutMs ?? 2_500,
+      options?.timeoutMs ?? SITE_HEALTH_TIMEOUT_MS,
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const json = (await response.json()) as { version?: string; status?: string; runtimeState?: string };
+    const json = (await response.json()) as { ok?: boolean; code?: string; error?: string; version?: string; runtimeState?: string };
+    if (json.ok === false || json.code === 'PIXFLOW_SITE_NOT_CONNECTED') {
+      throw new Error(json.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
+    }
     if (json.runtimeState) window.dispatchEvent(new CustomEvent('pixflow-design:bridge-runtime-state', { detail: { state: json.runtimeState } }));
     const value: PixflowOptionalBridgeHealth = {
       available: true,
@@ -522,6 +538,10 @@ export async function probePixflowOptionalBridge(options?: {
     cachedHealth = { checkedAt: Date.now(), value };
     return value;
   } catch (error) {
+    if (error instanceof PixflowOptionalBridgeUnavailableError && isRequestTimeout(error.cause)
+      && cachedHealth?.value.available && Date.now() - cachedHealth.checkedAt <= HEALTH_CACHE_MS) {
+      return cachedHealth.value;
+    }
     const value: PixflowOptionalBridgeHealth = {
       available: false,
       requiredVersion: readBridgeConfig()?.bridgeRequiredVersion,
@@ -564,15 +584,13 @@ export async function fetchPixflowOptionalBridgeAgents(options?: {
     const finishDiscovery = beginProviderDiscovery(Boolean(cachedAgents?.value.length));
     try {
     const force = options?.force === true;
-    const health = await probePixflowOptionalBridge({
-      force,
-      timeoutMs: force ? 2_500 : 1_800,
-    });
+    const health = await probePixflowOptionalBridge({ force });
     if (['sleeping', 'releasing', 'waking'].includes(health.runtimeState || '')) {
       if (force) await ensurePixflowOptionalBridgeSiteContext();
       else { finishDiscovery('sleeping'); return cachedAgents?.value ?? []; }
     }
     if (!health.available) {
+      if (force) throw new PixflowOptionalBridgeUnavailableError(health.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
       if (health.error && isPixflowOptionalBridgeLoopbackAccessError(new Error(health.error))) {
         throw new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE);
       }
@@ -591,7 +609,7 @@ export async function fetchPixflowOptionalBridgeAgents(options?: {
     persistAgentsCache(value, cachedAgents.checkedAt);
     finishDiscovery(true);
     return value;
-    } catch (error) { finishDiscovery(false); throw error; }
+    } catch (error) { finishDiscovery(false, error instanceof PixflowOptionalBridgeUnavailableError ? error.message : undefined); throw error; }
   };
 
   const startBackgroundRefresh = (): Promise<AgentInfo[]> => {
@@ -662,10 +680,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
   const finishDiscovery = beginProviderDiscovery(Boolean(cachedAgents?.value.length));
   try {
   const force = args.force === true;
-  const health = await probePixflowOptionalBridge({
-    force,
-    timeoutMs: force ? 2_500 : 1_800,
-  });
+  const health = await probePixflowOptionalBridge({ force });
   if (['sleeping', 'releasing', 'waking'].includes(health.runtimeState || '')) {
     if (force) await ensurePixflowOptionalBridgeSiteContext();
     else {
@@ -675,6 +690,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
   }
   if (!health.available) {
+      if (force) throw new PixflowOptionalBridgeUnavailableError(health.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
     if (health.error && isPixflowOptionalBridgeLoopbackAccessError(new Error(health.error))) {
       throw new PixflowOptionalBridgeLoopbackAccessError(PIXFLOW_OPTIONAL_BRIDGE_LOOPBACK_BLOCKED_MESSAGE);
     }
@@ -709,7 +725,7 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
     const data = dataLines.join('\n');
     if (eventName === 'done') {
-      if (data && JSON.parse(data).timedOut) throw new Error('Provider scan timed out');
+      if (data && JSON.parse(data).timedOut) throw new PixflowProviderScanIncompleteError('Provider scan timed out');
       done = true;
       return;
     }
@@ -721,7 +737,8 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
       const agent = JSON.parse(data) as AgentInfo;
       if (!isPixflowSupportedCliAgent(agent)) return;
       collected.push(agent);
-      args.onAgent(agent);
+      // Keep the last completed snapshot visible until a replacement scan commits.
+      if (!cachedAgents?.value.length) args.onAgent(agent);
     } catch {
       // Ignore malformed records so one bad probe does not break the list.
     }
@@ -749,12 +766,10 @@ export async function fetchPixflowOptionalBridgeAgentsStream(args: {
     }
   }
 
-  if (!done) throw new Error('agents stream ended before done');
+  if (!done) throw new PixflowProviderScanIncompleteError('Provider scan ended before completion');
   cachedAgents = { checkedAt: Date.now(), value: collected };
   persistAgentsCache(collected, cachedAgents.checkedAt);
   finishDiscovery(true);
   return collected;
-  } catch (error) { finishDiscovery(false); throw error; }
+  } catch (error) { finishDiscovery(false, error instanceof PixflowOptionalBridgeUnavailableError ? error.message : undefined); throw error; }
 }
-
-

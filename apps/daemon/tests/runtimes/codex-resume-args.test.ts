@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { agentCapabilities } from '../../src/runtimes/capabilities.js';
+import {resolveRuntimeReasoning} from '../../src/runtimes/claude-models.js';
 import { resolveProbedInputCapabilities } from '../../src/runtimes/detection.js';
 import {
   codexAgentDef,
@@ -25,16 +26,24 @@ describe('codex buildArgs session resume', () => {
     expect(args).not.toContain('11111111-1111-4111-8111-111111111111');
     expect(args[args.indexOf('-C') + 1]).toBe('C:/project');
     expect(args[args.indexOf('--add-dir') + 1]).toBe('C:/extra');
+    expect(args).toContain('model_reasoning_effort="medium"');
   });
 
   it('uses the Windows-compatible unsandboxed flag when resuming a captured thread', () => {
-    const args = codexAgentDef.buildArgs('prompt', [], ['C:/extra'], {
-      model: 'gpt-5.5',
-      reasoning: 'medium',
-    }, {
-      cwd: 'C:/project',
-      resumeSessionId: threadId,
-    });
+    const args = (() => {
+      vi.stubEnv('OD_CODEX_SANDBOX', 'danger-full-access');
+      try {
+        return codexAgentDef.buildArgs('prompt', [], ['C:/extra'], {
+          model: 'gpt-5.5',
+          reasoning: 'medium',
+        }, {
+          cwd: 'C:/project',
+          resumeSessionId: threadId,
+        });
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    })();
     expect(args.slice(0, 2)).toEqual(['exec', 'resume']);
     expect(args.at(-1)).toBe(threadId);
     expect(args).not.toContain('--sandbox');
@@ -108,6 +117,28 @@ describe('codex buildArgs session resume', () => {
 });
 
 describe('Codex live model input capabilities', () => {
+  it('preserves per-model reasoning support and friendly labels, including explicit denial',()=>{
+    const models=parseCodexDebugModels(JSON.stringify({models:[
+      {slug:'astra',supported_reasoning_levels:['low','medium','high','xhigh','max','ultra'].map(effort=>({effort}))},
+      {slug:'small',supported_reasoning_levels:[{effort:'low'}]},
+      {slug:'none',supported_reasoning_levels:[]},
+      {slug:'older'},
+    ]}))!;
+    expect(models.find(model=>model.id==='astra')?.reasoningOptions).toEqual([
+      {id:'low',label:'Light'},{id:'medium',label:'Medium'},{id:'high',label:'High'},
+      {id:'xhigh',label:'Extra High'},{id:'max',label:'Max'},
+    ]);
+    expect(models.find(model=>model.id==='small')?.reasoningOptions).toEqual([{id:'low',label:'Light'}]);
+    expect(models.find(model=>model.id==='none')?.reasoningOptions).toEqual([]);
+    expect(models.find(model=>model.id==='older')?.reasoningOptions).toBeUndefined();
+    rememberLiveModels('codex',models);
+    expect(resolveRuntimeReasoning(codexAgentDef,'astra','max')).toBe('max');
+    expect(()=>resolveRuntimeReasoning(codexAgentDef,'astra','ultra')).toThrow('Ultra');
+    expect(()=>codexAgentDef.buildArgs('prompt',[],[],{reasoning:'ultra'},{})).toThrow('Ultra');
+    expect(resolveRuntimeReasoning(codexAgentDef,'small','max')).toBeUndefined();
+    expect(resolveRuntimeReasoning(codexAgentDef,'none','medium')).toBeUndefined();
+    rememberLiveModels('codex',[]);
+  });
   it('derives Fast eligibility from the live CLI catalogue, including priority aliases', () => {
     const models = parseCodexDebugModels(JSON.stringify({
       models: [

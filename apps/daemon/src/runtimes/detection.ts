@@ -1,5 +1,5 @@
 import { execAgentFile } from './invocation.js';
-import { refreshCodexAppDiscovery } from './executables.js';
+import { discoveryPathLookup, refreshCodexAppDiscovery } from './executables.js';
 import { resolveSystemProxyEnvAsync } from '@open-design/platform';
 import { AGENT_DEFS } from './registry.js';
 import {
@@ -7,7 +7,7 @@ import {
   getRememberedLiveModels,
   rememberLiveModels,
 } from './models.js';
-import { applyAgentLaunchEnv, resolveAgentLaunch } from './launch.js';
+import { agentRuntimeSource, applyAgentLaunchEnv, resolveAgentLaunch } from './launch.js';
 import { spawnEnvForAgent } from './env.js';
 import { probeAgentAuthStatus } from './auth.js';
 import { agentCapabilities } from './capabilities.js';
@@ -91,6 +91,7 @@ async function fetchModels(
   if (typeof def.fetchModels === 'function') {
     try {
       const parsed = await def.fetchModels(resolvedBin, env);
+      if (parsed && !Array.isArray(parsed)) return parsed.models.length ? parsed : { models: def.fallbackModels, source: 'fallback' };
       if (!parsed || parsed.length === 0) {
         return { models: def.fallbackModels, source: 'fallback' };
       }
@@ -304,7 +305,7 @@ async function probe(
   // If detection probes the shim but chat/run spawns the native binary, the
   // UI incorrectly reports "not installed" until the user pins CODEX_BIN by
   // hand even though the real launch path is healthy.
-  const launch = resolveAgentLaunch(def, configuredEnv);
+  const launch = resolveAgentLaunch(def, configuredEnv, await discoveryPathLookup(def, configuredEnv));
   if (!launch.selectedPath || !launch.launchPath) {
     return unavailableAgent(def, [buildExecutableDiagnostic(def, configuredEnv)]);
   }
@@ -332,6 +333,7 @@ async function probe(
   onInstalled({
     ...stripFns(def), models: def.fallbackModels ?? [DEFAULT_MODEL_OPTION],
     modelsSource: 'fallback', available: true, path: launch.selectedPath,
+    runtimeSource: agentRuntimeSource(launch),
     version: outcome.version, ...installMetaForAgent(def.id),
   });
   // The version probe must finish first (it gates availability), but the
@@ -360,6 +362,7 @@ async function probe(
     modelsSource: surfacedModelResult.source,
     available: true,
     path: launch.selectedPath,
+    runtimeSource: agentRuntimeSource(launch),
     version: outcome.version,
     ...(auth
       ? {
@@ -400,18 +403,48 @@ function stripFns(
   return rest;
 }
 
-async function safeProbe(
+// One completed observation per adapter, scoped to its configured environment.
+const lastProbe = new Map<string, { key: string; agent: DetectedAgent; at: number }>();
+const activeProbes = new Map<string, Promise<DetectedAgent>>();
+
+function safeProbe(
+  def: RuntimeAgentDef,
+  configuredEnv: Record<string, string>,
+  systemProxyEnv: NodeJS.ProcessEnv,
+): Promise<DetectedAgent> {
+  const key = stableAgentEnvKey({ [def.id]: configuredEnv });
+  const active = activeProbes.get(key);
+  if (active) return active;
+  const last = lastProbe.get(def.id);
+  const previous = last?.key === key && Date.now() - last.at < AGENT_DETECTION_CACHE_MS ? last.agent : undefined;
+  const pending = runProbe(def, configuredEnv, systemProxyEnv, previous, agent => {
+    lastProbe.set(def.id, { key, agent, at: Date.now() });
+  }).finally(() => activeProbes.delete(key));
+  activeProbes.set(key, pending);
+  return pending;
+}
+
+async function runProbe(
   def: RuntimeAgentDef,
   configuredEnv: Record<string, string> = {},
-  systemProxyEnv: NodeJS.ProcessEnv = {},
+  systemProxyEnv: NodeJS.ProcessEnv,
+  previous: DetectedAgent | undefined,
+  remember: (agent: DetectedAgent) => void,
 ): Promise<DetectedAgent> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let installed: DetectedAgent | null = null;
   try {
     return await Promise.race([
-      probe(def, configuredEnv, agent => { installed = agent; }, systemProxyEnv),
+      probe(def, configuredEnv, agent => { installed = agent; }, systemProxyEnv).then(agent => {
+        // A late completion may belong to a superseded scan.
+        if (timeout !== null) remember(agent);
+        return agent;
+      }),
       new Promise<DetectedAgent>((resolve) => {
-        timeout = setTimeout(() => resolve(installed ?? unavailableAgent(def)), 7000);
+        timeout = setTimeout(() => {
+          const sameInstallation = previous?.available && (!installed || previous.path === installed.path);
+          resolve(sameInstallation ? previous : installed ?? unavailableAgent(def));
+        }, 7000);
       }),
     ]);
   } catch {
@@ -425,6 +458,7 @@ async function safeProbe(
     return unavailableAgent(def);
   } finally {
     if (timeout) clearTimeout(timeout);
+    timeout = null;
   }
 }
 

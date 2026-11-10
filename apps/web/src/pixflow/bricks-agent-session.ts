@@ -166,6 +166,7 @@ export type PixflowBricksStageAEvidence = PixflowBricksBuildEvidence;
 export type PixflowBricksAgentMessage = {
   id: string;
   role: 'system' | 'user' | 'assistant';
+  handoffPresentation?: { title: string; summary: string };
   content: string;
   createdAt: number;
   startedAt?: number;

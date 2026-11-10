@@ -1,3 +1,4 @@
+@import './pixflow-shimmer.css';
 /* Direct media progress belongs to the builder host, never page content. */
 .pixflow-direct-media {
   position: fixed;
@@ -27,8 +28,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(110deg, transparent 25%, rgb(255 255 255 / 45%) 50%, transparent 75%);
-  transform: translateX(-100%);
-  animation: pixflow-direct-shimmer 3s linear infinite;
+  background-size: 200% 100%;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 .pixflow-direct-media-label {
   position: relative;
@@ -84,8 +85,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(110deg, transparent 20%, rgb(124 92 255 / 14%) 48%, transparent 75%);
-  transform: translateX(-100%);
-  animation: pixflow-direct-shimmer 1600ms linear infinite;
+  background-size: 200% 100%;
+  @media (prefers-reduced-motion: no-preference) { animation: pixflow-shimmer 2s linear infinite; }
 }
 #pixflow-direct-presence .pixflow-direct-presence-cursor {
   position: absolute;
@@ -224,16 +225,6 @@
   transition: max-width 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 #pixflow-direct-presence[data-presentation="quiet"] .pixflow-direct-presence-brand { flex: none; }
-/* Keep readable text throughout an edit; shimmer only signals real in-flight work. */
-#pixflow-direct-presence[data-presentation="quiet"][data-phase="editing"] .pixflow-direct-presence-brand {
-  background: linear-gradient(105deg, #b8b8c0 25%, #fff 45%, #b8b8c0 65%);
-  background-size: 240% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: pixflow-presence-text-shimmer 2200ms linear infinite;
-}
-@keyframes pixflow-presence-text-shimmer { from { background-position: 150% 0; } to { background-position: -100% 0; } }
 #pixflow-direct-presence[data-presentation="quiet"] .pixflow-direct-presence-detail {
   min-width: 0;
   overflow: hidden;
@@ -243,7 +234,6 @@
   border-left: 1px solid rgb(255 255 255 / 18%);
   color: #c2c2c8;
 }
-@keyframes pixflow-direct-shimmer { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) {
   #pixflow-direct-presence, #pixflow-direct-presence * { transition: none !important; }
   #pixflow-direct-presence .pixflow-direct-presence-box::after { animation: none; }
@@ -316,8 +306,7 @@
   pointer-events: auto;
 }
 
-#pixflow-design-overlay[data-tool="google-fonts"] .modal-backdrop,
-#pixflow-design-overlay[data-tool="design-system"] .modal-backdrop {
+#pixflow-design-overlay[data-tool="google-fonts"] .modal-backdrop {
   visibility: hidden;
   pointer-events: none;
 }
@@ -719,6 +708,24 @@ li#pixflow-design-library-toolbar-entry {
 
 .pixflow-design-toolbar-menu .inline-switcher__agent-row[hidden] {
   display: none;
+}
+
+.pixflow-design-toolbar-menu__translation-update:not([hidden]) {
+  display: block;
+  flex: 0 0 6px;
+  height: 6px;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background-color: var(--accent, #3b82f6);
+}
+
+.pixflow-design-toolbar-menu__translation-update .screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .pixflow-design-toolbar-menu .inline-switcher__agent {

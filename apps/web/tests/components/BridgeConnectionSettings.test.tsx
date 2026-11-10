@@ -64,3 +64,14 @@ it('reports another site and offers recovery without requiring a Pro licence', (
   expect(screen.getByText('Bridge connected to another site')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Reconnect' })).toBeTruthy();
 });
+it('shows only verified routes and updates when the transport changes', () => {
+  (window as any).pixflowDesignBridgeStatus = { state: 'connected', connectionRoute: 'chrome-extension' };
+  render(<BridgeConnectionSettings />);
+  expect(screen.getByRole('status').textContent).toBe('Bridge connected via Chrome extension');
+  status({ state: 'connected', connectionRoute: 'direct' });
+  expect(screen.getByRole('status').textContent).toBe('Bridge connected directly');
+  status({ state: 'connected' });
+  expect(screen.getByRole('status').textContent).toBe('Bridge connected');
+  status({ state: 'checking', connectionRoute: 'chrome-extension' });
+  expect(screen.getByRole('status').textContent).not.toContain('via Chrome extension');
+});

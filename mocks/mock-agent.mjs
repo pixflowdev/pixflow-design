@@ -22,6 +22,7 @@ import { renderAsClaude }      from './lib/format-claude.mjs';
 import { renderAsGemini }      from './lib/format-gemini.mjs';
 import { renderAsCursorAgent } from './lib/format-cursor-agent.mjs';
 import { renderAsPlain }       from './lib/format-plain.mjs';
+import { renderAsGrok }        from './lib/format-grok.ts';
 import { runAcpServer }        from './lib/format-acp.mjs';
 import { runVelaAcpServer }    from './lib/format-vela.mjs';
 import { runVelaLogin, runVelaModels } from './lib/vela-subcommands.mjs';
@@ -122,8 +123,8 @@ async function main() {
       if (process.argv.includes('stream-json')) await renderAsClaude(events, renderOpts);
       else await renderAsPlain(events, renderOpts);
       break;
+    case 'grok':         await renderAsGrok(events, renderOpts);        break;
     case 'deepseek':
-    case 'grok':
     case 'plain':        await renderAsPlain(events, renderOpts);       break;
     // ACP family â€” JSON-RPC server over stdio.
     case 'devin':

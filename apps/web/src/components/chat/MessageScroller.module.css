@@ -1,0 +1,9 @@
+.root { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.viewport { min-height: 0; min-width: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.viewport[data-pending-scroll] { visibility: hidden; }
+.content { display: flex; flex-direction: column; flex-shrink: 0; min-width: 0; gap: 12px; }
+.item { display: flex; flex-direction: column; min-width: 0; flex-shrink: 0; }
+.button[data-active=false] { opacity: 0; pointer-events: none; transform: translateY(8px); }
+.button[data-active=true] { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.button { transition: opacity 200ms cubic-bezier(.23,1,.32,1), transform 200ms cubic-bezier(.23,1,.32,1); }
+@media (prefers-reduced-motion: reduce) { .button { transition: none; } }

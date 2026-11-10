@@ -72,7 +72,11 @@ export const MONO_AGENT_ICONS = new Set([
 
 export function agentIconAssetUrl(id: string): string | null {
   const ext = AGENT_ICON_EXT[id];
-  return ext ? providerIconAssetUrl(`agent-icons/${id}.${ext}`) : null;
+  if (!ext) return null;
+  const url = providerIconAssetUrl(`agent-icons/${id}.${ext}`);
+  // Refresh the replaced Grok mark even on same-version candidate installs.
+  return id === 'grok-build' && !usesMonochromeProviderArtwork()
+    ? `${url}${url.includes('?') ? '&' : '?'}mark=f44f4ea37fa0` : url;
 }
 
 export function allAgentIconAssetUrls(): string[] {

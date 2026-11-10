@@ -1,0 +1,31 @@
+{
+  "agent": "grok",
+  "trace": "synthetic-empty",
+  "events": [
+    {
+      "type": "text_delta",
+      "delta": ""
+    },
+    {
+      "type": "error",
+      "message": "Grok finished without a reply or tool activity. Try again."
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "input_tokens": 10,
+        "output_tokens": 2
+      }
+    },
+    {
+      "type": "status",
+      "label": "completed",
+      "sessionId": "<normalized>"
+    },
+    {
+      "type": "turn_end",
+      "stopReason": "end_turn",
+      "sessionId": "<normalized>"
+    }
+  ]
+}

@@ -5061,7 +5061,7 @@ async function runAgents(args) {
   od agents list [--force] [--json]
   od agents readiness <agentId> [--model <id>] [--force] [--json]
   od agents sign-in claude [--status | --cancel | --open-browser | --prompt-file <path|->] [--json]
-  od agents usage <codex|claude> [--model <model>] [--json]
+  od agents usage <codex|claude|grok-build> [--model <model>] [--json]
 
 Checks are non-generating and do not consume provider usage.
 
@@ -5108,7 +5108,7 @@ Common options:
   }
   if (sub === 'usage') {
     const [agentId] = collectCliPositionals(rest, stringFlags);
-    if (agentId !== 'codex' && agentId !== 'claude') throw new Error('Usage supports codex or claude.');
+    if (agentId !== 'codex' && agentId !== 'claude' && agentId !== 'grok-build') throw new Error('Usage supports codex, claude or grok-build.');
     const resp = await fetch(`${base}/api/agents/${agentId}/usage?model=${encodeURIComponent(String(flags.model || ''))}`);
     if (!resp.ok) return structuredHttpFailure(resp);
     const data = await resp.json();

@@ -373,6 +373,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
   let sequence = input.resume?.checkpoint?.sequence || 0;
   let outcome: PixflowDirectSiteOutcome = checkpoint?.outcome || 'interrupted';
   let completed = !!checkpoint?.outcome;
+  let admissionRejected = false;
   let endedAt = checkpoint?.endedAt;
   let checkpointTimer: ReturnType<typeof setTimeout> | undefined;
   let formTail = '';
@@ -446,7 +447,28 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     }
     timings.bridgeHeadersMs = elapsed();
     if (response.status === 404 && input.resume) completed = true;
-    if (!response.ok || !response.body) throw new Error(await response.text() || 'Direct agent connection failed.');
+    if (!response.ok) {
+      const body = await response.text();
+      // A rejected new request never owned a running agent. Do not manufacture
+      // an interrupted checkpoint or invite the user to reconnect to that run.
+      if (!input.resume && response.status >= 400 && response.status < 500) {
+        admissionRejected = completed = true;
+        outcome = 'failed';
+        let message = `The Bridge could not start this request (HTTP ${response.status}).`;
+        for (const line of body.split('\n')) {
+          try {
+            const event = JSON.parse(line);
+            if (typeof event.message === 'string' && event.message.trim()) { message = event.message; break; }
+            if (typeof event.error === 'string' && event.error.trim()) { message = event.error; break; }
+          } catch { /* Non-JSON HTTP errors use the bounded fallback below. */ }
+        }
+        if (!body.trim().startsWith('{') && !body.includes('<') && body.trim().length <= 500 && body.trim()) message = body.trim();
+        input.onOutcome?.(outcome);
+        throw new DirectSiteRunError(message, outcome);
+      }
+      throw new StreamAttachmentHttpError(response.status, 'Could not reconnect to the existing run. Reopen the panel to retry; previous changes are retained.');
+    }
+    if (!response.body) throw new Error('Direct agent connection failed.');
     if (!input.resume) await input.onAccepted?.();
     if(content || events.length)input.onUpdate(content,[...events]);
     let reader = response.body.getReader();
@@ -620,7 +642,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
       try { if (pendingDirectSiteRun(input.persistenceSurface)?.connection.id === continuation.id) window.sessionStorage.removeItem(storageKey); } catch { /* Optional storage. */ }
     }
     // Revocation is independent of an aborted streaming signal.
-    if (session && (!continuation || input.resume)) {
+    if (session && (!continuation || input.resume || admissionRejected)) {
       await closeUnusedSession(session);
     }
   }

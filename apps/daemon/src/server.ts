@@ -79,6 +79,7 @@ import { sanitizePixflowBricksIntentContract } from './pixflow/bricks-intent-con
 
 export { resolveProjectRoot };
 import { createCommandInvocation } from '@open-design/platform';
+import { DirectCodexWorker } from './pixflow/direct-codex-worker.js';
 import { registerDirectSiteRunRoutes } from './pixflow/direct-site-run.js';
 import { registerUpscalerRoutes } from './pixflow/upscaler.js';
 import { registerDictationRoutes } from './pixflow/dictation-routes.js';
@@ -7641,7 +7642,16 @@ export async function startServer({
   // prompts run as one hybrid agent conversation. The selected CLI decides
   // whether the latest turn is a question, follow-up, clarification, or a safe
   // controlled Bricks mutation.
-  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db, PROJECT_ROOT);
+  const directWarmWorker = new DirectCodexWorker(RUNTIME_DATA_DIR);
+  const selectWarmWorker = (prefs: ReturnType<typeof readAppConfigSync>) => {
+    const def = prefs.mode !== 'api' && prefs.agentId === 'codex' ? getAgentDef('codex') : undefined;
+    if (!def) return directWarmWorker.select();
+    const configured = agentCliEnvForAgent(prefs.agentCliEnv, def.id);
+    const launch = resolveAgentLaunch(def, configured);
+    directWarmWorker.select(launch.launchPath ? { executable:launch.launchPath, env:applyAgentLaunchEnv(spawnEnvForAgent(def.id,process.env,configured),launch) } : undefined);
+  };
+  selectWarmWorker(readAppConfigSync(RUNTIME_DATA_DIR));
+  const stopDirectHistoryRetention = registerDirectSiteRunRoutes(app, RUNTIME_DATA_DIR, requireLocalDaemonRequest, db, PROJECT_ROOT, directWarmWorker);
   const claudeLogin = registerClaudeSignInRoutes(app, requireLocalDaemonRequest,
     () => agentCliEnvForAgent(readAppConfigSync(RUNTIME_DATA_DIR).agentCliEnv, 'claude'), () => pixflowBridgeSiteInfo()?.key ?? '', RUNTIME_DATA_DIR,
     () => pixflowBridgeSiteInfo()?.origin ?? '');
@@ -10897,7 +10907,12 @@ export async function startServer({
     StockImageRequestError,
     testUnsplashConnection,
   };
-  const appConfigDeps = { readAppConfig, writeAppConfig };
+  const writeRuntimeConfig: typeof writeAppConfig = async (...args) => {
+    const config = await writeAppConfig(...args);
+    if (args[0] === RUNTIME_DATA_DIR) selectWarmWorker(config);
+    return config;
+  };
+  const appConfigDeps = { readAppConfig, writeAppConfig: writeRuntimeConfig };
   const orbitDeps = { orbitService };
   const nativeDialogDeps = { openNativeFolderDialog };
   const researchDeps = { searchResearch, researchStatus, ResearchError };
@@ -15345,6 +15360,7 @@ export async function startServer({
     }
     try {
       const config = await writeAppConfig(RUNTIME_DATA_DIR, req.body);
+      selectWarmWorker(config);
       orbitService.configure(config.orbit);
       res.json({ config });
     } catch (err) {
@@ -20798,6 +20814,7 @@ export async function startServer({
   return await new Promise((resolve, reject) => {
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
+      directWarmWorker.select();
       stopDirectHistoryRetention();
       claudeLogin.stop();
       composioConnectorProvider.stopCatalogRefreshLoop();

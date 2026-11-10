@@ -11,7 +11,7 @@ import { TranslatedText } from '../i18n/TranslatedText';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { activityAction, liveActivityLabel, completedActivityLabel } from './chat/activity-label';
 import type { ActivityIconKind } from './chat/ActivityIcon';
-import { Fragment, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ToolCard } from "./ToolCard";
 import { FileOpsSummary } from "./FileOpsSummary";
 import {
@@ -662,7 +662,12 @@ function AssistantMessageImpl({
   // flips to "Working". The elapsed clock stays anchored to the persisted run
   // start so switching project tabs or remounting the message cannot restart it.
   const hasContent = blocks.some((b) => b.kind !== "status") || fileOps.length > 0;
-  const preparing = streaming && !hasContent && !message.events?.some(event => event.kind === 'steering_message');
+  const working = hasContent || Boolean(message.content?.trim()) || Boolean(message.events?.some(event => event.kind === 'steering_message'));
+  const workedTurn = useRef<string | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (streaming && working) workedTurn.current = message.id;
+  }, [message.id, streaming, working]);
+  const preparing = streaming && !working && workedTurn.current !== message.id;
   const voiceStatus = [...events].reverse().find(event => event.kind === 'status' && event.code === 'voice_connection');
   const isVoiceMessage = !!voiceStatus || message.agentName === 'Codex Voice'
     || events.some(event => event.kind === 'voice_transcript');

@@ -12,7 +12,7 @@ let recent: Entry[] = [];
 export function supportTimeline() { return recent.slice(); }
 export function persistBrowserEvent(area: string, event: string, http = 0, operation?: Operation, file?: string, line?: number) {
   if (!getPixflowWordPressConfig()?.restNonce) return;
-  void pixflowWordPressRestFetch('/diagnostics/event', { method: 'POST', keepalive: true,
+  void pixflowWordPressRestFetch('/diagnostics/event', { method: 'POST', priority: 'low', keepalive: true,
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ area, event, http, operation, file, line }),
   }).catch(() => {});
 }

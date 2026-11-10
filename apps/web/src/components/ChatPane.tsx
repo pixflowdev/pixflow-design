@@ -756,7 +756,7 @@ export function ChatPane({
   compactComposer = false,
   codexVoiceEnabled = false,
   codexVoiceStartRequested,
-  bottomAligned = false,
+  bottomAligned = true,
   designSystemPicker,
   config,
   projectResolvedDir,
@@ -1621,7 +1621,6 @@ export function ChatPane({
       commentAttachments={commentsToAttachments(attachedComments)}
       onRemoveCommentAttachment={onDetachComment}
       onSend={async (prompt, attachments, commentAttachments, meta): Promise<SharedChatSendOutcome> => {
-        pinnedToBottomRef.current = true;
         scrolledToFormRef.current = new Set();
         if (editingQueuedSendId && onUpdateQueuedSend) {
           const original = queuedItems.find((item) => item.id === editingQueuedSendId);

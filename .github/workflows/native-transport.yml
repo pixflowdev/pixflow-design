@@ -10,6 +10,10 @@ on:
       - 'apps/daemon/src/runtimes/claude-sign-in.ts'
       - 'apps/daemon/src/routes/claude-sign-in.ts'
       - 'apps/daemon/src/cli.ts'
+      - 'apps/daemon/src/grok-events.ts'
+      - 'apps/daemon/src/runtimes/*grok*'
+      - 'apps/daemon/src/runtimes/defs/grok-build.ts'
+      - 'apps/daemon/tests/*grok*'
       - 'apps/daemon/tests/runtimes/claude-sign-in.test.ts'
       - 'apps/daemon/tests/routes/claude-sign-in.test.ts'
       - 'apps/daemon/tests/claude-sign-in-cli.test.ts'
@@ -33,7 +37,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6.0.2
@@ -56,6 +60,11 @@ jobs:
         run: |
           pnpm --filter @open-design/daemon exec vitest run tests/runtimes/claude-sign-in.test.ts tests/routes/claude-sign-in.test.ts tests/claude-sign-in-cli.test.ts
           pnpm --filter @open-design/web exec vitest run tests/components/ClaudeSignIn.test.tsx tests/components/SettingsDialog.provider-sync.test.tsx tests/pixflow/bridge-request-connectivity.test.ts
+      - name: Grok discovery, native streams and read-only account usage
+        run: |
+          pnpm --filter @open-design/platform test
+          pnpm --filter @open-design/daemon test grok mocks-golden tests/runtimes/executables.test.ts tests/runtimes/agent-args.test.ts tests/pixflow/direct-site-run.test.ts
+          pnpm --filter @open-design/web test CodexUsage CodexUsageIndicator tests/pixflow/direct-site.test.tsx
       - name: Installer payload and production authorization boundary
         run: |
           pnpm --dir tools/pack exec vitest run tests/native-transport.test.ts tests/resources.test.ts -t 'native|Windows|copyBundled'

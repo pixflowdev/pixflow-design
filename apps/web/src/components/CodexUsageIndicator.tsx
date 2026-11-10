@@ -2,12 +2,12 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@open-design/components';
 import { useI18n } from '../i18n';
-import { CodexUsageDetails, useCodexUsage } from './CodexUsage';
+import { CodexUsageDetails, useCodexUsage, usageProviderName } from './CodexUsage';
 import { workspacePortalThemeStyle } from './workspacePortalTarget';
 import styles from './CodexUsageIndicator.module.css';
 
 /** The most constrained reported allowance drives the ring; every window remains visible in details. */
-export function CodexUsageIndicator({ zIndex = 1000, provider = 'codex', model = '' }: { zIndex?: number; provider?: 'codex' | 'claude'; model?: string }) {
+export function CodexUsageIndicator({ zIndex = 1000, provider = 'codex', model = '' }: { zIndex?: number; provider?: import('@open-design/contracts').AccountUsageProvider; model?: string }) {
   const state = useCodexUsage(provider, model);
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -64,7 +64,7 @@ export function CodexUsageIndicator({ zIndex = 1000, provider = 'codex', model =
   const target = visible ? document.body : null;
   return <>
     <Button ref={trigger} variant="ghost" size="icon" className={styles.trigger}
-      aria-label={`${t('settings.codexUsage').replace('Codex', provider === 'claude' ? 'Claude' : 'Codex')}: ${summary}`} aria-haspopup="dialog" aria-expanded={open}
+      aria-label={`${t('settings.codexUsage').replace('Codex', usageProviderName(provider))}: ${summary}`} aria-haspopup="dialog" aria-expanded={open}
       aria-controls={open ? id : undefined} aria-describedby={!open && hover ? id : undefined}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)} onBlur={() => setHover(false)}
@@ -76,12 +76,12 @@ export function CodexUsageIndicator({ zIndex = 1000, provider = 'codex', model =
       </svg>
     </Button>
     {target ? createPortal(<div className="pixflow-design-portal-scope">
-      <div ref={panel} id={id} role={open ? 'dialog' : 'tooltip'} aria-label={open ? t('settings.codexUsage').replace('Codex', provider === 'claude' ? 'Claude' : 'Codex') : undefined}
+      <div ref={panel} id={id} role={open ? 'dialog' : 'tooltip'} aria-label={open ? t('settings.codexUsage').replace('Codex', usageProviderName(provider)) : undefined}
       className={`${styles.panel}${open ? '' : ` ${styles.tooltip}`}`} style={{ ...position, color: open ? 'var(--text)' : 'var(--text-strong)' }}>
       {open ? <CodexUsageDetails state={state} /> : <div className={styles.preview}>
-        <strong>{t('settings.codexUsage').replace('Codex', provider === 'claude' ? 'Claude' : 'Codex')}</strong>
+        <strong>{t('settings.codexUsage').replace('Codex', usageProviderName(provider))}</strong>
         {windows.length ? windows.map((window, index) => <div key={index}>
-          <span>{window.bucket !== 'codex' && window.bucket !== 'claude' ? `${window.bucket} · ` : ''}{new Intl.NumberFormat(locale, { style: 'unit', unit: window.durationMinutes % 1440 === 0 ? 'day' : window.durationMinutes % 60 === 0 ? 'hour' : 'minute', unitDisplay: 'long' }).format(window.durationMinutes / (window.durationMinutes % 1440 === 0 ? 1440 : window.durationMinutes % 60 === 0 ? 60 : 1))}</span>
+          <span>{window.bucket !== 'codex' && window.bucket !== 'claude' && window.bucket !== 'grok-build' ? `${window.bucket} · ` : ''}{new Intl.NumberFormat(locale, { style: 'unit', unit: window.durationMinutes % 1440 === 0 ? 'day' : window.durationMinutes % 60 === 0 ? 'hour' : 'minute', unitDisplay: 'long' }).format(window.durationMinutes / (window.durationMinutes % 1440 === 0 ? 1440 : window.durationMinutes % 60 === 0 ? 60 : 1))}</span>
           <span>{t('settings.usageRemaining', { value: percent(window.remainingPercent) })}</span>
           {window.resetsAt ? <small>{t('settings.usageResets', { value: new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(window.resetsAt * 1000) })}</small> : null}
         </div>) : <span>{summary}</span>}

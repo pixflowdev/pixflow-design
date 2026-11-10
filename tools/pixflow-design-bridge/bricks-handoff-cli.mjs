@@ -7095,7 +7095,7 @@ function buildPixflowStageBBricksFontFallbackValue(families) {
     return '';
   }
   return uniqueStrings(cleaned)
-    .map((family) => /[\s,]/.test(family) && !isStageBSystemFontFamily(family) ? `"${family.replace(/"/g, '\\"')}"` : family)
+    .map((family) => /[\s,]/.test(family) ? `"${family.replace(/"/g, '\\"')}"` : family)
     .join(', ');
 }
 
@@ -32861,6 +32861,20 @@ function runnerEventToBridgeSemanticEvents(event, state = createBridgeRunnerPars
         });
         return records;
       }
+    }
+
+    if ((eventType === 'item.started' || eventType === 'item.completed') && firstString(item.id)
+      && (item.type === 'image_generation' || item.type === 'image_generation_call')) {
+      if (!state.codexToolUses.has(item.id)) {
+        state.codexToolUses.add(item.id);
+        state.toolUseCount += 1;
+        records.push({ type: 'tool_use', id: item.id, name: 'codex.imagegen', input: { startedAtMs: Date.now() } });
+      }
+      if (eventType === 'item.completed') {
+        records.push({ type: 'tool_result', toolUseId: item.id, isError: item.status === 'failed',
+          content: firstString(item.saved_path, item.status, 'completed') });
+      }
+      return records;
     }
 
     if ((eventType === 'item.started' || eventType === 'item.completed') && item.type === 'command_execution' && firstString(item.id)) {

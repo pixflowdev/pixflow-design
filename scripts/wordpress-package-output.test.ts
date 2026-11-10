@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { wordpressPackageVersion, writeWordPressPackageOutputs } from './wordpress-package-output.ts';
 
 test('version comes from the plugin header and supports hotfix/prerelease versions', () => {
-  for (const version of ['2.0.4', '2.0.5', '2.0.4.1', '2.1.0-rc.3']) {
+  for (const version of ['2.0.4', '2.0.5', '2.0.4.1', '2.1.0-rc.3', '2.1.0']) {
     assert.equal(wordpressPackageVersion(`<?php\n/**\n * Version: ${version}\r\n */\n`), version);
   }
   for (const entry of ['', '* Version: ../outside', '* Version: 2.0.4/extra', '* Version: 2.0']) {

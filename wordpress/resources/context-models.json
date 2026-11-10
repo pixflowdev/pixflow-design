@@ -1,0 +1,8 @@
+{
+  "reviewed": "2026-10-21",
+  "sources": ["https://developers.openai.com/api/docs/models", "https://developers.openai.com/api/docs/models/gpt-4.1-mini"],
+  "openai": {"gpt-6-astra":1050000,"gpt-6.1-sol":1050000,"gpt-6-sol":1050000,"gpt-6-luna":1050000,"gpt-4.1-mini":1047576},
+  "maxWorkingTokens":64000,
+  "fallbackBytes":48000,
+  "bytesPerEstimatedToken":3
+}

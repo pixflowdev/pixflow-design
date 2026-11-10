@@ -17,34 +17,42 @@ export async function authorizeWorkspaceBuilderSession(raw: string | undefined, 
   const value = await response.json() as PixflowDirectSiteAuthorization;
   const bound = value.workspaceSource;
   if (!value.identity?.siteId || !Number.isInteger(value.identity.userId) || value.identity.userId! <= 0 || !Number.isInteger(value.identity.blogId) || value.identity.blogId! <= 0 || !bound || bound.projectId !== source.projectId || bound.conversationId !== source.conversationId || !bound.requestId || value.editorTarget) throw new Error('The Workspace connection belongs to a different chat.');
-  return { endpoint: endpoint.href, token: session.token, expiresAt: session.expiresAt, writable: value.writable === true, workspaceSource: bound };
+  return { endpoint: endpoint.href, token: session.token, expiresAt: session.expiresAt, writable: value.writable === true, workspaceSource: bound,
+    ...(typeof value.siteTitle === 'string' ? { siteTitle: value.siteTitle.slice(0, 512) } : {}) };
 }
 
 /** Generated compatibility helper. Its private neighbour is outside project exports and file synchronization. */
+const workspaceTools = ['builder.destinations', 'builder.handoff', 'builder.handoff.status'];
 export const workspaceBuilderHelperSource = `import fs from 'node:fs/promises';
-const allowed = new Set(['builder.destinations','builder.handoff','builder.handoff.status']);
+const allowed = new Set(${JSON.stringify(workspaceTools)});
+let dispatchedHandoff = false;
 try {
   const [tool, input, ...extra] = process.argv.slice(2);
   if (!allowed.has(tool) || extra.length) throw new Error('Use builder.destinations, builder.handoff or builder.handoff.status with an optional @arguments.json file.');
   const args = input ? JSON.parse(input.startsWith('@') ? await fs.readFile(input.slice(1), 'utf8') : input) : {};
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Tool arguments must be a JSON object.');
   const connection = JSON.parse(await fs.readFile(new URL('./connection.json', import.meta.url), 'utf8'));
+  dispatchedHandoff = tool === 'builder.handoff';
   const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
   const value = await response.json();
   if (!response.ok) throw new Error(value.message || 'The builder request was rejected.');
   console.log(JSON.stringify(value));
-} catch { console.log(JSON.stringify({ok:false,error:'The builder request could not be confirmed. Read builder.handoff.status before retrying; do not create a second request.'})); process.exitCode=1; }
+} catch { console.log(JSON.stringify({ok:false,error:dispatchedHandoff ? 'The builder request could not be confirmed. Read builder.handoff.status before retrying; do not create a second request.' : 'Discovery failed. Run this helper with help for the allowed commands. No handoff was dispatched.'})); process.exitCode=1; }
 `;
 
-export async function stageWorkspaceBuilderHelper(root: string, session: PixflowDirectSiteSession): Promise<{ prompt: string; cleanup: () => Promise<void> }> {
+export async function stageWorkspaceBuilderHelper(root: string, session: PixflowDirectSiteSession): Promise<{ prompt: string; discovery: string; cleanup: () => Promise<void> }> {
   const directory = path.resolve(root, 'workspace-builder-sessions');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const runDirectory = await mkdtemp(path.join(directory, 'run-'));
   const helper = path.join(runDirectory, 'builder-tool.mjs');
+  // Only public discovery data enters the child environment. Operations still
+  // go through the allowlisted helper and WordPress's per-request checks.
+  const discovery = JSON.stringify({ scope: 'workspace', siteOrigin: new URL(session.endpoint).origin,
+    siteTitle: session.siteTitle ?? null, helper, tools: workspaceTools });
   const cleanup = async () => { await rm(runDirectory, { recursive: true, force: true }); await revokeDirectSession(session); };
   try {
     await writeFile(path.join(runDirectory, 'connection.json'), JSON.stringify({ endpoint: session.endpoint, token: session.token }), { mode: 0o600 });
-    await writeFile(helper, workspaceBuilderHelperSource, { mode: 0o600 });
+    await writeFile(helper, `const workspace = ${discovery};\nif (['context','help','--help','-h'].includes(process.argv[2]) && process.argv.length === 3) { console.log(JSON.stringify(workspace)); process.exit(0); }\n` + workspaceBuilderHelperSource, { mode: 0o600 });
   } catch (error) { await cleanup(); throw error; }
-  return { cleanup, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\nWorkspace builder tools are available through node ${JSON.stringify(helper)} TOOL '@arguments.json'. The supported tools are builder.destinations, builder.handoff and builder.handoff.status. Write JSON arguments to a file in your current workspace; quote @file in PowerShell. builder.destinations accepts {builder?:"gutenberg"|"bricks"|"etch"|"elementor",search?:string}; omit arguments to list available editors and pages. builder.handoff accepts {action:"create"|"open",builder:"gutenberg"|"bricks"|"etch"|"elementor",title?:string,postId?:number,brief:string,assets?:[{projectId:string,path:string,name:string,mime?:string}]}; create uses title, open uses postId. builder.handoff.status takes {}. The source chat and stable request identity are supplied by WordPress; never set or change them in tool arguments. Credentials are private helper transport; never read, echo, copy or include connection.json in project files. The helper returns the durable handoff receipt; Pixflow opens the selected live editor. Do not launch a second editor yourself. Current source request: ${session.workspaceSource?.requestId}.` };
+  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\nFor the connected site title and origin use the read-only command node ${JSON.stringify(helper)} context. It returns metadata verified by WordPress for this turn. For tool discovery use the same helper with help. No separate pairing or credential lookup is needed.\n\nWorkspace builder tools are available through node ${JSON.stringify(helper)} TOOL '@arguments.json'. The supported tools are builder.destinations, builder.handoff and builder.handoff.status. Write JSON arguments to a file in your current workspace; quote @file in PowerShell. builder.destinations accepts {builder?:"gutenberg"|"bricks"|"etch"|"elementor",search?:string}; omit arguments to list available editors and pages. builder.handoff accepts {action:"create"|"open",builder:"gutenberg"|"bricks"|"etch"|"elementor",title?:string,postId?:number,brief:string,assets?:[{projectId:string,path:string,name:string,mime?:string}]}; create uses title, open uses postId. builder.handoff.status takes {}. The source chat and stable request identity are supplied by WordPress; never set or change them in tool arguments. Credentials are private helper transport; never read, echo, copy or include connection.json in project files. The helper returns the durable handoff receipt; Pixflow opens the selected live editor. Do not launch a second editor yourself. Current source request: ${session.workspaceSource?.requestId}.` };
 }

@@ -177,7 +177,12 @@ final class LicenseCache
     /** Opaque server-only snapshot taken before a remote validation request. */
     public function snapshot(): array
     {
-        return $this->read();
+        // Migrate a legacy record first, then compare the actual stored bytes.
+        // Scope filtering belongs to readers; hiding a foreign record here
+        // would make explicit activation on a copied site impossible.
+        $this->read();
+        $stored = get_option(self::OPTION_KEY, []);
+        return is_array($stored) ? $stored : [];
     }
 
     /** Compare database bytes, not a possibly stale per-request option cache. */
@@ -189,14 +194,14 @@ final class LicenseCache
                 "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND BINARY option_value = BINARY %s",
                 maybe_serialize($replacement), self::OPTION_KEY, maybe_serialize($expected)
             ));
-            if ($changed === 1) {
-                wp_cache_delete(self::OPTION_KEY, 'options');
-                wp_cache_delete('alloptions', 'options');
-                return true;
-            }
+            // A rejected write also proves the request's cached snapshot may
+            // be stale. Subsequent reads must see the winning reset/activation.
+            wp_cache_delete(self::OPTION_KEY, 'options');
+            wp_cache_delete('alloptions', 'options');
+            if ($changed === 1) return true;
             return $expected === [] && $changed !== false && add_option(self::OPTION_KEY, $replacement, '', false);
         }
-        if ($this->read() !== $expected) return false;
+        if ($this->snapshot() !== $expected) return false;
         return update_option(self::OPTION_KEY, $replacement, false);
     }
 
@@ -204,7 +209,9 @@ final class LicenseCache
     {
         $cache = get_option(self::OPTION_KEY, []);
         if (is_array($cache) && $cache !== []) {
-            return $cache;
+            // A reset tombstone has no credential or site identity, but must
+            // remain visible to compare-and-swap after a first activation.
+            return isset($cache['reset_marker']) || $this->belongs_to_current_site($cache) ? $cache : [];
         }
 
         // Pixflow-owned: migrate the old Pixflow AI cache lazily so existing
@@ -216,7 +223,7 @@ final class LicenseCache
         }
 
         $legacy = get_option(self::LEGACY_OPTION_KEY, []);
-        if (is_array($legacy) && $legacy !== []) {
+        if (is_array($legacy) && $legacy !== [] && $this->belongs_to_current_site($legacy)) {
             update_option(self::OPTION_KEY, $legacy, false);
             delete_option(self::LEGACY_OPTION_KEY);
             update_option(self::LEGACY_MIGRATION_OPTION_KEY, gmdate('c'), false);
@@ -224,6 +231,12 @@ final class LicenseCache
         }
 
         return [];
+    }
+
+    private function belongs_to_current_site(array $cache): bool
+    {
+        $identity = new SiteIdentity();
+        return hash_equals($identity->fingerprint($identity->current_payload()), (string) ($cache['site_fingerprint'] ?? ''));
     }
 
     private function is_expired(array $cache): bool

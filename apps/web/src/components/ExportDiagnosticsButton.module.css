@@ -1,0 +1,43 @@
+:global(.settings-about-diagnostics):has(> .exportRow) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.exportRow {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.exportRow > button { justify-self: start; }
+.exportRow .deviceOption > label { display: block; margin: 0; color: var(--text); cursor: pointer; }
+.deviceOption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.deviceOption .switchControl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: none;
+  box-sizing: border-box;
+  width: 34px;
+  height: 20px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+}
+.deviceOption .switchControl[data-checked] { background: var(--accent); }
+.switchControl:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.switchControl:disabled { opacity: .55; cursor: default; }
+.thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-on-accent, white); }
+.switchControl[data-checked] .thumb { transform: translateX(14px); }
+[dir=rtl] .switchControl[data-checked] .thumb { transform: translateX(-14px); }

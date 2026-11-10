@@ -9,6 +9,7 @@ import type { AgentInfo, AppConfig, ExecMode } from '../../src/types';
 
 vi.mock('../../src/i18n', () => ({
   useT: () => (key: string) => key,
+  useI18n: () => ({ locale: 'en', t: (key: string) => key }),
 }));
 
 const codexAgent: AgentInfo = {
@@ -400,4 +401,38 @@ it('carries theme tokens into the nested model picker and keeps its parent open'
   fireEvent.keyDown(popup, { key:'Escape' });
   expect(screen.queryByTestId('avatar-model-popover')).toBeNull();
   expect(screen.queryByRole('dialog', { name:'avatar.title' })).not.toBeNull();
+});
+
+it('shows connection recovery guidance and clears it after successful discovery', async () => {
+  const {beginProviderDiscovery}=await import('../../src/pixflow/provider-discovery-state');
+  renderMenu();openMenu();
+  act(()=>{beginProviderDiscovery(true)(false,'Check Bridge status and rescan Local CLI.');});
+  expect(screen.getByRole('alert').textContent).toContain('Check Bridge status');
+  act(()=>{beginProviderDiscovery(true)(true);});
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+it('updates a single quiet route label and removes it on disconnect', () => {
+  renderMenu(); const menu=openMenu();
+  for (const route of ['direct','chrome-extension']) {
+    act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'connected',running:true,connectionRoute:route}})));
+    expect(within(menu).getByText(route==='direct'?'bridge.connectedDirect':'bridge.connectedExtension')).toBeTruthy();
+  }
+  act(()=>window.dispatchEvent(new CustomEvent('pixflow-design:bridge-status',{detail:{state:'missing',running:false}})));
+  expect(within(menu).queryByText('bridge.connectedExtension')).toBeNull();
+  cleanup();
+});
+
+it('shows only release numbers from CLI version banners', () => {
+  renderMenu({ agents: [
+    {...codexAgent, version: 'codex-cli 0.167.0-alpha.32'},
+    {...claudeAgent, version: '2.1.309 (Claude Code)'},
+    {...codexAgent, id: 'grok', name: 'Grok Build', version: 'grok 1.0.77 (50ca579fa996) [stable]'},
+  ] });
+  fireEvent.click(screen.getByRole('button', {name: 'avatar.title'}));
+  const menu = screen.getByRole('dialog', {name: 'avatar.title'});
+  expect(within(menu).getByText('2.1.309')).toBeTruthy();
+  expect(within(menu).getByText('1.0.77')).toBeTruthy();
+  expect(menu.textContent).toContain('0.167.0');
+  expect(menu.textContent).not.toMatch(/alpha|codex-cli|\(Claude Code\)|50ca579fa996|\[stable\]/);
 });

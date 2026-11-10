@@ -12,6 +12,21 @@ vi.mock('../../src/providers/provider-models', () => ({
   fetchProviderModels: vi.fn(),
 }));
 
+vi.mock('../../src/pixflow/wordpress-context', () => ({ hasPixflowWordPressContext: () => true }));
+
+describe('WordPress shared execution selection', () => {
+  afterEach(cleanup);
+  it('selects Local CLI before discovery has populated the shared inventory', () => {
+    const { onModeChange, onOpenSettings } = renderSwitcher({ mode: 'api', agentId: 'codex' }, []);
+    fireEvent.click(screen.getByTestId('inline-model-switcher-chip'));
+    const tab = screen.getByTestId('inline-model-switcher-mode-daemon') as HTMLButtonElement;
+    expect(tab.disabled).toBe(false);
+    fireEvent.click(tab);
+    expect(onModeChange).toHaveBeenCalledWith('daemon');
+    expect(onOpenSettings).not.toHaveBeenCalled();
+  });
+});
+
 const baseConfig: AppConfig = {
   mode: 'daemon',
   apiKey: '',

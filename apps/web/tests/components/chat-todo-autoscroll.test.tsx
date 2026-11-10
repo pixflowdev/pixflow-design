@@ -289,7 +289,7 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     await flushFrames();
 
     expect(document.querySelector('.chat-pinned-todo')).toBeNull();
-    expect(document.querySelector('.chat-log .op-card.op-todo')).not.toBeNull();
+    expect(document.querySelector('.chat-log [data-trace-kind="plan"]')).not.toBeNull();
     expect(screen.queryAllByText('Task 1').length).toBeGreaterThan(0);
   });
 
@@ -297,7 +297,7 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     render(chatPaneEl(messagesWithTwoTodoSnapshots()));
     await flushFrames();
 
-    expect(document.querySelectorAll('.chat-log .op-card.op-todo')).toHaveLength(1);
+    expect(document.querySelectorAll('.chat-log [data-trace-kind="plan"]')).toHaveLength(1);
     expect(screen.queryAllByText('Task 2 updated').length).toBeGreaterThan(0);
   });
 
@@ -305,7 +305,7 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     render(chatPaneEl(messagesWithTodoThenDone()));
     await flushFrames();
 
-    const todoCard = document.querySelector('.chat-log .op-card.op-todo');
+    const todoCard = document.querySelector('.chat-log [data-trace-kind="plan"]');
     expect(todoCard).not.toBeNull();
     const assistantMessages = document.querySelectorAll('.chat-log .msg.assistant');
     expect(assistantMessages).toHaveLength(2);
@@ -321,7 +321,7 @@ describe('chat-log autoscroll when inline todo card grows', () => {
 
     const before = screen.getByText('Before todo.');
     const after = screen.getByText('After todo.');
-    const todoCard = document.querySelector('.chat-log .op-card.op-todo');
+    const todoCard = document.querySelector('.chat-log [data-trace-kind="plan"]');
     expect(todoCard).not.toBeNull();
 
     expect(before.compareDocumentPosition(todoCard!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -334,7 +334,7 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     await flushFrames();
 
     expect(document.querySelector('[data-testid="chat-virtual-spacer"]')).not.toBeNull();
-    expect(document.querySelectorAll('.chat-log .op-card.op-todo')).toHaveLength(1);
+    expect(document.querySelectorAll('.chat-log [data-trace-kind="plan"]')).toHaveLength(1);
     expect(screen.queryAllByText('Task 1').length).toBeGreaterThan(0);
   });
 

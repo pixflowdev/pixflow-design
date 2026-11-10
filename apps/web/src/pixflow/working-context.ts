@@ -1,15 +1,17 @@
 import type { PixflowWorkingContextRequest, PixflowWorkingContextResponse, PixflowWorkingRunContextRequest, PixflowWorkingRunContextResponse } from '@open-design/contracts';
 import type { AppConfig } from '../types';
-import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
+import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type ChatHistoryPage, type HistoryMessage } from './chat-history-client';
 import { pixflowWordPressRestFetch } from './runtime-fetch';
 import { steeringPromptHistory } from './steering-messages';
 
 export interface WorkingContextSource {
   binding?: ChatHistoryBinding;
   sessionKey?: string;
+  checkSavedPageFirst?: boolean;
   /** Previous persisted rows only: excludes this request and its assistant placeholder. */
   messages: Array<HistoryMessage & { events?: unknown[] }>;
 }
+export type SavedHistoryPage = ChatHistoryPage<WorkingContextSource['messages'][number]>;
 export interface PreparedHistory {
   binding: ChatHistoryBinding;
   throughMessageId: string;
@@ -18,12 +20,26 @@ export interface PreparedHistory {
 
 export const workingContextBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 
+/** Count summarizable run history, without static instructions or opaque provider payloads. */
+export function workingRunContextBytes(state: { messages: unknown[]; turns: unknown[]; results: unknown[] }): number {
+  const turns = state.turns.filter(turn => !turn || typeof turn !== 'object' || !['system', 'developer'].includes(String((turn as { role?: string }).role)));
+  const existing = new Set(turns.map(turn => JSON.stringify(turn)));
+  const messages = state.messages.filter(message => !existing.has(JSON.stringify(message)));
+  const serialized = JSON.stringify({ messages, turns, results: state.results }, (key, value) => {
+    if (['encrypted_content', 'thoughtSignature', 'signature', 'reasoning_content', 'base64', 'inlineData'].includes(key)) return undefined;
+    if (value && typeof value === 'object' && (['thinking', 'redacted_thinking', 'reasoning', 'image', 'input_image', 'image_url'].includes(value.type) || value.thought)) return undefined;
+    return value;
+  });
+  return new TextEncoder().encode(serialized).length;
+}
+
 export async function compactWorkingRun(binding: ChatHistoryBinding, config: AppConfig,
   state: Pick<PixflowWorkingRunContextRequest, 'messages' | 'turns' | 'results' | 'calls' | 'inFlight'>, signal: AbortSignal): Promise<PixflowWorkingRunContextResponse> {
   signal.throwIfAborted();
   if (state.calls.length || state.inFlight) return { status: 'fallback', reason: 'unfinished_tools' };
   const owner = chatHistoryOwnerScope();
   const request: PixflowWorkingRunContextRequest = { ...state,
+    maxTokens: config.maxTokens,
     transport: config.apiTransport === 'composio' ? 'composio' : 'api',
     ...(config.apiTransport === 'composio' ? { provider: config.composioProvider, model: config.composioModel } : {
       apiProtocol: config.apiProtocol, baseUrl: config.baseUrl, apiKey: config.apiKey, apiVersion: config.apiVersion, model: config.model,
@@ -41,7 +57,7 @@ export async function compactWorkingRun(binding: ChatHistoryBinding, config: App
 }
 
 /** Read every saved page for execution; display pagination never limits model context. */
-export async function prepareHistorySource(source: WorkingContextSource, signal: AbortSignal): Promise<PreparedHistory> {
+export async function prepareHistorySource(source: WorkingContextSource, signal: AbortSignal, savedPage?: SavedHistoryPage, revisionChecked = false): Promise<PreparedHistory> {
   const owner = chatHistoryOwnerScope();
   const check = () => {
     signal.throwIfAborted();
@@ -50,6 +66,27 @@ export async function prepareHistorySource(source: WorkingContextSource, signal:
   check();
   const binding = source.binding || await resolveChatHistory({ sessionKey: source.sessionKey! });
   check();
+  if (revisionChecked && source.checkSavedPageFirst && savedPage) {
+    const throughMessageId = source.messages.at(-1)?.id;
+    if (!throughMessageId) throw new Error('The preceding chat message is unavailable. Reopen this conversation.');
+    return readPrefix(throughMessageId, savedPage);
+  }
+  // Reuse one complete server read when all local rows are already saved.
+  // Changed rows still go through the revision-checked writer below.
+  if (source.checkSavedPageFirst && source.messages.length > 0 && source.messages.length <= 50) {
+    const page = savedPage ?? await readChatHistory<WorkingContextSource['messages'][number]>(binding);
+    check();
+    const byId = new Map(page.messages.map(row => [row.id, row]));
+    if (!page.hasMore && byId.size === page.messages.length && page.messages.every(row => row.id)
+      && source.messages.every(row => {
+        const saved = byId.get(row.id);
+        return saved && historyMessageFingerprint(saved) === historyMessageFingerprint(row);
+      })) {
+      const throughMessageId = source.messages.at(-1)!.id!;
+      const end = page.messages.findIndex(row => row.id === throughMessageId);
+      return { binding, throughMessageId, messages: steeringPromptHistory(page.messages.slice(0, end + 1)) };
+    }
+  }
   // Insert-only import retains the original payload and never downgrades another tab.
   const imported = await importChatHistory(binding, source.messages);
   check();
@@ -66,25 +103,30 @@ export async function prepareHistorySource(source: WorkingContextSource, signal:
   }
   const throughMessageId = source.messages.at(-1)?.id || '';
   if (!throughMessageId) return { binding, throughMessageId, messages: [] };
-  let cursor: string | null | undefined;
-  const cursors = new Set<string>();
-  const identities = new Set<string>();
-  let messages: WorkingContextSource['messages'] = [];
-  do {
-    const page = await readChatHistory<WorkingContextSource['messages'][number]>(binding, cursor);
-    check();
-    for (const message of page.messages) {
-      if (!message.id || identities.has(message.id)) throw new Error('Chat history changed while loading. Please retry.');
-      identities.add(message.id);
-    }
-    messages = [...page.messages, ...messages];
-    if (page.hasMore && (!page.nextCursor || cursors.has(page.nextCursor))) throw new Error('Chat history could not be loaded completely. Please retry.');
-    if (page.nextCursor) cursors.add(page.nextCursor);
-    cursor = page.hasMore ? page.nextCursor : null;
-  } while (cursor);
-  const end = messages.findIndex(message => message.id === throughMessageId);
-  if (end < 0) throw new Error('The preceding chat message is not saved. Retry after chat history finishes saving.');
-  return { binding, throughMessageId, messages: steeringPromptHistory(messages.slice(0, end + 1)) };
+  return readPrefix(throughMessageId, undefined);
+
+  async function readPrefix(throughMessageId: string, firstPage: SavedHistoryPage | undefined): Promise<PreparedHistory> {
+    let cursor: string | null | undefined;
+    const cursors = new Set<string>();
+    const identities = new Set<string>();
+    let messages: WorkingContextSource['messages'] = [];
+    do {
+      const page = firstPage ?? await readChatHistory<WorkingContextSource['messages'][number]>(binding, cursor, 100);
+      firstPage = undefined;
+      check();
+      for (const message of page.messages) {
+        if (!message.id || identities.has(message.id)) throw new Error('Chat history changed while loading. Please retry.');
+        identities.add(message.id);
+      }
+      messages = [...page.messages, ...messages];
+      if (page.hasMore && (!page.nextCursor || cursors.has(page.nextCursor))) throw new Error('Chat history could not be loaded completely. Please retry.');
+      if (page.nextCursor) cursors.add(page.nextCursor);
+      cursor = page.hasMore ? page.nextCursor : null;
+    } while (cursor);
+    const end = messages.findIndex(message => message.id === throughMessageId);
+    if (end < 0) throw new Error('The preceding chat message is not saved. Retry after chat history finishes saving.');
+    return { binding, throughMessageId, messages: steeringPromptHistory(messages.slice(0, end + 1)) };
+  }
 }
 
 /** Prepare is disposable; only a still-active caller may commit a validated summary. */
@@ -104,6 +146,7 @@ export async function compactWorkingContext(history: PreparedHistory, config: Ap
     return value as PixflowWorkingContextResponse;
   };
   const request: PixflowWorkingContextRequest = {
+    maxTokens: config.maxTokens,
     transport: config.apiTransport === 'composio' ? 'composio' : 'api', throughMessageId: history.throughMessageId,
     ...(config.apiTransport === 'composio' ? { provider: config.composioProvider, model: config.composioModel } : {
       apiProtocol: config.apiProtocol, baseUrl: config.baseUrl, apiKey: config.apiKey, apiVersion: config.apiVersion, model: config.model,

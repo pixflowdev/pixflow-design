@@ -18,6 +18,7 @@ declare global {
 }
 
 export type PixflowDesignWordPressConfig = {
+  workspaceAvailable?: boolean;
   ajaxUrl?: string;
   apiBaseUrl?: string;
   appAssetBaseUrl?: string;

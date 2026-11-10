@@ -71,3 +71,9 @@ export function SitemapView(props: React.ComponentProps<Contribution['SitemapVie
   const Component = pixflowFeatureEnabled('planning') && renderer()?.SitemapView;
   return Component ? <Component {...props} /> : pixflowFeatureEnabled('planning') ? <FeatureContributionLoading {...status} /> : null;
 }
+
+export function EnhancedDesignGuidance(props: { enabled?: boolean; surface?: import('@open-design/contracts').PixflowSurface }) {
+  usePixflowFeatureAsset('pixflow-planning');
+  const Component = pixflowFeatureEnabled('planning') && renderer()?.EnhancedDesignGuidance;
+  return Component ? <Component {...props} /> : null;
+}

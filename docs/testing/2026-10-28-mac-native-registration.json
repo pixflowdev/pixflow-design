@@ -1,0 +1,44 @@
+{
+  "source": "af03030dd5c714f61a2b6d03dc9a43224a813603",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "durationMs": 14,
+  "status": "PASS",
+  "checks": [
+    "exact Store identity",
+    "stdio manifest",
+    "launcher 0700",
+    "manifest 0600",
+    "persistent user copy outside source",
+    "repeat registration",
+    "damaged-copy repair",
+    "abandoned lock recovery",
+    "foreign live owner rejected",
+    "transient paths rejected",
+    "owned unregister",
+    "idempotent unregister",
+    "reinstall",
+    "synthetic data preserved",
+    "source payload unchanged"
+  ],
+  "sourcePayloadSha256": [
+    "eab07f6464ceabb0ce9f661785a5de1c23570f3237cd0f25fb1d7564e419d582",
+    "9e43de61915fc597e1b1cc2d73e747b785d02a4252292512555993f77184d478"
+  ],
+  "syntheticBeforeSha256": [
+    "b9ef6174d872d4122512cbd41bc88de1bad93045f35d5c132bb6d0c43cef8078",
+    "b1605a8f240a75bfe6d02285757f995b861567bf1503bb0224589ffb3d1d96b3",
+    "70277889d356acd416e60097dc91e1cc5e8ee98d8f6d36911bc36482e5f94c90"
+  ],
+  "syntheticAfterSha256": [
+    "b9ef6174d872d4122512cbd41bc88de1bad93045f35d5c132bb6d0c43cef8078",
+    "b1605a8f240a75bfe6d02285757f995b861567bf1503bb0224589ffb3d1d96b3",
+    "70277889d356acd416e60097dc91e1cc5e8ee98d8f6d36911bc36482e5f94c90"
+  ],
+  "limitations": [
+    "Explicit isolated home parameter; not real-user Chrome registration",
+    "Node runtime; not full installed Electron Bridge",
+    "No actual Chrome permission, reboot, or signed-bundle acceptance"
+  ]
+}

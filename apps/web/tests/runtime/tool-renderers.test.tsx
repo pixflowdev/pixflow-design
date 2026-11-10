@@ -1,4 +1,7 @@
+// @vitest-environment jsdom
 import { useState } from 'react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+afterEach(cleanup);
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -119,9 +122,9 @@ describe('ToolCard dispatch', () => {
     const markup = renderToStaticMarkup(
       <ToolCard use={use(input, name)} runStreaming={false} runSucceeded={true} />,
     );
-    expect(markup).toContain('op-web');
+    expect(markup).toContain('data-slot="trace-line"');
+    expect(markup).toContain(name === 'websearch' ? '>Search<' : '>Fetch<');
     expect(markup).toContain(detail);
-    expect(markup).not.toContain('op-generic');
   });
 
   it('routes unknown tool names through the registry', () => {
@@ -173,7 +176,7 @@ describe('ToolCard dispatch', () => {
     const markup = renderToStaticMarkup(
       <ToolCard use={use({ junk: true }, 'ask_user_question')} runStreaming={false} runSucceeded={true} />,
     );
-    expect(markup).toContain('op-generic');
+    expect(markup).toContain('data-trace-kind="tool"');
     expect(markup).toContain('AskUserQuestion');
   });
 
@@ -192,11 +195,12 @@ describe('ToolCard dispatch', () => {
 
   it('falls back to the built-in card when the registered renderer returns null', () => {
     registerToolRenderer('Bash', () => null);
-    const markup = renderToStaticMarkup(
+    const view = render(
       <ToolCard use={use({ command: 'ls' }, 'Bash')} runStreaming={true} />,
     );
-    expect(markup).toContain('op-bash');
-    expect(markup).toContain('ls');
+    fireEvent.click(screen.getByRole('button', { name: 'Terminal' }));
+    expect(view.container.querySelector('[data-slot="code-block"]')).toBeTruthy();
+    expect(view.container.textContent).toContain('ls');
   });
 
   it('lets a registered renderer override a built-in family card', () => {
@@ -207,7 +211,7 @@ describe('ToolCard dispatch', () => {
       <ToolCard use={use({ command: 'whoami' }, 'Bash')} runStreaming={true} />,
     );
     expect(markup).toContain('data-testid="custom-bash"');
-    expect(markup).not.toContain('op-bash');
+    expect(markup).not.toContain('data-trace-kind="terminal"');
   });
 
   it('mounts hookful renderer output as a child component, surviving replace + dispose', () => {
@@ -254,17 +258,18 @@ describe('ToolCard dispatch', () => {
     registerToolRenderer('Bash', () => {
       throw new Error('boom');
     });
-    const markup = renderToStaticMarkup(
+    const view = render(
       <ToolCard use={use({ command: 'ls' }, 'Bash')} runStreaming={true} />,
     );
-    expect(markup).toContain('op-bash');
-    expect(markup).toContain('ls');
+    fireEvent.click(screen.getByRole('button', { name: 'Terminal' }));
+    expect(view.container.querySelector('[data-slot="code-block"]')).toBeTruthy();
+    expect(view.container.textContent).toContain('ls');
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
 
   it('shows file edit error details alongside the target path', () => {
-    const markup = renderToStaticMarkup(
+    const view = render(
       <ToolCard
         use={use({ file_path: 'C:\\repo\\canvas2-nodes.jsx', old_string: 'a', new_string: 'b' }, 'Edit')}
         result={err('String to replace was not found in C:\\repo\\canvas2-nodes.jsx')}
@@ -272,7 +277,8 @@ describe('ToolCard dispatch', () => {
       />,
     );
 
-    expect(markup).toContain('C:\\repo\\canvas2-nodes.jsx');
-    expect(markup).toContain('String to replace was not found');
+    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    expect(view.container.textContent).toContain('C:\\repo\\canvas2-nodes.jsx');
+    expect(view.container.textContent).toContain('String to replace was not found');
   });
 });

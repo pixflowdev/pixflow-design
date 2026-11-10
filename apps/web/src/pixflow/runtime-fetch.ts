@@ -1,4 +1,5 @@
 import { toPixflowRuntimeUrl } from './bridge-url';
+import { observeLicenceRequest, responseFormat } from './support-timeline';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
 
 type PixflowDesignWordPressConfig = {
@@ -17,7 +18,7 @@ export function withWordPressNonce(init: RequestInit | undefined, url?: string):
     ? config.restBaseUrl.replace(/\/+$/, '')
     : '';
   const restRouteBaseUrl = typeof config?.restRouteBaseUrl === 'string'
-    ? config.restRouteBaseUrl.replace(/\/+$/, '')
+    ? config.restRouteBaseUrl
     : '';
   const queryTransportBaseUrl = restRouteBaseUrl || (restBaseUsesQueryTransport(restBaseUrl) ? restBaseUrl : '');
   if (
@@ -84,7 +85,7 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
     ? config.restBaseUrl.replace(/\/+$/, '')
     : '';
   const restRouteBaseUrl = typeof config?.restRouteBaseUrl === 'string'
-    ? config.restRouteBaseUrl.replace(/\/+$/, '')
+    ? config.restRouteBaseUrl
     : '';
 
   if (!hasPixflowWordPressContext() || !restBaseUrl) {
@@ -103,5 +104,5 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
   const url = useQueryRoute
     ? queryRouteUrl(queryTransportBaseUrl, cleanPath)
     : `${restBaseUrl}${cleanPath}`;
-  return fetch(url, withWordPressNonce(init, url));
+  return observeLicenceRequest(cleanPath, () => fetch(url, withWordPressNonce(init, url)), responseFormat);
 }

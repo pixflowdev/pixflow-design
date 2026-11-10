@@ -41,6 +41,7 @@ final class WpAdminGutenbergEditorBridge
         if (!$site_editor && (!$screen || $screen->base !== 'post' || !$screen->is_block_editor() || !$post)) return;
         if ($site_editor && !current_user_can('edit_theme_options')) return;
         if (!$site_editor) { try { self::require_post((int) $post->ID); } catch (\Throwable) { return; } }
+        \PixflowDesign\WordPress\Media\FitMedia::enqueue();
         wp_enqueue_script('pixflow-gutenberg-workspace-menu', PIXFLOW_DESIGN_ASSETS_URL . 'builder/workspace-menu.js', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'builder/workspace-menu.js'), true);
         wp_enqueue_style('pixflow-native-workspace', PIXFLOW_DESIGN_ASSETS_URL . 'builder/native-workspace.css', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'builder/native-workspace.css'));
         wp_enqueue_style('pixflow-gutenberg-editor', PIXFLOW_DESIGN_ASSETS_URL . 'app/pixflow-gutenberg-editor.css', [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . 'app/pixflow-gutenberg-editor.css'));

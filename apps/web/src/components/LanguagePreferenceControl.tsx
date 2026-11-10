@@ -1,3 +1,4 @@
+import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@open-design/components';
 import { applyLocalePreference, detectAutomaticLocale, LOCALES, LOCALE_LABEL, useI18n, type Locale } from '../i18n';
@@ -85,7 +86,7 @@ export function LanguagePreferenceControl() {
 
   return <div className={styles.control}>
     <div className={styles.row}>
-      <div className={styles.copy}><h3>{t('settings.language')}</h3><p>{t('settings.languageHint')}</p></div>
+      <div className={styles.copy}><h3>{t('settings.language')}<LanguageUpdateDot /></h3><p>{t('settings.languageHint')}</p></div>
       <CustomSelect value={selected}
         options={[{ value: 'auto', label: t(wordpress ? 'settings.languageWordPress' : 'settings.languageSystem') }, ...LOCALES.map((code) => ({ value: code, label: LOCALE_LABEL[code] }))]}
         ariaLabel={t('settings.language')} className={styles.select} triggerClassName={styles.trigger} menuClassName={styles.menu}

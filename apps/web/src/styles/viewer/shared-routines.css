@@ -783,7 +783,7 @@ html:not([data-theme]) .routines-project-select {
 }
 .app .msg-time {
   font-size: 10.5px;
-  color: var(--text-soft);
+  color: var(--text);
   font-weight: 500;
 }
 .app .msg.user .user-text {
@@ -798,7 +798,7 @@ html:not([data-theme]) .routines-project-select {
   box-shadow: none;
 }
 .app .msg.user .user-copy-btn {
-  color: var(--text-soft);
+  color: var(--text);
 }
 .app .msg.user .user-copy-btn:hover {
   background: var(--bg-subtle);
@@ -834,11 +834,12 @@ html:not([data-theme]) .routines-project-select {
   padding: 4px 0;
   gap: 6px;
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--text);
   opacity: 0;
   transition: opacity 150ms var(--ease-out);
 }
 .app .msg.assistant:hover .assistant-footer,
+.app .msg.assistant:focus-within .assistant-footer,
 .app .assistant-footer[data-streaming="true"],
 .app .assistant-footer[data-last="true"] { opacity: 1; }
 .app .assistant-footer .dot {
@@ -853,11 +854,11 @@ html:not([data-theme]) .routines-project-select {
 .app .assistant-footer .assistant-label {
   font-weight: 400;
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--text);
 }
 .app .assistant-footer .assistant-stats {
   font-size: 11.5px;
-  color: var(--text-muted);
+  color: var(--text);
 }
 .app .op-waiting {
   width: fit-content;

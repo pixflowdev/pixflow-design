@@ -80,7 +80,7 @@ export type PixflowProjectSyncConflict = {
 };
 
 export async function fetchPixflowSyncStatus(): Promise<PixflowSyncStatus> {
-  const health = await probePixflowOptionalBridge({ timeoutMs: 750 }).catch(() => null);
+  const health = await probePixflowOptionalBridge().catch(() => null);
   if (!health?.available) {
     return {
       ok: true,

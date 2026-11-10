@@ -1,0 +1,13 @@
+{
+  "status": "available",
+  "source": "cli",
+  "checkedAt": "2026-10-30T02:12:26.218Z",
+  "windows": [
+    {
+      "bucket": "codex",
+      "durationMinutes": 10080,
+      "remainingPercent": 11,
+      "resetsAt": 1793784989
+    }
+  ]
+}

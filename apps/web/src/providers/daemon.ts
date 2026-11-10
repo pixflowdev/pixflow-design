@@ -10,6 +10,7 @@
  *                 non-zero (tail appended to the error message).
  */
 import type { AgentEvent, ChatCommentAttachment, ChatMessage } from '../types';
+import { observeSupport, responseFormat } from '../pixflow/support-timeline';
 import { expandSteeringMessages } from '../pixflow/steering-messages';
 import type { AmrEntryAttribution } from '../analytics/amr-attribution';
 import type {
@@ -63,7 +64,7 @@ import {
   isPixflowOptionalBridgeLoopbackAccessError,
   isPixflowIntentionalAbort,
   normalizePixflowOptionalBridgeError,
-  notifyPixflowOptionalBridgeDisconnected,
+  confirmPixflowOptionalBridgeConnectivity,
 } from '../pixflow/optional-bridge';
 import {
   summarizeArtifactsForTranscript,
@@ -378,6 +379,34 @@ function daemonApiUrl(path: string): string {
   return toPixflowRuntimeUrl(path);
 }
 
+/** HTTP headers are byte strings; JSON escapes preserve Unicode session metadata losslessly. */
+function sessionHeader(value: PixflowDirectSiteSession): string {
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, character =>
+    '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
+}
+
+export async function codexUsageRequest(signal?: AbortSignal, provider: import('@open-design/contracts').AccountUsageProvider = 'codex', model = ''): Promise<import('@open-design/contracts').CodexUsage> {
+  const response = await daemonFetch(`/api/agents/${provider}/usage?model=${encodeURIComponent(model)}`, { signal, cache: 'no-store' });
+  if (!response.ok) throw new Error('Usage unavailable');
+  return response.json();
+}
+
+export async function claudeSignInRequest(action: 'status' | 'start' | 'cancel' | 'open-browser' | 'code', signal?: AbortSignal, input?: {attemptId: string; code?: string}): Promise<import('@open-design/contracts').ClaudeSignInStatus> {
+  // A lost reply must hand control back to status recovery, never strand the action.
+  const timeout = AbortSignal.timeout(10000);
+  const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const response = await daemonFetch(`/api/agents/claude/sign-in${['cancel','open-browser','code'].includes(action) ? `/${action}` : ''}`, {
+    method: action === 'status' ? 'GET' : 'POST', signal: requestSignal, cache: 'no-store',
+    ...(action === 'status' ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input || {}) }),
+  }).catch(error => {
+    if (!signal?.aborted) observeSupport(`claude-${action}`, 'network-error');
+    throw error;
+  });
+  observeSupport(`claude-${action}`, responseFormat(response), response.status);
+  if (!response.ok) throw Object.assign(new Error('Claude sign-in could not continue. Check its current status and try again.'), {status:response.status});
+  return response.json();
+}
+
 function daemonFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const url = daemonApiUrl(path);
   const headers = new Headers(init.headers || {});
@@ -387,13 +416,13 @@ function daemonFetch(path: string, init: RequestInit = {}): Promise<Response> {
     ...init,
     headers,
     targetAddressSpace: 'loopback',
-  } as RequestInit & { targetAddressSpace: 'loopback' }).catch((error) => {
+  } as RequestInit & { targetAddressSpace: 'loopback' }).catch(async (error) => {
     if (isPixflowIntentionalAbort(error, init.signal)) throw error;
     if (!/^https?:\/\/(?:127(?:\.\d{1,3}){3}|localhost|\[?::1\]?)(?::\d+)?(?:\/|$)/i.test(url)) {
       throw error;
     }
     const normalized = normalizePixflowOptionalBridgeError(error);
-    notifyPixflowOptionalBridgeDisconnected(normalized);
+    await confirmPixflowOptionalBridgeConnectivity(error);
     throw normalized;
   });
 }
@@ -1085,13 +1114,18 @@ export async function streamViaDaemon({
     await syncWordPressPluginAssetsToBridgeProject(projectId, wordpressPluginAssetSync);
 
     if (workspaceSource) {
+      // Switching chats detaches the SSE viewer, not the submitted request.
+      // Only the explicit Stop signal may cancel admission before a run exists.
+      const admissionSignal = cancelSignal ?? signal;
+      admissionSignal.throwIfAborted();
       const sessionResponse = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
-        method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
+        method: 'POST', signal: admissionSignal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workspaceSource }),
       });
       if (!sessionResponse.ok) throw new Error('Could not connect this Workspace chat to WordPress. Please retry.');
       workspaceSession = await sessionResponse.json() as PixflowDirectSiteSession;
       if (!workspaceSession.token || !workspaceSession.workspaceSource) throw new Error('Update Pixflow to enable Workspace builder handoff.');
+      admissionSignal.throwIfAborted();
     }
 
     runCreationAttempted = true;
@@ -1104,7 +1138,7 @@ export async function streamViaDaemon({
         // The daemon falls back to a User-Agent sniff when this header is
         // absent (e.g. third-party clients), so omitting it in tests is OK.
         'X-OD-Client': detectClientType(),
-        ...(workspaceSession ? { 'X-Pixflow-Workspace-Session': JSON.stringify(workspaceSession) } : {}),
+        ...(workspaceSession ? { 'X-Pixflow-Workspace-Session': sessionHeader(workspaceSession) } : {}),
       },
       body,
     });
@@ -1472,6 +1506,7 @@ async function consumeDaemonRun({
         // permission state, not a transient SSE disconnect. Retrying it five
         // times only adds duplicate console failures and delays the actionable
         // Bridge permission banner.
+        if ((err as Error).name === 'PixflowNativeDisconnectedError') { handlers.onError(err as Error); return; }
         if (isPixflowOptionalBridgeLoopbackAccessError(err)) throw err;
         reconnects += 1;
         continue;
@@ -1498,6 +1533,7 @@ async function consumeDaemonRun({
           // catch so application bugs are never mistaken for transport loss.
           if ((err as Error).name === 'AbortError') throw err;
           try { await reader.cancel(); } catch {}
+          if ((err as Error).name === 'PixflowNativeDisconnectedError') { handlers.onError(err as Error); return; }
           break;
         }
         const { value, done } = readResult;
@@ -1744,6 +1780,11 @@ const PROVIDER_ACTIVITY_STATUS: Record<string, {
 // into the UI's AgentEvent union. Keep this liberal — unknown types just
 // return null so the UI ignores them instead of rendering garbage.
 export function translateAgentEvent(data: DaemonAgentPayload): AgentEvent | null {
+  // A provider can finish its reply before process cleanup/usage persistence.
+  // This is not a successful run receipt: tool-use pauses and failures stay live.
+  if (data.type === 'turn_end' && ['end_turn', 'stop'].includes(String(data.stopReason ?? data.stop_reason))) {
+    return {kind:'status',label:'response_complete'};
+  }
   if (data.type === 'assistant_message_boundary') return { ...data, kind: 'assistant_message_boundary' };
   if (data.type === 'steering_message') return { ...data, kind: 'steering_message' };
   if (data.type === 'voice_transcript') return { ...data, kind: 'voice_transcript' };
@@ -1884,3 +1925,4 @@ export async function saveArtifact(
     return null;
   }
 }
+

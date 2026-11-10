@@ -1,3 +1,4 @@
+import { resolveRuntimeReasoning } from './runtimes/claude-models.js';
 import type { Express } from 'express';
 import type { RouteDeps } from './server-context.js';
 import { seedProviderIfMissing } from './media-config.js';
@@ -351,12 +352,7 @@ export function registerChatRoutes(app: Express, ctx: RegisterChatRoutesDeps) {
               detail: 'Invalid custom model id. Use a model id that starts with a letter or number and contains no spaces.',
             });
           }
-          const safeReasoning =
-            def &&
-            typeof body.reasoning === 'string' &&
-            Array.isArray(def.reasoningOptions)
-              ? (def.reasoningOptions.find((r: any) => r.id === body.reasoning)?.id ?? undefined)
-              : undefined;
+          const safeReasoning = resolveRuntimeReasoning(def, safeModel, body.reasoning);
           const requestedFastMode = body.fastMode === true;
           const safeFastMode = requestedFastMode
             ? modelSupportsFastMode(def, safeModel)

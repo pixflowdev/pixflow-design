@@ -1,3 +1,4 @@
+import { loadComposerGuidanceReferences } from '../pixflow/composer-guidance-references';
 import { useT } from '../i18n';
 import { externalMcpAvailable } from '../pixflow/external-mcp-contribution';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
@@ -32,6 +33,8 @@ export const PixflowContextPicker = forwardRef<ContextPickerHandle, {
     try {sessionStorage.setItem(recentKey,JSON.stringify([item,...recent.filter(entry=>entry.id!==item.id)].slice(0,5)));}catch{/* References remain usable when browser storage is unavailable. */}
     onContext(item);
   };
+  const [guidance, setGuidance] = useState<WorkspaceContextItem[]>([]);
+  const [guidanceError, setGuidanceError] = useState(false);
   const [category, setCategory] = useState<Category | null>(null);
   const [search, setSearch] = useState('');
   const [index, setIndex] = useState(0);
@@ -39,6 +42,13 @@ export const PixflowContextPicker = forwardRef<ContextPickerHandle, {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const abort = new AbortController(); setGuidanceError(false);
+    void loadComposerGuidanceReferences(abort.signal).then(items => { if (!abort.signal.aborted) setGuidance(items); })
+      .catch(() => { if (!abort.signal.aborted) setGuidanceError(true); });
+    return () => abort.abort();
+  }, [retry]);
+
   const list = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const q = (category ? search : query).trim().toLowerCase();
@@ -62,10 +72,11 @@ export const PixflowContextPicker = forwardRef<ContextPickerHandle, {
     const out: Row[] = [];
     const contextRow = (item: WorkspaceContextItem, group?: string): Row => ({id:item.id,label:item.label,detail:(item.title !== item.label ? item.title : '') || item.url || item.path || '',color:item.kind === 'design-system' && /^#[a-f0-9]{6}$/i.test(item.accentColor || '') ? item.accentColor : undefined,icon:item.kind === 'design-system' ? 'palette' : item.id.startsWith('bricks-') && item.kind !== 'browser' ? 'layers-filled' : item.kind === 'file' ? 'image' : 'file',choose:()=>chooseContext(item),group});
     if (!category) {
+      for (const item of guidance) if (!q || item.label.toLowerCase().includes(q)) out.push(contextRow(item,t('guidance.title')));
       const categories: Array<[Category,IconName,string]> = [['files','attach',t('context.filesHint')],['pages','file',t('context.pagesHint')],['media','image',t('context.mediaHint')],['systems','palette',t('context.systemsHint')]];
       if (contexts.some(item=>item.id.startsWith('bricks-'))) categories.push(['elements','layers-filled',t('context.elementsHint')]);
       for (const [id,icon,detail] of categories.filter(([id]) => (bricksActive || id !== 'elements') && (systemsActive || id !== 'systems'))) if (!q || `${names[id]} ${detail}`.toLowerCase().includes(q)) out.push({id,label:names[id],detail,icon,choose:()=>enter(id),group:t('context.browse')});
-      for (const item of recent.filter(availableContext).filter(item=>!item.id.startsWith('bricks-element:') && !item.id.startsWith('bricks-selection:') && !contexts.some(current=>current.id===item.id))) if (!q || `${item.label} ${item.title || ''}`.toLowerCase().includes(q)) out.push(contextRow(item,t('context.recent')));
+      for (const item of recent.filter(item=>!item.id.startsWith('pixflow-guidance:') && !guidance.some(current=>current.id===item.id)).filter(availableContext).filter(item=>!item.id.startsWith('bricks-element:') && !item.id.startsWith('bricks-selection:') && !contexts.some(current=>current.id===item.id))) if (!q || `${item.label} ${item.title || ''}`.toLowerCase().includes(q)) out.push(contextRow(item,t('context.recent')));
       for (const item of contexts.filter(availableContext).filter(item=>!item.id.startsWith('bricks-element:'))) if (!q || `${item.label} ${item.title || ''}`.toLowerCase().includes(q)) out.push(contextRow(item,t('context.current')));
       for (const server of externalMcpAvailable() ? mcpServers : []) if (!q || `${server.label || ''} ${server.id}`.toLowerCase().includes(q)) out.push({id:`mcp:${server.id}`,label:server.label || server.id,detail:t('context.serverTools'),icon:'link',choose:()=>onMcp?.(server),group:t('context.externalTools')});
     } else if (category === 'files') {
@@ -75,7 +86,7 @@ export const PixflowContextPicker = forwardRef<ContextPickerHandle, {
       for (const item of category === 'elements' ? elements : remote) if (category !== 'elements' || !q || `${item.label} ${item.title || ''}`.toLowerCase().includes(q)) out.push(contextRow(item));
     }
     return out;
-  }, [category,q,files,contexts,remote,onFile,onContext,onUpload,bricksActive,mcpServers,onMcp,t]);
+  }, [category,q,files,contexts,remote,guidance,onFile,onContext,onUpload,bricksActive,mcpServers,onMcp,t]);
   const active = Math.min(index, Math.max(0, rows.length-1));
   useEffect(()=>{onActiveIndex?.(active);},[active,onActiveIndex]);
   const key = (value: string) => {
@@ -94,6 +105,7 @@ export const PixflowContextPicker = forwardRef<ContextPickerHandle, {
     </div>
     <div className={styles.results} id="mention-listbox" role="listbox" aria-label={category ? names[category] : t('context.label')} ref={list}>
       {loading && <div className={local.status} role="status">{t('context.searching')}</div>}
+      {guidanceError && <div className={local.status} role="alert">{t('guidance.requestFailed')} <button type="button" onClick={()=>setRetry(x=>x+1)}>{t('preview.retry')}</button></div>}
       {error && <div className={local.status} role="alert">{error} <button type="button" onClick={()=>setRetry(x=>x+1)}>{t('preview.retry')}</button></div>}
       {!loading && !error && rows.length === 0 && <div className={local.status}>{t('context.noMatches')}</div>}
       {rows.map((row,i)=><div key={row.id} role="presentation">

@@ -38,6 +38,10 @@ namespace {
     function check(bool $ok,string $message):void{if(!$ok)throw new RuntimeException($message);$GLOBALS['checks']++;}
     function error_is(mixed $result,string $code):bool{return $result instanceof WP_Error&&$result->code===$code;}
     check(!function_exists('wp_get_ability'), 'Fixture must have no Abilities API');
+    check($service->call('wordpress.posts.get',['postId'=>'10'],false)['id']===10,'Canonical decimal ID from a provider is losslessly normalized');
+    foreach (['01','1e1','10.0',' 10','10x','+10','-1','9223372036854775808',true,10.5] as $invalid) {
+        check(error_is($service->call('wordpress.posts.get',['postId'=>$invalid],false),'invalid_arguments'),'Ambiguous or overflowing IDs remain rejected');
+    }
     check($service->call('wordpress.posts.get',['postId'=>12],false)['id']===12,'Native reads work without WordPress Abilities API');
     check($service->call('wordpress.posts.list',[],false)['posts']['postType']==='post','Standard posts remain discoverable');
     check($service->call('wordpress.posts.list',['postType'=>'page'],false)['posts']['postType']==='page','Pages remain discoverable');

@@ -1,0 +1,58 @@
+name: Unified chat validation
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'apps/daemon/src/pixflow/direct-*'
+      - 'apps/daemon/src/pixflow/codex-turn.ts'
+      - 'apps/daemon/tests/pixflow/direct-*'
+      - 'apps/daemon/tests/pixflow/codex-turn.test.ts'
+      - 'packages/contracts/src/api/pixflow-direct-site.ts'
+      - 'packages/contracts/src/api/pixflow-chat-history.ts'
+      - 'wordpress/src/Chat/**'
+      - 'wordpress/src/Http/DirectSiteRestController.php'
+      - 'wordpress/src/Http/Routes/ChatHistoryRoutes.php'
+      - 'wordpress/tests/direct-session-features.test.php'
+      - 'wordpress/tests/chat-history-sqlite.test.php'
+      - 'wordpress/assets/admin/wp-admin-floating-panel.js'
+      - '.github/workflows/unified-chats.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Unified chat validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Verify Bridge continuity and WordPress history
+        run: |
+          pnpm --filter @open-design/daemon test pixflow/direct-codex-worker pixflow/codex-turn pixflow/direct-site-session pixflow/direct-site-native-context
+          php wordpress/tests/chat-history-sqlite.test.php
+          php wordpress/tests/direct-session-features.test.php
+      - run: pnpm guard
+      - run: pnpm typecheck
+      - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect completed-workspace-run
+      - run: pnpm --filter @open-design/web test tests/pixflow/direct-site.test.tsx tests/pixflow/working-context.test.ts tests/components/SharedChatRows.test.tsx
+      - run: pnpm --filter @open-design/web test bridge-connection-route AvatarMenu WorkspaceBridgeStatus
+      - run: pnpm --filter @open-design/web test agent-trace live-prose-reveal inline-citation floating-chat-scroll activity-disclosure assistant-message-tool-status assistant-message-thinking-volume ChatPane.streaming run-reattach
+      - run: pnpm --filter @open-design/daemon test claude-stream-tools
+      - name: Shared shadcn controls, scrolling and saved history
+        run: |
+          pnpm --filter @open-design/web test searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence FileOpsSummary assistant-progress
+          pnpm --filter @open-design/daemon test tests/pixflow/codex-turn.test.ts
+      - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
+      - run: pnpm --filter @open-design/web test EntryShell.onboarding
+      - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts
+      - run: pnpm i18n:check
+      - run: pnpm wordpress:web

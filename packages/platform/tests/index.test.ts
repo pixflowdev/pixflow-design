@@ -29,6 +29,12 @@ type FakeStamp = {
   source: "tool" | "pack";
 };
 
+it("includes the native Grok install directory without relying on the launcher's PATH", () => {
+  const home = join(tmpdir(), "grok-discovery-home");
+  const dirs = wellKnownUserToolchainBins({ home, env: {}, includeSystemBins: false });
+  expect(dirs).toContain(join(home, ".grok", "bin"));
+});
+
 const fakeContract: ProcessStampContract<FakeStamp> = {
   stampFields: ["app", "mode", "namespace", "ipc", "source"],
   stampFlags: {

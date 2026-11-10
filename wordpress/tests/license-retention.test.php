@@ -55,14 +55,15 @@ $c=seed_license();$GLOBALS['responses']=[response(403,['valid'=>false,'access_gr
 $r=(new \PixflowDesign\WordPress\License\LicenseService())->validate('synthetic-key');
 check(!$r['valid'] && !$c->summary()['valid'],'Explicit refusal granted access');
 
-// Challenge transport failures must retry without turning into permanent licence refusals.
+// Invalid challenges reject access, retain credentials and require fresh signed proof.
 foreach(['enroll','refresh'] as $stage){
  $c=seed_license();$state=['installation'=>['id'=>'fixture'],'epoch'=>3,'tokens'=>[],'denied'=>false];
  $GLOBALS['options']['pixflow_design_central_entitlements_v2']=$state;
  $method=new ReflectionMethod(CentralEntitlements::class,'rejected_response');
  $method->invoke(new CentralEntitlements(),response(401,['code'=>'invalid_challenge']),$state,$stage);
  $after=$GLOBALS['options']['pixflow_design_central_entitlements_v2'];
- check(empty($after['denied']) && !empty($after['network_unavailable']),'Recoverable challenge became terminal denial');
+ check(!empty($after['denied']) && empty($after['tokens']) && empty($after['network_unavailable']), 'Invalid challenge retained access or became an offline allowance');
+ check(($after['denial_code'] ?? '') === 'invalid_challenge', 'Invalid challenge lost its recoverable verification status');
  check(!empty($c->private_payload()),'Challenge retry lost stored key');
 }
 // Actual licence refusal stays terminal. Unknown endpoints do not gain retries.
@@ -94,8 +95,23 @@ foreach([false,true] as $initially_empty){
 }
 echo "Delayed validation preserves reset and newer activation.\n";
 
+// Trying a different invalid key must not erase the currently saved activation.
+$c=seed_license();$before=$c->snapshot();
+$GLOBALS['responses']=[response(403,['valid'=>false,'access_granted'=>false,'status'=>'revoked'])];
+$r=(new \PixflowDesign\WordPress\License\LicenseService())->validate('different-invalid-key');
+check(!$r['valid'] && $c->snapshot()===$before,'An invalid replacement key erased the existing activation');
+
 $c=seed_license();$GLOBALS['responses']=[response(200,['valid'=>true,'access_granted'=>true,'status'=>'active','license_id'=>'synthetic-id'])];
 $GLOBALS['deny_during_proof']=true;
 (new \PixflowDesign\WordPress\License\LicenseService())->validate('synthetic-key');
 check((new CentralEntitlements())->status()['code']==='license_revoked','Concurrent denial overwritten by manual validation enrollment');
 echo "Manual validation enrollment preserves concurrent denial.\n";
+
+// A copied database cannot authorize another site, but explicit activation there
+// must be able to atomically replace the foreign site's stored cache.
+$c=seed_license();$GLOBALS['site']='http://127.0.0.1:9099';
+check(!$c->summary()['valid'] && $c->private_payload()===[], 'Copied cache authorized another site');
+check($c->snapshot()===$GLOBALS['options']['pixflow_design_site_license_cache'], 'Write snapshot hid an existing foreign cache from SQL compare-and-swap');
+$identity=new SiteIdentity();
+check($c->persist($identity->fingerprint($identity->current_payload()),'replacement-key', ['license_id'=>'replacement'],PIXFLOW_DESIGN_LICENSE_VALIDATION_URL,$c->snapshot()),'Explicit activation could not replace the foreign cache');
+check(($c->private_payload()['license_key']??'')==='replacement-key','Replacement activation was not stored');

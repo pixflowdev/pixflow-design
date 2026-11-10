@@ -21,7 +21,13 @@ final class ChatHistoryRoutes
     {
         $permission = static fn(): bool => get_current_user_id() > 0 && current_user_can('edit_posts');
         register_rest_route('pixflow-design/v1', '/chat-history/resolve', ['methods' => 'POST', 'permission_callback' => $permission,
-            'callback' => fn(\WP_REST_Request $request) => $this->response(fn() => $this->history->resolve((array) $request->get_json_params()))]);
+            'callback' => fn(\WP_REST_Request $request) => $this->response(function () use ($request) {
+                $input = (array) $request->get_json_params();
+                $binding = $this->history->resolve($input);
+                if (is_wp_error($binding) || empty($binding['projectId']) || ($input['includePage'] ?? false) !== true) return $binding;
+                $page = $this->history->page($binding['projectId'], $binding['conversationId']);
+                return is_wp_error($page) ? $page : $binding + ['page' => $page];
+            })]);
         register_rest_route('pixflow-design/v1', '/chat-history/conversations', ['methods' => 'GET', 'permission_callback' => $permission,
             'callback' => fn(\WP_REST_Request $request) => $this->response(fn() => $this->history->owned_conversations((int) ($request['limit'] ?? 50), (string) ($request['before'] ?? '')))]);
         register_rest_route('pixflow-design/v1', '/chat-history/storage', ['methods' => 'GET', 'permission_callback' => $permission,

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dict } from '../i18n/types';
 
 export type BridgeStatusPayload = {
+  connectionRoute?: 'direct' | 'chrome-extension';
   checked?: boolean;
   running?: boolean;
   state?: string;

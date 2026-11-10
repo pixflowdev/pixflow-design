@@ -18,6 +18,7 @@ vi.mock('../../src/components/CustomSelect', () => ({ CustomSelect: ({ value, op
 import { I18nProvider, applyLocalePreference, useI18n } from '../../src/i18n';
 import { en } from '../../src/i18n/locales/en';
 import { i18nResources } from '../../src/i18n/resource-store';
+import { LanguageUpdateDot } from '../../src/components/LanguageUpdateDot';
 import { LanguagePreferenceControl } from '../../src/components/LanguagePreferenceControl';
 import { getLanguagePackStatus, loadInstalledLanguage } from '../../src/pixflow/language-packs';
 import { persistPixflowWordPressConfig } from '../../src/pixflow/wordpress-context';
@@ -34,7 +35,7 @@ function Chat({ name }: { name: string }) {
   return <><output>{name}: {localePreference}/{locale}/{t('chat.send')}</output><input aria-label={`${name} draft`} value={draft} onChange={(event) => setDraft(event.target.value)} /></>;
 }
 function surfaces() {
-  return render(<><I18nProvider><LanguagePreferenceControl /><Chat name="Panel" /></I18nProvider><I18nProvider><Chat name="Workspace" /></I18nProvider></>);
+  return render(<><I18nProvider><LanguagePreferenceControl /><Chat name="Panel" /></I18nProvider><I18nProvider><LanguageUpdateDot /><Chat name="Workspace" /></I18nProvider></>);
 }
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear();
@@ -57,7 +58,7 @@ describe('downloadable WordPress languages', () => {
     await screen.findByText('Workspace: de/de/Senden');
     expect(screen.queryByText(en['settings.languageDownload'])).toBeNull();
     expect(localStorage.getItem('open-design:locale')).toBe('de');
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3); // Includes the active-language notification status check.
   });
 
   it('keeps a newer missing-language choice pending for explicit download when inventory arrives', async () => {
@@ -100,7 +101,7 @@ describe('downloadable WordPress languages', () => {
     expect(document.querySelector('#pixflow-design-root')?.getAttribute('dir')).toBe('rtl');
     expect(document.querySelector('#native-editor')?.getAttribute('dir')).toBe('ltr');
     expect(localStorage.getItem('open-design:locale')).toBe('ar');
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3); // Includes the active-language notification status check.
   });
 
   it('preserves an unavailable saved automatic locale and offers a download instead of installing silently', async () => {
@@ -231,6 +232,7 @@ describe('downloadable WordPress languages', () => {
     }));
     surfaces(); await screen.findByText('Panel: de/de/Senden');
     const input = screen.getByLabelText('Panel draft');
+    await waitFor(() => expect(screen.getAllByRole('img')).toHaveLength(2));
     fireEvent.change(input, { target: { value: 'Keep draft during language update' } });
     fireEvent.click(await screen.findByText(en['updater.download']));
     expect(screen.getByText(en['updater.downloading'])).toBeTruthy();
@@ -239,6 +241,7 @@ describe('downloadable WordPress languages', () => {
     await screen.findByText('Workspace: de/de/Jetzt senden');
     expect(screen.getByText('Panel: de/de/Jetzt senden')).toBeTruthy();
     expect(screen.queryByText(en['updater.download'])).toBeNull();
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
     expect(screen.getByLabelText('Panel draft')).toBe(input);
     expect((input as HTMLInputElement).value).toBe('Keep draft during language update');
     expect(localStorage.getItem('open-design:locale')).toBe('de');
@@ -249,8 +252,9 @@ describe('downloadable WordPress languages', () => {
     localStorage.setItem('open-design:locale', 'ar'); localStorage.setItem('open-design:locale-source', 'manual');
     const currentStatus = status(['ar']);
     const updateStatus = { ...currentStatus, languages: currentStatus.languages.map((item) => ({ ...item, updateAvailable: item.locale === 'ar' })) };
+    let fail = true;
     vi.stubGlobal('fetch', vi.fn((url: string, init: RequestInit) => Promise.resolve(
-      init.method === 'POST' ? response({}, 503) : response(url.endsWith('/ar') ? pack('ar') : updateStatus),
+      init.method === 'POST' ? (fail ? response({}, 503) : response(pack('ar'))) : response(url.endsWith('/ar') ? pack('ar') : updateStatus),
     )));
     surfaces(); await screen.findByText('Panel: ar/ar/إرسال');
     fireEvent.click(await screen.findByText(en['updater.download']));
@@ -260,5 +264,41 @@ describe('downloadable WordPress languages', () => {
     expect(i18nResources.dictionaries.ar?.['chat.send']).toBe('إرسال');
     expect(document.querySelector('#pixflow-design-root')?.getAttribute('dir')).toBe('rtl');
     expect(localStorage.getItem('open-design:locale')).toBe('ar');
+    expect(screen.getAllByRole('img')).toHaveLength(2);
+    fail = false;
+    fireEvent.click(screen.getByText(en['updater.download']));
+    await waitFor(() => expect(screen.queryAllByRole('img')).toHaveLength(0));
+    expect(screen.queryByRole('alert')).toBeNull();
   });
+  it('does not notify for English or updates to an inactive language', async () => {
+    const inventory = { ...status(['ar']), languages: [{ locale: 'en', installed: true }, { locale: 'ar', installed: true, updateAvailable: true }] };
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(response(inventory))));
+    surfaces();
+    await waitFor(() => expect(screen.queryByText(en['settings.languageChecking'])).toBeNull());
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+  });
+
+  it('recovers a failed notification check when the window regains focus', async () => {
+    localStorage.setItem('open-design:locale', 'de'); localStorage.setItem('open-design:locale-source', 'manual');
+    let fail = true;
+    const inventory = { ...status(['de']), languages: [{ locale: 'de', installed: true, updateAvailable: true }] };
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url.endsWith('/de') ? response(pack('de')) : fail ? response({}, 503) : response(inventory))));
+    surfaces(); await screen.findByText('Panel: de/de/Senden');
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+    fail = false;
+    fireEvent(window, new Event('focus'));
+    await waitFor(() => expect(screen.getAllByRole('img')).toHaveLength(2));
+    expect((screen.getByLabelText('Panel draft') as HTMLInputElement).value).toBe('My existing draft');
+  });
+
+  it('ignores an update for another installed language while German is active', async () => {
+    localStorage.setItem('open-design:locale', 'de'); localStorage.setItem('open-design:locale-source', 'manual');
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(response(url.endsWith('/de') ? pack('de') : {
+      canInstall: true, languages: [{ locale: 'de', installed: true, updateAvailable: false }, { locale: 'ar', installed: true, updateAvailable: true }],
+    }))));
+    surfaces(); await screen.findByText('Panel: de/de/Senden');
+    await waitFor(() => expect(screen.queryByText(en['settings.languageChecking'])).toBeNull());
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+  });
+
 });

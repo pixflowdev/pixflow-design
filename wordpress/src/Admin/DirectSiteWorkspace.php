@@ -26,6 +26,8 @@ final class DirectSiteWorkspace
             if (!$call) return \PixflowDesign\WordPress\Modules\AdvancedSiteAccess::not_allowed();
             return $call($tool, $args, $writable);
         }
+        $feature_call = \PixflowDesign\WordPress\Modules\FeatureContributions::direct_site_handler($tool);
+        if ($feature_call) return $feature_call($tool, $args, $writable);
         $reads = ['help', 'project.file.read', 'skills.list', 'skills.read', 'abilities.list', 'sitemap.read', 'sitemap.inventory', 'builder.destinations', 'builder.handoff.status'];
         if (!$writable && !$readonly_ability && !in_array($tool, $reads, true)) {
             throw new \RuntimeException('This existing session is read-only. Start a new request to use the current connection.');
@@ -109,7 +111,7 @@ final class DirectSiteWorkspace
                 'assets.installed' => ['description' => 'List saved font registrations and installed icon sets without downloading a catalogue.'],
                 'assets.remove' => ['kind' => 'font or icons', 'id' => 'Exact installed asset id', 'builder' => 'Exact builder from assets.installed', 'description' => 'Remove a saved registration; keep shared font files and icons referenced by content.'],
                 'icons.wordpress' => ['description' => 'Enabled WordPress icons and exact native block attributes. Insert returned block with gutenberg.insert. Use block: native Icon on supported WordPress or Image fallback. Never invent an icon name.'],
-                'media.stock.search' => ['transport' => 'run-local site-tool helper', 'query' => 'photo description', 'count' => '1–4', 'orientation' => 'landscape, portrait or squarish'],
+                'media.stock.search' => ['transport' => 'run-local site-tool helper', 'query' => 'photo description', 'count' => '1â€“4', 'orientation' => 'landscape, portrait or squarish'],
                 'media.stock.register' => ['photo' => 'selected image object from stock search (Unsplash)', 'title' => 'descriptive Media Library title', 'filename' => 'descriptive record slug; remote file stays unchanged', 'altText' => 'accurate image description'],
                 'media.import' => ['contentBase64' => 'generated image bytes, base64 encoded', 'mimeType' => 'image/png, image/jpeg or image/webp', 'filename' => 'descriptive filename', 'title' => 'human readable image title', 'altText' => 'accurate description of the image', 'prompt' => 'generation prompt', 'source' => 'generated'],
                 'project.file.read' => ['projectId' => 'Pixflow project UUID', 'path' => 'relative uploaded file path; returns base64 content'],

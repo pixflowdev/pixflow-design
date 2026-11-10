@@ -95,6 +95,12 @@ final class HistoryService
         return $this->history->owned_conversations(get_current_user_id(), $limit, $before);
     }
 
+    public function prefix_revision(string $project, string $conversation, string $through): string|\WP_Error
+    {
+        $prepared = $this->prepare($project, $conversation, true, false);
+        return is_wp_error($prepared) ? $prepared : $this->history->prefix_revision($project, $conversation, $through);
+    }
+
     public function page(string $project, string $conversation, ?int $limit = 50, string $before = '', bool $ownerOnly = true): array|\WP_Error
     {
         $prepared = $this->prepare($project, $conversation, $ownerOnly, false);

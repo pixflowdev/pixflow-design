@@ -132,7 +132,7 @@ final class BuilderHandoffs
             $target = $body['editorTarget'] ?? null;
             if (!is_array($target) || ($target['builder'] ?? '') !== $record['destination']['builder'] || ($target['postId'] ?? null) !== $record['destination']['postId'] || !is_string($target['canvasId'] ?? null) || !preg_match('/^[a-f0-9]{32}$/D', $target['canvasId'])) return self::error('The connected editor does not match this page.', 409);
             $entity = $target['entity'] ?? null;
-            if ($entity !== null && ($target['builder'] !== 'gutenberg' || !is_array($entity) || ($entity['type'] ?? '') !== 'page' || ($entity['id'] ?? '') !== (string) $target['postId'])) return self::error('The Gutenberg document does not match this page.', 409);
+            if ($entity !== null && ($target['builder'] !== 'gutenberg' || !is_array($entity) || ($entity['type'] ?? '') !== (get_post($target['postId'])->post_type ?? '') || ($entity['id'] ?? '') !== (string) $target['postId'])) return self::error('The Gutenberg document does not match this content item.', 409);
             try {
                 $relay = new DirectCanvasRelay($target['builder']);
                 $verified = $relay->target($target['canvasId'], $target['postId'], $entity);
@@ -205,6 +205,15 @@ final class BuilderHandoffs
         if ($assets instanceof \WP_Error) return $assets;
         $id = $this->identity_prefix($project_id, $conversation_id) . substr(hash('sha256', $body['requestId']), 0, 32);
         $immutable = ['projectId' => $project_id, 'conversationId' => $conversation_id, 'builder' => $body['builder'], 'postId' => $body['postId'], 'targetTabId' => $body['targetTabId'], 'brief' => $body['brief'], 'assets' => $assets];
+        if (isset($body['continueConversation']) && !is_bool($body['continueConversation'])) return self::error('Invalid conversation continuation.');
+        if (!empty($body['continueConversation'])) $immutable['continueConversation'] = true;
+        if (isset($body['presentation'])) {
+            $display = $body['presentation'];
+            if (!is_array($display) || !is_string($display['title'] ?? null) || !is_string($display['summary'] ?? null)
+                || trim($display['title']) === '' || trim($display['summary']) === '' || strlen($display['title']) > 300 || strlen($display['summary']) > 1000)
+                return self::error('Invalid handoff presentation.');
+            $immutable['presentation'] = ['title' => sanitize_text_field($display['title']), 'summary' => sanitize_text_field($display['summary'])];
+        }
         $fingerprint = hash('sha256', (string) wp_json_encode($immutable));
         // An old idempotent retry must not replace a newer active-chat pointer.
         if (is_array(get_option(self::PREFIX . $id, null))) {
@@ -220,7 +229,9 @@ final class BuilderHandoffs
             'targetTabId' => $body['targetTabId'], 'brief' => $body['brief'], 'assets' => $assets,
             'messageId' => 'handoff-' . $id, 'status' => 'ready', 'createdAt' => self::now(), 'updatedAt' => self::now(), 'expiresAt' => self::now() + self::READY_TTL * 1000,
         ];
+        if (isset($immutable['presentation'])) $record['presentation'] = $immutable['presentation'];
         if ($source_request_id !== null) $record += ['origin' => 'agent', 'sourceRequestId' => $source_request_id];
+        if (!empty($body['continueConversation'])) $record['continueConversation'] = true;
         $active = $this->reserve_active($record);
         if ($active instanceof \WP_Error) return $active;
         if (!AtomicDestinationStore::reserve(self::PREFIX . $id, $record)) {
@@ -287,7 +298,8 @@ final class BuilderHandoffs
         $state = $project['metadata']['odState'] ?? [];
         $conversations = is_array($state['conversations'] ?? null) ? $state['conversations'] : [];
         $ids = array_column($conversations, 'id');
-        if (!in_array($conversation_id, $ids, true)) return self::error('The source conversation is unavailable.', 404);
+        $saved = (new \PixflowDesign\WordPress\Chat\HistoryRepository())->conversation($project_id, $conversation_id);
+        if (($saved && !empty($saved['deleted'])) || (!$saved && !in_array($conversation_id, $ids, true))) return self::error('The source conversation is unavailable.', 404);
         return $project;
     }
 

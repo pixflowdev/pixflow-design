@@ -98,7 +98,7 @@ export function PluginDetailsModal({
   }, []);
 
   const preview = inferPluginPreview(record);
-  let detail: JSX.Element;
+  let detail: React.JSX.Element;
 
   if (preview.kind === 'media') {
     detail = (

@@ -1,3 +1,5 @@
+import { contextAttachmentParts } from './context-attachment';
+import { $createContextAttachmentNode } from './ContextAttachmentNode';
 import {
   $createLineBreakNode,
   $createParagraphNode,
@@ -66,7 +68,12 @@ export function setComposerFromText(
           continue;
         }
       for (const part of pageAnnotationParts(draftPart)) {
-        if (typeof part === 'string') appendText(part);
+        if (typeof part === 'string') {
+          for (const attachment of contextAttachmentParts(part)) {
+            if (typeof attachment === 'string') appendText(attachment);
+            else p.append($createContextAttachmentNode(attachment));
+          }
+        }
         else {
           if (p.getChildrenSize()) p.append($createLineBreakNode());
           appendText(part.comment);

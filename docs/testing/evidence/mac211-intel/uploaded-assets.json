@@ -1,0 +1,40 @@
+[
+  {
+    "id": 686841908,
+    "name": "SHA256SUMS-mac-extension-ready-2.1.1.txt",
+    "size": 264,
+    "digest": "sha256:2709f8d6d5935221604e782c3800c2e495da23c061202c5a3f87ae388d082a4d",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-de92e86d207b30604c14/SHA256SUMS-mac-extension-ready-2.1.1.txt"
+  },
+  {
+    "id": 686841977,
+    "name": "mac-extension-ready-2.1.1-build.json",
+    "size": 12445,
+    "digest": "sha256:e0f50d7db996baada055ad739c9a468c9de02a50ac99a2651fb659c82eb8b805",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-de92e86d207b30604c14/mac-extension-ready-2.1.1-build.json"
+  },
+  {
+    "id": 686838822,
+    "name": "pixflow-design-bridge-2.1.1-mac-arm64-037a867b-extension-ready.dmg",
+    "size": 209966857,
+    "digest": "sha256:6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-de92e86d207b30604c14/pixflow-design-bridge-2.1.1-mac-arm64-037a867b-extension-ready.dmg",
+    "independentDownload": {
+      "bytes": 209966857,
+      "sha256": "6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f",
+      "verifiedAt": "2026-10-29T00:39:47.811064+00:00"
+    }
+  },
+  {
+    "id": 686840916,
+    "name": "pixflow-design-bridge-2.1.1-mac-x64-037a867b-extension-ready.dmg",
+    "size": 221084602,
+    "digest": "sha256:d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf",
+    "browser_download_url": "https://github.com/pixflowdev/pixflow-design/releases/download/untagged-de92e86d207b30604c14/pixflow-design-bridge-2.1.1-mac-x64-037a867b-extension-ready.dmg",
+    "independentDownload": {
+      "bytes": 221084602,
+      "sha256": "d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf",
+      "verifiedAt": "2026-10-29T00:41:16.834495+00:00"
+    }
+  }
+]

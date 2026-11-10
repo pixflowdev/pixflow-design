@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); vi.useRealTimers(); vi.restoreAllMocks(); });
 function setup(fetch: ReturnType<typeof vi.fn>) {
   const dispatchEvent = vi.fn();
   vi.stubGlobal('window', {
@@ -9,6 +9,47 @@ function setup(fetch: ReturnType<typeof vi.fn>) {
   });
   return dispatchEvent;
 }
+
+it('retains endpoint status without marking a healthy Bridge disconnected', async () => {
+  const dispatch=setup(vi.fn(async()=>new Response('Not found',{status:404})));
+  const {pixflowOptionalBridgeJson}=await import('../../src/pixflow/optional-bridge');
+  await expect(pixflowOptionalBridgeJson('agents/text')).rejects.toMatchObject({status:404});
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it.each([{ ok: false }, { ok: true, site: null, code: 'PIXFLOW_SITE_NOT_CONNECTED' }])('requires site health as well as an HTTP 200', async body => {
+  setup(vi.fn(async () => Response.json(body)));
+  const {probePixflowOptionalBridge} = await import('../../src/pixflow/optional-bridge');
+  expect(await probePixflowOptionalBridge({force:true})).toMatchObject({available:false});
+});
+
+it.each(['busy','endpoint-network'])('does not disconnect a healthy Bridge when Claude sign-in encounters %s', async kind => {
+  const fetch = vi.fn(async (url: string) => {
+    if (url.endsWith('/health')) return Response.json({ ok:true, version:'2.1.3', runtimeState:'ready' });
+    if (kind==='busy') throw new Error('Native transport is busy; wait for an active request to finish');
+    throw new TypeError('Failed to fetch');
+  });
+  const dispatch=setup(fetch); vi.stubGlobal('fetch',fetch);
+  const {claudeSignInRequest}=await import('../../src/providers/daemon');
+  await expect(claudeSignInRequest('start')).rejects.toThrow();
+  expect(dispatch.mock.calls.some(([event])=>event.type==='pixflow-design:optional-bridge-disconnected')).toBe(false);
+  expect(fetch).toHaveBeenCalledTimes(kind==='busy'?1:2);
+});
+
+it('bounds a lost sign-in reply without retrying the mutation or announcing Bridge offline', async () => {
+  // Replace the platform timeout with a controlled signal, retaining real fetch abort behavior.
+  const timeout = new AbortController(); vi.spyOn(AbortSignal, 'timeout').mockReturnValueOnce(timeout.signal);
+  const fetch=vi.fn((_url:string, init:RequestInit)=>new Promise<Response>((_resolve,reject)=>{
+    init.signal?.addEventListener('abort',()=>reject(init.signal!.reason),{once:true});
+  }));
+  const dispatch=setup(fetch); vi.stubGlobal('fetch',fetch);
+  const {claudeSignInRequest}=await import('../../src/providers/daemon');
+  const pending=claudeSignInRequest('start');
+  timeout.abort(new DOMException('Timed out','TimeoutError'));
+  await expect(pending).rejects.toThrow('Timed out');
+  expect(fetch).toHaveBeenCalledTimes(1); expect(dispatch).not.toHaveBeenCalled();
+  vi.restoreAllMocks();
+});
 
 it('sends one JSON content type when callers already specify it', async () => {
   const fetch=vi.fn(async (_url:string, init:RequestInit) => {
@@ -54,4 +95,97 @@ it('publishes disconnection when the independent health check also fails', async
   await expect(pixflowOptionalBridgeFetch('app-config')).rejects.toThrow();
   expect(dispatch).toHaveBeenCalledTimes(1);
   expect(dispatch.mock.calls[0]?.[0].type).toBe('pixflow-design:optional-bridge-disconnected');
+});
+
+it.each(['Failed to fetch', 'Load failed', 'NetworkError when attempting to fetch resource.'])('does not diagnose browser permission denial from %s', async (message) => {
+  setup(vi.fn());
+  const {normalizePixflowOptionalBridgeError, PixflowOptionalBridgeLoopbackAccessError}=await import('../../src/pixflow/optional-bridge');
+  const error=normalizePixflowOptionalBridgeError(new TypeError(message));
+  expect(error).not.toBeInstanceOf(PixflowOptionalBridgeLoopbackAccessError);
+  expect(error.message).toContain('could not reach');
+  expect(error.message).toContain('cannot determine');
+});
+
+it('distinguishes explicit local-network denial from unrelated authorization failures', async () => {
+  const {normalizePixflowOptionalBridgeError, PixflowOptionalBridgeLoopbackAccessError}=await import('../../src/pixflow/optional-bridge');
+  expect(normalizePixflowOptionalBridgeError(new Error('Local network access permission denied'))).toBeInstanceOf(PixflowOptionalBridgeLoopbackAccessError);
+  const denied=new Error('WordPress permission was denied');
+  expect(normalizePixflowOptionalBridgeError(denied)).toBe(denied);
+  const mismatch=new Error('Bridge loopback site mismatch');
+  expect(normalizePixflowOptionalBridgeError(mismatch)).toBe(mismatch);
+});
+
+it('gives timeout and connection-refused recovery without diagnosing permission denial', async () => {
+  const {normalizePixflowOptionalBridgeError}=await import('../../src/pixflow/optional-bridge');
+  expect(normalizePixflowOptionalBridgeError(new DOMException('Aborted','AbortError')).message).toContain('timed out');
+  expect(normalizePixflowOptionalBridgeError(new Error('net::ERR_CONNECTION_REFUSED')).message).toContain('refused');
+});
+
+it('publishes an ambiguous network failure as unavailable, not blocked', async () => {
+  const dispatch=setup(vi.fn(async()=>{throw new TypeError('Failed to fetch');}));
+  const {pixflowOptionalBridgeFetch}=await import('../../src/pixflow/optional-bridge');
+  await expect(pixflowOptionalBridgeFetch('health')).rejects.toThrow('cannot determine');
+  expect(dispatch.mock.calls[0]?.[0].detail.kind).toBe('unavailable');
+});
+
+it('times out a stalled health request without retrying or changing saved state', async () => {
+  const fetch=vi.fn((_url:string, init:RequestInit)=>new Promise<Response>((_resolve,reject)=>{
+    init.signal?.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});
+  }));
+  const dispatch=setup(fetch);
+  const {pixflowOptionalBridgeFetch}=await import('../../src/pixflow/optional-bridge');
+  await expect(pixflowOptionalBridgeFetch('health',{}, {timeoutMs:5})).rejects.toThrow('timed out');
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(dispatch.mock.calls[0]?.[0].detail.kind).toBe('unavailable');
+});
+
+it('recovers on an explicit rescan after an ambiguous failure', async () => {
+  const fetch=vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValueOnce(Response.json({version:'2.1.1',runtimeState:'ready'}));
+  setup(fetch);
+  const {probePixflowOptionalBridge}=await import('../../src/pixflow/optional-bridge');
+  expect(await probePixflowOptionalBridge({force:true})).toMatchObject({available:false,error:expect.stringContaining('cannot determine')});
+  expect(await probePixflowOptionalBridge({force:true})).toMatchObject({available:true,version:'2.1.1'});
+});
+
+it('retains explicit authorization and HTTP failures instead of suggesting browser permissions', async () => {
+  const dispatch=setup(vi.fn(async()=>Response.json({error:{message:'This site is not paired with Bridge'}},{status:403})));
+  const {pixflowOptionalBridgeJson}=await import('../../src/pixflow/optional-bridge');
+  await expect(pixflowOptionalBridgeJson('app-config')).rejects.toThrow('This site is not paired with Bridge');
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it.each(['list','stream'])('preserves the connection diagnosis in an explicit %s rescan', async (kind) => {
+  setup(vi.fn(async()=>{throw new TypeError('Failed to fetch');}));
+  const api=await import('../../src/pixflow/optional-bridge');
+  await expect(kind==='list' ? api.fetchPixflowOptionalBridgeAgents({force:true}) : api.fetchPixflowOptionalBridgeAgentsStream({force:true,onAgent:()=>{}})).rejects.toThrow('cannot determine');
+});
+
+it('retains verified providers and Claude authentication when a stream ends at its deadline', async () => {
+  const claude = { id: 'claude', available: true, authStatus: 'ok', models: [] };
+  const codex = { id: 'codex', available: true, models: [] };
+  const fetch = vi.fn()
+    .mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockResolvedValueOnce(Response.json({ agents: [claude, codex] }))
+    .mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockResolvedValueOnce(new Response('event: agent\ndata: {"id":"claude","available":false}\n\nevent: done\ndata: {"timedOut":true}\n\n'));
+  setup(fetch);
+  const api = await import('../../src/pixflow/optional-bridge');
+  const saved = await api.fetchPixflowOptionalBridgeAgents({ force: true });
+  expect(saved).toHaveLength(2);
+  const paint = vi.fn();
+  await expect(api.fetchPixflowOptionalBridgeAgentsStream({ force: true, onAgent: paint })).rejects.toThrow('timed out');
+  expect(paint).not.toHaveBeenCalled();
+  expect(await api.fetchPixflowOptionalBridgeAgents()).toEqual(saved);
+});
+
+it('keeps a recently confirmed connection on a health timeout but reports connection refusal', async () => {
+  const fetch = vi.fn().mockResolvedValueOnce(Response.json({ ok: true }))
+    .mockRejectedValueOnce(new DOMException('timeout', 'TimeoutError'))
+    .mockRejectedValueOnce(new Error('connection refused'));
+  const dispatch = setup(fetch);
+  const {probePixflowOptionalBridge} = await import('../../src/pixflow/optional-bridge');
+  await probePixflowOptionalBridge({force:true});
+  expect((await probePixflowOptionalBridge({force:true})).available).toBe(true);
+  expect(dispatch).not.toHaveBeenCalled();
+  expect((await probePixflowOptionalBridge({force:true})).available).toBe(false);
 });

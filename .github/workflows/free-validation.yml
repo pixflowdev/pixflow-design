@@ -38,6 +38,22 @@ jobs:
         run: pnpm guard
       - name: Typecheck
         run: pnpm typecheck
+      - name: Bridge diagnostics regression
+        run: pnpm --filter @open-design/web test tests/providers/registry.test.ts tests/providers/registry-site-connect.test.ts tests/pixflow/bridge-request-connectivity.test.ts tests/pixflow/bricksAgentFailureBanner.test.tsx tests/pixflow/provider-discovery-state.test.ts tests/components/AvatarMenu.test.tsx tests/pixflow/bridge-site-startup.test.ts tests/pixflow/automatic-bridge-pairing.test.ts tests/pixflow/bridge-update-gate.test.ts tests/pixflow/bridge-url.test.ts
+      - name: Provider discovery and Bridge health
+        run: |
+          pnpm --filter @open-design/daemon test tests/runtimes/executables.test.ts tests/runtimes/env-and-detection.test.ts tests/runtimes/detection-diagnostics.test.ts
+          pnpm --filter @open-design/daemon test discovery-health
+          pnpm --filter @open-design/packaged test pixflow-bridge-http
+      - name: Provider usage regression
+        run: |
+          pnpm --filter @open-design/daemon exec vitest run tests/runtimes/codex-usage.test.ts tests/runtimes/claude-usage.test.ts tests/runtimes/claude-usage-protocol.test.ts tests/routes/codex-usage.test.ts tests/routes/claude-usage.test.ts
+          pnpm --filter @open-design/web test tests/components/CodexUsage.test.tsx tests/components/CodexUsageIndicator.test.tsx tests/components/usage-refresh.test.tsx
+          node --import tsx --test tools/pixflow-design-bridge/tests/native-reconnect.test.ts
+      - name: Inline slash command regression
+        run: pnpm --filter @open-design/web test tests/components/ChatComposer.design-settings.test.tsx
+      - name: Tooltip portal regression
+        run: pnpm --filter @open-design/web test tests/components/TooltipLayer.test.tsx
       - name: Translation consistency
         run: pnpm i18n:check
       - name: Directory packaging regression
@@ -53,5 +69,20 @@ jobs:
           php wordpress/tests/signed-entitlement.test.php
           php wordpress/tests/licensing-staging-origin.test.php
           php wordpress/tests/directory-license-http.test.php
+      - name: Live canvas mailbox and handoff regression
+        run: |
+          php wordpress/tests/direct-canvas-mailbox-cache.test.php
+          php wordpress/tests/direct-canvas-navigation.test.php
+          php wordpress/tests/direct-canvas-reconnect.test.php
+          php wordpress/tests/builder-handoffs.test.php
+      - name: Artifact authorization and licence recovery
+        run: |
+          php wordpress/tests/central-artifact-license-preservation.test.php
+          php wordpress/tests/central-artifact-download.test.php
+          php wordpress/tests/central-artifact-selection.test.php
+          php wordpress/tests/central-entitlements-lifecycle.test.php
+          php wordpress/tests/central-entitlements-cache-recovery.test.php
+          php wordpress/tests/central-entitlements-atomic.test.php
+
       - name: Build Free browser assets
         run: pnpm wordpress:web

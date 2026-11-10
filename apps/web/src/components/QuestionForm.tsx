@@ -10,6 +10,8 @@ interface Props {
   // disables the form when the assistant turn is no longer the most recent
   // one (i.e. the user has already moved past it).
   interactive: boolean;
+  /** Optional status while the host processes submitted answers. */
+  pendingLabel?: string;
   // Pre-existing answers — when we detect a follow-up user message that
   // begins with "[form answers — <id>]", we parse it back out and pass it
   // here so the rendered form reflects what was sent.
@@ -38,6 +40,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   {
     form,
     interactive,
+    pendingLabel,
     submittedAnswers,
     hideInternalSubmit = false,
     draftAnswers,
@@ -156,7 +159,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
             <div className="question-form-desc">{form.description}</div>
           ) : null}
         </div>
-        {locked ? <span className="question-form-pill">{t('qf.answered')}</span> : null}
+        {locked ? <span className="question-form-pill">{pendingLabel || t('qf.answered')}</span> : null}
       </div>
       <div className="question-form-body">
         {form.questions.map((q) => {
@@ -252,6 +255,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                 <>
                   <select
                     className="qf-select"
+                  aria-label={q.label}
                     value={typeof value === 'string' && q.options.some((option) => option.value === value) ? value : ''}
                     disabled={locked}
                     onChange={(e) => update(q.id, e.target.value)}
@@ -284,6 +288,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                 <input
                   type="text"
                   className="qf-input"
+                  aria-label={q.label}
                   value={typeof value === 'string' ? value : ''}
                   placeholder={q.placeholder}
                   disabled={locked}
@@ -293,6 +298,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
               {q.type === 'textarea' ? (
                 <textarea
                   className="qf-textarea"
+                  aria-label={q.label}
                   value={typeof value === 'string' ? value : ''}
                   placeholder={q.placeholder}
                   disabled={locked}
@@ -323,7 +329,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
         <div className="question-form-foot">
           {locked ? (
             <span className="qf-locked-note">
-              {submittedAnswers ? t('qf.lockedSubmitted') : t('qf.lockedPrev')}
+              {pendingLabel || (submittedAnswers ? t('qf.lockedSubmitted') : t('qf.lockedPrev'))}
             </span>
           ) : (
             <span className="qf-hint">{t('qf.hint')}</span>

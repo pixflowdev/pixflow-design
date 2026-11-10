@@ -1,6 +1,7 @@
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { Questionnaire } from '@shadcn/react/questionnaire';
 import { Button } from '@open-design/components';
 import { IconChevronUp, IconCornerDownLeft } from '@tabler/icons-react';
 import { useT } from '../i18n';
@@ -74,7 +75,7 @@ function RequestCard({ form, occurrenceKey, disabled = false, reopenToken, onOpe
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
   const submitting = useRef(false);
-  const root = useRef<HTMLElement>(null);
+  const root = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const titleId = useId();
   const question = form.questions[index];
@@ -166,9 +167,10 @@ function RequestCard({ form, occurrenceKey, disabled = false, reopenToken, onOpe
   if (!question || sent) return null;
   if (collapsed) return <div className={styles.dock}><Button className={styles.reopen} variant="ghost" onClick={() => setCollapsed(false)}><Icon name="help-circle" size={16} /><span>{question.label}</span><IconChevronUp size={14} /></Button></div>;
   const hasAnswer = multiple ? Array.isArray(value) && value.length > 0 : options.length ? custom.trim().length > 0 : String(value).trim().length > 0;
-  return <section ref={root} tabIndex={0} className={styles.card} aria-labelledby={titleId} aria-busy={busy} data-testid="question-request-card" onKeyDown={handleKey}>
+  return <Questionnaire.Root item={question.id} onSubmit={event => { event.preventDefault(); void advance(); }} ref={root} tabIndex={0} className={styles.card} aria-labelledby={titleId} aria-busy={busy} data-testid="question-request-card" onKeyDown={handleKey}>
+    <Questionnaire.Item key={question.id} name={question.id} multiple={multiple} className={styles.item}>
     <header className={styles.header}>
-      <h3 id={titleId}>{question.label}</h3>
+      <Questionnaire.Title render={<h3 />} id={titleId}>{question.label}</Questionnaire.Title>
       <div className={styles.navigation}>
         {form.questions.length > 1 && <>
           <Button variant="ghost" size="icon" aria-label={t('request.previous')} disabled={index === 0 || busy} onClick={() => setIndex(index - 1)}><Icon name="chevron-left" size={15} /></Button>
@@ -180,21 +182,23 @@ function RequestCard({ form, occurrenceKey, disabled = false, reopenToken, onOpe
     </header>
     {question.help && <p className={styles.help}>{question.help}</p>}
     <div className={styles.body}>
-      {options.length > 0 && <div role={multiple ? 'group' : 'radiogroup'} aria-labelledby={titleId} className={styles.options}>
+      {options.length > 0 && <Questionnaire.Choices aria-labelledby={titleId} className={styles.options}>
         {options.map((option, position) => {
           const selected = multiple ? Array.isArray(value) && value.includes(option.value) : value === option.value;
           const maxed = multiple && !selected && question.maxSelections !== undefined && Array.isArray(value) && value.length >= question.maxSelections;
           const recommended = option.label.endsWith(' (Recommended)');
-          return <Button key={option.value} variant="ghost" className={styles.option} role={multiple ? 'checkbox' : 'radio'} aria-checked={selected} aria-label={option.label} disabled={locked || maxed} onClick={() => choose(option.value)}>
+          return <Questionnaire.Choice key={option.value} value={option.value} checked={selected} className={styles.option} disabled={locked || maxed}
+            onClick={event => { if (event.target instanceof HTMLInputElement) choose(option.value); }}>
+            <Questionnaire.ChoiceInput className={styles.choiceInput} aria-label={option.label} aria-checked={selected} />
             <span className={multiple ? styles.checkbox : styles.number} aria-hidden="true">{multiple ? selected && <Icon name="check" size={12} /> : position + 1}</span>
             <span className={styles.copy}><span className={styles.optionTitle}>{recommended ? option.label.slice(0, -14) : option.label}{recommended && <span className={styles.recommended}>{t('request.recommended')}</span>}</span>
               {option.description && <span className={styles.description}>{option.description}</span>}
               {option.card && <span className={styles.swatches} aria-hidden="true">{option.card.palette.map((color, i) => <span key={i} style={{ backgroundColor: color }} />)}</span>}
             </span>
             {!multiple && <IconCornerDownLeft className={styles.enter} size={15} />}
-          </Button>;
+          </Questionnaire.Choice>;
         })}
-      </div>}
+      </Questionnaire.Choices>}
       <div className={styles.footer}>
         {(!options.length || question.allowCustom !== false) && <textarea ref={input} className={styles.input} rows={1} aria-label={options.length ? t('request.other') : question.label} aria-required={!options.length && question.required} placeholder={question.customPlaceholder || question.placeholder || (options.length ? t('request.other') : t('request.type'))} disabled={locked || customAtLimit} value={options.length ? custom : String(value)} onFocus={() => { if (!multiple && options.length && !custom) update(''); }} onChange={event => updateCustom(event.target.value)} onKeyDown={event => {
           if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.stopPropagation(); void advance(); }
@@ -210,5 +214,6 @@ function RequestCard({ form, occurrenceKey, disabled = false, reopenToken, onOpe
       </div>
       {error && <p role="alert" className={styles.help}>{t('request.error')}</p>}
     </div>
-  </section>;
+    </Questionnaire.Item>
+  </Questionnaire.Root>;
 }

@@ -1,3 +1,4 @@
+import { cliVersionLabel } from '../utils/cli-version-label';
 // InlineModelSwitcher — top-bar chip exposing CLI/BYOK + model picker.
 //
 // Lives in the entry view's sticky top-bar so users can swap between a
@@ -32,6 +33,7 @@ import {
 } from '../analytics/amr-auth';
 import { isByokExecutionConfigured, KNOWN_PROVIDERS } from '../state/config';
 import { fetchProviderModels } from '../providers/provider-models';
+import { hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { SUGGESTED_MODELS_BY_PROTOCOL } from '../state/apiProtocols';
 import {
   cancelVelaLogin,
@@ -358,6 +360,7 @@ export function InlineModelSwitcher({
     [agents],
   );
   const localCliAvailable = daemonLive && installedAgents.length > 0;
+  const canDiscoverLocalCli = hasPixflowWordPressContext();
   const localCliActive = config.mode === 'daemon' && localCliAvailable;
   const localCliUnavailable = config.mode === 'daemon' && !localCliAvailable;
   const byokConfigured = isByokExecutionConfigured(config);
@@ -642,7 +645,7 @@ export function InlineModelSwitcher({
                   (localCliActive ? ' is-active' : '')
                 }
                 data-testid="inline-model-switcher-mode-daemon"
-                disabled={!localCliAvailable && config.mode !== 'daemon'}
+                disabled={!canDiscoverLocalCli && !localCliAvailable && config.mode !== 'daemon'}
                 onClick={() => {
                   trackExecutionSettingsPopoverClick(analytics.track, {
                     page_name: 'home',
@@ -653,7 +656,7 @@ export function InlineModelSwitcher({
                   // parent has not yet re-rendered with the new prop signature
                   // does not crash the entire entry view. The same defensive
                   // pattern is applied to every callback below.
-                  if (!localCliAvailable) {
+                  if (!localCliAvailable && !canDiscoverLocalCli) {
                     setOpen(false);
                     onOpenSettings?.('execution');
                     return;
@@ -743,8 +746,8 @@ export function InlineModelSwitcher({
                             title={
                               a.id === 'amr' && amrLoginPending
                                 ? amrPendingHoverLabel
-                                : a.id !== 'amr' && a.version
-                                  ? `${agentName} · ${a.version}`
+                                : a.id !== 'amr' && cliVersionLabel(a.version)
+                                  ? `${agentName} · ${cliVersionLabel(a.version)}`
                                   : agentName
                             }
                           >

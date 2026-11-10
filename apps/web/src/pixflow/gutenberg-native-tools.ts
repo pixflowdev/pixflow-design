@@ -79,6 +79,8 @@ export async function executeGutenberg(wp: GutenbergApi, command: GutenbergComma
   const editor = wp.data.select('core/editor'), post = wp.data.dispatch('core/editor');
   if (tool === 'gutenberg.schema') return wp.blocks.getBlockTypes().filter((type: any) => (!args.name || type.name === args.name) && (() => { try { blockExtension(type.name); return true; } catch { return false; } })()).map((type: any) => ({ name: type.name, title: type.title, attributes: type.attributes, supports: type.supports, parent: type.parent, ancestor: type.ancestor, allowedBlocks: type.allowedBlocks, usesContext: type.usesContext, providesContext: type.providesContext, ...(blockExtension(type.name)?.schema(wp, type.name, !!args.name) ?? {}) }));
   const before = await snapshot(wp);
+  const reader = (window as any).PixflowGutenbergReadCommands?.[tool];
+  if (reader) return reader(wp, args);
   if (tool === 'gutenberg.read') return before;
   if (tool === 'gutenberg.entities') return siteAuthoring().documents(wp, tool, args);
   if (tool === 'gutenberg.styles' && ['list', 'read'].includes(args.action)) return integrationStyles(wp, args);

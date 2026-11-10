@@ -136,7 +136,20 @@ final class DirectSkillCatalog
             $mentions[] = $mention;
         }
         $query = trim((string) ($args['query'] ?? ''));
-        if ($query !== '') $entries = array_values(array_filter($entries, static fn(array $entry): bool => stripos(implode(' ', array_merge([$entry['path'], $entry['title'], $entry['description']], $entry['ids'])), $query) !== false));
+        if ($query !== '') {
+            // Search words independently: skill IDs and paths use separators,
+            // whereas users and agents normally search with natural spaces.
+            $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [$query];
+            $ranked = [];
+            foreach ($entries as $entry) {
+                $text = implode(' ', array_merge([$entry['path'], $entry['title'], $entry['description']], $entry['ids']));
+                $score = count(array_filter($terms, static fn(string $term): bool => stripos($text, $term) !== false));
+                if ($score > 0) $ranked[] = ['score'=>$score, 'entry'=>$entry];
+            }
+            usort($ranked, static fn(array $a, array $b): int => ($b['score'] <=> $a['score']) ?: strcmp($a['entry']['path'], $b['entry']['path']));
+            $best = $ranked[0]['score'] ?? 0;
+            $entries = array_column(array_filter($ranked, static fn(array $row): bool => $row['score'] === $best), 'entry');
+        }
         return ['paths' => array_column($entries, 'path'), 'skills' => $entries, 'mentions' => $mentions];
     }
     private function available_path(string $path): bool

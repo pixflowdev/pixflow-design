@@ -42,7 +42,7 @@ import {
   streamViaDaemon,
   steerChatRun,
 } from '../providers/daemon';
-import { isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
+import { isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
 import { fetchElevenLabsVoiceOptions } from '../providers/elevenlabs-voices';
 import { normalizeCustomReason } from '@open-design/contracts/analytics';
 import {
@@ -189,7 +189,8 @@ import { PluginDetailsModal } from './PluginDetailsModal';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
 import { listMessagePage, prependHistoryPage } from '../state/chat-history';
-import { retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
+import { useWorkspaceHistoryRefresh } from '../state/use-workspace-history-refresh';
+import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteConflicted, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
@@ -206,6 +207,7 @@ import type { PixflowBuilderDestination } from '@open-design/contracts';
 import { Button } from '@open-design/components';
 import { WorkspaceSummary, WorkspaceSummaryToggle } from './WorkspaceSummary';
 import { ChatExportButton } from '../pixflow/ChatExportButton';
+import { ConversationActions } from '../pixflow/ConversationActions';
 import {
   type PluginFolderAgentAction,
 } from './design-files/pluginFolderActions';
@@ -1015,6 +1017,7 @@ export function ProjectView({
   const historyPageGeneration = useRef(0);
   const historyContextLoading = useRef(false);
   const [historyWriteError, setHistoryWriteError] = useState(false);
+  const [historyRecovering, setHistoryRecovering] = useState(false);
   useEffect(() => {
     const update = () => setHistoryWriteError(Boolean(activeConversationId && workspaceHistoryWriteFailed(project.id,activeConversationId)));
     update();
@@ -2521,6 +2524,14 @@ export function ProjectView({
     [project.id],
   );
 
+  useWorkspaceHistoryRefresh(project.id, activeConversationId,
+    hasPixflowWordPressContext() && messagesInitialized && messagesConversationId === activeConversationId && !streaming,
+    incoming => setMessages(current => {
+      const revisions = new Map(current.map(message => [message.id, message.historyRevision || 0]));
+      const newer = incoming.filter(message => !revisions.has(message.id) || (message.historyRevision || 0) > revisions.get(message.id)!);
+      return newer.length ? mergeServerMessagesIntoConversation(current, newer) : current;
+    }));
+
   const scheduleConversationMessageRefresh = useCallback(
     (conversationId: string) => {
       window.setTimeout(() => {
@@ -2774,7 +2785,7 @@ export function ProjectView({
 
     const attachRecoverableRuns = async () => {
       const missingRunIdMessages = messages.filter((m) => {
-        if (m.role !== 'assistant' || m.runId) return false;
+        if (!isDaemonRecoveryMessage(m) || m.runId) return false;
         return isActiveRunStatus(m.runStatus);
       });
       const activeRuns = missingRunIdMessages.length > 0
@@ -2799,7 +2810,7 @@ export function ProjectView({
 
       for (const message of messages) {
         if (cancelled) return;
-        if (message.role !== 'assistant') continue;
+        if (!isDaemonRecoveryMessage(message)) continue;
         const spuriouslyFailedPending = isSpuriouslyFailedAssistantMessage(message);
         const replayingTerminalRun = shouldReplayTerminalRunMessage(message);
         const needsFullReplay =
@@ -3821,7 +3832,11 @@ export function ProjectView({
           cancelSendTextBuffer();
           if (controller.signal.aborted) {
             const endedAt = Date.now();
-            updateMessageById(assistantId, previous => ({ ...previous, runStatus: 'canceled', endedAt }), true, { telemetryFinalized: true });
+            // The original chat may already be unmounted. Persist its terminal
+            // snapshot independently of React's currently visible message list.
+            latestAssistantMsg = { ...latestAssistantMsg, runStatus: 'canceled', endedAt };
+            updateAssistant(previous => ({ ...previous, runStatus: 'canceled', endedAt }));
+            void saveMessage(project.id, runConversationId, latestAssistantMsg, { telemetryFinalized: true });
             const ownsCurrentRun = clearCurrentRunStreamingMarker(runConversationId, controller, cancelController);
             if (ownsCurrentRun) updateConversationLatestRun('canceled', endedAt);
             return;
@@ -6159,7 +6174,16 @@ export function ProjectView({
               key={`${project.id}:${activeConversationId ?? 'conversation-unavailable'}:${chatSeed?.id ?? 'ready'}`}
               messages={messages}
               olderHistory={olderMessagesCursor ? { loading: loadingOlderMessages, error: olderMessagesError, load: loadOlderMessages } : undefined}
-              historyPersistence={historyWriteError ? { retry: retryHistoryWrites } : undefined}
+              historyPersistence={historyWriteError ? { conflict: workspaceHistoryWriteConflicted(project.id, activeConversationId!), retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
+                if (!activeConversationId || historyRecovering) return;
+                const recoveryGeneration = historyPageGeneration.current;
+                setHistoryRecovering(true);
+                try {
+                  const restored = await recoverWorkspaceHistoryWrites(project.id, activeConversationId, title);
+                  if (recoveryGeneration === historyPageGeneration.current) setMessages(current => current.map(message => restored.find(item => item.id === message.id) || message));
+                } catch { setHistoryWriteError(true); }
+                finally { setHistoryRecovering(false); }
+              } } : undefined}
               streaming={currentConversationStreaming}
               liveToolInput={liveToolInput}
               loading={currentConversationLoading}
@@ -6183,7 +6207,6 @@ export function ProjectView({
               onAttachComment={attachPreviewComment}
               onDetachComment={detachPreviewComment}
               onDeleteComment={(commentId) => void removePreviewComment(commentId)}
-              bottomAligned
               codexVoiceEnabled={hasPixflowWordPressContext() && daemonLive && config.mode === 'daemon' && config.agentId === 'codex'}
               codexVoiceStartRequested={codexVoiceStartRequested}
               onSend={handleSend}
@@ -6281,6 +6304,7 @@ export function ProjectView({
                 setProjectActionsToast({ message, details: null });
               }}
               headerActions={<>
+                {hasPixflowWordPressContext() && activeConversationId && <ConversationActions workspace={false} disabled={currentConversationBusy} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && activeConversationId && <ChatExportButton key={activeConversationId} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && <BuilderDestinationControl key={builderChatId} chatId={builderChatId}
                   disabled={currentConversationBusy} open={destinationDialogOpen} onOpenChange={setDestinationDialogOpen}

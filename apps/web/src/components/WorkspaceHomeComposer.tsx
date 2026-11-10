@@ -28,7 +28,7 @@ interface Props {
   executionSwitcher?: ReactNode;
   mcpProvider?: string | null;
   codexVoiceEnabled?: boolean;
-  onOpenSettings?: (section?: 'execution' | 'dictation') => void;
+  onOpenSettings?: (section?: 'execution' | 'dictation' | 'designSystems') => void;
   onOpenMcp?: () => void;
   onOpenConnectors?: () => void;
   busy?: boolean;

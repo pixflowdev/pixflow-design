@@ -49,7 +49,7 @@ posixTest('detectAgents emits a not-on-path diagnostic with searched dirs + fix 
       process.env.PATH = dir;
       process.env.OD_AGENT_HOME = dir;
 
-      const agents = await detectAgents();
+      const agents = await detectAgents({}, { force: true });
       const mimo = agents.find((agent) => agent.id === 'mimo');
 
       assert.equal(mimo?.available, false);
@@ -78,7 +78,7 @@ posixTest('detectAgents emits a not-executable diagnostic for a PATH match witho
       process.env.PATH = dir;
       process.env.OD_AGENT_HOME = dir;
 
-      const agents = await detectAgents();
+      const agents = await detectAgents({}, { force: true });
       const cursor = agents.find((agent) => agent.id === 'cursor-agent');
 
       assert.equal(cursor?.available, false);
@@ -109,7 +109,7 @@ posixTest('detectAgents emits an auth-missing diagnostic when the auth probe rep
       process.env.PATH = dir;
       process.env.OD_AGENT_HOME = dir;
 
-      const agents = await detectAgents();
+      const agents = await detectAgents({}, { force: true });
       const cursor = agents.find((agent) => agent.id === 'cursor-agent');
 
       assert.equal(cursor?.available, true);
@@ -148,9 +148,9 @@ posixTest('detectAgentsStream yields the same agent set as detectAgents', async 
       process.env.PATH = dir;
       process.env.OD_AGENT_HOME = dir;
 
-      const batch = await detectAgents();
+      const batch = await detectAgents({}, { force: true });
       const streamed: string[] = [];
-      for await (const agent of detectAgentsStream()) {
+      for await (const agent of detectAgentsStream({}, { force: true })) {
         streamed.push(agent.id);
       }
 

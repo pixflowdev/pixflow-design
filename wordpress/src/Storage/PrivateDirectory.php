@@ -12,7 +12,7 @@ final class PrivateDirectory
         private readonly string $option,
         private readonly string $constant,
     ) {
-        if (!in_array($collection, ['projects', 'resource-packs'], true)) throw new \InvalidArgumentException('Unknown private collection.');
+        if (!in_array($collection, ['projects', 'resource-packs', 'diagnostics'], true)) throw new \InvalidArgumentException('Unknown private collection.');
     }
     public function directory(): string
     {
@@ -47,7 +47,7 @@ final class PrivateDirectory
                 throw new \RuntimeException('Private storage must be outside public directories.');
             }
         }
-        $this->make_directory(dirname($root));
+        if ($this->collection !== 'diagnostics' || !is_dir(dirname($root))) $this->make_directory(dirname($root));
         $lock_path = dirname($root) . '/.' . $this->collection . '-migration.lock';
         $this->assert_no_links($lock_path);
         // Expected host permission failures are reported by the caller's notice /
@@ -56,7 +56,7 @@ final class PrivateDirectory
         if ($lock === false || !flock($lock, LOCK_EX)) throw new \RuntimeException('Could not lock private storage.');
         try {
             $legacy = wp_normalize_path($uploads['basedir'] . '/' . 'pixflow-design/' . $this->collection);
-            if (file_exists($legacy) || is_link($legacy)) {
+            if ($this->collection !== 'diagnostics' && (file_exists($legacy) || is_link($legacy))) {
                 $this->assert_no_links($legacy);
                 if (file_exists($root)) throw new \RuntimeException('Both legacy and private storage trees exist; migration needs host assistance.');
                 // Rename the whole tree atomically: no partially copied data,

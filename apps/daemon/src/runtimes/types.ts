@@ -7,6 +7,7 @@ export type { AgentDiagnostic } from '@open-design/contracts';
 export type RuntimeEnv = NodeJS.ProcessEnv | Record<string, string>;
 
 export type RuntimeModelOption = {
+  reasoningOptions?: Array<{ id: string; label: string }>;
   id: string;
   label: string;
   enabled?: boolean;
@@ -16,7 +17,7 @@ export type RuntimeModelOption = {
   metadata?: ModelMetadata;
 };
 
-export type RuntimeModelSource = 'live' | 'fallback';
+export type RuntimeModelSource = 'live' | 'fallback' | 'cli-fallback';
 
 export type RuntimeReasoningOption = RuntimeModelOption;
 
@@ -138,8 +139,10 @@ export type RuntimeAgentDef = {
   fetchModels?: (
     resolvedBin: string,
     env: RuntimeEnv,
-  ) => Promise<RuntimeModelOption[] | null>;
+  ) => Promise<RuntimeModelOption[] | { models: RuntimeModelOption[]; source: RuntimeModelSource } | null>;
   reasoningOptions?: RuntimeReasoningOption[];
+  /** Model-specific validation for both chat and connection-test requests. */
+  modelReasoningOptions?: (model: string | null | undefined) => RuntimeReasoningOption[];
   supportsImagePaths?: boolean;
   maxPromptArgBytes?: number;
   mcpDiscovery?: string;
@@ -239,6 +242,7 @@ export type DetectedAgent = Omit<
   available: boolean;
   authStatus?: 'ok' | 'missing' | 'unknown';
   authMessage?: string;
+  runtimeSource?: 'desktop' | 'cli';
   path?: string;
   version?: string | null;
   diagnostics?: AgentDiagnostic[];

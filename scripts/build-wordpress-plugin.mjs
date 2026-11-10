@@ -186,6 +186,7 @@ async function validatePackagedPlugin() {
     'assets/app/agent-icons/codex.svg',
     'assets/app/model-icons/openai.svg',
     'assets/pixflow-design-builder.css',
+    'assets/pixflow-shimmer.css',
     directoryBuild ? 'resources/bundled-library/skills' : 'resources/bundled-library.zip',
     'src/autoload.php',
     'src/Plugin.php',

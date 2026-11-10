@@ -3,7 +3,8 @@ import { directDigest } from './direct-site-store.js';
 type Message = {role:string;content:string};
 export interface AcceptedDirectSteering { id:string; text:string; contentOffset:number }
 
-export const directHistoryLineage = (history: Message[]): string => directDigest(history.slice(-2).map(({role,content})=>({role,content})));
+/** Native context is reusable only when every supplied role/content pair still matches. */
+export const directHistoryLineage = (history: Message[]): string => directDigest(history.map(({role,content})=>({role,content})));
 
 /** Match the visible timeline using only steering acknowledged by this native turn. */
 export function directTurnLineage(history: Message[], prompt: string, assistant: string, steering: AcceptedDirectSteering[]): string {

@@ -39,8 +39,12 @@ final class FeatureRuntime
                 $assets[] = ['handle' => $handle, 'kind' => $kind, 'url' => add_query_arg('ver', (string) $item->ver, $url)];
             }
         }
+        $configuration = [];
+        foreach (FeatureContributions::all() as $id => $service) {
+            if (isset($service['clientConfiguration'])) $configuration[$id] = ($service['clientConfiguration'])();
+        }
         $builders = [];
         foreach (['bricks', 'etch', 'elementor', 'generateblocks'] as $builder) $builders[$builder] = BuilderIntegrations::active($builder);
-        return ['schema' => 'pixflow.feature-runtime.v1', 'features' => $features, 'builders' => $builders, 'assets' => $assets];
+        return ['schema' => 'pixflow.feature-runtime.v1', 'features' => $features, 'builders' => $builders, 'assets' => $assets, 'configuration' => $configuration];
     }
 }

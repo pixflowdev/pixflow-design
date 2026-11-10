@@ -3,6 +3,9 @@ export interface PixflowSiteIntegrations { bricks?: boolean }
 /** Source bound by WordPress when the Workspace opens a tool session. */
 export interface PixflowWorkspaceSource { projectId: string; conversationId: string; requestId: string }
 export interface PixflowDirectSiteAuthorization {
+  historyCurrent?: boolean;
+  /** WordPress's public site title at the time this Workspace session was checked. */
+  siteTitle?: string;
   /** Current server-owned contributions, never taken from request JSON. */
   features?: { composio?: boolean; audio?: boolean; 'external-mcp'?: boolean; 'image-generation'?: boolean };
   editorTarget?: PixflowEditorTarget | null;
@@ -19,7 +22,21 @@ export interface PixflowDirectSiteAttachment {
   kind: 'image' | 'file';
   annotationScreenshot?: boolean;
 }
+/** Saved site guidance snapshot, supplied by WordPress for a new run. No history or credentials. */
+export interface PixflowRunDesignGuidance {
+  revision: number;
+  source: 'existing' | 'custom' | 'system';
+  product: string;
+  design?: string;
+  system?: { id: string; title: string; profile: unknown };
+  unavailable?: boolean;
+  instructions: string;
+  /** Optional, authorized add-on instructions and explicit command hints. */
+  extension?: { instructions: string; commands: Record<string, string> };
+}
 export interface PixflowDirectSiteSession {
+  siteTitle?: string;
+  designGuidance?: PixflowRunDesignGuidance | null;
   editorTarget?: PixflowEditorTarget;
   workspaceSource?: PixflowWorkspaceSource;
   endpoint: string;
@@ -41,11 +58,17 @@ export interface PixflowDirectSiteTimings {
   ownerReadyMs?: number;
   contextReadyMs?: number;
   spawnMs?: number;
+  /** Native protocol startup, when the provider exposes a persistent transport. */
+  protocolReadyMs?: number;
+  threadReadyMs?: number;
+  /** The first model request was written, distinct from process/protocol startup. */
+  providerSubmittedMs?: number;
   firstProviderEventMs?: number;
   firstTextMs?: number;
   totalMs: number;
   promptBytes?: number;
   nativeSessionReused?: boolean;
+  warmWorkerUsed?: boolean;
 }
 export interface PixflowDirectSiteRunIdentity {
   conversationId: string;
@@ -93,6 +116,8 @@ export interface PixflowDirectSiteVoiceEndResponse {
   outcome: PixflowDirectSiteOutcome | null;
 }
 export interface PixflowDirectSiteRunRequest {
+  /** Draft guidance may inspect the site but must never change its content. */
+  purpose?: 'guidance-draft';
   editorTarget?: PixflowEditorTarget;
   /** Browser-created WebRTC offer. Credentials and native execution stay in the Bridge. */
   voice?: { sdp: string; name?: string };
@@ -127,6 +152,14 @@ export function bricksStylingInstructions(useSiteStyles = true): string {
 }
 
 /** Live tools target one authenticated browser tab, never saved post metadata. */
+export interface PixflowDirectCanvasDepartureRequest {
+  action: 'depart';
+  builder: 'bricks';
+  canvasId: string;
+  postId: number;
+  destination?: PixflowEditorTarget;
+}
+
 export interface PixflowDirectCanvasCommand {
   /** Opaque owner of transient canvas feedback; never an execution credential. */
   presentationScope?: string;
@@ -177,6 +210,6 @@ export interface PixflowBricksLiveContext {
 /** One native BYOK provider turn transported through the owned WordPress session. */
 export interface PixflowSiteProviderTurn {
   text: string;
-  calls: Array<{ id: string; function: 'site_tool'; input: { name: string; arguments: Record<string, unknown> } }>;
+  calls: Array<{ id: string; function: 'site_tool'; input: { name: string; arguments: Record<string, unknown> }; validationError?: string }>;
   turns: unknown[];
 }

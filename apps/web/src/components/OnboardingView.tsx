@@ -527,6 +527,7 @@ export function OnboardingView({
       <footer className={onboardingStyles.footer}>
         <Button variant="ghost" disabled={saving || displayedStep === 0} onClick={() => void move(displayedStep - 1)}>{translateUi("settings.onboardingBack")}</Button>
         <a href="https://docs.pixflow.dev/plugin/bridge/" target="_blank" rel="noopener noreferrer">{translateUi("ui.entryShell.setupHelp")}</a>
+        {(displayedStep === 1 || displayedStep === 2) && <Button variant="ghost" disabled={!hydrated || saving} onClick={() => void finish()}>{translateUi("ui.finalOnboarding.1be451ef72")}</Button>}
         <Button disabled={!hydrated || saving || !ready} onClick={() => void (displayedStep === 3 ? finish() : move(displayedStep + 1))}>{saving ? translateUi("routines.saving") : displayedStep === 3 ? translateUi("ui.entryShell.openPixflowDesign") : translateUi("settings.onboardingContinue")}</Button>
       </footer>
     </section>

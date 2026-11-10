@@ -1,3 +1,7 @@
+import { agentReasoningOptions } from '../utils/agentReasoning';
+import { LanguageUpdateDot } from './LanguageUpdateDot';
+import { ClaudeSignIn } from './ClaudeSignIn';
+import { CodexUsage } from './CodexUsage';
 import { BridgeConnectorSection } from './BridgeConnectorSection';
 export { deriveComposioCredentialState } from './composio-credential-state';
 import { composioAvailable } from '../pixflow/composio-contribution';
@@ -145,6 +149,7 @@ import { McpClientSection } from './McpClientSection';
 import { SkillsSection } from './SkillsSection';
 import { availableSkillUpdates, useSkillLibraryCatalogue } from './useSkillLibraryCatalogue';
 import { CodexVoiceSettings } from './CodexVoiceSettings';
+import { UpscalerSettings } from './UpscalerSettings';
 import { DictationSettings } from './DictationSettings';
 import settingsStyles from './SettingsDialog.module.css';
 import appearanceStyles from './AppearanceSection.module.css';
@@ -231,6 +236,7 @@ import {
 
 export type SettingsSection =
   | 'dictation'
+  | 'upscaler'
   | 'execution'
   | 'instructions'
   | 'media'
@@ -332,6 +338,8 @@ function compareVersionParts(a: string, b: string): number {
 interface Props {
   /** Per mount: do not infer this from the first WordPress root's global config. */
   portalToBody?: boolean;
+  /** Persistent toolbar intent survives lazy Pro asset loading. */
+  openManualDesignSystem?: boolean;
   initial: AppConfig;
   agents: AgentInfo[];
   agentsLoading?: boolean;
@@ -1069,6 +1077,26 @@ export function sanitizeSettingsSavePayload(
   };
 }
 
+const EXECUTION_SELECTION_KEYS = [
+  'mode', 'apiTransport', 'apiProtocol', 'apiVersion', 'apiKey', 'baseUrl',
+  'model', 'apiProviderBaseUrl', 'apiProtocolConfigs', 'maxTokens',
+  'composioProvider', 'composioModel', 'agentId',
+] as const satisfies ReadonlyArray<keyof AppConfig>;
+
+/** Adopt hydrated execution preferences only while the local selection is pristine.
+ * Treat provider fields as one group so a pending user edit is never combined
+ * with an older provider's credentials or model. Unrelated draft fields survive.
+ */
+function reconcileExecutionSelection(current: AppConfig, previous: AppConfig, incoming: AppConfig): AppConfig {
+  const before = normalizeSettingsRuntimeConfig(previous);
+  const next = normalizeSettingsRuntimeConfig(incoming);
+  const same = (a: AppConfig, b: AppConfig) => EXECUTION_SELECTION_KEYS.every(
+    (key) => JSON.stringify(a[key]) === JSON.stringify(b[key]),
+  );
+  if (!same(current, before) || same(current, next)) return current;
+  return { ...current, ...Object.fromEntries(EXECUTION_SELECTION_KEYS.map((key) => [key, next[key]])) };
+}
+
 export function switchApiProtocolConfig(
   config: AppConfig,
   protocol: ApiProtocol,
@@ -1131,6 +1159,7 @@ function normalizeSettingsRuntimeConfig(config: AppConfig): AppConfig {
 
 export function SettingsDialog({
   portalToBody = false,
+  openManualDesignSystem = false,
   initial,
   agents,
   agentsLoading = false,
@@ -1171,6 +1200,13 @@ export function SettingsDialog({
   const bricksIntegrationActive = getPixflowWordPressConfig()?.bricksIntegrationActive ?? initial.bricksIntegrationActive ?? false;
   const freeSettings = isPixflowWordPressEmbed() && !assetsAvailable();
   const [freeLicenseStatus, setFreeLicenseStatus] = useState(pixflowLicenseStatus);
+  const [freeLicenseReadState, setFreeLicenseReadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [freeLicenseReadAttempt, setFreeLicenseReadAttempt] = useState(0);
+  useEffect(() => {
+    const closeForConversation = () => onClose();
+    window.addEventListener('pixflow-design:conversation-opened', closeForConversation);
+    return () => window.removeEventListener('pixflow-design:conversation-opened', closeForConversation);
+  }, [onClose]);
   useEffect(() => { if (pixflowLicenseStatus) setFreeLicenseStatus(pixflowLicenseStatus); }, [pixflowLicenseStatus]);
   useEffect(() => {
     const sync = (event: Event) => setFreeLicenseStatus((event as CustomEvent<PixflowLicenseStatus>).detail);
@@ -1233,22 +1269,24 @@ export function SettingsDialog({
   useEffect(() => {
     const previousInitial = previousInitialRef.current;
     setCfg((current) => {
+      const selection = reconcileExecutionSelection(current, previousInitial, initial);
       const nextAgentCliEnv = reconcileAmrProfileEnv(current.agentCliEnv, initial.agentCliEnv);
       const nextAgentModels = reconcileAmrModelChoice(current.agentModels, previousInitial, initial);
       if (
-        nextAgentCliEnv === current.agentCliEnv
+        selection === current
+        && nextAgentCliEnv === current.agentCliEnv
         && nextAgentModels === current.agentModels
       ) {
         return current;
       }
       return {
-        ...current,
+        ...selection,
         agentCliEnv: nextAgentCliEnv,
         agentModels: nextAgentModels,
       };
     });
     autosaveLastSavedRef.current = {
-      ...autosaveLastSavedRef.current,
+      ...reconcileExecutionSelection(autosaveLastSavedRef.current, previousInitial, initial),
       agentCliEnv: reconcileAmrProfileEnv(
         autosaveLastSavedRef.current.agentCliEnv,
         initial.agentCliEnv,
@@ -1563,7 +1601,7 @@ export function SettingsDialog({
     };
     applyPublishedStatus(readPixflowBridgeStatus());
     const unsubscribe = subscribePixflowBridgeStatus(applyPublishedStatus);
-    void probePixflowOptionalBridge({ force: true, timeoutMs: 2_500 }).then((health) => {
+    void probePixflowOptionalBridge({ force: true }).then((health) => {
       if (cancelled) return;
       const version = health.available ? String(health.version || '').trim() : '';
       setProbedBridgeVersion(version || null);
@@ -1578,11 +1616,17 @@ export function SettingsDialog({
   useEffect(() => {
     if (!freeSettings) return;
     let cancelled = false;
-    void fetchPixflowLicenseStatus().then(status => {
-      if (!cancelled) setFreeLicenseStatus(status);
-    }).catch(() => { /* Keep Free available if status cannot be fetched. */ });
+    setFreeLicenseReadState('loading');
+    void fetchPixflowLicenseStatus(freeLicenseReadAttempt ? { force: true } : undefined).then(status => {
+      if (!cancelled) {
+        setFreeLicenseStatus(status);
+        setFreeLicenseReadState('ready');
+      }
+    }).catch(() => {
+      if (!cancelled) setFreeLicenseReadState('error');
+    });
     return () => { cancelled = true; };
-  }, [freeSettings]);
+  }, [freeSettings, freeLicenseReadAttempt]);
 
   // A surface profile is an execution boundary, not only a navigation filter.
   // Resolve profile changes before the next paint so a disallowed section can
@@ -3030,6 +3074,7 @@ export function SettingsDialog({
   // BYOK content so "Local CLI" only renders once (in the seg-control tab),
   // not twice (heading + tab).
   const sectionHeader: Record<SettingsSection, { title: string; subtitle: string }> = {
+    upscaler: { title:t('media.upscale.settingsTitle'), subtitle:t('media.upscale.settingsHelp') },
     dictation: { title: t('dictationTitle'), subtitle: t('dictationLocal') },
     execution: { title: t('settings.title'), subtitle: hasPixflowWordPressContext() && composioAvailable() ? 'Choose Local CLI, API · BYOK or Composio.' : t('settings.subtitle') },
     instructions: {
@@ -3094,6 +3139,7 @@ export function SettingsDialog({
     { section: 'execution', icon: IconTerminal2, title: t('settings.envConfigure'), subtitle: `${t('settings.localCli')} / ${t('settings.modeApiMeta')}` },
     { section: 'media', icon: IconPhotoVideo, title: t('settings.mediaProviders'), subtitle: translateUi("ui.settingsDialog.imageVideoAudio") },
     ...(audioAvailable() ? [{ section: 'dictation' as const, icon: IconMicrophone, title: t('dictationTitle'), subtitle: t('dictationLocal') }] : []),
+    { section:'upscaler',icon:IconPhotoVideo,title:t('media.upscale.settingsTitle'),subtitle:t('media.upscale.settingsHelp') },
     { section: 'memory', icon: IconBrain, title: t('settings.memory'), subtitle: translateUi("ui.settingsDialog.rulesAndSavedContext") },
     ...(isWpAdminSurface || hasPixflowWordPressContext() ? [{
       section: 'bricksExtensions' as const,
@@ -3153,9 +3199,8 @@ export function SettingsDialog({
   const renderAgentModelConfig = (selected: AgentInfo) => {
     const hasModels =
       Array.isArray(selected.models) && selected.models.length > 0;
-    const hasReasoning =
-      Array.isArray(selected.reasoningOptions) &&
-      selected.reasoningOptions.length > 0;
+    const reasoningOptions = agentReasoningOptions(selected, cfg.agentModels?.[selected.id]?.model);
+    const hasReasoning = reasoningOptions.length > 0;
     // AMR's live catalog only lands a beat after sign-in. While the user is
     // signed in but the model list hasn't arrived yet, show the picker in a
     // loading state instead of hiding it — so the dropdown appears at sign-in
@@ -3223,8 +3268,7 @@ export function SettingsDialog({
         ? selected.models?.[0]?.id ?? ''
         : configuredModel ?? selected.models?.[0]?.id ?? '';
     const reasoningValue =
-      choice.reasoning ??
-      selected.reasoningOptions?.[0]?.id ?? '';
+      (reasoningOptions.some(option => option.id === choice.reasoning) ? choice.reasoning : reasoningOptions[0]?.id) ?? '';
     const customActive =
       allowCustomModel &&
       hasModels &&
@@ -3239,15 +3283,17 @@ export function SettingsDialog({
     const fastModeAvailable = codexModelSupportsFastMode(selected, modelValue);
     const modelSource = selected.modelsSource ?? 'fallback';
     const modelSourceLabel =
-      modelSource === 'live'
-        ? t('settings.modelSourceLive')
-        : t('settings.modelSourceFallback');
+      modelSource === 'cli-fallback' ? t('settings.modelSourceCliFallback') : modelSource === 'live'
+        ? t(selected.runtimeSource === 'desktop' ? 'settings.modelSourceDesktop' : 'settings.modelSourceLive')
+        : t(selected.id === 'claude' ? 'settings.modelDiscoveryUnavailable' : 'settings.modelSourceFallback');
     const modelSourceHint =
-      modelSource === 'live'
-        ? selected.supportsCustomModel === false
+      modelSource === 'cli-fallback' ? t('settings.modelPickerLiveHint') : modelSource === 'live'
+        ? selected.runtimeSource === 'desktop'
+          ? t('settings.modelPickerDesktopHint')
+          : selected.supportsCustomModel === false
           ? t('settings.modelPickerLiveCatalogOnlyHint')
           : t('settings.modelPickerLiveHint')
-        : t('settings.modelPickerFallbackHint');
+        : t(selected.id === 'claude' ? 'settings.modelDiscoveryUnavailable' : 'settings.modelPickerFallbackHint');
     return (
       <div className="agent-card-config">
         {hasModels ? (
@@ -3341,7 +3387,7 @@ export function SettingsDialog({
                   setChoice({ reasoning: e.target.value })
                 }
               >
-                {selected.reasoningOptions!.map((r) => (
+                {reasoningOptions.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label}
                   </option>
@@ -3515,7 +3561,7 @@ export function SettingsDialog({
                 <item.icon size={18} stroke={1.65} aria-hidden="true" />
                 <span>
                   <span className="settings-nav-item__title-row">
-                    <strong>{item.title}</strong>
+                    <strong>{item.title}</strong>{(item.section === 'appearance' || item.section === 'language') && <LanguageUpdateDot />}
                     {item.section === 'skills' && skillUpdateCount > 0 && <span className={settingsStyles.skillUpdateCount} aria-label={`${translateUi('skillLibrary.updateAvailable')}: ${skillUpdateCount}`} title={`${translateUi('skillLibrary.updateAvailable')}: ${skillUpdateCount}`}>{skillUpdateCount > 99 ? '99+' : skillUpdateCount}</span>}
                     {item.section === 'resourcePacks' && downloadAttentionCount > 0 ? (
                       <span
@@ -3531,7 +3577,15 @@ export function SettingsDialog({
               </button>
             ))}
             </div>
-            {freeSettings && <div className={settingsStyles.sidebarUpgrade}>
+            {freeSettings && freeLicenseReadState === 'error' && !freeLicenseStatus && (
+              <div className={settingsStyles.sidebarUpgrade} role="status">
+                <span>{translateUi('ui.pixflowLicensePanel.feedback61')}</span>
+                <Button onClick={() => setFreeLicenseReadAttempt(attempt => attempt + 1)}>
+                  {translateUi('promptTemplates.retry')}
+                </Button>
+              </div>
+            )}
+            {freeSettings && freeLicenseStatus && <div className={settingsStyles.sidebarUpgrade}>
               <div className={settingsStyles.sidebarUpgradeCopy}>
                 <strong>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.pixflowProMigration.yourProAccess") : 'Pixflow Design Pro'}</strong>
                 <span>{freeLicenseStatus?.pro?.eligible ? translateUi("ui.settingsDialog.yourLicenceIncludesTheProAddOn") : translateUi("ui.settingsDialog.moreToolsForYourNextIdea")}</span>
@@ -3643,7 +3697,7 @@ export function SettingsDialog({
                   <span className={settingsStyles.cliScanIcon} aria-hidden="true">
                     <Icon name="terminal" size={18} />
                   </span>
-                  <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                  <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                 </div>
               ) : agents.length === 0 ? (
                 <div className="empty-card">
@@ -3690,7 +3744,7 @@ export function SettingsDialog({
                         >
                           {agentRescanRunning ? (
                             <>
-                              <span className={settingsStyles.cliScanLabel}>{t('settings.rescanRunning')}</span>
+                              <span className={`${settingsStyles.cliScanLabel} pixflow-shimmer-text`}>{t('settings.rescanRunning')}</span>
                             </>
                           ) : (
                             t('settings.rescan')
@@ -3748,6 +3802,31 @@ export function SettingsDialog({
                             hoveredAgentCardId === a.id &&
                             amrCardStatus?.loggedIn !== true &&
                             amrCardStatus?.loginInFlight === true;
+                          const testButton = active && !isAmrAgent ? (
+                                  <button
+                                    type="button"
+                                    className={
+                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
+                                      (running ? ' loading' : '')
+                                    }
+                                    onClick={() => void handleTestAgent()}
+                                    disabled={running}
+                                    title={t('settings.testTitle')}
+                                  >
+                                    {running ? (
+                                      <>
+                                        <Icon
+                                          name="spinner"
+                                          size={13}
+                                          className="icon-spin"
+                                        />
+                                        <span>{t('settings.test')}</span>
+                                      </>
+                                    ) : (
+                                      t('settings.test')
+                                    )}
+                                  </button>
+                          ) : null;
                           const cardEl = (
                             <div
                               key={a.id}
@@ -3767,7 +3846,7 @@ export function SettingsDialog({
                                 setHoveredAgentCardId(null);
                               }}
                             >
-                              <div className="agent-card-main">
+                              <div className={`agent-card-main${a.id === 'claude' ? ` ${settingsStyles.claudeAuthMain}` : ''}`}>
                                 <button
                                   type="button"
                                   className="agent-card-select"
@@ -3833,6 +3912,7 @@ export function SettingsDialog({
                                           <span title={metaTitle}>
                                             {metaLabel}
                                           </span>
+                                            {a.runtimeSource === 'desktop' && a.authStatus !== 'missing' ? <span className="agent-runtime-source">{t('settings.modelSourceDesktop')}</span> : null}
                                         </div>
                                       ) : null}
                                       {amrCardEmail ? (
@@ -3904,33 +3984,12 @@ export function SettingsDialog({
                                     />
                                   )
                                 ) : null}
-                                {active && !isAmrAgent ? (
-                                  <button
-                                    type="button"
-                                    className={
-                                      'ghost icon-btn settings-test-btn agent-card-test-btn' +
-                                      (running ? ' loading' : '')
-                                    }
-                                    onClick={() => void handleTestAgent()}
-                                    disabled={running}
-                                    title={t('settings.testTitle')}
-                                  >
-                                    {running ? (
-                                      <>
-                                        <Icon
-                                          name="spinner"
-                                          size={13}
-                                          className="icon-spin"
-                                        />
-                                        <span>{t('settings.test')}</span>
-                                      </>
-                                    ) : (
-                                      t('settings.test')
-                                    )}
-                                  </button>
-                                ) : null}
+                                {a.id === 'claude' && a.authStatus === 'missing' ? (
+                                  <ClaudeSignIn onConnected={() => { void handleRefreshAgents(); }} />
+                                ) : testButton}
                               </div>
-                              {(a.diagnostics ?? []).map((diagnostic, i) => (
+
+                              {(a.diagnostics ?? []).filter(diagnostic => !(a.id === 'claude' && diagnostic.reason === 'auth-missing')).map((diagnostic, i) => (
                                 <AgentDiagnosticRow
                                   key={`${diagnostic.reason}-${i}`}
                                   diagnostic={diagnostic}
@@ -3938,6 +3997,7 @@ export function SettingsDialog({
                                 />
                               ))}
                               {active ? renderAgentModelConfig(a) : null}
+                              {active && (a.id === 'codex' || a.id === 'claude' || a.id === 'grok-build') ? <CodexUsage key={a.id + ':' + cfg.agentModels?.[a.id]?.model} provider={a.id} model={cfg.agentModels?.[a.id]?.model || ''} /> : null}
                             </div>
                           );
                           if (active && agentTestState.status !== 'idle') {
@@ -4662,6 +4722,7 @@ export function SettingsDialog({
             </>
           ) : null}
 
+          {activeSection === 'upscaler' && <UpscalerSettings onDownloads={()=>setActiveSection('resourcePacks')}/>}
           {activeSection === 'dictation' && audioAvailable() ? <DictationSettings onInstallBridge={() => setActiveSection('resourcePacks')} /> : null}
           {activeSection === 'media' ? (
             <MediaProvidersSection
@@ -4839,6 +4900,7 @@ export function SettingsDialog({
 
           {activeSection === 'designSystems' ? (
             <DesignSystemsSection
+              openManualEditor={openManualDesignSystem}
               cfg={cfg}
               setCfg={setCfg}
               onDesignSystemsChanged={onDesignSystemsChanged}
@@ -6795,7 +6857,7 @@ function buildSharedMcpJson(info: McpInstallInfo): string {
 // copy-snippet path still works for users who prefer to paste manually
 // or whose Codex CLI is not on PATH (button shows a disabled hint in
 // that case).
-function CodexInstallToggle(): JSX.Element | null {
+function CodexInstallToggle(): React.JSX.Element | null {
   const translateUi = usePixflowUiTranslation();
   const { t } = useI18n();
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -7782,3 +7844,5 @@ function testNotificationStatusText(
   if (result === 'unsupported') return 'settings.notifyDesktopUnsupported';
   return 'settings.notifyTestFailed';
 }
+
+

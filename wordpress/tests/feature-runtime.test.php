@@ -9,6 +9,9 @@ function wp_scripts(): object { return $GLOBALS['scripts']; }
 function wp_styles(): object { return $GLOBALS['styles']; }
 function wp_register_script($handle, $src, $deps = [], $ver = false, $footer = false): void { $GLOBALS['scripts']->registered[$handle] = (object) compact('src', 'deps', 'ver'); }
 $dequeued = [];
+$inline = [];
+function wp_add_inline_script($handle, $data, $position = 'after'): void { $GLOBALS['inline'][$handle] = $data; }
+function wp_json_encode($value): string { return json_encode($value); }
 function wp_dequeue_script(string $handle): void { $GLOBALS['dequeued'][] = 'script:' . $handle; }
 function wp_dequeue_style(string $handle): void { $GLOBALS['dequeued'][] = 'style:' . $handle; }
 function plugins_url(string $path, string $file): string { return 'https://site.test/wp-content/plugins/pixflow-design-pro/' . $path; }
@@ -41,7 +44,9 @@ BuilderIntegrations::add('bricks', ['active' => static fn(): bool => true, 'regi
     $GLOBALS['styles']->registered['pixflow-bricks-settings'] = (object) ['src' => 'https://site.test/wp-content/plugins/pixflow-design-pro/assets/app/pixflow-bricks-settings.css', 'ver' => '4'];
     return 'pixflow-bricks-settings';
 }]);
+FeatureContributions::add('optional-example', static fn(): string => '', ['clientConfiguration' => static fn(): array => ['commands' => ['check']]]);
 $free = FeatureRuntime::state();
+check($free['configuration'] === [], 'Free exposes no optional configuration.');
 check($free['assets'] === [] && $free['features'] === [] && !$free['builders']['bricks'], 'Free or expired Pro must not expose premium modules.');
 check($enqueues === 0, 'No premium asset callbacks run for Free.');
 $allowed = true;
@@ -53,7 +58,9 @@ check(count($pro['assets']) === 4, 'Only package-owned script and stylesheet URL
 check(count(array_filter($pro['assets'], static fn(array $asset): bool => $asset['handle'] === 'pixflow-bricks-settings')) === 2, 'Authorized Bricks settings have standalone script and CSS URLs.');
 check($pro['assets'][0]['url'] === 'https://site.test/wp-content/plugins/pixflow-design-pro/assets/app/pixflow-assets.js?ver=4', 'Versioned URLs preserve cache invalidation.');
 check(!str_contains(json_encode($pro), 'must-not-publish'), 'Inline data and secrets excluded.');
+check($pro['configuration']['optional-example']['commands'] === ['check'], 'Authorized optional configuration survives deferred loading.');
 $allowed = false;
+check(FeatureRuntime::state()['configuration'] === [], 'Revocation removes optional configuration.');
 check(FeatureRuntime::state()['assets'] === [], 'Revocation excludes loaded implementations.');
 require dirname(__DIR__) . '/src/Assets/AssetRegistrar.php';
 $registrar = (new ReflectionClass(\PixflowDesign\WordPress\Assets\AssetRegistrar::class))->newInstanceWithoutConstructor();
@@ -73,7 +80,9 @@ check($enqueues === $prior_enqueues + 1, 'Manifest uses registered handles witho
 check(in_array('script:pixflow-bricks-agent', $dequeued, true), 'Admin removes full Bricks runtime from the eager queue.');
 check(in_array('style:pixflow-assets', $dequeued, true), 'Optional CSS follows the on-demand script.');
 check(isset(wp_scripts()->registered['pixflow-assets']), 'Deferred assets remain registered for the authorized manifest.');
+$inline = [];
 $native_handles = $dependencies->invoke($registrar, false);
+check(str_contains($inline['pixflow-shared-runtime'] ?? '', '"optional-example":{"commands":["check"]}'), 'Native builders receive authorized configuration before their shared runtime.');
 check(!in_array('pixflow-workspace', $native_handles, true), 'Native builder does not eagerly load the Workspace shell.');
 check(!in_array('pixflow-workspace', $admin_handles, true), 'Admin does not eagerly load the Workspace shell.');
 check(count(array_filter(FeatureRuntime::state()['assets'], static fn(array $asset): bool => $asset['handle'] === 'pixflow-workspace')) === 2, 'Workspace script and CSS remain discoverable for lazy loading.');

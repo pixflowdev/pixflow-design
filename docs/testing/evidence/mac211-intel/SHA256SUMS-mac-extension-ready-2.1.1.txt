@@ -1,0 +1,2 @@
+6c38bca034043269051628c7503dc27881b06dd6ad19b477141c15e22348417f  pixflow-design-bridge-2.1.1-mac-arm64-037a867b-extension-ready.dmg
+d0dd0d04dc59e318063c70dacf900231ace71e3a365eaf99bacf31d8257a7dcf  pixflow-design-bridge-2.1.1-mac-x64-037a867b-extension-ready.dmg

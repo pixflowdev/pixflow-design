@@ -124,7 +124,7 @@ final class LicenseService
             $explicit_refusal = $status >= 200 && $status < 500
                 && !in_array($status, [408, 429], true)
                 && ($body['valid'] ?? null) === false
-                && ($body['access_granted'] ?? null) === false;
+                && ($body['access_granted'] ?? null) === false && !empty($body['status']);
             if (!$explicit_refusal) return $this->denied('license_verification_unavailable',
                 'Pixflow could not verify the saved licence. Your saved key has been kept; retry verification shortly.',
                 ['http_status' => $status]);
@@ -132,7 +132,10 @@ final class LicenseService
             // but never return access from this refused validation.
             if ($renewal) return $this->denied((string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),
                 (string) ($body['message'] ?? 'The saved licence has no current access.'));
-            if (!$this->cache->clear($expected_cache)) return $this->denied('license_state_changed', 'Licence settings changed during verification. Refresh the status before retrying.');
+            $saved_key = \PixflowDesign\WordPress\Security\SecretBox::decrypt((string) ($expected_cache['encrypted_license_key'] ?? ''));
+            if (hash_equals($saved_key, $license_key) && !$this->cache->clear($expected_cache))
+                return $this->denied('license_state_changed', 'Licence settings changed during verification. Refresh the status before retrying.');
+
             return array_merge($this->denied(
                 (string) ($body['last_error'] ?? $body['status'] ?? 'license_validation_failed'),
                 (string) ($body['message'] ?? 'Pixflow license validation failed.'),
@@ -194,9 +197,6 @@ final class LicenseService
 
         $expected_fingerprint = $this->site_identity->fingerprint($this->site_identity->current_payload());
         if (!hash_equals($expected_fingerprint, (string) ($payload['site_fingerprint'] ?? ''))) {
-            // Pixflow-owned: license keys are site scoped. A copied option or a
-            // bridge/site switch must not grant access to another WP install.
-            $this->cache->clear();
             return [];
         }
 
@@ -254,20 +254,7 @@ final class LicenseService
         if (($license['validation_url'] ?? self::VALIDATION_URL) !== $this->validation_url()) {
             return ['valid' => false, 'present' => false, 'status' => 'authority_changed'];
         }
-        if (($license['valid'] ?? false) !== true) {
-            return $license;
-        }
-
-        $expected_fingerprint = $this->site_identity->fingerprint($this->site_identity->current_payload());
-        if (hash_equals($expected_fingerprint, (string) ($license['site_fingerprint'] ?? ''))) {
-            return $license;
-        }
-
-        // Pixflow-owned: never reuse a cached license across WP sites. Clear
-        // mismatches so the wizard asks for a site-specific activation.
-        $this->cache->clear();
-
-        return $this->cache->summary();
+        return $license;
     }
 
     /** Poll a same-site expired subscription at most once per five minutes.

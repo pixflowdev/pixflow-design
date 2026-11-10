@@ -7,6 +7,7 @@ import {
   type PixflowWebsiteCloneSourceRequest,
 } from '@open-design/contracts';
 import { capturePixflowBrowserScreenshots } from '../pixflow/browser-screenshot.js';
+import { inspectPublicPage } from '../pixflow/public-page-inspection.js';
 import { capturePixflowWebsiteCloneSource } from '../pixflow/website-clone-source.js';
 
 export function registerPixflowVisualCaptureRoutes(
@@ -16,6 +17,14 @@ export function registerPixflowVisualCaptureRoutes(
 ): void {
   app.post('/api/pixflow/visual-capture', requireLocalDaemonRequest, async (req, res) => {
     const body = req.body && typeof req.body === 'object' ? req.body as Partial<PixflowVisualCaptureRequest> : {};
+    if (body.inspectionOnly === true) {
+      try {
+        const inspection = await inspectPublicPage(String(body.url || ''), body.viewports?.[0]?.width === 390 ? 390 : 1440);
+        return res.json({ok:true,browser:null,captures:[],errors:[],inspection});
+      } catch (error) {
+        return res.status(422).json({ok:false,browser:null,captures:[],errors:[error instanceof Error ? error.message : 'Browser inspection unavailable.']});
+      }
+    }
     const result = await capturePixflowBrowserScreenshots({
       url: String(body.url || ''),
       viewports: Array.isArray(body.viewports) ? body.viewports : [],

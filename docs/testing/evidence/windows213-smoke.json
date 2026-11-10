@@ -1,0 +1,28 @@
+{
+  "version": "2.1.3",
+  "preservedFiles": 40,
+  "direct": true,
+  "pro": "e3b7b86d6ea1e1129200a0a5cc2cfe849f1d6e5f",
+  "qaBridgeStopped": true,
+  "native": true,
+  "nativeRegistrationRestored": true,
+  "codexUsage": "available/desktop, weekly-only",
+  "claudeUsage": "available/desktop, five-hour and weekly; Opus/Sonnet reads pass",
+  "notClaimed": [
+    "fresh browser popover/permission UX",
+    "physical tray menu click",
+    "new standalone CLI fallback run"
+  ],
+  "scope": "Production base/overlay archives installed through QA-isolated NSIS identity; production executable and native helper payloads unchanged",
+  "foreignOriginDenied": true,
+  "core": "e6ec0e0a7ee15c70fbe06ad7974d2fb0b6d11cd7",
+  "restart": "graceful stop/start; pairing retained and usage/native transport checks repeated successfully",
+  "repair": true,
+  "productionInstallerSha256": "d30d673e587e79d877a45d29e1c63ee880d9ae22da1fe06b08ec62593b945447",
+  "temporaryWordPressPairingRevoked": true,
+  "payloadFiles": 11418,
+  "upgrade": true,
+  "passed": true,
+  "nativeDisconnectRetainsDirect": true,
+  "payloadErrors": []
+}

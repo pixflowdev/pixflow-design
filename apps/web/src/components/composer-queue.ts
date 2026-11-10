@@ -20,11 +20,11 @@ export interface ComposerQueueItem {
   id: string; prompt: string; attachments: ChatAttachment[]; comments: ChatCommentAttachment[]; meta?: ChatSendMeta;
   state: 'queued' | 'editing' | 'sending' | 'unconfirmed' | 'accepted'; message?: string;
 }
-interface QueueState { items: ComposerQueueItem[]; paused: boolean }
+interface QueueState { items: ComposerQueueItem[]; paused: boolean; steeringPauseIds?: string[] }
 export function readComposerQueue(key: string): QueueState {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) || 'null');
-    if (Array.isArray(value?.items)) return { paused: value.paused || value.items.some((item: ComposerQueueItem) => ['sending', 'editing'].includes(item.state)), items: value.items.map((item: ComposerQueueItem) => item.state === 'editing' ? { ...item, state: 'queued' } : item.state === 'sending' ? { ...item, state: 'unconfirmed', message: 'Delivery was interrupted. Check the conversation before sending again.' } : item) };
+    if (Array.isArray(value?.items)) return { steeringPauseIds: Array.isArray(value.steeringPauseIds) && value.steeringPauseIds.every((id: unknown) => typeof id === 'string') && !value.items.some((item: ComposerQueueItem) => item.state === 'editing') ? value.steeringPauseIds : undefined, paused: value.paused || value.items.some((item: ComposerQueueItem) => ['sending', 'editing'].includes(item.state)), items: value.items.map((item: ComposerQueueItem) => item.state === 'editing' ? { ...item, state: 'queued' } : item.state === 'sending' ? { ...item, state: 'unconfirmed', message: 'Delivery was interrupted. Check the conversation before sending again.' } : item) };
   } catch { /* A corrupt or unavailable cache never submits a message. */ }
   return { items: [], paused: false };
 }
@@ -68,7 +68,16 @@ export function useComposerQueue(options: {
     // A reload can lose the HTTP acknowledgement while durable replay proves
     // delivery. Remove only receipted IDs; other uncertain work stays paused.
     if (busy.current && accepted.has(busy.current)) busy.current = null;
-    change(value => ({ ...value, items: value.items.filter(item => !accepted.has(item.id)) }));
+    change(value => {
+      const items = value.items.filter(item => !accepted.has(item.id));
+      const steeringPauseIds = value.steeringPauseIds?.filter(id => !accepted.has(id));
+      // Durable acceptance resolves a delivery-only pause. A user stop, failed
+      // run, edit or another uncertain message still owns its pause.
+      const resolved = !!value.steeringPauseIds?.length && !steeringPauseIds?.length
+        && (!options.outcome || ['succeeded', 'completed', 'answered', 'queued', 'running', 'streaming'].includes(options.outcome))
+        && items.every(item => item.state === 'accepted' || (item.state === 'queued' && !item.message));
+      return { ...value, items, steeringPauseIds, paused: resolved ? false : value.paused };
+    });
   }, [options.key, receiptKey]);
   useEffect(() => {
     if (!options.key || scope.current !== options.key) return;
@@ -88,7 +97,7 @@ export function useComposerQueue(options: {
       return;
     }
     if (finished && options.outcome && !['succeeded', 'completed', 'answered'].includes(options.outcome)) {
-      change(value => ({ ...value, paused: true })); return;
+      change(value => ({ ...value, paused: true, steeringPauseIds: undefined })); return;
     }
     // A restored run owns the conversation before its stream reattaches. The
     // child queue effect must not start a second turn during parent hydration.
@@ -137,8 +146,8 @@ export function useComposerQueue(options: {
       paused: value.items.some(item => item.state !== 'accepted') ? value.paused : false,
       items: [...value.items, { id: secureRandomUUID(), prompt, attachments, comments, meta, state: 'queued' }],
     })),
-    pause: () => change(value => ({ ...value, paused: true })),
-    resume: () => change(value => ({ ...value, paused: false })),
+    pause: () => change(value => ({ ...value, paused: true, steeringPauseIds: undefined })),
+    resume: () => change(value => ({ ...value, paused: false, steeringPauseIds: undefined })),
     reorder: (id: string, targetId: string) => change(value => {
       const items = [...value.items];
       if (items.some(item => item.state !== 'queued' && item.state !== 'accepted')) return value;
@@ -165,8 +174,14 @@ export function useComposerQueue(options: {
       let result: PixflowDirectSiteSteerResponse;
       try { result = await options.steer(item); }
       catch { result = { messageId: item.id, state: 'unconfirmed', message: 'Delivery could not be confirmed. Check the conversation before sending again.' }; }
-      if (scope.current !== key) return;
-      change(value => ({ ...value, paused: value.paused || !['accepted', 'queued'].includes(result.state), items: value.items.map(row => row.id === item.id ? { ...row, state: result.state === 'rejected' ? 'queued' : result.state, message: result.message } : row) }));
+      if (scope.current !== key || !current.current.items.some(row => row.id === item.id)) return;
+      change(value => {
+        const failed = !['accepted', 'queued'].includes(result.state);
+        const steeringPauseIds = failed && (!value.paused || value.steeringPauseIds)
+          ? [...new Set([...(value.steeringPauseIds ?? []), item.id])]
+          : value.steeringPauseIds;
+        return { ...value, steeringPauseIds, paused: value.paused || failed, items: value.items.map(row => row.id === item.id ? { ...row, state: result.state === 'rejected' ? 'queued' : result.state, message: result.message } : row) };
+      });
     },
   };
 }

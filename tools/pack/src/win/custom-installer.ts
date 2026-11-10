@@ -10,6 +10,7 @@ import { winResources } from "../resources.js";
 import { PRODUCT_BRIDGE_TRAY_MODE, PRODUCT_NAME } from "./constants.js";
 import { pathExists } from "./fs.js";
 import { resolveWinInstallIdentity } from "./identity.js";
+import { nativeWindowsHooks } from '../native-transport.js';
 import { readPackagedVersion } from "./manifest.js";
 import { ensureNsisPersianLanguageAlias } from "./nsis.js";
 import { sanitizeNamespace } from "./paths.js";
@@ -933,6 +934,7 @@ skip_silent_desktop_shortcut:
   CreateShortCut "$SMPROGRAMS\\${shortcutName}" "$INSTDIR\\${exeName}" "" "${installedIconPath}" 0
   !insertmacro LOG_PATH_STATE "start_menu_shortcut_after_create" "$SMPROGRAMS\\${shortcutName}"
 ${bridgeStartupShortcutScripts.install}
+${PRODUCT_BRIDGE_TRAY_MODE ? nativeWindowsHooks().install : ''}
   WriteRegStr HKCU "${registryKey}" "DisplayName" "${productName}"
   WriteRegStr HKCU "${registryKey}" "DisplayVersion" "\${APP_VERSION}"
   WriteRegStr HKCU "${registryKey}" "InstallLocation" "$INSTDIR"
@@ -965,6 +967,7 @@ after_desktop_shortcut:
   Delete "$SMPROGRAMS\\${shortcutName}"
   !insertmacro UN_LOG_PATH_STATE "start_menu_shortcut_after_delete" "$SMPROGRAMS\\${shortcutName}"
 ${bridgeStartupShortcutScripts.uninstall}
+${PRODUCT_BRIDGE_TRAY_MODE ? nativeWindowsHooks().uninstall : ''}
   DeleteRegKey HKCU "${registryKey}"
   DeleteRegKey HKCU "${appPathsKey}"
   Push "event=registry_after_delete key=${registryKey} appPathsKey=${appPathsKey}"

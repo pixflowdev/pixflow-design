@@ -5,6 +5,169 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Recover renewed licences without re-entering a saved key. Preserve credentials during temporary failures, reject invalid proofs, and prevent delayed validation from undoing a reset or newer activation.
+
+- Preserve and save a newer appended reply retained when reopening a chat, instead of replacing it with an earlier saved snapshot. Existing revision and conflict protections remain enforced.
+- Prevent live builder commands from remaining stuck as busy when a persistent WordPress object cache hides the queued command. Preserve edits and command results without replaying operations.
+
+
+- Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
+- Add anonymous desktop and mobile public-page inspection through Bridge and the od inspect-page command. Page inspection runs without an AI provider.
+- Support bounded specialist review workers for Codex, Claude and Grok Build, with provider capacity and timeout handling. Keep Ultra reasoning unavailable.
+- Preserve the original WordPress revision before an AI repair so the first edit can be recovered when revisions are enabled.
+
+- Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
+- Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
+- Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
+- Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
+- Use the updated, theme-aware Grok mark in provider menus.
+
+- Support Blog Studio native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+- Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
+- Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
+
+- Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
+- Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
+- Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.
+- Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
+- Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
+- Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
+
+- Floating panel chats prepare saved history on open and after replies, show the first streamed text sooner, and keep your place when you scroll up. Plain Claude replies show Done as soon as Claude confirms completion.
+
+- The Bridge keeps Codex ready between prompts and reuses the active conversation on eligible follow-ups. WordPress checks the site owner and current chat history on each Send so edits from another tab reach the next reply.
+
+- Detect Cursor CLI installed in its standard Windows location even when the Bridge was started before installation. Keep Cursor separate from other providers that use the `agent` command.
+
+## [2.2.2] - Release candidate
+
+- The Pro upgrade notice follows the saved licence entitlement.
+- Completed commands fold into the chat trace and edits show filenames.
+
+## [2.2.1] - Release candidate
+
+- Fit & optimise Gutenberg Image, Cover and supported Query Loop images to their responsive placements. Reuse local images pasted by URL, or choose Import & optimise for an external image.
+- Fitted sizes are shared without adding copies to the Media Library. An enabled Bridge upscaler can enlarge undersized originals before compression; compression still works without Bridge. Revert to original restores the canvas without reloading.
+
+- Paired sites keep showing Bridge as connected while a provider scan is slow. Interrupted scans preserve the previous provider list, and Local CLI settings offer Claude sign-in when authentication is missing.
+
+- Browse Media as a list or a grid with two, three or four columns. Filter by file types present in your library. The header and column labels stay visible while the file list and preview scroll independently.
+- Open generated images from chat in a Media dialog and return to the conversation when you close it. Saved images are clickable before Bridge reconnects.
+- Click an image preview for a full-screen lightbox with Download, Copy URL, Optimise image and, when available, Upscale image.
+- Compare an image with its compressed preview and see the file size difference before saving a copy. Adjust the export format, quality and maximum width.
+- Use Bulk select to pick individual images or select matching images across library pages. Compress the selection or queue it for upscaling and save the results as copies.
+- Download optional Photo and Illustration models in Image upscaler settings. With Bridge connected, choosing Upscale image opens setup if a model is needed. Once installed, the enable switch controls availability in Media.
+- Upscale at 1.5×, 2×, 3× or 4×, or set a custom scale or target width. Inspect a detail at 100%, compare before and after, and adjust noise reduction where supported. Save directly, optionally compress the result, or explicitly overwrite the original in its existing format.
+- In Settings → About, use the switch beside the diagnostics export to choose whether to include Bridge, device and Claude sign-in details.
+
+### Pixflow Design Bridge
+
+- Install optional image models for local enlargement before compression. Slow provider discovery keeps the paired connection and previously detected providers available.
+
+## [2.2.0] - Release candidate
+
+- Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.
+- Choose Continue without AI during setup to use the library and design tools without connecting a provider.
+- Follow replies as they stream in Workspace and floating panels. New prompts stay in view, scrolling back preserves your place, and animations respect reduced-motion preferences.
+- Expand a compact timeline of reported steps, reasoning summaries and tool results. Repeated Claude stream events no longer duplicate tool activity, and opening Workspace no longer marks a running floating-panel conversation as failed.
+- Preview inline citations and expand Sources to see each cited page once. Long code blocks have visible Expand and Collapse controls.
+- Switch between API and Local CLI across Workspace, floating panels and Execution settings without reloading. Tool pages keep their navigation rail, hide chat controls and warn before leaving unsaved changes.
+- Export recent Pixflow licence, builder and tooling failures from Settings → About. Private site history retains up to 128 events for seven days, including when WordPress debugging is off.
+
+### Pixflow Design Bridge
+
+- Keep Bridge responsive while Local CLI scans for providers. Onboarding, settings and composer checks share overlapping discovery work, allow slow sites time to answer and still report stopped sites as unavailable.
+- Run Pro translation jobs using local Codex or Claude. The od agent-text and od site-translations commands support authenticated workflows, and longer translation requests have a dedicated timeout.
+- Let Workspace agents read the connected site title and discover builder tools using their existing authorised session.
+- Optionally include device characteristics, the selected Claude runtime and recent sign-in stages in a diagnostic export from the paired Bridge.
+
+## [2.1.4] - Unreleased
+
+- Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.
+- Share usage polling between mounted composers for the same provider and model to prevent overlapping reads.
+- Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, and refresh overdue usage when returning to the tab.
+- Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
+- Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.
+- Reopen the official Claude authorization page and submit a returned code from Execution settings. Codes are sent only to the active login process on your computer.
+- Discover Claude's sign-in address from the selected runtime so path changes keep working, while retaining checks for official domains and valid authorization requests.
+
+## [2.1.3] - Unreleased
+- Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
+- Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
+
+- Prevent failed protected-resource requests, including local or staging identity mismatches, from incorrectly disabling a saved licence. Licence expiry and revocation checks remain enforced.
+
+- Open slash commands after a space or on a new line while composing, preserving surrounding text and avoiding commands inside URLs or file paths.
+
+- Show a compact Codex and Claude usage ring beside the composer account menu, with hover summaries, reset times and refreshable details in Workspace and floating panels.
+- Read remaining allowances from the selected Desktop-managed or installed CLI runtime; display only reported limits and show unavailable when usage cannot be confirmed.
+- Refresh Claude usage when the selected model changes, including applicable model-specific limits without retaining the allowance of the previous model.
+- Keep usage popovers aligned with their buttons and preserve Pixflow styling in WordPress and builder panels.
+
+## [2.1.2]
+
+- Find the optional Chrome extension in Execution > Local CLI settings; hide the install banner when the extension is detected on the current site.
+
+- Use the Claude Desktop-managed runtime first on Windows and macOS, with an installed Claude CLI as the fallback; no separate CLI installation is needed when the app runtime is available.
+- Sign in with Claude from Execution settings, with a visible waiting state, cancellation and automatic connection refresh after browser authorization.
+- Discover Claude models and supported effort levels from the selected runtime instead of showing a fixed, outdated model list.
+- Identify Desktop-app runtimes in Execution settings and improve provider-card spacing, active-row hover states and sign-in controls.
+- Remove misleading dollar estimates from chat response footers while preserving recorded usage and token information.
+- Show whether Bridge is connected directly or through the Chrome extension in Execution settings, matching the Bridge and account menus.
+- Let Connect and Reconnect request the optional extension connection from Execution settings and chat controls, opening its approval popup when needed while retaining direct Bridge access. Requires Chrome extension 1.0.3 or later.
+- Allow provider connection tests through the extension connection. The matching extension update also corrects connection status when several sites are approved and adds a Close button to its popup; these changes are available in Chrome extension 1.0.3.
+- Update Pixflow Design Bridge to 2.1.2 for Local CLI. Existing content, chats, credentials and settings are preserved; API execution does not require Bridge.
+
+## [2.1.1]
+
+- Show a notification dot in Settings when the active language pack needs updating; keep the update available after a failed download and clear it after a successful retry.
+- Translate editor-handoff recovery guidance and refresh downloadable language packs for the new chat, design-command and Bridge connection wording.
+
+- Show whether Bridge is connected directly or through the optional Chrome extension in the Bridge popover and Account & settings menu. Chrome extension support is pending Chrome Web Store approval.
+
+- Restore the floating-panel Bridge control immediately when switching from API to Local CLI, including panels first opened in API mode.
+
+- Keep queued messages attached to their original chat while switching conversations; pause sending during the switch and resume that queue when its chat is reopened.
+- Recover completed replies and clear stale Working or save-warning states after reloading or moving between Workspace and the floating panel, without replaying edits.
+- Show more specific Bridge connection failures and recovery steps, distinguishing an unavailable Bridge from browser access, site authorization and version problems. Direct Bridge connections remain supported.
+
+- Keep numbered and bulleted chat lists visible when a builder such as Etch resets list markers; website content is unchanged.
+
+- Browse saved chats from the floating-panel header and continue the same conversation in Workspace or a supported editor without copying its history.
+- Keep unsent drafts scoped to their conversation when switching chats; close the chat drawer after selection.
+- Restore the last-active saved chat in a new tab or after logout/login in the same browser, separately for each site and WordPress user. Recheck access before loading; explicit chat links and New chat take priority.
+
+- Show a distinct, translated description for each Pro design slash command in the shared composer.
+- Copy only the displayed agent reply instead of a larger saved text snapshot, preserving message boundaries in the floating panel and Workspace.
+- Improve copy-button and timestamp contrast in light and dark themes, and reveal older reply actions when reached with the keyboard.
+
+- Make live review feedback more responsive by avoiding repeated updates to unchanged controls. Review the changed content instead of an untouched containing section, and prefer captions below the review frame.
+
+- Keep Design Your System toolbar requests available while Pro loads, and keep the settings overlay visible and dismissible if loading fails.
+
+- Refresh saved Pro access during active editor use when scheduled licence renewal has not run, and recover stale entitlement caches without asking users to re-enter their saved key. Existing licence and permission checks remain enforced.
+- Keep the same floating-panel conversation, active response and selected provider/model when moving between supported editor screens in the same tab. Show a loading indicator while the conversation reconnects.
+- Preserve the latest saved chat revisions when restoring an active run, avoiding false history conflicts caused by an older recovery snapshot.
+- Recover from navigation immediately after Send instead of leaving Preparing stuck. Keep the unsent message and explain when it needs to be sent again.
+- Allow an active Bricks conversation to reconnect to the same page in Gutenberg without rejecting its original editor identity. Retain page permissions and prevent another tab from taking over.
+- Handle pending builder commands safely during navigation: distinguish commands that never ran from edits whose outcome is still unconfirmed, without automatically repeating edits.
+- Use Pixflow Design Bridge 2.1.1 for Local CLI. API execution does not require Bridge.
+
+## [2.1.0] - 2026-10-22
+
+- Preserve conflicting saved chat versions, recover older browser snapshots safely and refresh newer messages across open floating panels and Workspace chats without silently overwriting history.
+- Keep provider selection and saved credentials consistent across open settings panels and when switching between API, Local CLI and Composio execution.
+- Use model-aware working-context budgets, avoid repeatedly compacting unchanged context and recover safely when summary generation is unavailable.
+- Return smaller tool schemas and targeted skill lookups while keeping complete tool results available through accurate saved-result paths.
+- Validate API tool arguments before dispatch, report malformed calls clearly, accept losslessly encoded numeric WordPress content IDs and check requested edits against native tool readback before claiming completion or saving. Target and permission checks remain enforced.
+- Reconnect the owned live editor after navigation to another permitted document, including when the previous document is no longer editable. Validate the current target permissions before accepting edits.
+- Add shared composer support for optional Pro design references, clarification questions and focused operations. Preserve explicit multiline queued design commands when automatic design guidance is disabled; the design foundation, design-source settings and audit engine require Pro.
+- Expose live change-review selections to optional Pro controls and update all 18 downloadable language packs for the new guidance and review actions. English remains bundled.
+- Improve Local CLI startup instructions, native session context, site-tool argument handling and saved-result retrieval through Pixflow Design Bridge.
+- Pair with Pixflow Design Pro 2.1.0. Local CLI requires Pixflow Design Bridge 2.1.0; update Bridge before updating the plugins. API execution does not require Bridge. Existing website updates, installed plugin identities, chats and settings are preserved.
+
 ## [2.0.8] - Hotfix
 
 ### Fixed
@@ -57,7 +220,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 - Deliver Pro skill downloads and updates through the existing site connection, with verified packages. Preserve installed versions, disabled choices, saved skill references, personal skills and settings when updating or when downloads are unavailable. Pro users can manage optional skills without starting a trial.
 
-- Expand the optional Pro library to 30 skills with 20 attributed WordPress adaptations for design refinement, typography, colour, responsive layouts, accessibility, quality testing, multilingual/RTL content, performance, debugging, copywriting, content planning, comparison pages, structured data, data-driven pages, analytics, experiments, pricing and banners. Show warnings for enabled skills with overlapping workflows without changing the user’s choices. On reopening Skills, group overlapping enabled installations first, then other installed skills, followed by available downloads; keep controls in place during installation.
+- Expand the optional Pro library to 30 skills with 20 attributed WordPress adaptations for design refinement, typography, colour, responsive layouts, accessibility, quality testing, multilingual/RTL content, performance, debugging, copywriting, content planning, comparison pages, structured data, data-driven pages, analytics, experiments, pricing and banners. Show warnings for enabled skills with overlapping workflows without changing the userâ€™s choices. On reopening Skills, group overlapping enabled installations first, then other installed skills, followed by available downloads; keep controls in place during installation.
 
 - Keep Settings above floating chat, annotation and review panels. Opening Settings from a quick menu no longer opens the Workspace behind it; closing Settings preserves the previously open chat panel.
 
@@ -79,7 +242,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 - Compact the agent's working context in long API and Composio conversations while preserving complete saved chat history. Retain recent messages and important decisions, show compaction progress, and keep queued messages safe through preparation, cancellation and recovery. Use supported CLI providers' native context management and preserve accepted steering across reconnects.
 - Add automatic Workspace handoff to Gutenberg, Bricks, Etch and Elementor. Choose an editor and a new draft or compatible existing page; Pixflow transfers the chat brief and reference files, opens the floating panel and starts the agent. Show progress, keep retries tied to the original draft and editor tab, and preserve source chats and unrelated page content.
-- Refresh the Pro Workspace with the floating panel’s shared composer, a permanent page icon rail and a separate collapsible Chats/Projects sidebar. Group chats into projects, pin projects or individual chats, search and rename chats, and move chats without changing their files or history. Preserve saved organisation across visits, replace the old Home/chat tabs with a compact toolbar, and remove the old home chips and Recent projects cards.
+- Refresh the Pro Workspace with the floating panelâ€™s shared composer, a permanent page icon rail and a separate collapsible Chats/Projects sidebar. Group chats into projects, pin projects or individual chats, search and rename chats, and move chats without changing their files or history. Preserve saved organisation across visits, replace the old Home/chat tabs with a compact toolbar, and remove the old home chips and Recent projects cards.
 - Fork a conversation into its own sidebar chat with the complete saved history through the selected reply, including older messages. Keep the original unchanged, retain a link back to it, and support safe retries and independent continuation.
 - Add live Gutenberg page and post editing through the Bridge and API providers: discover available blocks, read the unsaved document, insert, update, move and remove blocks, select targets, save, and use native undo/redo. Preserve unrelated content and native block serialization.
 - Add Gutenberg editor toolbar and quick-menu buttons, full-screen workspace access, and left/right floating-panel docking that reserves canvas space and restores saved placement.
@@ -160,7 +323,7 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 
 ### Fixed
 
-- Fix the builder follower showing a blank caption during edits. Keep a readable Updating… label with subtle working feedback, show Updated when the edit completes and Saved only after a confirmed save, and respect reduced-motion preferences.
+- Fix the builder follower showing a blank caption during edits. Keep a readable Updatingâ€¦ label with subtle working feedback, show Updated when the edit completes and Saved only after a confirmed save, and respect reduced-motion preferences.
 - Fix right-to-left layout handling for Arabic and Persian across Pixflow panels, dialogs and menus, including overlays opened after changing language. Correct Settings header spacing and close-button placement so controls do not overlap, without changing the surrounding WordPress editor's direction.
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.

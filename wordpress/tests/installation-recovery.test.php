@@ -6,7 +6,6 @@ $GLOBALS['environment']='local';
 $GLOBALS['recovery_admin']=true;
 $GLOBALS['recovery_logged_in']=true;
 function is_user_logged_in(){return $GLOBALS['recovery_logged_in'];}
-function current_user_can($cap){return $GLOBALS['recovery_admin'];}
 function wp_verify_nonce($value,$action){return $value==='fixture-nonce';}
 
 $recovery=new \PixflowDesign\WordPress\License\InstallationRecovery();

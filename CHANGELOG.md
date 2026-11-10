@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent live builder commands from remaining stuck as busy when a persistent WordPress object cache hides the queued command. Preserve edits and command results without replaying operations.
 
 
-## Unreleased
-
 - Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
 - Add anonymous desktop and mobile public-page inspection through Bridge and the od inspect-page command. Page inspection runs without an AI provider.
 - Support bounded specialist review workers for Codex, Claude and Grok Build, with provider capacity and timeout handling. Keep Ultra reasoning unavailable.

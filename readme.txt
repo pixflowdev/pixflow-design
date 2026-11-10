@@ -33,6 +33,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
+= Unreleased =
+* Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
+* Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
+
 = 2.2.2 =
 Restore chat Trace details and licence-based notices.
 

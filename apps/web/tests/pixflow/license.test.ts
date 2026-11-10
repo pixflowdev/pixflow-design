@@ -113,6 +113,37 @@ describe('Pixflow license status cache', () => {
     expect((await validating).license.valid).toBe(true);
     expect((await staleRead).license.valid).toBe(true);
   });
+  it('skips both licence requests on a paired follow-up and checks again when the user changes', async () => {
+    const { win } = installWordPressWindow();
+    const config = Object.assign(win.__PIXFLOW_DESIGN_WORDPRESS__!, {
+      siteHash:'example-site', userId:1, bridgeBaseUrl:'http://127.0.0.1:17457',
+    });
+    win.setTimeout = setTimeout as typeof win.setTimeout;
+    win.clearTimeout = clearTimeout;
+    win.dispatchEvent = vi.fn(() => true);
+    const transport = vi.fn(async (url: string) => {
+      if (url.endsWith('/health')) return Response.json({ok:true, site:{key:'example-site'}});
+      if (url.endsWith('/license/status')) return Response.json(licenseStatus(true, {runtime_ready:true,central_entitlement:{enabled:true,valid:true}}));
+      return Response.json({valid:true});
+    });
+    win.fetch = transport as typeof win.fetch;
+    vi.stubGlobal('fetch', transport);
+    const { ensurePixflowLicenseEntitlement } = await import('../../src/pixflow/license');
+    await ensurePixflowLicenseEntitlement({reusePairing:true});
+    transport.mockClear();
+    await ensurePixflowLicenseEntitlement({reusePairing:true});
+    expect(transport.mock.calls.map(([url]) => new URL(url).pathname)).toEqual(['/api/health']);
+    // A page reload creates a new JS runtime in the same browser tab.
+    vi.resetModules();
+    transport.mockClear();
+    const reloaded = await import('../../src/pixflow/license');
+    await reloaded.ensurePixflowLicenseEntitlement({reusePairing:true});
+    expect(transport.mock.calls.map(([url]) => new URL(url).pathname)).toEqual(['/api/health']);
+    config.userId = 2;
+    await ensurePixflowLicenseEntitlement({reusePairing:true});
+    expect(transport.mock.calls.some(([url]) => url.endsWith('/license/status'))).toBe(true);
+  });
+
   it('upgrades an existing Free pairing when Pro is renewed', async () => {
     const { win } = installWordPressWindow();
     win.__PIXFLOW_DESIGN_WORDPRESS__!.bridgeBaseUrl = 'http://127.0.0.1:17457';
@@ -156,6 +187,7 @@ describe('Pixflow license status cache', () => {
     win.fetch = fetchMock as unknown as typeof win.fetch;
     const { ensurePixflowLicenseEntitlement } = await import('../../src/pixflow/license');
     await expect(ensurePixflowLicenseEntitlement()).resolves.toBeUndefined();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/license/features'))).toBe(false);
     expect(fetchMock).toHaveBeenLastCalledWith('http://127.0.0.1:17457/api/pixflow/central-entitlement', expect.objectContaining({ method: 'GET' }));
     expect(fetchMock.mock.calls.every((call) => !call[0].endsWith('/license-entitlement'))).toBe(true);
   });

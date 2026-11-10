@@ -246,14 +246,15 @@ export const historyMessageFingerprint = (message: HistoryMessage) => {
   const { historyRevision: _revision, historySequence: _sequence, ...payload } = message;
   return JSON.stringify(payload);
 };
+export function resolveChatHistory<T extends HistoryMessage>(input: PixflowChatHistoryResolveRequest & { includePage: true; create?: true }): Promise<ChatHistoryBinding & { page?: ChatHistoryPage<T> }>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest & { create: false }): Promise<PixflowChatHistoryLookupResponse>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<ChatHistoryBinding>;
 export function resolveChatHistory(input: PixflowChatHistoryResolveRequest): Promise<PixflowChatHistoryLookupResponse> {
   const selected = conversationBinding(input.sessionKey);
   return request('/chat-history/resolve', json('POST', selected ? { ...input, ...selected } : input));
 }
-export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null): Promise<ChatHistoryPage<T>> {
-  return request(`${base(binding)}?limit=50${before ? `&before=${encodeURIComponent(before)}` : ''}`);
+export function readChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, before?: string | null, limit: 50 | 100 = 50): Promise<ChatHistoryPage<T>> {
+  return request(`${base(binding)}?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}`);
 }
 export async function importChatHistory<T extends HistoryMessage>(binding: ChatHistoryBinding, messages: T[]): Promise<PixflowChatHistoryImportResponse<T>> {
   const owner = ownerScope();

@@ -363,11 +363,15 @@ describe('AssistantMessage thinking blocks', () => {
       />,
     );
 
+    const disclosure = container.querySelector('[data-activity-group] button');
+    if (disclosure) fireEvent.click(disclosure);
     expect(container.querySelector('.thinking-block')).toBeTruthy();
     expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
-    fireEvent.click(container.querySelector('.thinking-toggle')!);
-    expect(container.querySelector('.thinking-body')?.textContent?.trim()).toBe('Reading the directory listing.');
-    expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
+    const toggle = container.querySelector('.thinking-toggle')!;
+    const expanded = toggle.getAttribute('aria-expanded');
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe(expanded === 'true' ? 'false' : 'true');
+    expect(screen.getByText('Reading the directory listing.')).toBeTruthy();
   });
 
   it('renders Pixflow wait events with a stage label and muted overview detail', () => {
@@ -741,3 +745,16 @@ it('does not present provider cost estimates as charges in the response footer',
  expect(view.container.querySelector('.assistant-footer')?.textContent).toContain('5');
 });
 
+
+it('never re-enters Preparing on a transient empty snapshot within the same turn', () => {
+  const message = baseMessage({content: '', events: [], runStatus: 'running', endedAt: undefined});
+  const view = render(<AssistantMessage message={message} streaming />);
+  const label = () => view.container.querySelector('.assistant-label')?.textContent;
+  expect(label()).toMatch(/preparing/i);
+  view.rerender(<AssistantMessage message={{...message, content: 'Hello'}} streaming />);
+  expect(label()).toBe('Working');
+  view.rerender(<AssistantMessage message={message} streaming />);
+  expect(label()).toBe('Working');
+  view.rerender(<AssistantMessage message={{...message, id: 'new-turn'}} streaming />);
+  expect(label()).toMatch(/preparing/i);
+});

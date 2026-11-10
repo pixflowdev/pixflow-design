@@ -11,6 +11,8 @@ export interface PixflowChatHistoryResolveRequest {
   conversationId?: string;
   /** false only looks up an existing binding; opening an empty panel must not create a chat. */
   create?: boolean;
+  /** Return the latest owner-authorized page alongside an existing binding. */
+  includePage?: boolean;
 }
 
 export type PixflowChatHistoryLookupResponse = PixflowChatHistoryBinding | { projectId: null; conversationId: null };

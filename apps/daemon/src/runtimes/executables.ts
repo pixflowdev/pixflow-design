@@ -420,16 +420,20 @@ export function resolveAgentExecutable(
   return inspectAgentExecutableResolution(def, configuredEnv).selectedPath;
 }
 
-function antigravityStandaloneCliCandidates(def: RuntimeAgentDef): string[] {
-  if (def.id !== 'antigravity' || process.platform !== 'win32') return [];
-  // The official standalone installer always uses the signed-in Windows
-  // user's LOCALAPPDATA. OD_AGENT_HOME scopes agent workspace/config data,
-  // but it is not a synthetic Windows profile and must not redirect this
-  // executable lookup inside the packaged bridge sandbox.
+function windowsStandaloneCliCandidates(def: RuntimeAgentDef): string[] {
+  if (process.platform !== 'win32') return [];
+  // Official installers use the signed-in Windows profile, even when the
+  // packaged Bridge scopes agent workspace/config data to OD_AGENT_HOME.
   const windowsHome = process.env.USERPROFILE?.trim() || homedir();
   const localAppData = process.env.LOCALAPPDATA?.trim()
     || path.join(windowsHome, 'AppData', 'Local');
-  return [path.join(localAppData, 'agy', 'bin', 'agy.exe')];
+  if (def.id === 'antigravity') return [path.join(localAppData, 'agy', 'bin', 'agy.exe')];
+  if (def.id === 'cursor-agent') {
+    // Use Cursor's own update-aware launcher; the generic `agent` name is
+    // also installed by other providers (including Grok Build).
+    return ['cursor-agent.exe', 'cursor-agent.cmd'].map(bin => path.join(localAppData, 'cursor-agent', bin));
+  }
+  return [];
 }
 
 function isAntigravityIdeShim(def: RuntimeAgentDef, executablePath: string): boolean {
@@ -470,17 +474,21 @@ export function inspectAgentExecutableResolution(
     }
   }
   let standaloneCliPath: string | null = null;
-  for (const candidate of antigravityStandaloneCliCandidates(def)) {
+  for (const candidate of windowsStandaloneCliCandidates(def)) {
     standaloneCliPath = executableFilePath(candidate);
     if (standaloneCliPath) break;
   }
   const builtInPath = packagedBuiltInExecutable(def, configuredEnv, lookup);
   const appBundlePath = appBundleExecutable(def);
+  // A Cursor-specific launcher already on PATH can be a deliberate install.
+  const resolvedCliPath = def.id === 'cursor-agent'
+    ? pathResolvedPath || standaloneCliPath
+    : standaloneCliPath || pathResolvedPath;
   return {
     configuredOverridePath,
     appBundlePath,
     pathResolvedPath,
     selectedPath:
-      appBundlePath || configuredOverridePath || builtInPath || standaloneCliPath || pathResolvedPath,
+      appBundlePath || configuredOverridePath || builtInPath || resolvedCliPath,
   };
 }

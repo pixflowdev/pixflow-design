@@ -4,8 +4,7 @@ export function chatScrollBehavior(): ScrollBehavior {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
 }
 
-/** Follow the actual live edge without reserving space below new prompts.
- * Scrolling away suspends following until the reader returns or chooses Latest. */
+/** Keep the live edge in view until the reader scrolls away. */
 export function useFloatingChatScroll(
   log: RefObject<HTMLDivElement | null>, spacer: RefObject<HTMLDivElement | null>, session: string,
   messages: ReadonlyArray<{ id?: string; role?: string }>, running: boolean,
@@ -15,6 +14,11 @@ export function useFloatingChatScroll(
   const [scrollable, setScrollable] = useState(false);
   const [away, setAway] = useState(false);
   const [scrolling, setScrolling] = useState(false);
+
+  const followOnSend = useCallback(() => {
+    Object.assign(state.current, { follow: true, moving: false, manual: false });
+    schedule.current();
+  }, []);
 
   const jump = useCallback(() => {
     const el = log.current;
@@ -36,15 +40,25 @@ export function useFloatingChatScroll(
     tail.style.height = '0px';
     let idle: number | undefined, frame: number | null = null;
     const distance = () => el.scrollHeight - el.clientHeight - el.scrollTop;
+    const pin = () => {
+      if (view.follow && !view.moving && distance() > 1) el.scrollTop = el.scrollHeight;
+    };
     const measure = () => {
       frame = null;
-      if (view.follow && !view.moving && distance() > 1) el.scrollTop = el.scrollHeight;
+      pin();
       setAway(!view.moving && distance() > 2);
       setScrollable(el.scrollHeight > el.clientHeight + 2);
     };
     function queue() { if (frame === null) frame = requestAnimationFrame(measure); }
-    schedule.current = queue;
-    const release = () => { Object.assign(view, { manual: true, moving: false, follow: false }); };
+    const sync = () => { pin(); queue(); };
+    // Content mutations already notify ResizeObserver after layout, before paint.
+    // Avoid forcing a second synchronous layout inside the React commit.
+    schedule.current = typeof ResizeObserver === 'undefined' ? sync : queue;
+    let reachedScrollback = false;
+    const release = () => {
+      if (!view.manual) reachedScrollback = distance() > 2;
+      Object.assign(view, { manual: true, moving: false, follow: false });
+    };
     const onKey = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) release();
     };
@@ -52,21 +66,28 @@ export function useFloatingChatScroll(
       if (view.moving) { view.moving = false; queue(); }
     };
     const onScroll = () => {
-      if (view.manual && distance() <= 2) { view.manual = false; view.follow = true; }
+      if (view.manual) {
+        if (distance() > 2) reachedScrollback = true;
+        else if (reachedScrollback) { view.manual = false; view.follow = true; }
+      }
       setAway(!view.moving && distance() > 2);
       setScrolling(true);
       window.clearTimeout(idle);
       idle = window.setTimeout(() => setScrolling(false), 140);
     };
-    el.addEventListener('wheel', release, { passive: true });
-    el.addEventListener('touchstart', release, { passive: true });
-    el.addEventListener('pointerdown', release, { passive: true });
+    const onWheel = (e: WheelEvent) => { if (e.deltaY < 0 || distance() > 2) release(); };
+    const onPointer = (e: PointerEvent) => {
+      if (e.target === el && e.offsetX >= el.clientWidth) release();
+    };
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchmove', release, { passive: true });
+    el.addEventListener('pointerdown', onPointer, { passive: true });
     el.addEventListener('keydown', onKey);
     el.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('scrollend', onScrollEnd);
     // Token reveals, highlighting and disclosures can change height between
     // provider events. Observe row boxes, never the tail that we resize.
-    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(queue);
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
     resize?.observe(el);
     for (const child of el.children) if (child !== tail) resize?.observe(child);
     const mutations = typeof MutationObserver === 'undefined' ? null : new MutationObserver(records => {
@@ -78,9 +99,9 @@ export function useFloatingChatScroll(
     });
     mutations?.observe(el, { childList: true });
     return () => {
-      el.removeEventListener('wheel', release);
-      el.removeEventListener('touchstart', release);
-      el.removeEventListener('pointerdown', release);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchmove', release);
+      el.removeEventListener('pointerdown', onPointer);
       el.removeEventListener('keydown', onKey);
       el.removeEventListener('scroll', onScroll);
       el.removeEventListener('scrollend', onScrollEnd);
@@ -95,5 +116,5 @@ export function useFloatingChatScroll(
   useLayoutEffect(() => {
     schedule.current();
   }, [messages, running, session]);
-  return { scrollable, scrolling, away, jump };
+  return { scrollable, scrolling, away, jump, followOnSend };
 }

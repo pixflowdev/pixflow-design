@@ -147,4 +147,16 @@ $exported = (new PixflowDesign\WordPress\Chat\HistoryArchive($history))->export_
 history_sqlite_check($exported['messages'][0]['historyRecoverySnapshots'] === [$copy], 'Full export retains recovery evidence');
 $history->remove('project-1', 'recovery', 'recovered');
 history_sqlite_check($history->page('project-1', 'recovery', null, '')['messages'] === [], 'Deletion hides message and recovery evidence together');
+$history->migrate([...$project, 'metadata' => ['odState' => ['messages' => ['revision-test' => $messages]]]], 'revision-test');
+$revision = fn() => $history->prefix_revision('project-1', 'revision-test', 'm-65');
+$original = $revision();
+history_sqlite_check(is_string($original), 'Read multi-page history revision');
+$history->write('project-1', 'revision-test', [...$messages[129], 'content' => 'Later', 'historyRevision' => 1]);
+history_sqlite_check($original === $revision(), 'Later rows do not invalidate the prefix');
+$history->write('project-1', 'revision-test', [...$messages[2], 'content' => 'Correction', 'historyRevision' => 1]);
+$corrected = $revision();
+history_sqlite_check($original !== $corrected, 'Earlier correction invalidates the prefix');
+$history->remove('project-1', 'revision-test', 'm-0');
+history_sqlite_check($corrected !== $revision(), 'Earlier deletion invalidates the prefix');
+history_sqlite_check(is_wp_error($history->prefix_revision('project-1', 'revision-test', 'absent')), 'Missing cutoff fails closed');
 echo "chat-history-sqlite: {$checks} checks passed\n";

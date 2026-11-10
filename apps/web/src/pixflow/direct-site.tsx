@@ -2,11 +2,10 @@ import { floatingRunStorageKey, floatingConversationScope, rememberFloatingConve
 import { withRunDesignGuidance } from './run-design-guidance';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { secureRandomUUID } from '../utils/uuid';
-import { fetchPixflowOptionalBridgeConfig } from './optional-bridge';
 import { voiceStatusUpdates, type CodexVoiceConnection } from './codex-voice-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@open-design/components';
-import type { PixflowDirectSiteSession, PixflowDirectSiteRunRequest, PixflowDirectSiteOutcome, PixflowDirectSiteSteerResponse, PixflowWorkspaceSource } from '@open-design/contracts';
+import type { PixflowDirectSiteSession, PixflowDirectSiteRunRequest, PixflowDirectSiteOutcome, PixflowDirectSiteSteerResponse, PixflowDirectSiteTimings, PixflowWorkspaceSource } from '@open-design/contracts';
 import type { ComposerQueueItem } from '../components/composer-queue';
 import type { AgentEvent, AppConfig } from '../types';
 import { runByokSite, SiteDeliveryUncertain, type ByokSiteCheckpoint } from './direct-site-byok';
@@ -20,7 +19,23 @@ import { SiteAccessError, siteAccessError } from './site-access-error';
 import { createFrameCheckpoint } from '../runtime/frame-checkpoint';
 import { recoverDirectStream, StreamAttachmentHttpError } from './direct-stream-recovery';
 import { withoutTranscriptEvents } from './direct-history-storage';
+import { chatHistoryOwnerScope, readChatHistory, type ChatHistoryBinding } from './chat-history-client';
+import type { SavedHistoryPage } from './working-context';
 const SITE_ACCESS_CHANGED = 'pixflow:site-access-changed';
+
+/** Only known timing scalars enter local diagnostics, never arbitrary stream payloads. */
+function bridgeTimings(value: unknown): Partial<PixflowDirectSiteTimings> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  const source = value as Record<string, unknown>;
+  const result: Partial<PixflowDirectSiteTimings> = {};
+  for (const key of ['ownerReadyMs', 'contextReadyMs', 'spawnMs', 'protocolReadyMs', 'threadReadyMs', 'providerSubmittedMs', 'firstProviderEventMs', 'firstTextMs', 'totalMs', 'promptBytes'] as const) {
+    const number = source[key];
+    if (typeof number === 'number' && Number.isFinite(number) && number >= 0) result[key] = number;
+  }
+  if (typeof source.nativeSessionReused === 'boolean') result.nativeSessionReused = source.nativeSessionReused;
+  if (typeof source.warmWorkerUsed === 'boolean') result.warmWorkerUsed = source.warmWorkerUsed;
+  return result;
+}
 
 /** WordPress owns uploaded references; Direct downloads them through its site session. */
 export function useDirectAttachmentProject() {
@@ -46,19 +61,19 @@ export function useSiteAccess(busy = false) {
   const [error, setError] = useState('');
   const [details, setDetails] = useState('');
   const [retryRevision, retry] = useState(0);
+  const lastSettingsRead = useRef<number | undefined>(undefined);
   useEffect(() => {
-    // A preference changed in another tab applies to the next run. Do not
-    // replace this panel's execution path or transcript during an active turn.
-    if (busy) return;
     let active = true;
     const refresh = async () => {
+      lastSettingsRead.current = undefined;
+      if (busy) return;
       // Refresh the authenticated preference without tearing down a healthy
       // canvas/session between turns. Initial hydration starts unready.
       try {
         const response = await pixflowWordPressRestFetch('/wp-admin/direct/settings');
         if (!response.ok) throw await siteAccessError(response);
         await response.json();
-        if (active) { setError(''); setDetails(''); }
+        if (active) { lastSettingsRead.current = retryRevision; setError(''); setDetails(''); }
       } catch (reason) {
         if (active) {
           setError(reason instanceof SiteAccessError ? reason.message : 'The site connection was interrupted. Please retry.');
@@ -66,7 +81,7 @@ export function useSiteAccess(busy = false) {
         }
       } finally { if (active) setReady(true); }
     };
-    void refresh();
+    if (lastSettingsRead.current !== retryRevision) void refresh();
     const onStorage = (event: StorageEvent) => { if (event.key === SITE_ACCESS_CHANGED) void refresh(); };
     window.addEventListener('focus', refresh);
     window.addEventListener(SITE_ACCESS_CHANGED, refresh);
@@ -177,7 +192,121 @@ export async function steerDirectSite(surface: string, item: ComposerQueueItem, 
   return result.ok ? value : { messageId: item.id, state: value.state === 'rejected' ? 'rejected' : result.status >= 500 ? 'unconfirmed' : 'rejected', message: value.message || 'Could not deliver guidance. Keep this message queued.' };
 }
 
+type HistoryPrefix = ChatHistoryBinding & { throughMessageId?: string };
+type SessionOptions = Pick<PixflowDirectSiteRunRequest, 'editorTarget' | 'purpose'> & {
+  workspaceSource?: PixflowWorkspaceSource;
+  historyBinding?: HistoryPrefix;
+  restorePanel?: boolean;
+};
+type SessionWithHistory = PixflowDirectSiteSession & { historyPage?: SavedHistoryPage; historyRevision?: string };
+
+async function createPanelSession(options: SessionOptions, signal?: AbortSignal, onRestore?: (page: SavedHistoryPage, through?: string) => void): Promise<SessionWithHistory> {
+  const response = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
+    method: 'POST', priority: 'high', signal, headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'design', ...options }),
+  });
+  const { historyWindow, historyThrough, ...value } = await response.json();
+  if (!response.ok) throw new Error(value.message || 'Could not connect to this WordPress site.');
+  if (onRestore && historyWindow && value.historyRevision && Array.isArray(value.historyPage?.messages)) {
+    onRestore({ ...historyWindow, messages: value.historyPage.messages.slice(-50) }, historyThrough);
+  }
+  // Complete a paginated snapshot before Send whenever the panel is already open.
+  // WordPress verifies its original revision during Bridge admission.
+  if (value.historyRevision && options.historyBinding && value.historyPage) {
+    try {
+      let page: SavedHistoryPage = value.historyPage;
+      const pages = [page.messages];
+      const cursors = new Set<string>();
+      while (page.hasMore) {
+        signal?.throwIfAborted();
+        if (!page.nextCursor || cursors.has(page.nextCursor)) throw new Error('Incomplete chat history.');
+        cursors.add(page.nextCursor);
+        page = await readChatHistory(options.historyBinding, page.nextCursor, 100);
+        pages.push(page.messages);
+      }
+      value.historyPage = { messages: pages.reverse().flat(), hasMore: false, nextCursor: null };
+    } catch (error) {
+      await closeUnusedSession(value);
+      throw error;
+    }
+  }
+  return value;
+}
+
+interface PanelPreparation {
+  take(options: SessionOptions, signal: AbortSignal): Promise<SessionWithHistory | undefined>;
+  dispose(): void;
+  invalidateHistory(): void;
+}
+
+/** Single use. An unclaimed credential is revoked even if its response arrives after panel cleanup. */
+export function preparePanelSession(
+  target: Promise<PixflowDirectSiteRunRequest['editorTarget']>, historyBinding?: HistoryPrefix,
+  restore?: (page?: SavedHistoryPage) => void,
+): PanelPreparation {
+  const owner = chatHistoryOwnerScope();
+  const started = Date.now();
+  let disposed = false;
+  let claimed = false;
+  let historyInvalidated = false;
+  let credential: SessionWithHistory | undefined;
+  let preparedTarget: PixflowDirectSiteRunRequest['editorTarget'];
+  let confirmedBinding = historyBinding;
+  let pendingRestore = restore;
+  const finishRestore = (page?: SavedHistoryPage, through?: string) => {
+    if (through && historyBinding && !historyBinding.throughMessageId) confirmedBinding = { ...historyBinding, throughMessageId: through };
+    const notify = pendingRestore;
+    pendingRestore = undefined;
+    notify?.(page);
+  };
+  const expiry = window.setTimeout(() => dispose(), 60_000);
+  const dispose = () => {
+    window.clearTimeout(expiry);
+    disposed = true;
+    finishRestore();
+    if (credential && !claimed) {
+      void closeUnusedSession(credential);
+      credential = undefined;
+    }
+  };
+  const ready = target.then(async editorTarget => {
+    if (disposed || owner !== chatHistoryOwnerScope()) return;
+    preparedTarget = editorTarget;
+    credential = await createPanelSession({ editorTarget, historyBinding, ...(restore && { restorePanel: true }) }, undefined, finishRestore);
+    if (disposed || (historyInvalidated && !credential.historyRevision)) dispose();
+  }).catch(() => { dispose(); }).finally(() => finishRestore());
+  return {
+    async take(options, signal) {
+      // A different authorized cutoff cannot claim this preparation. Start its own request immediately.
+      if (disposed || options.purpose || options.workspaceSource || JSON.stringify(options.historyBinding) !== JSON.stringify(confirmedBinding)) {
+        dispose();
+        signal.throwIfAborted();
+        return;
+      }
+      await ready;
+      if (!credential || disposed || claimed || signal.aborted || owner !== chatHistoryOwnerScope()
+        || Date.now() - started > 60_000 || credential.expiresAt * 1000 <= Date.now()
+        || JSON.stringify(options.editorTarget) !== JSON.stringify(preparedTarget)) {
+        dispose();
+        signal.throwIfAborted();
+        return;
+      }
+      claimed = true;
+      window.clearTimeout(expiry);
+      return credential;
+    },
+    invalidateHistory() {
+      // The ownership GET validates a versioned snapshot even if another tab saved changes.
+      // Older WordPress installations still need local invalidation.
+      historyInvalidated = true;
+      if (credential && !credential.historyRevision) dispose();
+    },
+    dispose,
+  };
+}
+
 async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'session'> & {
+  panelPreparation?: PanelPreparation;
   historySource?: import('./working-context').WorkingContextSource;
   workspaceSource?: PixflowWorkspaceSource;
   voiceConnection?: CodexVoiceConnection;
@@ -187,34 +316,42 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
   persistenceMetadata?: unknown;
   resume?: PendingDirectSiteRun;
   persistenceSurface?: string;
+  onPlainReplyFinished?: () => void;
   onOutcome?: (outcome: PixflowDirectSiteOutcome, endedAt?: number) => void;
   onAccepted?: () => Promise<void>;
-}): Promise<PixflowDirectSiteOutcome> {
-  const submitted = performance.now();
-  const timings: Record<string, number> = {updates:0,events:0};
+}, submitted: number, timings: Record<string, number>, authorization: Promise<void>, preparedHistory: (page?: SavedHistoryPage, revision?: string) => Promise<PixflowDirectSiteRunRequest['history']>, historyBinding?: HistoryPrefix): Promise<PixflowDirectSiteOutcome> {
   const elapsed = () => Math.round(performance.now()-submitted);
+  let serverTimings: Partial<PixflowDirectSiteTimings> | undefined;
   const storageKey = runStorageKey(input.persistenceSurface);
   // A reconnect can fail before opening its stream. Keep the already-owned
   // checkpoint visible while the Bridge is unavailable.
   if (input.resume?.checkpoint) input.onUpdate(input.resume.checkpoint.content, [...input.resume.checkpoint.events]);
-  try { await ensurePixflowLicenseEntitlement({allowSiteSwitch:!input.resume}); }
+  try { await authorization; }
   catch (error) {
     if (input.resume) throw new DirectSiteRunError('The Bridge connection is unavailable. Reopen the panel after reconnecting; previous output and changes are retained.', 'interrupted');
     throw error;
   }
   let session: PixflowDirectSiteSession | undefined;
-  timings.licenseReadyMs=elapsed();
+  input.signal.throwIfAborted();
   let continuation = input.resume?.connection;
   {
-    const sessionResponse = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
-    method: 'POST', signal: input.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'design', purpose: input.purpose, editorTarget: input.editorTarget, workspaceSource: input.workspaceSource }),
-    });
-    const value = await sessionResponse.json() as PixflowDirectSiteSession & { message?: string };
-    if (!sessionResponse.ok) throw new Error(value.message || 'Could not connect to this WordPress site.');
+    const options = { editorTarget: input.editorTarget, purpose: input.purpose, workspaceSource: input.workspaceSource, historyBinding };
+    const prepared = await input.panelPreparation?.take(options, input.signal);
+    const response = prepared ?? await createPanelSession(options, input.signal);
+    const { historyPage, historyRevision, ...value } = response;
+    timings.preparedSessionUsed = Number(Boolean(prepared));
     if (input.purpose === 'guidance-draft' && value.writable !== false) throw new Error('Update Pixflow Design before generating guidance. A read-only draft session is required.');
     session = value;
     if (!input.resume) input = { ...input, context: withRunDesignGuidance(input.context, session) };
     timings.siteReadyMs=elapsed();
+    try {
+      const history = await preparedHistory(historyPage, historyRevision);
+      input.signal.throwIfAborted();
+      input = { ...input, history };
+    } catch (error) {
+      await closeUnusedSession(session);
+      throw error;
+    }
     if (!input.resume && (input.persistenceMetadata !== undefined || input.voiceConnection)) {
       const candidate = { id: secureRandomUUID().replaceAll('-', ''), token: (secureRandomUUID() + secureRandomUUID()).replaceAll('-', '') };
       continuation = candidate;
@@ -275,15 +412,39 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     saveCheckpoint();
   });
   try {
-    const { voiceConnection, signal, onUpdate: _onUpdate, onOutcome: _onOutcome, onAccepted: _onAccepted, resume: _resume, persistenceMetadata: _metadata, persistenceSurface: _surface, historySource: _historySource, ...request } = input;
+    const { voiceConnection, signal, onUpdate: _onUpdate, onOutcome: _onOutcome, onPlainReplyFinished: _onPlainReplyFinished, onAccepted: _onAccepted, resume: _resume, persistenceMetadata: _metadata, persistenceSurface: _surface, historySource: _historySource, panelPreparation: _prepared, ...request } = input;
     const conversationId=input.resume?.conversationId || input.conversationId || directConversationId(input.persistenceSurface || 'bricks',input.history,input.canvasPostId ? `post:${input.canvasPostId}` : input.canvasId);
     if(continuation) {
       const pending=pendingDirectSiteRun(input.persistenceSurface);
       if(pending?.connection.id===continuation.id)try{window.sessionStorage.setItem(storageKey,JSON.stringify({...pending,conversationId}));}catch { /* Optional storage. */ }
     }
-    const response = await pixflowRuntimeFetch(input.resume ? '/api/pixflow/direct-site/resume-stream' : '/api/pixflow/direct-site/run-stream', {
+    timings.bridgeRequestMs = elapsed();
+    const submit = () => pixflowRuntimeFetch(input.resume ? '/api/pixflow/direct-site/resume-stream' : '/api/pixflow/direct-site/run-stream', {
       method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input.resume ? {...continuation,session,afterSequence:sequence} : { ...request, session, continuation, conversationId,surface:input.persistenceSurface || 'bricks' }),
     });
+    let response = await submit();
+    if (response.status === 403) {
+      const denial = await response.clone().json().catch(() => null);
+      // Only this middleware response proves the run handler never started.
+      if (denial?.error?.code === 'PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED') {
+        await ensurePixflowLicenseEntitlement({ allowSiteSwitch: false });
+        signal.throwIfAborted();
+        response = await submit();
+      }
+    }
+    if (response.status === 409 && historyBinding && !input.resume
+      && (await response.clone().json().catch(() => null))?.code === 'DIRECT_HISTORY_CHANGED') {
+      // This specific response precedes admission. Preserve the run ID and retry once.
+      const fresh = await createPanelSession({ editorTarget: input.editorTarget, purpose: input.purpose,
+        workspaceSource: input.workspaceSource, historyBinding }, signal);
+      const { historyPage, historyRevision, ...credential } = fresh;
+      session = credential;
+      try { request.history = await preparedHistory(historyPage, historyRevision); }
+      catch (error) { await closeUnusedSession(credential); throw error; }
+      timings.historyRefreshed = 1;
+      response = await submit();
+    }
+    timings.bridgeHeadersMs = elapsed();
     if (response.status === 404 && input.resume) completed = true;
     if (!response.ok || !response.body) throw new Error(await response.text() || 'Direct agent connection failed.');
     if (!input.resume) await input.onAccepted?.();
@@ -316,8 +477,18 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
       }
       timings.events!++;
       if (event.type === 'error') failure = String(event.message || event.error || 'Agent failed.');
+      // Claude's result envelope is distinct from intermediate turn_end and per-message
+      // deltas. A text-only reply can finish painting before the CLI exits. The run,
+      // Stop, persistence and all tool outcomes still belong to the Bridge.
+      if (input.agentId === 'claude' && !input.resume && event.type === 'usage' &&
+          event.stopReason === 'end_turn' && !event.isError && !failure && content.trim() &&
+          !/<question-form\b/i.test(content) && !events.some(item => item.kind === 'tool_use' || item.kind === 'tool_result')) {
+        presentation.flush();
+        input.onPlainReplyFinished?.();
+      }
       if (event.type === 'done') {
         presentation.flush();
+        serverTimings = bridgeTimings(event.timings);
         completed=true;outcome=event.outcome || (event.ok?'completed':'failed');
         endedAt=Number.isSafeInteger(event.timestamp) && event.timestamp>0 ? event.timestamp : undefined;
         failure=event.ok?'':String(event.message || failure || 'Agent run did not complete.');
@@ -335,14 +506,18 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
             return;
           }
         }
-        if (translated.kind === 'text') content += translated.text;
+        const firstReplyText = translated.kind === 'text' && !!translated.text && timings.firstTextReceivedMs === undefined;
+        if (translated.kind === 'text') {
+          if (translated.text) timings.firstTextReceivedMs ??= elapsed();
+          content += translated.text;
+        }
         if (translated.kind === 'voice_transcript') content += `\n\n**${translated.role === 'user' ? 'You' : 'Codex'}:** ${translated.text}\n\n`;
         events.push(translated);
         presentation.schedule();
         // Tool boundaries and questions stay responsive; text/thinking alone can wait a frame.
         const questionCompleted = translated.kind === 'text' && /<\/(?:question-form|ask-question)>/i.test(formTail + translated.text);
         if (translated.kind === 'text') formTail = (formTail + translated.text).slice(-32);
-        if (!['text', 'thinking'].includes(translated.kind) || questionCompleted) presentation.flush();
+        if (firstReplyText || !['text', 'thinking'].includes(translated.kind) || questionCompleted) presentation.flush();
       }
       if (event.type === 'error') presentation.flush();
       if(!checkpointTimer)checkpointTimer=setTimeout(saveCheckpoint,200);
@@ -437,7 +612,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     // A bounded User Timing entry can be inspected locally without collecting private content.
     try {
       performance.clearMeasures('pixflow.direct-run');
-      performance.measure('pixflow.direct-run', {start:submitted,end:performance.now(),detail:{...timings,totalMs:elapsed(),outcome}});
+      performance.measure('pixflow.direct-run', {start:submitted,end:performance.now(),detail:{...timings,totalMs:elapsed(),outcome,...(serverTimings?{bridge:serverTimings}:{})}});
     } catch { /* Older browsers can still execute runs. */ }
     input.signal.removeEventListener('abort', stop);
     if (continuation && activeRunOwners.get(storageKey)?.connection.id === continuation.id) activeRunOwners.delete(storageKey);
@@ -446,15 +621,21 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     }
     // Revocation is independent of an aborted streaming signal.
     if (session && (!continuation || input.resume)) {
-      const endpoint = new URL(session.endpoint);
-      endpoint.searchParams.set('rest_route', '/pixflow-design/v1/wp-admin/direct/session');
-      await fetch(endpoint, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } }).catch(() => undefined);
+      await closeUnusedSession(session);
     }
   }
 }
 
+async function closeUnusedSession(session: PixflowDirectSiteSession): Promise<void> {
+  const endpoint = new URL(session.endpoint);
+  endpoint.searchParams.set('rest_route', '/pixflow-design/v1/wp-admin/direct/session');
+  await fetch(endpoint, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } }).catch(() => undefined);
+}
+
 /** Release audio even when session preparation fails. */
 export async function runDirectSite(request: Parameters<typeof executeDirectSite>[0] & { config?: AppConfig }): Promise<PixflowDirectSiteOutcome> {
+  const submitted = performance.now();
+  const timings: Record<string, number> = { updates: 0, events: 0 };
   request.signal.throwIfAborted();
   if (request.resume?.preparing) {
     const pending = pendingDirectSiteRun(request.persistenceSurface);
@@ -468,39 +649,56 @@ export async function runDirectSite(request: Parameters<typeof executeDirectSite
     if (request.config && ['admin','bricks'].includes(request.persistenceSurface)) rememberFloatingExecution(request.config);
     request = { ...request, persistenceMetadata: { ...(request.persistenceMetadata as object), sessionKey: request.historySource.sessionKey } };
   }
-  if (!request.resume && request.purpose !== 'guidance-draft') {
+  const prepareEditor = async () => {
+    if (request.resume || request.purpose === 'guidance-draft') return request;
     const { resolveEditorRunTarget } = await import('./editor-run-target');
-    request = { ...request, editorTarget: await resolveEditorRunTarget(request, request.signal) };
-    if (request.persistenceMetadata !== undefined) request = { ...request, persistenceMetadata: {...(request.persistenceMetadata as object), editorTarget: request.editorTarget} };
+    const editorTarget = await resolveEditorRunTarget(request, request.signal);
+    timings.editorReadyMs = Math.round(performance.now() - submitted);
+    return { ...request, editorTarget, ...(request.persistenceMetadata !== undefined ? {
+      persistenceMetadata: { ...(request.persistenceMetadata as object), editorTarget },
+    } : {}) };
+  };
+  if (request.resume?.byok || request.config?.mode === 'api') {
+    if (!request.config) throw new Error('API settings are still loading. Reopen this panel to resume.');
+    return runByokSite({ ...await prepareEditor(), config: request.config });
   }
-  // Provider credentials belong only to the WordPress provider transport.
-  const { config, ...execution } = request;
-  if (execution.resume?.byok || config?.mode === 'api') {
-    if(!config)throw new Error('API settings are still loading. Reopen this panel to resume.');
-    return runByokSite({ ...execution, config });
-  }
-  let input = execution;
-  if (!input.resume && input.historySource) {
+  const authorize = async () => {
+    await ensurePixflowLicenseEntitlement({ allowSiteSwitch: !request.resume, reusePairing: true });
+    timings.licenseReadyMs = Math.round(performance.now() - submitted);
+  };
+  const historyOwner = chatHistoryOwnerScope();
+  const prepareHistory = async (page?: SavedHistoryPage, revision?: string) => {
+    if (request.resume || !request.historySource) return request.history;
+    if (!request.historySource.messages.length) return [];
     const { prepareHistorySource } = await import('./working-context');
-    const source = await prepareHistorySource(input.historySource, input.signal);
-    input = { ...input, history: source.messages };
-  }
+    if (chatHistoryOwnerScope() !== historyOwner) throw new Error('The signed-in account changed. Reopen this chat before continuing.');
+    const source = await prepareHistorySource(request.historySource, request.signal, page, Boolean(revision));
+    timings.historyReadyMs = Math.round(performance.now() - submitted);
+    return source.messages;
+  };
+  const authorization = authorize();
+  // Always observe failures, including when context preparation fails first.
+  void authorization.catch(() => undefined);
+  const source = request.historySource;
+  const historyBinding = !request.resume && source?.checkSavedPageFirst && source.binding && source.messages.at(-1)?.id
+    ? { ...source.binding, throughMessageId: source.messages.at(-1)!.id } : undefined;
+  const separateHistory = historyBinding ? undefined : prepareHistory();
+  void separateHistory?.catch(() => undefined);
+  const history = (page?: SavedHistoryPage, revision?: string) => separateHistory ?? prepareHistory(page, revision);
+  const prepared = await prepareEditor();
+  const { config: _config, ...execution } = prepared;
+  let input = execution;
   const voiceUpdates = input.voiceConnection ? voiceStatusUpdates(input.voiceConnection, input.onUpdate) : undefined;
   if (voiceUpdates) input = { ...input, onUpdate: voiceUpdates.update };
   try {
-  // Capture the shared preference before asynchronous site/session preparation.
-  // Reconnecting streams keep the original server-owned request unchanged.
-  if (!input.resume && input.enhancedDesignGuidance === undefined) {
-    const config = await fetchPixflowOptionalBridgeConfig();
-    if (config) input = { ...input, enhancedDesignGuidance: config.enhancedDesignGuidance !== false };
-  }
-  if (!input.voiceConnection) return executeDirectSite(input);
+  // The Bridge reads its current guidance setting as part of run admission.
+  if (!input.voiceConnection) return executeDirectSite(input, submitted, timings, authorization, history, historyBinding);
   const controller = new AbortController();
   const abort = () => controller.abort();
   input.signal.addEventListener('abort', abort, { once: true });
   input.voiceConnection.signal.addEventListener('abort', abort, { once: true });
   if (input.signal.aborted || input.voiceConnection.signal.aborted) abort();
-  try { return await executeDirectSite({ ...input, voice: { sdp: input.voiceConnection.sdp, name: input.voiceConnection.name }, signal: controller.signal }); }
+  try { return await executeDirectSite({ ...input, voice: { sdp: input.voiceConnection.sdp, name: input.voiceConnection.name }, signal: controller.signal }, submitted, timings, authorization, history, historyBinding); }
   catch (error) { input.voiceConnection.finish(controller.signal.aborted ? undefined : error instanceof Error ? error.message : String(error)); throw error; }
   finally { input.signal.removeEventListener('abort', abort); input.voiceConnection.signal.removeEventListener('abort', abort); input.voiceConnection.finish(); }
   } finally { voiceUpdates?.dispose(); }

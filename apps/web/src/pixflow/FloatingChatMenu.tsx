@@ -76,6 +76,17 @@ export function FloatingChatMenu() {
     return () => { observer.disconnect(); document.removeEventListener('keydown', key); };
   }, [open, panelHost]);
   useEffect(() => () => { request.current?.abort(); generation.current++; }, []);
+  async function openExisting(id: string) {
+    if (pending) return;
+    const controller = new AbortController(); request.current?.abort(); request.current = controller;
+    setPending(true); setWaiting(false); setError(false);
+    try {
+      const conversations = await listConversations(id);
+      if (controller.signal.aborted) return;
+      if (!conversations[0]) throw new Error('Conversation unavailable');
+      await choose({ projectId: id, conversationId: conversations[0].id });
+    } catch { if (!controller.signal.aborted) { setError(true); setPending(false); } }
+  }
   async function choose(row?: ChatHistoryBinding, projectId?: string | null) {
     const controller = new AbortController(); request.current?.abort(); request.current = controller;
     setPending(true); setWaiting(false); setError(false);
@@ -98,11 +109,7 @@ export function FloatingChatMenu() {
       <WorkspaceSidebar chatOnly chats={rows} activeChatId={activeChatId}
         organization={library.organization} loading={loading || library.loading} error={library.error}
         onRetry={async () => { await Promise.all([load(), library.refresh()]); }} onMutate={library.mutate}
-        onOpenChat={id => { if (pending) return; void listConversations(id).then(conversations => {
-          const conversation = conversations[0];
-          if (conversation) return choose({ projectId: id, conversationId: conversation.id });
-          setError(true);
-        }); }}
+        onOpenChat={id => { void openExisting(id); }}
         onRenameChat={async (id, name) => { if (!await patchProject(id, { name })) throw new Error('Could not rename the chat.'); await load(); }}
         onNewChat={projectId => { if (!pending) void choose(undefined, projectId); }}
         onNavigate={() => {}} onSettings={() => {}}>{null}</WorkspaceSidebar>

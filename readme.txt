@@ -34,6 +34,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 == Changelog ==
 
 = Unreleased =
+* Preserve newer retained replies when reopening chats while keeping revision and conflict protections.
+* Prevent live builder commands from becoming stuck behind stale WordPress object-cache entries.
 * Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
 * Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
 

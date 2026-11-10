@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
 - Use the updated, theme-aware Grok mark in provider menus.
 
-- Continue native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+- Support Blog Studio native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
 - Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
 - Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
 

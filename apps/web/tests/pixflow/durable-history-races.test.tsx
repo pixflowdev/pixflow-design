@@ -39,6 +39,36 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Durable history independent migration and recovery checks', () => {
+  it('restores a newer server revision without reimporting an acknowledged browser copy', async () => {
+    const stale = saved(message(1));
+    const corrected = { ...stale, content: 'Corrected in another tab', historyRevision: 3 };
+    const response = { projectId: 'history-race-test', conversationId: 'conversation', page: { messages: [corrected], nextCursor: '50', hasMore: true } };
+    vi.mocked(resolveChatHistory).mockResolvedValueOnce(response);
+    const owner = renderHook(() => useHarness([stale]));
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages).toEqual([corrected]);
+    expect(owner.result.current.hasMore).toBe(true);
+    expect(importChatHistory).not.toHaveBeenCalled();
+    expect(readChatHistory).not.toHaveBeenCalled();
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
+  it('uses the session read for a canonical reload and adopts a correction saved in another tab', async () => {
+    const original = saved(message(1));
+    const corrected = { ...original, content: 'Another tab corrected this', historyRevision: 2 };
+    const restorePanel = vi.fn(async () => ({ messages: [corrected], nextCursor: null, hasMore: false }));
+    const sessionKey = 'pixflow:conversation:v1:11111111-1111-1111-1111-111111111111:conversation';
+    const owner = renderHook(() => {
+      const [messages, onHydrate] = useState([original]);
+      return useDurableChatHistory({ sessionKey, messages, onHydrate, restorePanel });
+    });
+    await waitFor(() => expect(owner.result.current.ready).toBe(true));
+    expect(owner.result.current.messages).toEqual([corrected]);
+    expect(restorePanel).toHaveBeenCalledTimes(1);
+    expect(resolveChatHistory).not.toHaveBeenCalled();
+    expect(readChatHistory).not.toHaveBeenCalled();
+    expect(saveChatHistoryMessage).not.toHaveBeenCalled();
+  });
+
   it('reads a selected empty-local chat directly without resolving its known address again', async () => {
     const address = 'pixflow:conversation:v1:11111111-1111-1111-1111-111111111111:conversation';
     vi.mocked(readChatHistory).mockResolvedValue({ messages: [saved(message(1))], nextCursor: null, hasMore: false });

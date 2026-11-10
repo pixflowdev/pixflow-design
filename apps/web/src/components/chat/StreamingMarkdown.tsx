@@ -6,11 +6,14 @@ import { renderMarkdown, type MarkdownLinkClickHandler } from '../../runtime/mar
 export function StreamingMarkdown({ text, live, onLinkClick, searchedWeb, attachmentUrls }: {
   text: string; live: boolean; onLinkClick?: MarkdownLinkClickHandler; searchedWeb?: boolean; attachmentUrls?: ReadonlySet<string>;
 }) {
-  const [shown, setShown] = useState(() => live ? '' : text);
+  const [shown, setShown] = useState(text);
   const current = useRef(shown);
   const target = useRef(text);
   const frame = useRef<number | null>(null);
-  const allowed = live && typeof window !== 'undefined' && !document.hidden
+  // Only consult the browser when there is enough new text to animate.
+  // Reading selection and media state can synchronize layout in a long chat.
+  const allowed = live && shown.length > 0 && text.length - shown.length > 16
+    && text.startsWith(shown) && typeof window !== 'undefined' && !document.hidden
     && window.getSelection()?.isCollapsed !== false
     && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   useLayoutEffect(() => {

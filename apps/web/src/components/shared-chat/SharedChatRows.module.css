@@ -35,3 +35,12 @@
     animation: none;
   }
 }
+
+/* Keep settled replies in the document for selection, search and scrollback.
+   Use Chrome's remembered height after a reply has been laid out. */
+@supports (content-visibility: auto) {
+  .historyReply {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 100px;
+  }
+}

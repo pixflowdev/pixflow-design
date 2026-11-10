@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The Bridge keeps Codex ready between prompts and reuses the active conversation on eligible follow-ups. WordPress checks the site owner and current chat history on each Send so edits from another tab reach the next reply.
+
 - Detect Cursor CLI installed in its standard Windows location even when the Bridge was started before installation. Keep Cursor separate from other providers that use the `agent` command.
 
 ## [2.2.2] - Release candidate

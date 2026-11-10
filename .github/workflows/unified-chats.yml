@@ -3,6 +3,17 @@ on:
   pull_request:
     paths:
       - 'apps/web/**'
+      - 'apps/daemon/src/pixflow/direct-*'
+      - 'apps/daemon/src/pixflow/codex-turn.ts'
+      - 'apps/daemon/tests/pixflow/direct-*'
+      - 'apps/daemon/tests/pixflow/codex-turn.test.ts'
+      - 'packages/contracts/src/api/pixflow-direct-site.ts'
+      - 'packages/contracts/src/api/pixflow-chat-history.ts'
+      - 'wordpress/src/Chat/**'
+      - 'wordpress/src/Http/DirectSiteRestController.php'
+      - 'wordpress/src/Http/Routes/ChatHistoryRoutes.php'
+      - 'wordpress/tests/direct-session-features.test.php'
+      - 'wordpress/tests/chat-history-sqlite.test.php'
       - 'wordpress/assets/admin/wp-admin-floating-panel.js'
       - '.github/workflows/unified-chats.yml'
   workflow_dispatch:
@@ -24,6 +35,11 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
+      - name: Verify Bridge continuity and WordPress history
+        run: |
+          pnpm --filter @open-design/daemon test pixflow/direct-codex-worker pixflow/codex-turn pixflow/direct-site-session pixflow/direct-site-native-context
+          php wordpress/tests/chat-history-sqlite.test.php
+          php wordpress/tests/direct-session-features.test.php
       - run: pnpm guard
       - run: pnpm typecheck
       - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect completed-workspace-run

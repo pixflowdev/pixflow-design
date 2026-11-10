@@ -8,6 +8,9 @@ export interface PixflowBuilderHandoff {
   id: string;
   projectId: string;
   conversationId: string;
+  /** Continue the existing source transcript while retaining isolated execution receipts. */
+  continueConversation?: boolean;
+  presentation?: { title: string; summary: string };
   /** Present only for a handoff prepared through the source-bound agent tool. */
   origin?: 'agent';
   sourceRequestId?: string;
@@ -27,7 +30,7 @@ export interface PixflowBuilderHandoff {
   error?: string;
 }
 export type PixflowBuilderHandoffRequest =
-  | { action: 'prepare'; requestId: string; projectId: string; conversationId: string; builder: PixflowBuilderId; postId: number; targetTabId: string; brief: string; assets?: PixflowBuilderHandoffAsset[] }
+  | { action: 'prepare'; requestId: string; projectId: string; conversationId: string; builder: PixflowBuilderId; postId: number; targetTabId: string; brief: string; assets?: PixflowBuilderHandoffAsset[]; continueConversation?: boolean; presentation?: { title: string; summary: string } }
   | { action: 'claim'; id: string; tabId: string; editorTarget: PixflowEditorTarget }
   | { action: 'ack'; id: string; tabId: string; messageId: string; runId?: string }
   | { action: 'finish'; id: string; tabId: string; messageId: string; outcome: 'completed' | 'failed' | 'awaiting_input'; error?: string }

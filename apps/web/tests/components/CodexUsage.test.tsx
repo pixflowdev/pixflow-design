@@ -8,6 +8,14 @@ vi.mock('../../src/i18n', () => ({ useI18n: () => ({ locale: 'en', t: (key: keyo
 import { codexUsageRequest } from '../../src/providers/daemon';
 import { CodexUsage } from '../../src/components/CodexUsage';
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
+test('Grok models share one account poller across mounted views', async () => {
+  vi.mocked(codexUsageRequest).mockResolvedValue({ status: 'available', source: 'cli', checkedAt: '2026-11-06T00:00:00Z', windows: [{ bucket: 'grok-build', durationMinutes: 10080, remainingPercent: 96, resetsAt: 1794528000 }] });
+  render(<><CodexUsage provider="grok-build" model="grok-4.7" /><CodexUsage provider="grok-build" model="grok-4.5" /></>);
+  await waitFor(() => expect(screen.getAllByText('96% remaining')).toHaveLength(2));
+  expect(codexUsageRequest).toHaveBeenCalledOnce();
+  expect(vi.mocked(codexUsageRequest).mock.calls[0]!.slice(1)).toEqual(['grok-build', '']);
+  expect(screen.getAllByText(/Shared across Grok/)).toHaveLength(2);
+});
 const data = { status: 'available' as const, source: 'desktop' as const, checkedAt: '2026-10-30T00:00:00Z', windows: [{ bucket: 'codex', durationMinutes: 10080, remainingPercent: 19, resetsAt: 1793784989 }] };
 test('weekly-only account shows one real window and an account-wide timestamp', async () => {
   vi.mocked(codexUsageRequest).mockResolvedValue(data); render(<CodexUsage />);

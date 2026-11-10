@@ -62,9 +62,9 @@ export function mountNativeEditorWorkspaceMenu(builder: 'etch' | 'elementor' | '
     isOnboardingCompleted: () => (config?.appConfig as Record<string, unknown>)?.onboardingCompleted !== false,
     onToggleWorkspace: () => overlay && !overlay.hidden ? close() : open(),
     onOpenTool: (tool: string) => { keepWorkspaceOnToolClose = false; open({ type: 'pixflow-design:open-workspace-tool', tool: tool === 'design-system' ? 'design-systems' : tool }); },
-    onOpenSettings: () => {
+    onOpenSettings: (section?: string) => {
       keepWorkspaceOnToolClose = Boolean(overlay && !overlay.hidden);
-      open({ type: 'pixflow-design:open-settings', section: 'execution' }, keepWorkspaceOnToolClose);
+      open({ type: 'pixflow-design:open-settings', section: section || 'execution' }, keepWorkspaceOnToolClose);
     },
     onThemeChange: (value: string) => { theme = value; open({ type: 'pixflow-design:change-theme', theme: value }, Boolean(overlay && !overlay.hidden)); },
     initialDesignSystemVisible: planningAvailable(),

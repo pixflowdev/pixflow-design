@@ -1,5 +1,5 @@
 // Plain (raw stdout) renderer. OD's `plain` streamFormat (deepseek /
-// qwen / grok / grok-build) treats stdout as the final assistant
+// qwen) treats stdout as the final assistant
 // response. We emit ONLY the report content.
 
 import { writeFile } from 'node:fs/promises';

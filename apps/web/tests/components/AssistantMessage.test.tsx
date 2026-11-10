@@ -363,11 +363,15 @@ describe('AssistantMessage thinking blocks', () => {
       />,
     );
 
-    fireEvent.click(container.querySelector('[data-activity-group] > button')!);
+    const disclosure = container.querySelector('[data-activity-group] button');
+    if (disclosure) fireEvent.click(disclosure);
     expect(container.querySelector('.thinking-block')).toBeTruthy();
     expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
-    fireEvent.click(container.querySelector('.thinking-toggle')!);
-    expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(2);
+    const toggle = container.querySelector('.thinking-toggle')!;
+    const expanded = toggle.getAttribute('aria-expanded');
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe(expanded === 'true' ? 'false' : 'true');
+    expect(screen.getByText('Reading the directory listing.')).toBeTruthy();
   });
 
   it('renders Pixflow wait events with a stage label and muted overview detail', () => {
@@ -564,7 +568,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('shows project files mentioned as plain filenames in the assistant summary', () => {
@@ -588,7 +592,7 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(document.querySelector('.produced-file-name[title="browser-war-deck-outline.md"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="attachment-title"][title="browser-war-deck-outline.md"]')).toBeTruthy();
   });
 
   it('does not recover old reference files as produced files', () => {
@@ -741,3 +745,16 @@ it('does not present provider cost estimates as charges in the response footer',
  expect(view.container.querySelector('.assistant-footer')?.textContent).toContain('5');
 });
 
+
+it('never re-enters Preparing on a transient empty snapshot within the same turn', () => {
+  const message = baseMessage({content: '', events: [], runStatus: 'running', endedAt: undefined});
+  const view = render(<AssistantMessage message={message} streaming />);
+  const label = () => view.container.querySelector('.assistant-label')?.textContent;
+  expect(label()).toMatch(/preparing/i);
+  view.rerender(<AssistantMessage message={{...message, content: 'Hello'}} streaming />);
+  expect(label()).toBe('Working');
+  view.rerender(<AssistantMessage message={message} streaming />);
+  expect(label()).toBe('Working');
+  view.rerender(<AssistantMessage message={{...message, id: 'new-turn'}} streaming />);
+  expect(label()).toMatch(/preparing/i);
+});

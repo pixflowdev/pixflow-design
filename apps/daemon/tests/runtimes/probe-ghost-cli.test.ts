@@ -48,6 +48,12 @@ vi.mock('../../src/runtimes/invocation.js', () => ({
     (execAgentFileMock as unknown as (...args: unknown[]) => unknown)(...args),
 }));
 
+// These tests supply the resolved launch explicitly, including under a fake clock.
+vi.mock('../../src/runtimes/executables.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../src/runtimes/executables.js')>(),
+  discoveryPathLookup: async () => () => null,
+}));
+
 vi.mock('../../src/runtimes/launch.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/runtimes/launch.js')>();
   return {

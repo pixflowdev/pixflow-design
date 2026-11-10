@@ -9,6 +9,28 @@ import { TooltipLayer } from '../../src/components/TooltipLayer';
 afterEach(() => cleanup());
 
 describe('TooltipLayer', () => {
+  it('portals viewport-positioned tooltips into an isolated themed layer outside contained editors', () => {
+    const editor = document.createElement('div');
+    editor.className = 'workspace-shell pixflow-bricks-agent-shell';
+    editor.style.contain = 'layout paint';
+    editor.style.transform = 'translateY(20px)';
+    editor.style.zIndex = '100090';
+    editor.style.setProperty('--bg-elevated', 'rgb(30, 30, 30)');
+    document.body.appendChild(editor);
+    try {
+      render(<><button className="od-tooltip" data-tooltip="Add context">Add context</button><TooltipLayer /></>, { container: editor });
+      fireEvent.pointerOver(screen.getByRole('button', { name: 'Add context' }));
+      const tooltip = screen.getByRole('tooltip');
+      const layer = tooltip.parentElement!;
+      expect(layer.parentElement).toBe(document.body);
+      expect(layer.classList.contains('pixflow-design-portal-scope')).toBe(true);
+      expect(layer.style.position).toBe('fixed');
+      expect(layer.style.contain).toContain('paint');
+      expect(Number(layer.style.zIndex)).toBeGreaterThan(100090);
+      expect(tooltip.style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+    } finally { editor.remove(); }
+  });
+
   it('dismisses a hovered icon tooltip when the icon is activated', () => {
     render(
       <>

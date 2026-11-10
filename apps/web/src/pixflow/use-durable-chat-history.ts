@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from './wordpress-context';
-import { chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type HistoryMessage } from './chat-history-client';
+import { ChatHistoryRequestError, chatHistoryOwnerScope, historyMessageFingerprint, importChatHistory, mergeChatHistory, readChatHistory, resolveChatHistory, saveChatHistoryMessage, type ChatHistoryBinding, type ChatHistoryPage, type HistoryMessage } from './chat-history-client';
 import { historicalRecoveryCopy, preserveHistoryCopies } from './history-recovery';
 import { conversationBinding } from './conversation-address';
 
@@ -35,8 +35,9 @@ function isRetainedLiveContinuation(next: HistoryMessage, prior?: HistoryMessage
   const changing = new Set(['content', 'events', 'status', 'runStatus', 'endedAt', 'awaitingInput', 'historyRevision', 'historySequence']);
   return Object.entries(saved).every(([key, value]) => changing.has(key) || JSON.stringify(local[key]) === JSON.stringify(value));
 }
-export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported }: {
-  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement>;
+export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, messages, onHydrate, enabled = true, scrollRef, legacyMessages, onImported, restorePanel }: {
+  sessionKey: string; messages: T[]; onHydrate?: (messages: T[]) => void; enabled?: boolean; scrollRef?: RefObject<HTMLDivElement | null>;
+  restorePanel?: (address: ChatHistoryBinding, through: string | undefined, signal: AbortSignal) => Promise<ChatHistoryPage<T> | undefined>;
   legacyMessages?: T[]; onImported?: (ids: string[]) => void;
 }) {
   const initialOwner = useRef(chatHistoryOwnerScope());
@@ -50,6 +51,8 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   const [readyKey, setReadyKey] = useState('');
   const [emptyLookup, setEmptyLookup] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const conflicts = useRef(new Set<string>());
   const binding = useRef<ChatHistoryBinding | null>(null);
   const pending = useRef(new Map<string, T>());
   const migrationSnapshots = useRef(new Map<string, T>());
@@ -57,18 +60,21 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   const writtenOutbox = useRef(new Map<string, string>());
   const removedOutbox = useRef(new Set<string>());
   const known = useRef(new Map<string, T>());
+  const matchedSnapshots = useRef(new WeakMap<T, T>());
   const latest = useRef(messages); latest.current = messages;
   const hydrate = useRef(onHydrate); hydrate.current = onHydrate;
   const legacy = useRef(legacyMessages); legacy.current = legacyMessages;
   const importedCallback = useRef(onImported); importedCallback.current = onImported;
   const flushing = useRef(false);
   const refreshing = useRef(false);
+  const initialRefresh = useRef<{ owner: number; messages: T[] } | null>(null);
   const generation = useRef(0);
   const readableOutbox = useRef(false);
   const scrollAnchor = useRef<{ top: number; height: number } | null>(null);
   useLayoutEffect(() => {
     const node = scrollRef?.current;
     if (!node || !scrollAnchor.current) return;
+    if (node.dataset.slot === 'message-scroller-viewport') { scrollAnchor.current = null; return; }
     node.scrollTop = scrollAnchor.current.top + node.scrollHeight - scrollAnchor.current.height;
     scrollAnchor.current = null;
   }, [history, scrollRef]);
@@ -119,28 +125,35 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       return true;
     } catch { setError('save'); return false; }
   }, [outboxKey]);
-  const flush = useCallback(async (): Promise<void> => {
-    if (!binding.current || flushing.current) return;
+  const activeWrite = useRef<Promise<void> | undefined>(undefined);
+  const flush = useCallback(async (onlyIds?: ReadonlySet<string>): Promise<void> => {
+    if (flushing.current) return activeWrite.current;
+    if (!binding.current) return;
     const owner = generation.current;
     const target = binding.current;
     if (initialOwner.current !== chatHistoryOwnerScope()) return;
     flushing.current = true;
+    let release!: () => void;
+    activeWrite.current = new Promise<void>(resolve => { release = resolve; });
     let failed = false;
     try {
       for (const [id, snapshot] of [...pending.current]) {
+        if (onlyIds && !onlyIds.has(id)) continue;
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         let saved: T;
         try {
           saved = await saveChatHistoryMessage(target, snapshot);
-        } catch {
+        } catch (error) {
           // Each identity has its own revision. Preserve a conflicting recovery
           // copy, but do not let it prevent unrelated replies from being saved.
           failed = true;
           if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+          if (error instanceof ChatHistoryRequestError && error.status === 409) { conflicts.current.add(id); setConflict(true); }
           setError('save');
           continue;
         }
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        conflicts.current.delete(id); setConflict(conflicts.current.size > 0);
         const prior = known.current.get(id);
         known.current.set(id, saved);
         acknowledgedOutbox.current.set(id, historyMessageFingerprint(snapshot));
@@ -162,6 +175,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       if (pending.current.size === 0) setError(null);
     } catch { failed = true; if (owner === generation.current) setError('save'); }
     finally {
+      release();
       if (owner === generation.current) {
         flushing.current = false;
         if (!failed && pending.current.size) window.setTimeout(() => { if (owner === generation.current) void flush(); }, 400);
@@ -172,7 +186,8 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
   useEffect(() => {
     if (!active) return;
     const owner = ++generation.current;
-    binding.current = null; flushing.current = false;
+    const restoreController = new AbortController();
+    binding.current = null; flushing.current = false; conflicts.current.clear(); setConflict(false);
     setReadyKey(''); setHistory([]); setHasMore(false); setCursor(null); setLoading(true);
     const initial = latest.current;
     const initialLegacy = legacy.current || [];
@@ -200,7 +215,15 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         // A selected canonical address needs no alias lookup. The history read
         // still authorizes access before hydration; migration/recovery retains
         // the existing resolver path when there are local messages to preserve.
-        const target = hasMessages ? await resolveChatHistory({ sessionKey }) : conversationBinding(sessionKey) ?? await resolveChatHistory({ sessionKey, create: false });
+        const address = conversationBinding(sessionKey);
+        const through = initial.at(-1)?.id;
+        const restoredPage = !recoveredIds.size && address
+          ? await restorePanel?.(address, through, restoreController.signal) : undefined;
+        if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
+        const snapshot = restoredPage && address ? { ...address, page: restoredPage }
+          : hasMessages && !recoveredIds.size ? await resolveChatHistory<T>({ sessionKey, includePage: true }) : null;
+        const prefetched = snapshot?.page;
+        const target = snapshot ? { projectId: snapshot.projectId, conversationId: snapshot.conversationId } : hasMessages ? await resolveChatHistory({ sessionKey }) : conversationBinding(sessionKey) ?? await resolveChatHistory({ sessionKey, create: false });
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         if (!target.projectId || !target.conversationId) {
           // A confirmed empty lookup is ready for its first message. Adopt the
@@ -217,15 +240,19 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         const legacyCandidates = initialLegacy;
         // Preserve untouched legacy payloads before presentation reconciliation
         // converts an interrupted run or sanitizes a rendered event list.
-        if (legacyCandidates.length) await importChatHistory(target, legacyCandidates);
+        const storedIds = new Set(prefetched?.messages.map(item => item.id));
+        const missingLegacy = legacyCandidates.filter(item => !storedIds.has(item.id));
+        if (missingLegacy.length) await importChatHistory(target, missingLegacy);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         const importCandidates = mergeChatHistory(legacyCandidates, mergeChatHistory(initial, [...pending.current.values()]));
-        const imported = await importChatHistory(target, importCandidates);
+        const missing = importCandidates.filter(item => !storedIds.has(item.id));
+        const imported = missing.length ? await importChatHistory(target, missing) : { messages: [], deletedMessageIds: [] };
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         importedCallback.current?.(importCandidates.map(item => item.id!).filter(Boolean));
-        const page = await readChatHistory<T>(target);
+        const page = prefetched && !missing.length && !missingLegacy.length ? prefetched : await readChatHistory<T>(target);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         binding.current = target;
+        initialRefresh.current = { owner, messages: page.messages };
         const deleted = new Set(imported.deletedMessageIds);
         removedOutbox.current = deleted;
         for (const id of deleted) pending.current.delete(id);
@@ -263,7 +290,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
       } catch { if (owner === generation.current) setError('load'); }
       finally { if (owner === generation.current) setLoading(false); }
     })();
-    return () => { generation.current++; };
+    return () => { restoreController.abort(); generation.current++; };
   // Retry reads the same durable outbox; it never clears an unacknowledged write.
   }, [active, sessionKey, retryCount]);
 
@@ -276,7 +303,13 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     for (const item of messages) {
       if (!item.id) continue;
       const previous = known.current.get(item.id);
-      if (previous && historyMessageFingerprint(previous) === historyMessageFingerprint(item)) continue;
+      // Each stream update replaces the active message. Finished immutable
+      // snapshots only need comparing again when their server copy changes.
+      if (previous && (previous === item || matchedSnapshots.current.get(item) === previous)) continue;
+      if (previous && historyMessageFingerprint(previous) === historyMessageFingerprint(item)) {
+        matchedSnapshots.current.set(item, previous);
+        continue;
+      }
       // Never borrow a newer server revision for a snapshot produced by an old
       // tab. Only acknowledgements of this outbox may advance its expected CAS.
       pending.current.set(item.id, item);
@@ -284,6 +317,12 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     if (!pending.current.size) return;
     persistOutbox();
     if (readyKey !== sessionKey) return;
+    const last = messages.at(-1) as (T & { status?: string }) | undefined;
+    const finished = last?.role === 'assistant' && (last.status === 'complete' || last.status === 'error');
+    if (finished && last.id && pending.current.has(last.id)) {
+      void flush();
+      return;
+    }
     const timer = window.setTimeout(() => { void flush(); }, 400);
     return () => window.clearTimeout(timer);
   }, [active, messages, readyKey, sessionKey, flush, persistOutbox]);
@@ -303,12 +342,12 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     if (!active || readyKey !== sessionKey) return;
     const owner = generation.current;
     const controller = new AbortController();
-    const refresh = async () => {
+    const refresh = async (hydrated?: T[]) => {
       const target = binding.current;
       if (!target || refreshing.current || initialOwner.current !== chatHistoryOwnerScope()) return;
       refreshing.current = true;
       try {
-        const page = await readChatHistory<T>(target);
+        const page = hydrated ? { messages: [...hydrated] } : await readChatHistory<T>(target);
         if (owner !== generation.current || initialOwner.current !== chatHistoryOwnerScope()) return;
         for (let index = 0; index < page.messages.length; index++) {
           const item = page.messages[index];
@@ -351,7 +390,9 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     window.addEventListener('focus', focus);
     document.addEventListener('visibilitychange', visible);
     const timer = window.setInterval(visible, 15000);
-    void refresh();
+    // Run recovery against the authorized page just hydrated. Subsequent focus and timer checks read fresh revisions.
+    void refresh(initialRefresh.current?.owner === owner ? initialRefresh.current.messages : undefined);
+    initialRefresh.current = null;
     return () => {
       controller.abort();
       window.removeEventListener('focus', focus);
@@ -393,6 +434,7 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
         if (!saved || pending.current.get(snapshot.id!) !== snapshot) continue;
         acknowledgedOutbox.current.set(snapshot.id!, historyMessageFingerprint(snapshot));
         pending.current.delete(snapshot.id!); known.current.set(snapshot.id!, saved);
+        conflicts.current.delete(snapshot.id!); setConflict(conflicts.current.size > 0);
       }
       const restored = latest.current.map(item => {
         const before = captured.find(snapshot => snapshot.id === item.id);
@@ -405,12 +447,28 @@ export function useDurableChatHistory<T extends HistoryMessage>({ sessionKey, me
     } catch { if (owner === generation.current) setError('save'); }
     finally { if (owner === generation.current) setRecovering(false); }
   }, [outboxKey, persistOutbox, recovering]);
+  const visibleMessages = useMemo(() => readyKey === sessionKey
+    ? mergeChatHistory(history, messages) : messages, [readyKey, sessionKey, history, messages]);
   return {
     binding: readyKey === sessionKey ? binding.current : null,
     ready: active && readyKey === sessionKey,
-    messages: readyKey === sessionKey ? mergeChatHistory(history, messages) : messages,
+    messages: visibleMessages,
+    // Read after the persistence effect has queued any changed snapshots.
+    async acknowledgeForSend(): Promise<boolean> {
+      if (!active || readyKey !== sessionKey || error || !binding.current) return false;
+      const owner = generation.current;
+      const prior = new Set(pending.current.keys());
+      const saved = () => owner === generation.current && initialOwner.current === chatHistoryOwnerScope()
+        && [...prior].every(id => !pending.current.has(id));
+      if (saved()) return true;
+      // An in-flight save may contain the previous streaming version of this reply.
+      await flush(prior);
+      if (!saved() && owner === generation.current && !flushing.current) await flush(prior);
+      return saved();
+    },
+    hasPendingWrites: () => pending.current.size > 0,
     acknowledged: readyKey === sessionKey && !error && pending.current.size === 0,
-    hasMore, loading, error, loadEarlier, recover, recovering,
+    hasMore, loading, error, conflict, loadEarlier, recover, recovering,
     retry: () => { if (binding.current && pending.current.size) void flush(); else setRetryCount(value => value + 1); },
   };
 }

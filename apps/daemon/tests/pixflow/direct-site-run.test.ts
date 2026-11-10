@@ -9,9 +9,9 @@ import { promisify } from 'node:util';
 
 const runner = vi.hoisted(() => ({ script: '', imageGeneration: false, imagePaths: [] as string[], contexts: [] as Record<string, unknown>[], prompts: [] as string[], writable: true, userId:1, siteId:'fixture-site', authorized:true, parser:'codex', streamInput:false, filePrompt:false, failArgs:false }));
 vi.mock('../../src/agents.js', () => ({
-  getAgentDef: () => ({ id: 'fixture-cli', name: 'Fixture CLI', streamFormat: runner.parser==='claude'?'claude-stream-json':'json-event-stream', eventParser: runner.parser, promptInputFormat:runner.streamInput?'stream-json':'text', promptViaStdin: !runner.filePrompt, promptViaFile: runner.filePrompt, resumesSessionViaCli: true, capturesSessionIdFromStream: true, buildArgs: (prompt: string, images: string[], _dirs: string[], _options: unknown, context: Record<string, unknown>) => {
+  getAgentDef: () => ({ id: 'fixture-cli', name: 'Fixture CLI', streamFormat: runner.parser==='grok-build'?grokBuildAgentDef.streamFormat:runner.parser==='claude'?'claude-stream-json':'json-event-stream', eventParser: runner.parser, promptInputFormat:runner.streamInput?'stream-json':'text', promptViaStdin: !runner.filePrompt, promptViaFile: runner.filePrompt, resumesSessionViaCli: true, capturesSessionIdFromStream: true, buildArgs: (prompt: string, images: string[], _dirs: string[], _options: unknown, context: Record<string, unknown>) => {
     runner.imagePaths = images; runner.contexts.push(context); runner.prompts.push(prompt);
-    if (runner.filePrompt) antigravityAgentDef.buildArgs(prompt, images, [], {}, context);
+    if (runner.filePrompt) (runner.parser==='grok-build'?grokBuildAgentDef:antigravityAgentDef).buildArgs(prompt, images, [], {}, context);
     if (runner.failArgs) throw new Error('Fixture argument failure');
     return ['--input-type=module', '-e', `const resumed=${JSON.stringify(context.resumeSessionId)};const promptFile=${JSON.stringify(context.promptFilePath)};`+runner.script];
   } }),
@@ -25,6 +25,7 @@ import { DIRECT_SITE_TOOL_SOURCE, directSitePrompt, directSkillContext, register
 import { closeDatabase } from '../../src/db.js';
 import { emittedRenderableQuestionForm } from '../../src/question-form-detect.js';
 import { antigravityAgentDef } from '../../src/runtimes/defs/antigravity.js';
+import { grokBuildAgentDef } from '../../src/runtimes/defs/grok-build.js';
 import { AGENT_VISUAL_CAPTURE_SOURCE } from '../../src/pixflow/agent-visual-capture.js';
 
 const servers: Server[] = [];
@@ -112,6 +113,35 @@ describe('direct site agent connection', () => {
     return {dir,url,request,post,app};
   }
   const answerScript=`for await(const chunk of process.stdin) {}; console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'First answer'}}));`;
+
+  it('admits Grok file prompts, streams real tool shapes, and resumes the captured session', async () => {
+    runner.parser='grok-build';runner.filePrompt=true;
+    runner.script=`import fs from 'node:fs';for await(const chunk of process.stdin){};if(!fs.readFileSync(promptFile,'utf8').includes('First request'))throw new Error('Prompt missing');
+      for(const event of [{type:'tool_call',toolCallId:'read-1',toolName:'read_file',rawInput:{target_file:'page.txt'}},
+      {type:'tool_call_update',toolCallId:'read-1',status:'completed',content:[{type:'content',content:{type:'text',text:'Page URL'}}]},
+      {type:'text',data:'First answer'},{type:'end',stopReason:'end_turn',sessionId:'saved-grok'}])console.log(JSON.stringify(event));`;
+    const {request,post}=await fixture();request.agentId='grok-build';
+    const response=await post('run-stream',request);
+    expect(response.status).toBe(200);
+    const output=await response.text();
+    expect(output).toContain('"delta":"First answer"');
+    expect(output).toContain('"name":"Read"');
+    expect(output).toContain('"outcome":"answered"');
+    runner.script=`for await(const chunk of process.stdin){};console.log(JSON.stringify({type:'text',data:resumed||'NO SESSION'}));console.log(JSON.stringify({type:'end',stopReason:'end_turn',sessionId:'saved-grok'}));`;
+    const next=await(await post('run-stream',{...request,prompt:'Follow up',history:[{role:'user',content:'First request'},{role:'assistant',content:'First answer'}],continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
+    expect(next).toContain('"delta":"saved-grok"');
+    expect(next).toContain('"outcome":"answered"');
+  });
+
+  it('fails a truncated Grok stream even if its child exits successfully', async () => {
+    runner.parser='grok-build';runner.filePrompt=true;
+    runner.script=`for await(const chunk of process.stdin){};console.log(JSON.stringify({type:'text',data:'Partial reply'}));`;
+    const {request,post}=await fixture();
+    const output=await(await post('run-stream',{...request,agentId:'grok-build'})).text();
+    expect(output).toContain('without a completion event');
+    expect(output).toContain('"outcome":"failed"');
+    expect(output).not.toContain('"outcome":"answered"');
+  });
 
   it('keeps Workspace voice on the live-handoff policy on fresh and resumed turns', async () => {
     const { request } = await fixture();
@@ -226,7 +256,7 @@ describe('direct site agent connection', () => {
     const {request, post} = await fixture(false);
     await (await post('run-stream', {...request, context:{imageGenerationAllowed:!allowed}})).text();
     expect(runner.prompts.at(-1)?.includes('Image generation and generated-image import are unavailable')).toBe(!allowed);
-    expect(runner.prompts.at(-1)?.includes('Use the configured Pixflow media providers')).toBe(allowed);
+    expect(runner.prompts.at(-1)?.includes('No Pixflow image provider is configured')).toBe(allowed);
   });
 
   it('enables design guidance for an unset preference and preserves explicit opt-out', async () => {
@@ -698,10 +728,18 @@ describe('direct site agent connection', () => {
     expect(directSitePrompt(input, false, true, true)).toContain(path);
     expect(directSitePrompt({ ...input, enhancedDesignGuidance: false })).not.toContain(path);
   });
-  it('only enables the imagegen preference for opted-in Codex runs', () => {
+  it('uses native images for opted-in Codex or when there is no image provider', () => {
     const input = { agentId: 'codex', prompt: 'Generate an image', history: [], session: { endpoint: 'https://site.example/tools', token: '', writable: true, expiresAt: 0 } };
-    expect(directSitePrompt(input, true)).toContain('node site-tool.mjs media.import');
-    expect(directSitePrompt(input, true)).toContain('Videos still use the configured video provider');
+    expect(directSitePrompt(input, true)).toContain('Bridge imports the result');
+    for (const resumed of [false, true]) {
+      const native = directSitePrompt(input, false, true, resumed, true, false, []);
+      expect(native).toContain('No Pixflow image provider is configured');
+      expect(native).toContain('invoke native imagegen immediately');
+      const configured = directSitePrompt(input, false, true, resumed, true, false, ['openai']);
+      expect(configured).toContain('Configured Pixflow image providers: openai');
+      expect(configured).not.toContain('invoke native imagegen immediately');
+      expect(directSitePrompt({...input, agentId: 'claude'}, false, true, resumed, true, false, [])).toContain('an image provider must be configured');
+    }
     expect(directSitePrompt(input)).not.toContain('Image generation preference:');
     expect(directSitePrompt({ ...input, agentId: 'claude' }, true)).not.toContain('Image generation preference:');
   });

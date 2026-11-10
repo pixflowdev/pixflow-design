@@ -101,6 +101,8 @@ export type DaemonAgentPayload =
   | { type: 'voice_transcript'; role: 'user' | 'assistant'; text: string; id?: string }
   | { type: 'thinking_delta'; delta: string }
   | { type: 'thinking_start' }
+  /** Provider response boundary; tool_use pauses are not completed runs. */
+  | { type: 'turn_end'; stopReason?: string; stop_reason?: string; sessionId?: string }
   | LiveArtifactSsePayload
   | LiveArtifactRefreshSsePayload
   | { type: 'tool_use'; id: string; name: string; input: unknown }

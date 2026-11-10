@@ -42,7 +42,7 @@ import {
   streamViaDaemon,
   steerChatRun,
 } from '../providers/daemon';
-import { isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
+import { isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
 import { fetchElevenLabsVoiceOptions } from '../providers/elevenlabs-voices';
 import { normalizeCustomReason } from '@open-design/contracts/analytics';
 import {
@@ -190,7 +190,7 @@ import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
 import { listMessagePage, prependHistoryPage } from '../state/chat-history';
 import { useWorkspaceHistoryRefresh } from '../state/use-workspace-history-refresh';
-import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
+import { recoverWorkspaceHistoryWrites, retryWorkspaceHistoryWrites, subscribeWorkspaceHistoryWrites, workspaceHistoryPendingMessages, workspaceHistoryWriteConflicted, workspaceHistoryWriteFailed } from '../state/workspace-history-persistence';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
@@ -2785,7 +2785,7 @@ export function ProjectView({
 
     const attachRecoverableRuns = async () => {
       const missingRunIdMessages = messages.filter((m) => {
-        if (m.role !== 'assistant' || m.runId) return false;
+        if (!isDaemonRecoveryMessage(m) || m.runId) return false;
         return isActiveRunStatus(m.runStatus);
       });
       const activeRuns = missingRunIdMessages.length > 0
@@ -2810,7 +2810,7 @@ export function ProjectView({
 
       for (const message of messages) {
         if (cancelled) return;
-        if (message.role !== 'assistant') continue;
+        if (!isDaemonRecoveryMessage(message)) continue;
         const spuriouslyFailedPending = isSpuriouslyFailedAssistantMessage(message);
         const replayingTerminalRun = shouldReplayTerminalRunMessage(message);
         const needsFullReplay =
@@ -6174,7 +6174,7 @@ export function ProjectView({
               key={`${project.id}:${activeConversationId ?? 'conversation-unavailable'}:${chatSeed?.id ?? 'ready'}`}
               messages={messages}
               olderHistory={olderMessagesCursor ? { loading: loadingOlderMessages, error: olderMessagesError, load: loadOlderMessages } : undefined}
-              historyPersistence={historyWriteError ? { retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
+              historyPersistence={historyWriteError ? { conflict: workspaceHistoryWriteConflicted(project.id, activeConversationId!), retry: retryHistoryWrites, recovering: historyRecovering, recover: currentConversationStreaming ? undefined : async title => {
                 if (!activeConversationId || historyRecovering) return;
                 const recoveryGeneration = historyPageGeneration.current;
                 setHistoryRecovering(true);
@@ -6207,7 +6207,6 @@ export function ProjectView({
               onAttachComment={attachPreviewComment}
               onDetachComment={detachPreviewComment}
               onDeleteComment={(commentId) => void removePreviewComment(commentId)}
-              bottomAligned
               codexVoiceEnabled={hasPixflowWordPressContext() && daemonLive && config.mode === 'daemon' && config.agentId === 'codex'}
               codexVoiceStartRequested={codexVoiceStartRequested}
               onSend={handleSend}

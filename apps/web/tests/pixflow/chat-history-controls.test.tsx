@@ -9,6 +9,10 @@ vi.mock('../../src/i18n', () => ({ useT: () => (key: string) => ({
 }[key] || key) }));
 import { ChatHistoryControls } from '../../src/pixflow/ChatHistoryControls';
 afterEach(cleanup);
+it('offers retry without conflict recovery for a temporary save failure', () => {
+  render(<ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={vi.fn()} retry={vi.fn()} recover={vi.fn()} />);
+  expect(screen.queryByText('history.recoverCopies')).toBeNull();
+});
 it('shows one accessible transition status, then removes it without an acceptance step', () => {
   const props = {hasMore:false,loading:true,error:null,loadEarlier:vi.fn(),retry:vi.fn()};
   const view = render(<ChatHistoryControls {...props} continuing />);
@@ -22,4 +26,10 @@ it('replaces a stalled handoff spinner with the existing recovery action on fail
   render(<ChatHistoryControls hasMore={false} loading={false} error="load" continuing loadEarlier={vi.fn()} retry={vi.fn()} />);
   expect(screen.queryByText('Continuing your conversation…')).toBeNull();
   expect(screen.getByRole('button', {name:'Retry'})).toBeTruthy();
+});
+
+it('offers recovery copies only for a confirmed save conflict', () => {
+  render(<ChatHistoryControls hasMore={false} loading={false} error="save" conflict loadEarlier={vi.fn()} retry={vi.fn()} recover={vi.fn()} />);
+  expect(screen.getByRole('button', {name: 'history.recoverCopies'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Retry'})).toBeTruthy();
 });

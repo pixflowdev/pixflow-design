@@ -108,3 +108,33 @@ it('writes WordPress routes as selector-safe fragments',()=>{
  expect(()=>document.querySelector(window.location.hash)).not.toThrow();}
  finally{delete (window as any).pixflowDesignShell;window.history.replaceState(null,'','/');}
 });
+
+it('defers workspace navigation until an unsaved editor permits it, once only', async () => {
+ delete (window as any).pixflowDesignShell; window.sessionStorage.clear();
+ window.history.replaceState(null,'','/translations');render(<RouteLabel/>);
+ let proceed:(()=>void)|undefined;
+ const guard=(event:Event)=>{event.preventDefault();proceed=(event as CustomEvent).detail.proceed;};
+ window.addEventListener('pixflow-design:workspace-navigation-request',guard);
+ try{
+  navigate({kind:'home',view:'media'});expect(window.location.pathname).toBe('/translations');expect(screen.getByTestId('route-label').textContent).toBe('translations');
+  window.removeEventListener('pixflow-design:workspace-navigation-request',guard);
+  const length=window.history.length;proceed!();proceed!();await flushMicrotasks();
+  expect(window.location.pathname).toBe('/media');expect(window.history.length).toBe(length+1);
+ }finally{window.removeEventListener('pixflow-design:workspace-navigation-request',guard);cleanup();}
+});
+
+it('restores Back navigation while a dirty editor waits, then resumes after saving', async()=>{
+ delete (window as any).pixflowDesignShell; window.sessionStorage.clear();
+ window.history.replaceState(null,'','/media');render(<RouteLabel/>);
+ navigate({kind:'home',view:'translations'});await flushMicrotasks();
+ let proceed:(()=>void)|undefined;
+ const guard=(event:Event)=>{event.preventDefault();proceed=(event as CustomEvent).detail.proceed;};
+ window.addEventListener('pixflow-design:workspace-navigation-request',guard);
+ try{
+  await act(async()=>{window.history.back();await new Promise(resolve=>setTimeout(resolve,50));});
+  expect(proceed).toBeTypeOf('function');expect(window.location.pathname).toBe('/translations');expect(screen.getByTestId('route-label').textContent).toBe('translations');
+  window.removeEventListener('pixflow-design:workspace-navigation-request',guard);
+  await act(async()=>{proceed!();await new Promise(resolve=>setTimeout(resolve,50));});
+  expect(window.location.pathname).toBe('/media');expect(screen.getByTestId('route-label').textContent).toBe('media');
+ }finally{window.removeEventListener('pixflow-design:workspace-navigation-request',guard);cleanup();}
+});

@@ -12,7 +12,7 @@ interface Props {
 interface EditorVisual {
   bg: string;
   fg: string;
-  glyph: (size: number) => JSX.Element;
+  glyph: (size: number) => React.JSX.Element;
 }
 
 function simplePath(path: string) {

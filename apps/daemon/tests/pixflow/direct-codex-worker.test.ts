@@ -1,0 +1,44 @@
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
+import { afterEach, expect, it, vi } from 'vitest';
+const mocks = vi.hoisted(() => ({ spawn: vi.fn(), stop: vi.fn(async () => {}) }));
+vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), spawn:mocks.spawn }));
+vi.mock('@open-design/platform', async original => ({ ...await original<typeof import('@open-design/platform')>(), stopChildProcessTree:mocks.stop }));
+import { DirectCodexWorker } from '../../src/pixflow/direct-codex-worker.js';
+afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
+it('initializes without a model request, remains warm, and never lends a busy or superseded worker', async () => {
+  vi.useFakeTimers();
+  const requests: string[] = [];
+  mocks.spawn.mockImplementation(() => {
+    const child = Object.assign(new EventEmitter(), { exitCode:null, killed:false, stdin:new PassThrough(), stdout:new PassThrough(), stderr:new PassThrough() });
+    child.stdin.on('data', chunk => {
+      const msg = JSON.parse(chunk.toString()); requests.push(msg.method);
+      if (msg.method === 'initialize') Promise.resolve().then(() => child.stdout.write(JSON.stringify({id:msg.id,result:{}})+'\n'));
+    });
+    return child;
+  });
+  const pool = new DirectCodexWorker('host');
+  const launch = { executable:'codex', env:{PROFILE:'first'} };
+  pool.select(launch);
+  await Promise.resolve();
+  await vi.advanceTimersByTimeAsync(86_400_000);
+  expect(requests).toEqual(['initialize','initialized']);
+  const first = pool.acquire(launch)!; await first.worker.ready;
+  expect(pool.acquire(launch)).toBeUndefined();
+  first.release(true);
+  const follow = pool.acquire(launch)!;
+  expect(follow.worker.child).toBe(first.worker.child);
+  pool.select();
+  expect(mocks.stop).not.toHaveBeenCalled();
+  pool.select(launch);
+  follow.release(true);
+  expect(mocks.stop).toHaveBeenCalledWith(first.worker.child);
+  expect(pool.acquire({...launch,env:{PROFILE:'other'}})).toBeUndefined();
+  const current = pool.acquire(launch)!; await current.worker.ready;
+  expect(current.worker.child).not.toBe(first.worker.child);
+  current.release(false);
+  await Promise.resolve();
+  expect(mocks.stop).toHaveBeenCalledWith(current.worker.child);
+  pool.select();
+  expect(pool.acquire(launch)).toBeUndefined();
+});

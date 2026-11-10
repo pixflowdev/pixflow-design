@@ -9,6 +9,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Preserve and save a newer appended reply retained when reopening a chat, instead of replacing it with an earlier saved snapshot. Existing revision and conflict protections remain enforced.
 
+## Unreleased
+
+- Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
+- Add anonymous desktop and mobile public-page inspection through Bridge and the od inspect-page command. Page inspection runs without an AI provider.
+- Support bounded specialist review workers for Codex, Claude and Grok Build, with provider capacity and timeout handling. Keep Ultra reasoning unavailable.
+- Preserve the original WordPress revision before an AI repair so the first edit can be recovered when revisions are enabled.
+
+- Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
+- Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
+- Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
+- Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
+- Use the updated, theme-aware Grok mark in provider menus.
+
+- Support Blog Studio native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+- Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
+- Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
+
+- Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
+- Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
+- Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.
+- Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
+- Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
+- Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
+
+- Floating panel chats prepare saved history on open and after replies, show the first streamed text sooner, and keep your place when you scroll up. Plain Claude replies show Done as soon as Claude confirms completion.
+
+- The Bridge keeps Codex ready between prompts and reuses the active conversation on eligible follow-ups. WordPress checks the site owner and current chat history on each Send so edits from another tab reach the next reply.
+
+- Detect Cursor CLI installed in its standard Windows location even when the Bridge was started before installation. Keep Cursor separate from other providers that use the `agent` command.
+
+## [2.2.2] - Release candidate
+
+- The Pro upgrade notice follows the saved licence entitlement.
+- Completed commands fold into the chat trace and edits show filenames.
+
+## [2.2.1] - Release candidate
+
+- Fit & optimise Gutenberg Image, Cover and supported Query Loop images to their responsive placements. Reuse local images pasted by URL, or choose Import & optimise for an external image.
+- Fitted sizes are shared without adding copies to the Media Library. An enabled Bridge upscaler can enlarge undersized originals before compression; compression still works without Bridge. Revert to original restores the canvas without reloading.
+
+- Paired sites keep showing Bridge as connected while a provider scan is slow. Interrupted scans preserve the previous provider list, and Local CLI settings offer Claude sign-in when authentication is missing.
+
+- Browse Media as a list or a grid with two, three or four columns. Filter by file types present in your library. The header and column labels stay visible while the file list and preview scroll independently.
+- Open generated images from chat in a Media dialog and return to the conversation when you close it. Saved images are clickable before Bridge reconnects.
+- Click an image preview for a full-screen lightbox with Download, Copy URL, Optimise image and, when available, Upscale image.
+- Compare an image with its compressed preview and see the file size difference before saving a copy. Adjust the export format, quality and maximum width.
+- Use Bulk select to pick individual images or select matching images across library pages. Compress the selection or queue it for upscaling and save the results as copies.
+- Download optional Photo and Illustration models in Image upscaler settings. With Bridge connected, choosing Upscale image opens setup if a model is needed. Once installed, the enable switch controls availability in Media.
+- Upscale at 1.5×, 2×, 3× or 4×, or set a custom scale or target width. Inspect a detail at 100%, compare before and after, and adjust noise reduction where supported. Save directly, optionally compress the result, or explicitly overwrite the original in its existing format.
+- In Settings → About, use the switch beside the diagnostics export to choose whether to include Bridge, device and Claude sign-in details.
+
+### Pixflow Design Bridge
+
+- Install optional image models for local enlargement before compression. Slow provider discovery keeps the paired connection and previously detected providers available.
+
+## [2.2.0] - Release candidate
+
+- Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.
+- Choose Continue without AI during setup to use the library and design tools without connecting a provider.
+- Follow replies as they stream in Workspace and floating panels. New prompts stay in view, scrolling back preserves your place, and animations respect reduced-motion preferences.
+- Expand a compact timeline of reported steps, reasoning summaries and tool results. Repeated Claude stream events no longer duplicate tool activity, and opening Workspace no longer marks a running floating-panel conversation as failed.
+- Preview inline citations and expand Sources to see each cited page once. Long code blocks have visible Expand and Collapse controls.
+- Switch between API and Local CLI across Workspace, floating panels and Execution settings without reloading. Tool pages keep their navigation rail, hide chat controls and warn before leaving unsaved changes.
+- Export recent Pixflow licence, builder and tooling failures from Settings → About. Private site history retains up to 128 events for seven days, including when WordPress debugging is off.
+
+### Pixflow Design Bridge
+
+- Keep Bridge responsive while Local CLI scans for providers. Onboarding, settings and composer checks share overlapping discovery work, allow slow sites time to answer and still report stopped sites as unavailable.
+- Run Pro translation jobs using local Codex or Claude. The od agent-text and od site-translations commands support authenticated workflows, and longer translation requests have a dedicated timeout.
+- Let Workspace agents read the connected site title and discover builder tools using their existing authorised session.
+- Optionally include device characteristics, the selected Claude runtime and recent sign-in stages in a diagnostic export from the paired Bridge.
+
+## [2.1.4] - Unreleased
+
+- Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.
+- Share usage polling between mounted composers for the same provider and model to prevent overlapping reads.
+- Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, and refresh overdue usage when returning to the tab.
+- Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
+- Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.
+- Reopen the official Claude authorization page and submit a returned code from Execution settings. Codes are sent only to the active login process on your computer.
+- Discover Claude's sign-in address from the selected runtime so path changes keep working, while retaining checks for official domains and valid authorization requests.
+
 ## [2.1.3] - Unreleased
 - Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.
 - Load selected conversations with fewer requests while retaining access checks and unsaved-message recovery.
@@ -244,8 +326,3 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.
 - Prevent unrelated settings saves from reapplying unchanged Bricks extension metadata to other content.
-
-
-
-
-

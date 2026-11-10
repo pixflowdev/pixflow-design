@@ -43,7 +43,6 @@ final class AdminBridgeStatus
 
     private function enqueue_shared_assets(): void
     {
-
         $asset_path = PIXFLOW_DESIGN_ASSETS_DIR . 'admin/bridge-status.js';
         $style_path = PIXFLOW_DESIGN_ASSETS_DIR . 'admin/wp-admin-floating-panel.css';
         wp_enqueue_style(
@@ -54,22 +53,18 @@ final class AdminBridgeStatus
         );
         $app_config = get_option('pixflow_design_app_config', []);
         $app_config = is_array($app_config) ? $app_config : [];
-        $bridge_enabled = (string) ($app_config['mode'] ?? 'daemon') !== 'api';
-        if ($bridge_enabled) {
-            wp_enqueue_script(
-                self::SCRIPT_HANDLE,
-                PIXFLOW_DESIGN_ASSETS_URL . 'admin/bridge-status.js',
-                [],
-                PIXFLOW_DESIGN_VERSION . '.' . (file_exists($asset_path) ? (int) filemtime($asset_path) : 0),
-                true
-            );
-        }
-
-        if (!$bridge_enabled) {
-            return;
-        }
+        // Keep the controller available for an in-page API -> Local CLI switch.
+        // Its initial mode leaves all passive probes idle on API-only pages.
+        wp_enqueue_script(
+            self::SCRIPT_HANDLE,
+            PIXFLOW_DESIGN_ASSETS_URL . 'admin/bridge-status.js',
+            [],
+            PIXFLOW_DESIGN_VERSION . '.' . (file_exists($asset_path) ? (int) filemtime($asset_path) : 0),
+            true
+        );
 
         wp_localize_script(self::SCRIPT_HANDLE, 'pixflowDesignAdminBridge', [
+            'executionMode' => (string) ($app_config['mode'] ?? 'daemon'),
             'bridgeBaseUrl' => esc_url_raw($this->bridge_config->base_url()),
             'bridgeRequiredVersion' => defined('PIXFLOW_DESIGN_BRIDGE_VERSION') ? PIXFLOW_DESIGN_BRIDGE_VERSION : '0.0.0',
             'bridgeInstallWindowsUrl' => esc_url_raw('https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-win-x64-setup.exe'),

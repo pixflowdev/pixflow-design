@@ -46,7 +46,11 @@ final class BuilderDestinations
     {
         if (!in_array($builder, self::BUILDERS, true) || !$this->available($builder)) return self::error('This builder is unavailable.', 403);
         $post = get_post($id);
-        if (!$post instanceof \WP_Post || $post->post_type !== 'page' || !in_array($post->post_status, ['draft', 'pending', 'private', 'publish', 'future'], true)) return self::error('Page not found.', 404);
+        if (!$post instanceof \WP_Post || !in_array($post->post_status, ['draft', 'pending', 'private', 'publish', 'future'], true)) return self::error('Page not found.', 404);
+        $type = get_post_type_object($post->post_type);
+        // Existing article destinations use the same permission and ownership checks as pages.
+        // Internal templates, attachments and non-editor content are never build targets.
+        if ($post->post_type !== 'page' && (!$type || empty($type->public) || $post->post_type === 'attachment' || !post_type_supports($post->post_type, 'editor'))) return self::error('This content type is not an editable article.', 404);
         if (!current_user_can('edit_post', $id) || !current_user_can('read_post', $id)) return self::error('You cannot edit this page.', 403);
         if (self::has_foreign_owner($post, $builder)) return self::error('This page belongs to another builder. Choose a compatible page or create a new draft.', 409);
         if ($builder === 'gutenberg') {

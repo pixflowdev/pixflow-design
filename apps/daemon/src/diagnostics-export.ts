@@ -80,6 +80,7 @@ async function resolveAgentHomes(dataDir: string | null | undefined): Promise<Re
 }
 
 export interface DiagnosticsHandlerOptions {
+  bridgeSupport?: () => import('@open-design/contracts').PixflowBridgeSupport;
   /** Sidecar runtime context, present when daemon is launched via tools-dev or packaged sidecar. */
   runtime: SidecarRuntimeContext<SidecarStamp> | null;
   /** Project root used to derive crash-report match strings. */
@@ -223,6 +224,11 @@ async function buildPixflowRunSummary(runSources: LogSource[]): Promise<Diagnost
           : {};
         const event = String(record.event || 'unknown');
         const type = String(data.type || '');
+        if (event === 'agent' && type === 'tool_result' && (data.isError === true || data.is_error === true)) {
+          events.push({ event, type: 'tool-failed', timestamp: diagnosticTimestamp(record.timestamp),
+            categories: diagnosticCategories(data.content) });
+          continue;
+        }
         if (event === 'agent' && !['status', 'usage', 'error'].includes(type)) continue;
         if (event === 'stderr') {
           const categories = diagnosticCategories(data.chunk);
@@ -285,28 +291,31 @@ export function createDiagnosticsExportHandler(options: DiagnosticsHandlerOption
       const pixflowProfile = options.profile === 'pixflow';
       const versionInfo = await readCurrentAppVersionInfo().catch(() => null);
       const home = homedir();
-      const agentHomes = await resolveAgentHomes(options.dataDir);
+      const agentHomes = pixflowProfile ? null : await resolveAgentHomes(options.dataDir);
       const sidecarSources = buildSidecarLogSources(options.runtime);
       const runSources = await buildRunEventLogSources(options.runsDir);
-      const cliSources = await buildAgentCliLogSources({
+      const cliSources = agentHomes ? await buildAgentCliLogSources({
           homeDir: home,
           dataDir: options.dataDir ?? null,
           amrOpenCodeHome: agentHomes.amrOpenCodeHome,
           claudeConfigDir: agentHomes.claudeConfigDir,
           codexHome: agentHomes.codexHome,
           xdgDataHome: agentHomes.openCodeXdgDataHome ?? process.env.XDG_DATA_HOME ?? null,
-        });
+        }) : [];
       const sources = pixflowProfile ? [] : [...sidecarSources, ...runSources, ...cliSources];
       const username = safeUsername();
       const crashDumpsDir = resolveDesktopCrashDumpsDir(options.runtime);
       const attachments: DiagnosticAttachment[] = [];
       if (pixflowProfile) {
+        if (options.bridgeSupport && !req.headers?.origin && !req.headers?.['x-pixflow-site-key']) attachments.push({
+          name: 'bridge/support.json', kind: 'json', content: options.bridgeSupport(), priority: 95, required: true,
+        });
         if (options.dataDir) attachments.push({
           name: 'agent/direct-run-summaries.json', kind: 'json', priority: 86, required: true,
           content: { schema: 'pixflow.direct-diagnostics.v1', ...readDirectDiagnostics(options.dataDir) },
         });
         attachments.push(await buildPixflowRunSummary(runSources));
-        attachments.push(await buildPixflowTextLogSummary([...sidecarSources, ...cliSources]));
+        attachments.push(await buildPixflowTextLogSummary(sidecarSources));
       }
       if (pixflowProfile && req.method === 'POST') {
         const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)

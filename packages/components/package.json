@@ -16,19 +16,20 @@
       "development": "./src/index.ts",
       "default": "./dist/index.mjs"
     },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./empty": "./src/empty.tsx"
   },
   "scripts": {
     "build": "tsx ./esbuild.config.ts && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
-    "react": "18.3.1"
+    "react": "19.3.1"
   },
   "devDependencies": {
-    "@types/react": "18.3.28",
+    "@types/react": "19.3.0",
     "esbuild": "0.28.1",
-    "react": "18.3.1",
+    "react": "19.3.1",
     "tsx": "4.22.3",
     "typescript": "5.9.3"
   },

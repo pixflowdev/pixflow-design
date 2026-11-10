@@ -32863,6 +32863,20 @@ function runnerEventToBridgeSemanticEvents(event, state = createBridgeRunnerPars
       }
     }
 
+    if ((eventType === 'item.started' || eventType === 'item.completed') && firstString(item.id)
+      && (item.type === 'image_generation' || item.type === 'image_generation_call')) {
+      if (!state.codexToolUses.has(item.id)) {
+        state.codexToolUses.add(item.id);
+        state.toolUseCount += 1;
+        records.push({ type: 'tool_use', id: item.id, name: 'codex.imagegen', input: { startedAtMs: Date.now() } });
+      }
+      if (eventType === 'item.completed') {
+        records.push({ type: 'tool_result', toolUseId: item.id, isError: item.status === 'failed',
+          content: firstString(item.saved_path, item.status, 'completed') });
+      }
+      return records;
+    }
+
     if ((eventType === 'item.started' || eventType === 'item.completed') && item.type === 'command_execution' && firstString(item.id)) {
       const itemId = firstString(item.id);
       state.codexPreviousEventWasAgentMessage = false;

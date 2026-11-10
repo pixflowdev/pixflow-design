@@ -9,6 +9,20 @@ import { selectFloatingConversation, useFloatingConversation } from '../../src/p
 import { conversationSessionKey } from '../../src/pixflow/conversation-address';
 beforeEach(() => { sessionStorage.clear(); owner = { restBaseUrl: 'https://example.test/wp-json/pixflow-design/v1', userId: 1, postId: 12 }; });
 
+it.each(['admin','bricks'])('allows explicit New chat after a %s handoff without replacing its active run', async base => {
+  const {renderHook,act,cleanup}=await import('@testing-library/react');
+  const surface=`${base}-handoff:${'a'.repeat(64)}:tab-1234567890123456`;
+  const binding={projectId:'12345678-1234-1234-1234-123456789abc',conversationId:'new-chat'};
+  const hook=renderHook(({busy})=>useFloatingConversation('original-article-chat',surface,busy),{initialProps:{busy:true}});
+  let selected!:Promise<void>;
+  act(()=>{selected=selectFloatingConversation(binding);});
+  expect(hook.result.current.historyKey).toBe('original-article-chat');
+  hook.rerender({busy:false});await selected;
+  expect(hook.result.current.historyKey).toBe(conversationSessionKey(binding));
+  expect(readFloatingConversation()?.surface).toBe(base);
+  cleanup();
+});
+
 it('does not replace an active run when selecting a saved Workspace chat', async () => {
   const { renderHook, act, cleanup } = await import('@testing-library/react');
   const binding = { projectId: '12345678-1234-1234-1234-123456789abc', conversationId: 'workspace-chat' };

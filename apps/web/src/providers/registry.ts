@@ -74,6 +74,7 @@ import { toPixflowRuntimeIframeUrl, toPixflowRuntimeUrl } from '../pixflow/bridg
 import { getPixflowWordPressConfig, hasPixflowWordPressContext } from '../pixflow/wordpress-context';
 import { pixflowRuntimeFetch, pixflowWordPressRestFetch, withWordPressNonce } from '../pixflow/runtime-fetch';
 import {
+  PixflowProviderScanIncompleteError,
   ensurePixflowOptionalBridgeSiteContext,
   PixflowOptionalBridgeUnavailableError,
   fetchPixflowOptionalBridgeAgents,
@@ -169,6 +170,8 @@ async function activeWorkspaceFetch(
 export type PixflowMediaType = 'image' | 'video' | 'audio' | 'file';
 
 export interface PixflowMediaItem {
+  thumbnailUrl?: string;
+  previewRevision?: number;
   id: string;
   attachmentId: number;
   title: string;
@@ -193,6 +196,7 @@ export interface PixflowMediaItem {
 }
 
 export interface PixflowMediaListResponse {
+  availableTypes?: { value: string; label: string }[];
   ok: boolean;
   items: PixflowMediaItem[];
   total: number;
@@ -201,13 +205,17 @@ export interface PixflowMediaListResponse {
 }
 
 export async function fetchPixflowMedia(params: {
-  type?: 'all' | 'image' | 'video' | 'audio';
+  attachmentId?: number;
+  attachmentUrl?: string;
+  type?: string;
   source?: 'all' | 'pixflow';
   search?: string;
   page?: number;
   perPage?: number;
-} = {}): Promise<PixflowMediaListResponse> {
+} = {}, signal?:AbortSignal): Promise<PixflowMediaListResponse> {
   const query = new URLSearchParams();
+  if (params.attachmentUrl) query.set('attachmentUrl', params.attachmentUrl);
+  if (params.attachmentId) query.set('attachmentId', String(params.attachmentId));
   if (params.type && params.type !== 'all') query.set('type', params.type);
   if (params.source && params.source !== 'all') query.set('source', params.source);
   if (params.search) query.set('search', params.search);
@@ -215,7 +223,7 @@ export async function fetchPixflowMedia(params: {
   if (params.perPage) query.set('perPage', String(params.perPage));
 
   const resp = await pixflowWordPressRestFetch(`/media${query.size > 0 ? `?${query.toString()}` : ''}`, {
-    cache: 'no-store',
+    cache: 'no-store',signal,
   });
   if (!resp.ok) {
     throw new Error(`media ${resp.status}`);
@@ -236,9 +244,15 @@ export async function importPixflowWpMedia(attachmentIds: number[]): Promise<Pix
   return json.items ?? [];
 }
 
-export async function uploadPixflowMedia(file: File): Promise<PixflowMediaItem> {
+export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>, options?: { upscaled?: boolean }): Promise<PixflowMediaItem> {
   const form = new FormData();
   form.append('file', file);
+  if (options?.upscaled) form.append('surface', 'upscaler');
+  if (metadata) {
+    for (const key of ['altText', 'caption', 'description'] as const) {
+      if (metadata[key]) form.append(key, metadata[key]);
+    }
+  }
   const resp = await pixflowWordPressRestFetch('/media/upload', {
     method: 'POST',
     body: form,
@@ -361,6 +375,7 @@ function generatedMediaFilename(
 }
 
 export interface DirectWordPressMediaGenerationInput {
+  signal?: AbortSignal;
   projectId: string;
   protocol?: string;
   apiKey: string;
@@ -380,9 +395,10 @@ export interface DirectWordPressMediaGenerationInput {
 export async function generateProjectMediaOnWordPress(
   input: DirectWordPressMediaGenerationInput,
 ): Promise<{ file?: ProjectFile; provider?: string; media?: PixflowMediaItem; mediaError?: string }> {
-  const { onProgress, ...requestInput } = input;
+  const { onProgress, signal, ...requestInput } = input;
+  signal?.throwIfAborted();
   const resp = await pixflowRuntimeFetch('/api/media/generate', {
-    method: 'POST',
+    method: 'POST', signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestInput),
   });
@@ -403,9 +419,15 @@ export async function generateProjectMediaOnWordPress(
   let status = payload.task.status || 'queued';
   onProgress?.(`${requestInput.surface} task ${taskId} accepted; polling (${status})…`);
   while (Date.now() < deadline) {
-    await new Promise((resolve) => globalThis.setTimeout(resolve, 4000));
+    await new Promise<void>((resolve,reject)=>{
+      const done=()=>{signal?.removeEventListener('abort',abort);resolve();};
+      const timer=globalThis.setTimeout(done,4000);
+      const abort=()=>{clearTimeout(timer);reject(signal?.reason??new DOMException('Stopped','AbortError'));};
+      signal?.addEventListener('abort',abort,{once:true});
+      if(signal?.aborted)abort();
+    });
     const poll = await pixflowRuntimeFetch(`/api/media/tasks/${encodeURIComponent(taskId)}`, {
-      method: 'POST',
+      method: 'POST', signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         projectId: requestInput.projectId,
@@ -483,7 +505,7 @@ export async function fetchAgentsStream(args: {
       const agents = await fetchPixflowOptionalBridgeAgentsStream({ onAgent, signal, force: true });
       return agents;
     } catch (error) {
-      if (error instanceof PixflowOptionalBridgeUnavailableError) throw error;
+      if (signal?.aborted || error instanceof PixflowProviderScanIncompleteError || error instanceof PixflowOptionalBridgeUnavailableError) throw error;
       const agents = await fetchPixflowOptionalBridgeAgents({ force: true });
       for (const agent of agents) {
         if (signal?.aborted) break;

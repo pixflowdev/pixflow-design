@@ -49,7 +49,7 @@ describe('AssistantMessage tool status', () => {
     expect(row).not.toBeNull();
     expect(row?.textContent).toContain('Researching current public sources');
     expect(row?.textContent).toContain('2 sources found');
-    expect(row?.querySelector('.shimmer-text')).not.toBeNull();
+    expect(row?.querySelector('[data-slot="trace-line"][data-status="running"] [data-slot="trace-title"]')).not.toBeNull();
   });
 
   it('settles research activity and renders bounded source links without a shimmer', () => {
@@ -78,7 +78,7 @@ describe('AssistantMessage tool status', () => {
     container.querySelectorAll('[data-activity-group] > button[aria-expanded="false"] ').forEach(button => fireEvent.click(button));
     const row = container.querySelector('[data-agent-activity-phase="researching"]');
     expect(row).not.toBeNull();
-    expect(row?.querySelector('.shimmer-text')).toBeNull();
+    expect(row?.querySelector('.pixflow-shimmer-text')).toBeNull();
     expect(container.querySelector('a[href="https://developer.wordpress.org/"]')).not.toBeNull();
     expect(container.querySelector('a[href="https://example.test/docs"]')).not.toBeNull();
   });
@@ -107,7 +107,7 @@ describe('AssistantMessage tool status', () => {
     const row = container.querySelector('[data-agent-activity-phase="preparing"]');
     expect(row?.getAttribute('data-agent-activity-status')).toBe('succeeded');
     expect(row?.querySelector('.icon-spin')).toBeNull();
-    expect(row?.querySelector('.shimmer-text')).toBeNull();
+    expect(row?.querySelector('.pixflow-shimmer-text')).toBeNull();
   });
 
   it('shows Done for a completed run tool use that has no tool result', () => {

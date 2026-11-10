@@ -1,0 +1,44 @@
+name: Private diagnostics validation
+on:
+  pull_request:
+    paths:
+      - 'wordpress/src/Diagnostics/**'
+      - 'wordpress/tests/diagnostics-*.test.php'
+      - 'wordpress/src/Http/RestController.php'
+      - 'wordpress/src/Storage/PrivateDirectory.php'
+      - 'apps/daemon/src/diagnostics-export.ts'
+      - 'apps/daemon/src/routes/claude-sign-in.ts'
+      - 'apps/daemon/src/runtimes/claude-*.ts'
+      - 'apps/daemon/tests/**/claude-*.test.ts'
+      - 'apps/web/src/components/ExportDiagnosticsButton.tsx'
+      - 'apps/web/src/pixflow/*diagnostics.ts'
+      - 'apps/web/src/pixflow/support-timeline.ts'
+      - 'apps/web/tests/pixflow/*diagnostics.test.ts'
+      - 'packages/contracts/src/api/pixflow-support.ts'
+      - '.github/workflows/private-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - name: Verify private files and export boundaries without WP_DEBUG
+        run: |
+          php wordpress/tests/diagnostics-history.test.php
+          php wordpress/tests/diagnostics-export-boundary.test.php
+          php wordpress/tests/diagnostics-error-privacy.test.php
+          php wordpress/tests/central-entitlements-time.test.php
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @open-design/daemon test claude-sign-in claude-support-history diagnostics-export diagnostics-cli
+      - run: pnpm --filter @open-design/web test support-diagnostics client-diagnostics ExportDiagnostics PixflowLicensePanel tests/pixflow/license.test.ts

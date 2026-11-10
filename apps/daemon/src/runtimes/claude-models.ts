@@ -1,10 +1,11 @@
+import { assertCodexReasoningSupported } from './defs/shared.js';
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { StringDecoder } from 'node:string_decoder';
 import { join } from 'node:path';
 import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
-import { DEFAULT_MODEL_OPTION, sanitizeCustomModel } from './models.js';
+import { DEFAULT_MODEL_OPTION, sanitizeCustomModel, getRememberedLiveModels } from './models.js';
 import type { RuntimeEnv, RuntimeModelOption, RuntimeAgentDef } from './types.js';
 
 let selectedClaudeModels: RuntimeModelOption[] = [];
@@ -20,9 +21,11 @@ export function claudeSupportsEffort(model: string | null | undefined, effort: s
 /** Validate request effort at the same boundary for test calls and actual chat runs. */
 export function resolveRuntimeReasoning(def: RuntimeAgentDef | null, model: string | null | undefined, effort: unknown): string | undefined {
   if (!def || typeof effort !== 'string') return undefined;
+  if (def.id === 'codex') assertCodexReasoningSupported(effort);
+  if(def.id==='codex')return (getRememberedLiveModels('codex').find(item=>item.id===model)?.reasoningOptions??def.reasoningOptions)?.find(option=>option.id===effort)?.id;
   return def.id === 'claude'
     ? (claudeSupportsEffort(model, effort) ? effort : undefined)
-    : def.reasoningOptions?.find(option => option.id === effort)?.id;
+    : (def.modelReasoningOptions?.(model) ?? def.reasoningOptions)?.find(option => option.id === effort)?.id;
 }
 
 /** Only advertise models returned by the selected runtime, never guessed version IDs. */

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@open-design/components';
-import { IconLayoutSidebar } from '@tabler/icons-react';
+import { IconLayoutSidebar, IconPlus } from '@tabler/icons-react';
 import { useT } from '../i18n';
-import { listChatHistory, readChatHistory, type SavedChatHistory } from './chat-history-client';
+import { listChatHistory, readChatHistory, resolveChatHistory, type ChatHistoryBinding, type SavedChatHistory } from './chat-history-client';
 import { selectFloatingConversation } from './floating-conversation';
 import styles from './FloatingChatMenu.module.css';
 
@@ -66,10 +66,11 @@ export function FloatingChatMenu() {
     return () => { observer.disconnect(); document.removeEventListener('keydown', key); };
   }, [open, panelHost]);
   useEffect(() => () => { request.current?.abort(); generation.current++; }, []);
-  async function choose(row: SavedChatHistory) {
+  async function choose(row?: ChatHistoryBinding) {
     const controller = new AbortController(); request.current?.abort(); request.current = controller;
     setPending(true); setWaiting(false); setError(false);
     try {
+      row ??= await resolveChatHistory({sessionKey:`floating-new-${crypto.randomUUID()}`,title:t('workspaceSidebar.newChat')});
       await readChatHistory(row);
       if (controller.signal.aborted) return;
       await selectFloatingConversation(row, { signal: controller.signal, onWaiting: () => setWaiting(true) });
@@ -79,10 +80,10 @@ export function FloatingChatMenu() {
       }
     } catch { if (!controller.signal.aborted) { setError(true); setPending(false); } }
   }
-  const drawer = (<div ref={dialog} className={styles.layer} data-open={open} aria-hidden={!open} {...(!open ? { inert: '' } as Record<string, string> : {})}>
+  const drawer = (<div ref={node => { dialog.current = node; node?.toggleAttribute('inert', !open); }} className={styles.layer} data-open={open} aria-hidden={!open}>
       <div className={styles.scrim} onClick={close} aria-hidden="true" />
       <div role="dialog" aria-label={t('chat.conversationsAria')} className={styles.drawer}>
-      <header className={styles.header}><strong>{t('chat.conversationsAria')}</strong></header>
+      <header className={styles.header}><strong>{t('chat.conversationsAria')}</strong><Button variant="ghost" className={styles.newChat} disabled={pending} onClick={()=>void choose()}><IconPlus size={16}/><span>{t('workspaceSidebar.newChat')}</span></Button></header>
       <nav className={styles.list} aria-label={t('chat.conversationsAria')} aria-busy={loading || pending}>
         {rows.map(row => <Button variant="ghost" className={styles.row} key={`${row.projectId}:${row.conversationId}`} disabled={pending} onClick={() => void choose(row)} title={row.title || t('chat.conversationsAria')}><span>{row.title || t('chat.conversationsAria')}</span></Button>)}
         {!loading && !error && !rows.length && <p>{t('chat.emptyConversations')}</p>}

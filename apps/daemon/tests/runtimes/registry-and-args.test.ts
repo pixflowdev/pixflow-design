@@ -500,9 +500,9 @@ test('grok-build filters login headers from live model discovery output', () => 
   ].join('\n'));
 
   assert.deepEqual(parsed, [
-    { id: 'default', label: 'Default (CLI config)' },
-    { id: 'grok-composer-2.5-fast', label: 'grok-composer-2.5-fast' },
-    { id: 'grok-build', label: 'grok-build' },
+    { id: 'default', label: 'Default (CLI config)', reasoningOptions: [] },
+    { id: 'grok-composer-2.5-fast', label: 'grok-composer-2.5-fast', reasoningOptions: [] },
+    { id: 'grok-build', label: 'grok-build', reasoningOptions: [] },
   ]);
 });
 

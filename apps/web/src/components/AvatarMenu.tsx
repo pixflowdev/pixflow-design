@@ -1,3 +1,4 @@
+import { cliVersionLabel } from '../utils/cli-version-label';
 import { CodexUsageIndicator } from './CodexUsageIndicator';
 import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
@@ -318,8 +319,8 @@ export function AvatarMenu({
                   ? t('avatar.metaOffline')
                 : currentAgent
                   ? `${displayAgentName(currentAgent)}${
-                      currentAgent.id !== 'amr' && currentAgent.version
-                        ? ` · ${currentAgent.version}`
+                      currentAgent.id !== 'amr' && cliVersionLabel(currentAgent.version)
+                        ? ` · ${cliVersionLabel(currentAgent.version)}`
                         : ''
                     }${
                       currentModelLabel && currentModelId !== 'default'
@@ -441,8 +442,8 @@ export function AvatarMenu({
                       <span className="avatar-item-meta">
                         {t('avatar.metaSelected')}
                       </span>
-                    ) : a.id !== 'amr' && a.version ? (
-                      <span className="avatar-item-meta">{a.version}</span>
+                    ) : a.id !== 'amr' && cliVersionLabel(a.version) ? (
+                      <span className="avatar-item-meta">{cliVersionLabel(a.version)}</span>
                     ) : null}
                     {selected ? (
                       <RemixIcon name="check-line" size={14} className="avatar-item-check" />
@@ -627,7 +628,7 @@ export function AvatarMenu({
         portalTarget,
       ) : null}
     </div>
-    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
+    {composerLabel && config.mode === 'daemon' && (config.agentId === 'codex' || config.agentId === 'claude' || config.agentId === 'grok-build') ? <CodexUsageIndicator key={config.agentId + ':' + currentModelId} provider={config.agentId} model={currentModelId || ''} zIndex={popoverZIndex} /> : null}
     </>
   );
 }

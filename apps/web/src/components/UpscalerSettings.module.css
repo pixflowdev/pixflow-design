@@ -1,0 +1,16 @@
+.settings {max-width:680px;color:var(--text);font-size:13px;}
+.enable,.models {border:1px solid var(--border);border-radius:16px;background:var(--composer-surface,var(--bg-elevated));}
+.enable {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;}
+.note,.row small {color:var(--text-muted);font-size:12px;}
+.note {margin:12px 2px 20px;line-height:1.6;}
+.models {padding:6px;}
+.row {display:flex;gap:10px;align-items:center;padding:8px;}
+.row > div {flex:1;display:grid;gap:4px;}
+.row strong,.enable strong {font-weight:500;}
+.settings .toggle {display:flex;align-items:center;width:34px;height:20px;padding:2px;border:0;border-radius:12px;background:var(--border-strong);cursor:pointer;}
+.settings .toggle[data-checked] {background:var(--accent);}
+.thumb {height:15px;width:15px;border-radius:50%;background:var(--text-on-accent,white);}
+.toggle[data-checked] .thumb {transform:translateX(14px);}
+
+.settings .iconButton { display:inline-flex; flex:0 0 30px; align-items:center; justify-content:center; box-sizing:border-box; width:30px; min-width:30px; height:30px; min-height:30px; padding:0; line-height:1; border-radius:8px; }
+.settings .iconButton>svg { display:block; flex-shrink:0; margin:0; }

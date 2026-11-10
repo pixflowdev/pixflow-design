@@ -803,7 +803,7 @@ export function HomeView({
     fallback: string,
   ): Promise<string> {
     try {
-      const bridge = await probePixflowOptionalBridge({ force: true, timeoutMs: 1_000 });
+      const bridge = await probePixflowOptionalBridge({ force: true });
       if (!bridge.available) {
         return `Pixflow Design Bridge is not running. Start or reconnect the bridge, then try ${pluginTitle} again.`;
       }

@@ -1,0 +1,3 @@
+.handoff { width:100%; min-width:0; margin-block:12px 20px; }
+.files { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); margin-block:14px; }
+.files > [data-slot="attachment"] { width:100%; }

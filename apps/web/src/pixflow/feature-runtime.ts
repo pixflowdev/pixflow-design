@@ -145,3 +145,10 @@ export function pixflowFeatureConfiguration(id: string): Record<string, unknown>
   const value = (window as RuntimeWindow).__PIXFLOW_FEATURE_RUNTIME__?.configuration?.[id];
   return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined;
 }
+
+/** A native toolbar can open this workspace page only for an authorised manager. */
+export function translationsShortcutLabel(): string | null {
+  return pixflowFeatureConfiguration('site-translations')?.canManage === true
+    ? translateLocale(detectInitialLocale(), 'siteTranslations.title')
+    : null;
+}

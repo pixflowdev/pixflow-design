@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.1.3
+Stable tag: 2.2.2
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,42 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= Unreleased =
+* Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
+* Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
+
+= 2.2.2 =
+Restore chat Trace details and licence-based notices.
+
+= 2.2.1 =
+* Fit responsive Gutenberg images, compress media, use the optional upscaler and keep Bridge connected during slow provider discovery.
+
+= 2.2.0 =
+
+* Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.
+* Choose Continue without AI during setup to use the library and design tools without connecting a provider.
+* Follow replies as they stream in Workspace and floating panels. New prompts stay in view, scrolling back preserves your place, and animations respect reduced-motion preferences.
+* Expand a compact timeline of reported steps, reasoning summaries and tool results. Repeated Claude stream events no longer duplicate tool activity, and opening Workspace no longer marks a running floating-panel conversation as failed.
+* Preview inline citations and expand Sources to see each cited page once. Long code blocks have visible Expand and Collapse controls.
+* Switch between API and Local CLI across Workspace, floating panels and Execution settings without reloading. Tool pages keep their navigation rail, hide chat controls and warn before leaving unsaved changes.
+* Export recent Pixflow licence, builder and tooling failures from Settings → About. Private site history retains up to 128 events for seven days, including when WordPress debugging is off.
+
+Pixflow Design Bridge
+
+* Keep Bridge responsive while Local CLI scans for providers. Onboarding, settings and composer checks share overlapping discovery work, allow slow sites time to answer and still report stopped sites as unavailable.
+* Run Pro translation jobs using local Codex or Claude. The od agent-text and od site-translations commands support authenticated workflows, and longer translation requests have a dedicated timeout.
+* Let Workspace agents read the connected site title and discover builder tools using their existing authorised session.
+* Optionally include device characteristics, the selected Claude runtime and recent sign-in stages in a diagnostic export from the paired Bridge.
+
+= 2.1.4 =
+* Keep floating composer tooltips inside the viewport without changing builder page dimensions or scroll position, retaining the panel theme.
+* Share usage polling between mounted composers for the same provider and model to prevent overlapping reads.
+* Refresh Codex and Claude usage indicators every 60 seconds while the tab is visible, including hover summaries, and refresh overdue usage when returning to the tab.
+* Keep Claude sign-in available after authentication and restore an existing login attempt when settings reopen.
+* Recover from interrupted sign-in requests without starting duplicate logins or marking a healthy Bridge disconnected after extension congestion or an endpoint failure.
+* Reopen the official Claude authorization page and submit a returned code from Execution settings. Codes are sent only to the active login process on your computer.
+* Discover Claude's sign-in address from the selected runtime so path changes keep working, while retaining checks for official domains and valid authorization requests.
 
 = 2.1.3 =
 * Restore the Send button after opening a new, empty chat without creating an unnecessary saved conversation.

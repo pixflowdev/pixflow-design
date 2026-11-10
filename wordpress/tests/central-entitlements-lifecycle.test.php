@@ -13,7 +13,7 @@ function get_option($k,$d=false){
  }
  return $GLOBALS['options'][$k]??$d;
 }function update_option($k,$v,$a=false){$GLOBALS['options'][$k]=$v;return true;}function delete_option($k){unset($GLOBALS['options'][$k]);return true;}
-function get_transient($k){return $GLOBALS['transients'][$k]??false;}function set_transient($k,$v,$ttl){$GLOBALS['transients'][$k]=$v;return true;}function delete_transient($k){unset($GLOBALS['transients'][$k]);return true;}
+function get_transient($k){return $GLOBALS['transients'][$k]??false;}function set_transient($k,$v,$ttl){$GLOBALS['transients'][$k]=$v;$GLOBALS['transient_expiry'][$k]=($GLOBALS['licence_test_clock']??time())+$ttl;return true;}function delete_transient($k){unset($GLOBALS['transients'][$k]);return true;}
 function esc_url_raw($s){return $s;}function untrailingslashit($s){return rtrim($s,'/');}function apply_filters($n,$v){return $v;}function wp_json_encode($v){return json_encode($v);}
 function add_query_arg($a,$url){return $url.(str_contains($url,'?')?'&':'?').http_build_query($a);}
 class WP_Error{function __construct(public string $code='', public string $message='fixture network failure', public array $data=[]){} function get_error_message(){return $this->message;}}
@@ -216,7 +216,48 @@ check($GLOBALS['options']['pixflow_design_central_entitlements_v2']['installatio
 check((new \PixflowDesign\WordPress\License\LicenseService())->status()['license']['valid'], 'Recovered installation did not unlock Pro');
 check($GLOBALS['options']['pixflow_design_site_license_cache'] === $saved_key_cache && $GLOBALS['options']['customer_content'] === $saved_content, 'Upgrade recovery changed saved licence/content');
 
-foreach (['license_reset', 'license_revoked', 'trial_access_expired'] as $denial) {
+// A failed local verification must block Pro, but it is not an authority revocation.
+$client = new CentralEntitlements();
+$bad_grants = $grants;
+$bad_grants['entitlements']['bridge']['token'] = 'invalid.signature';
+$GLOBALS['responses'] = [response(200,$challenge),response(200,$bad_grants),response(200,$jwks)];
+check($client->refresh()['code'] === 'invalid_central_entitlement', 'Invalid grant accepted');
+check($client->status()['verification_check'] === 'bridge:token_format', 'Missing safe diagnostic for the rejected grant');
+check(!$client->allows('wordpress:mutate'), 'Partial token pair granted Pro');
+$GLOBALS['transients'] = [];
+$GLOBALS['responses'] = [response(200,$challenge),response(200,$bad_grants),response(200,$jwks)];
+$attempts = count($GLOBALS['requests']);
+$client->recover_saved_license();
+check(count($GLOBALS['requests']) === $attempts + 3 && !$client->status()['valid'], 'Unverified grant must retry and fail closed');
+$client->recover_saved_license();
+check(count($GLOBALS['requests']) === $attempts + 3, 'Failed signature retried during cooldown');
+$GLOBALS['transients'] = []; // Next eligible request.
+$GLOBALS['responses'] = [response(200,$challenge),response(200,$grants),response(200,$jwks)];
+$client->recover_saved_license();
+check($client->status()['valid'] && $client->allows('wordpress:mutate'), 'A freshly signed pair did not restore Pro');
+check($GLOBALS['options']['pixflow_design_central_entitlements_v2']['installation'] === $pending_installation
+    && $GLOBALS['options']['pixflow_design_site_license_cache'] === $saved_key_cache, 'Recovery changed the installation or saved licence');
+
+// A rejected first enrollment has no previous grant to refresh.
+unset($GLOBALS['options']['pixflow_design_central_entitlements_v2']);
+$GLOBALS['transients'] = [];
+$GLOBALS['responses'] = [response(200,$challenge),response(200,$bad_grants),response(200,$jwks)];
+$client->recover_saved_license();
+check($client->status()['code'] === 'invalid_central_entitlement' && !$client->status()['valid'], 'Failed first enrollment granted access');
+$GLOBALS['transients'] = [];
+$GLOBALS['responses'] = [response(200,$challenge),response(200,$grants),response(200,$jwks)];
+$attempts = count($GLOBALS['requests']);
+$client->recover_saved_license();
+check($client->status()['valid'] && str_ends_with($GLOBALS['requests'][$attempts+1][0], '/enroll'), 'First enrollment recovery used the wrong protocol');
+check($GLOBALS['options']['pixflow_design_central_entitlements_v2']['installation'] === $pending_installation, 'First enrollment recovery replaced the identity');
+
+// An actual revocation returned during repair still ends automatic recovery.
+$client->deny('invalid_central_entitlement');
+$GLOBALS['responses'] = [response(403,['code'=>'license_revoked'])];
+$client->recover_saved_license();
+check($client->status()['code'] === 'license_revoked' && !$client->status()['valid'], 'Online denial ignored during verification recovery');
+
+foreach (['license_reset', 'license_revoked', 'trial_access_expired', 'site_deactivated', 'user_suspended'] as $denial) {
     (new CentralEntitlements())->deny($denial);
     $baseline = $GLOBALS['options']; $attempts = count($GLOBALS['requests']);
     (new \PixflowDesign\WordPress\License\LicenseService())->status();

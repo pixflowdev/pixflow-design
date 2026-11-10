@@ -6,7 +6,8 @@ namespace PixflowDesign\WordPress\Projects {
     final class ProjectFileService { public function list(string $id): array|\WP_Error { return isset($GLOBALS['files'][$id]) ? ['files' => $GLOBALS['files'][$id]] : new \WP_Error('forbidden', 'Denied', ['status' => 403]); } }
 }
 namespace PixflowDesign\WordPress\Modules { final class WorkspaceAccess { public static function available(): bool { return $GLOBALS['pro']; } } }
-namespace PixflowDesign\WordPress\Admin\Gutenberg { final class GutenbergEntity { public static function validate(array $entity): array { if ($entity !== ['type' => 'page', 'id' => '42']) throw new \RuntimeException('Wrong entity'); return $entity; } } }
+namespace PixflowDesign\WordPress\Chat { final class HistoryRepository { public function conversation(string $project,string $conversation): ?array { return $GLOBALS['saved_chats'][$project.':'.$conversation] ?? null; } } }
+namespace PixflowDesign\WordPress\Admin\Gutenberg { final class GutenbergEntity { public static function validate(array $entity): array { if ($entity !== ['type' => $GLOBALS['post_type'] ?? 'page', 'id' => '42']) throw new \RuntimeException('Wrong entity'); return $entity; } } }
 namespace PixflowDesign\WordPress\Pages {
     final class BuilderDestinations {
         public function destination(string $builder, int $id): array|\WP_Error { if ($id !== 42 || !empty($GLOBALS['deny_page']) || ($builder !== 'gutenberg' && !\PixflowDesign\WordPress\Modules\BuilderIntegrations::active($builder))) return new \WP_Error('forbidden', 'Unavailable', ['status' => 403]); return ['postId' => $id, 'title' => 'Existing draft', 'status' => 'draft', 'builder' => $builder, 'editorUrl' => 'https://example.test/?page_id=42&builder=' . $builder]; }
@@ -15,6 +16,7 @@ namespace PixflowDesign\WordPress\Pages {
     }
 }
 namespace {
+    function get_post(int $id): object { return (object)['post_type' => $GLOBALS['post_type'] ?? 'page']; }
     define('ABSPATH', __DIR__);
     require __DIR__ . '/../src/Modules/BuilderIntegrations.php';
     require __DIR__ . '/../src/Pages/AtomicDestinationStore.php';
@@ -282,5 +284,28 @@ namespace {
     $GLOBALS['destination_failure'] = 0;
     check(is_array($service->agent_prepare([...$fresh_source, 'requestId' => 'fresh-user-message-002'], $agent_body)), 'Fresh chat remains usable after creation denial');
     array_pop($GLOBALS['projects']['project-1']['metadata']['odState']['conversations']);
+    foreach (['post', 'blog'] as $post_type) {
+        $GLOBALS['post_type'] = $post_type;
+        $GLOBALS['projects']['project-1']['metadata']['odState']['conversations'][] = ['id' => 'article-'.$post_type];
+        $prepared = $service->mutate([...$body, 'requestId' => 'article-handoff-'.$post_type, 'conversationId' => 'article-'.$post_type, 'targetTabId' => 'article-tab-'.$post_type]);
+        check(is_array($prepared), "Prepare $post_type article handoff");
+        $_GET = ['action' => 'edit', 'pixflow_handoff' => $prepared['handoff']['id'], 'pixflow_handoff_tab' => 'article-tab-'.$post_type];
+        $article_context = ['editor' => 'gutenberg', 'screen' => ['verified' => true, 'base' => 'post'], 'object' => ['verified' => true, 'kind' => 'post', 'type' => $post_type, 'id' => 42]];
+        check($bootstrap->invoke($assets, $article_context) === ['id' => $prepared['handoff']['id'], 'tabId' => 'article-tab-'.$post_type, 'postId' => 42], "$post_type bootstrap preserves handoff before native editor updates the URL");
+        $article_canvas = str_repeat($post_type === 'post' ? 'c' : 'd', 32);
+        seed_canvas('gutenberg', $article_canvas);
+        $entity = ['type' => $post_type, 'id' => '42'];
+        $GLOBALS['options']['pixflow_gutenberg_canvas_'.$article_canvas]['entity'] = $entity;
+        $article_claim = ['action' => 'claim', 'id' => $prepared['handoff']['id'], 'tabId' => 'article-tab-'.$post_type, 'editorTarget' => ['builder' => 'gutenberg', 'canvasId' => $article_canvas, 'postId' => 42, 'entity' => $entity]];
+        check(rejected($service->mutate([...$article_claim, 'editorTarget' => [...$article_claim['editorTarget'], 'entity' => ['type' => 'page', 'id' => '42']]]), 409), "$post_type rejects wrong page entity");
+        check(($service->mutate($article_claim)['shouldStart'] ?? false) === true, "$post_type starts with matching native entity");
+    }
+    unset($GLOBALS['post_type']);
+    $project_id=array_key_first($GLOBALS['projects']);
+    $GLOBALS['saved_chats'][$project_id.':ordinary-chat']=['deleted'=>0];
+    $source=['projectId'=>$project_id,'conversationId'=>'ordinary-chat','requestId'=>'existing-chat-request'];
+    check(is_array($service->workspace_source($source)), 'Normalized floating chat is a valid handoff source without legacy metadata');
+    $GLOBALS['saved_chats'][$project_id.':ordinary-chat']['deleted']=1;
+    check(rejected($service->workspace_source($source),404), 'Deleted normalized chat cannot be handed off');
     echo "Builder handoffs: {$checks} checks passed.\n";
 }

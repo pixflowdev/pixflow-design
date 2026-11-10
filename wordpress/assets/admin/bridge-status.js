@@ -2,6 +2,7 @@
   'use strict';
 
   var config = window.pixflowDesignAdminBridge || {};
+  var bridgeEnabled = config.executionMode !== 'api';
   var currentState = '';
   var currentTitle = '';
   var currentVersion = '';
@@ -17,6 +18,7 @@
   var PROBE_COOLDOWN_MS = 120000;
   var PRECONNECT_TTL_MS = 24 * 60 * 60 * 1000;
   var HEARTBEAT_INTERVAL_MS = 4000;
+  var SITE_HEALTH_TIMEOUT_MS = 5500;
   var BRIDGE_HELP_TITLE = 'Pixflow Bridge connects Local CLI and local files. Click to check the connection.';
 
   function normalizeBaseUrl(value) {
@@ -186,7 +188,7 @@
       });
     }).catch(function (error) {
       if (error && error.name === 'AbortError') {
-        throw new Error('Pixflow Design Bridge did not respond.');
+        throw error;
       }
       throw error;
     }).finally(function () {
@@ -213,7 +215,7 @@
     var stableTargetResponses = 0;
 
     function poll() {
-      return bridgeJson('health', { timeoutMs: 1600 }).then(function (payload) {
+      return bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS }).then(function (payload) {
         var key = String(payload && payload.site && payload.site.key || '');
         var instanceId = String(payload && payload.instanceId || '');
         if (key !== String(config.siteHash || '') || (previousInstanceId && instanceId && instanceId !== previousInstanceId)) {
@@ -296,7 +298,7 @@
         throw new Error('Pixflow Design Bridge rejected the site switch.');
       }
       if (payload.status === 'claimed') {
-        return bridgeJson('health', { timeoutMs: 2200 });
+        return bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS });
       }
       return waitForSiteContext(previousPayload);
     }).then(function (payload) {
@@ -323,7 +325,7 @@
     if (!hasResolvedOnce || opts.showPending) {
       setState('checking', 'Pixflow Bridge', BRIDGE_HELP_TITLE);
     }
-    bridgeJson('health', { timeoutMs: 1800 }).then(function (payload) {
+    bridgeJson('health', { timeoutMs: SITE_HEALTH_TIMEOUT_MS }).then(function (payload) {
       if (!payload || payload.ok === false) {
         throw new Error('Pixflow Design Bridge is not running.');
       }
@@ -353,6 +355,7 @@
       setState('connected', 'Pixflow Bridge', 'Pixflow Design Bridge is connected' + version + '. Click to check the connection.');
     }).catch(function (error) {
       failedProbeCount = Math.min(failedProbeCount + 1, 5);
+      if (currentState === 'connected' && failedProbeCount === 1 && error && (error.name === 'AbortError' || error.name === 'TimeoutError')) return;
       var wasSwitching = currentState === 'switching';
       hasResolvedOnce = true;
       currentVersion = '';
@@ -423,7 +426,7 @@
     if (bridgeHeartbeatTimer) return;
 
     function heartbeat() {
-      if (document.visibilityState === 'hidden') return;
+      if (!bridgeEnabled || document.visibilityState === 'hidden') return;
       // Health checks keep the dot honest, but a heartbeat never claims a
       // bridge currently owned by another site. Only an explicit request or
       // status click selects a different site.
@@ -431,6 +434,7 @@
     }
 
     function onVisibilityChange() {
+      if (!bridgeEnabled) return;
       if (document.visibilityState === 'hidden') {
         tabWasHidden = true;
         return;
@@ -446,6 +450,7 @@
     bridgeHeartbeatTimer = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', function () {
+      if (!bridgeEnabled) return;
       tabWasHidden = false;
       probe({ force: true, allowSwitch: false });
     });
@@ -460,9 +465,21 @@
       setState('missing', 'Pixflow Bridge', 'Pixflow Design Bridge is offline. Click to retry. Local CLI and local files are unavailable until it reconnects.');
     }
     window.addEventListener('pixflow-design:bridge-reconnect-request', requestReconnect);
+    function onExecutionMode(event) {
+      var mode = event && event.detail && event.detail.mode;
+      if (mode !== 'api' && mode !== 'daemon') return;
+      var wasEnabled = bridgeEnabled;
+      bridgeEnabled = mode === 'daemon';
+      if (bridgeEnabled && !wasEnabled) {
+        probe({ force: true, allowSwitch: false, showPending: true });
+      }
+    }
+    window.addEventListener('pixflow-design:app-config-changed', onExecutionMode);
+    window.addEventListener('open-design:app-config-changed', onExecutionMode);
     bindBridgeHeartbeat();
-    if (cached && (currentState === 'connected' || currentState === 'update')) {
+    if (bridgeEnabled && cached && (currentState === 'connected' || currentState === 'update')) {
       window.setTimeout(function () {
+        if (!bridgeEnabled) return;
         probe({ force: true, allowSwitch: false });
       }, 150);
     }

@@ -4,6 +4,14 @@ import http from 'node:http';
 import {decoder,encode,relay,validateRequest,type Configuration} from '../native-messaging/src/relay';
 const config:Configuration={extensionOrigin:'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/',bridge:'http://127.0.0.1:17467',sites:['https://example.test']};
 const request={id:'request-1',origin:config.sites[0],url:config.bridge+'/api/health'};
+
+test('existing native endpoint coverage permits Claude recovery without broader permissions',()=>{
+ for(const suffix of ['','/cancel','/open-browser','/code']){
+  const result=validateRequest({...request,url:config.bridge+'/api/agents/claude/sign-in'+suffix,method:'POST',body:JSON.stringify({attemptId:'synthetic',code:'synthetic-code'})},config);
+  assert.equal(result.init.method,'POST');
+  assert.equal(result.init.body,JSON.stringify({attemptId:'synthetic',code:'synthetic-code'}));
+ }
+});
 test('connection test is allowed without opening other test endpoints',()=>{
  assert.doesNotThrow(()=>validateRequest({...request,url:config.bridge+'/api/test/connection',method:'POST'},config));
  for(const path of ['/api/test','/api/test/other','/api/test/connection/extra'])assert.throws(()=>validateRequest({...request,url:config.bridge+path,method:'POST'},config));

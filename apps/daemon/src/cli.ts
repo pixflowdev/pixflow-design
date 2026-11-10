@@ -30,6 +30,7 @@ import { runBridgeSitesCli } from './bridge-sites-cli.js';
 import { runBuilderDestinationsCli } from './pixflow/builder-destinations-cli.js';
 import { runSiteTranslationsCli } from './pixflow/site-translations-cli.js';
 import { runAgentTextCli } from './pixflow/agent-text-cli.js';
+import { runPageInspectionCli } from './pixflow/page-inspection-cli.js';
 import { readFile } from 'node:fs/promises';
 import { createCommandInvocation } from '@open-design/platform';
 import { resolveOnPath } from './runtimes/executables.js';
@@ -283,6 +284,7 @@ const PLUGIN_LIST_BOOLEAN_FLAGS = new Set([
 ]);
 
 const SUBCOMMAND_MAP = {
+  'inspect-page': runPageInspectionCli,
   artifacts: runArtifacts,
   media: runMedia,
   mcp: runMcp,

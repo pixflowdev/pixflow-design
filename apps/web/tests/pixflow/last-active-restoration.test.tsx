@@ -3,9 +3,9 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { createElement, StrictMode } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mock = vi.hoisted(() => ({ read: vi.fn(), navigate: vi.fn() }));
-vi.mock('../../src/pixflow/wordpress-context', () => ({ getPixflowWordPressConfig: () => ({ restBaseUrl: 'https://a.test/wp-json', userId: 1 }) }));
+vi.mock('../../src/pixflow/wordpress-context', () => ({ hasPixflowWordPressContext: () => true, getPixflowWordPressConfig: () => ({ restBaseUrl: 'https://a.test/wp-json', userId: 1 }) }));
 vi.mock('../../src/pixflow/chat-history-client', () => ({ readChatHistory: mock.read, mergeChatHistory: vi.fn() }));
-vi.mock('../../src/router', () => ({ navigate: mock.navigate }));
+vi.mock('../../src/router', async importOriginal => ({ ...await importOriginal<typeof import('../../src/router')>(), navigate: mock.navigate }));
 import { rememberLastActiveChat } from '../../src/pixflow/last-active-chat';
 import { useFloatingConversation } from '../../src/pixflow/floating-conversation';
 import { useLastActiveWorkspaceChat } from '../../src/pixflow/use-last-active-workspace-chat';
@@ -13,13 +13,10 @@ import { conversationSessionKey } from '../../src/pixflow/conversation-address';
 const binding = { projectId: '12345678-1234-1234-1234-123456789abc', conversationId: 'saved-chat' };
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); location.hash = ''; mock.read.mockReset().mockResolvedValue({ messages: [] }); mock.navigate.mockReset(); });
 afterEach(cleanup);
-it('restores Workspace during StrictMode effect replay', async () => {
+it('opens Home in a fresh session even with a previous chat', () => {
   rememberLastActiveChat(binding);
-  const route = { kind: 'home', view: 'home' } as const;
-  renderHook(() => useLastActiveWorkspaceChat(route, true), {
-    wrapper: ({ children }) => createElement(StrictMode, null, children),
-  });
-  await waitFor(() => expect(mock.navigate).toHaveBeenCalledTimes(1));
+  renderHook(() => useLastActiveWorkspaceChat({kind:'home', view:'home'}, true));
+  expect(mock.navigate).not.toHaveBeenCalled();
 });
 it('restores the floating panel in a fresh tab without starting a run', async () => {
   rememberLastActiveChat(binding);
@@ -39,11 +36,13 @@ it('lets New chat win over a pending floating restoration', async () => {
   expect(hook.result.current.historyKey).toBe('new');
   expect(hook.result.current.restoring).toBe(false);
 });
-it('restores an empty Workspace entry after permission verification', async () => {
-  rememberLastActiveChat(binding);
-  const route = { kind: 'home', view: 'home' } as const;
-  renderHook(() => useLastActiveWorkspaceChat(route, true));
-  await waitFor(() => expect(mock.navigate).toHaveBeenCalledWith({ kind: 'project', ...binding, fileName: null }, { replace: true }));
+it('restores SEO Audit after reopening in the same session', () => {
+  const first=renderHook(()=>useLastActiveWorkspaceChat({kind:'home',view:'seo-audit'},true));
+  first.unmount();
+  renderHook(()=>useLastActiveWorkspaceChat({kind:'home',view:'home'},true), {
+    wrapper: ({children})=>createElement(StrictMode,null,children),
+  });
+  expect(mock.navigate).toHaveBeenCalledExactlyOnceWith({kind:'home',view:'seo-audit'},{replace:true});
 });
 it('does not hijack explicit Workspace URLs', async () => {
   rememberLastActiveChat(binding); location.hash = '#pixflow-explicit';

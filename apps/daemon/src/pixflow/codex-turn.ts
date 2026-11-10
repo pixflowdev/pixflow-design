@@ -1,3 +1,4 @@
+import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
 import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 import { createHash } from 'node:crypto';
 import type { CodexPromptParts } from './direct-site-run.js';
@@ -36,6 +37,7 @@ export async function runCodexTurn(options: {
   onPhase?: (phase: 'initialized' | 'thread_ready' | 'submitted') => void;
   onEvent: (event: Message) => void; onSteerReady: (steer: CodexSteer | undefined) => void;
 }): Promise<string> {
+  assertCodexReasoningSupported(options.reasoning);
   const lease = options.isolateProjectInstructions && !options.configArgs?.length ? options.warmWorker?.acquire(options, options.resumeSessionId, options.threadScope) : undefined;
   let reusable = false;
   const child = lease?.worker.child ?? spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
@@ -176,7 +178,7 @@ export async function runCodexTurn(options: {
       cwd: options.cwd, model: options.model, approvalPolicy: 'never',
       ...(options.runtimeWorkspaceRoots?.length ? { runtimeWorkspaceRoots: options.runtimeWorkspaceRoots } : {}),
       sandbox: codexNeedsDangerFullAccessSandbox(process.platform, options.env) ? 'danger-full-access' : 'workspace-write',
-      config: { model_reasoning_effort: options.reasoning ?? 'medium', 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
+      config: { model_reasoning_effort: clampCodexReasoning(options.model, options.reasoning && options.reasoning !== 'default' ? options.reasoning : 'medium'), 'sandbox_workspace_write.network_access': true, ...(options.mcpServers ? { mcp_servers: options.mcpServers } : {}) },
     };
     const settingsKey = createHash('sha256').update(JSON.stringify(settings)).digest('hex');
     const prior = lease?.worker.attached;

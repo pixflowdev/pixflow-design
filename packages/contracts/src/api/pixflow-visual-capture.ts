@@ -20,6 +20,8 @@ import type {
 } from './pixflow-bricks-render-environment.js';
 
 export type PixflowVisualCaptureRequest = {
+  /** Anonymous, bounded DOM inspection; no screenshots, input actions or agent. */
+  inspectionOnly?: boolean;
   url: string;
   viewports: PixflowVisualCaptureViewport[];
   captureMode?: 'generated' | 'live-reference';
@@ -239,6 +241,7 @@ export type PixflowVisualCaptureResult = {
 };
 
 export type PixflowVisualCaptureResponse = {
+  inspection?: PixflowPageInspection;
   ok: boolean;
   browser: string | null;
   captures: PixflowVisualCaptureResult[];
@@ -253,4 +256,20 @@ export type PixflowVisualCaptureResponse = {
     comparisonDurationMs: number;
     totalDurationMs: number;
   };
+};
+
+export type PixflowPageInspection = {
+  url: string;
+  finalUrl: string;
+  checkedAt: string;
+  status: number;
+  width: number;
+  title: string;
+  canonical: string;
+  description: string;
+  headings: Array<{level: number; text: string}>;
+  links: string[];
+  ids: string[];
+  images: Array<{src: string; alt: string | null; loaded: boolean; failed: boolean; width: number; naturalWidth: number}>;
+  limitations: string[];
 };

@@ -81,6 +81,10 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 == Changelog ==
 
+= Unreleased =
+* Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
+* Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
+
 = 2.2.0 =
 
 * Recover Pro access with the saved licence after a temporary verification failure. Licence settings offer Retry while the service is unavailable, and background WordPress requests preserve the installed key.

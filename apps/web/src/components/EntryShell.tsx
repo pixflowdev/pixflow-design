@@ -356,7 +356,7 @@ export function EntryShell({
   // to /design-systems lands on that section. We derive the active
   // view from the route rather than keeping it in component state.
   const route = useRoute();
-  const view: EntryViewKind = route.kind === 'home' && route.view !== 'translations' && !(hasPixflowWordPressContext() && route.view === 'plugins') ? route.view : 'home';
+  const view: EntryViewKind = route.kind === 'home' && route.view !== 'blog-studio' && route.view !== 'seo-audit' && route.view !== 'translations' && !(hasPixflowWordPressContext() && route.view === 'plugins') ? route.view : 'home';
   const [previewSystemId, setPreviewSystemId] = useState<string | null>(null);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   // The entry nav rail is collapsed by default (Manus-style) so the entry

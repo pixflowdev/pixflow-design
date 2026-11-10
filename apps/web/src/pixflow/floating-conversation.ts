@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { forgetLastActiveChat, rememberLastActiveChat, restoreLastActiveChat } from './last-active-chat';
 import { directTabStorageKey } from './direct-tab-storage';
-import { mergeChatHistory, type HistoryMessage } from './chat-history-client';
+import { mergeChatHistory, resolveChatHistory, type HistoryMessage } from './chat-history-client';
 import type { AppConfig } from '../types';
 import { conversationBinding, conversationSessionKey } from './conversation-address';
 import type { PixflowChatHistoryBinding } from '@open-design/contracts';
@@ -37,8 +37,17 @@ type FloatingConversation = { historyKey: string; surface: string; runKey: strin
 const referenceKey = () => directTabStorageKey('pixflow:floating-conversation:v1');
 const legacyRunKey = (surface: string) => directTabStorageKey(surface === 'bricks' ? 'pixflow:direct-bricks-run' : `pixflow:direct-bricks-run:${surface}`);
 const ordinary = (surface: string) => surface === 'bricks' || surface === 'admin';
+const selectable = (surface: string) => ordinary(surface) || /^(admin|bricks)-handoff:[a-f0-9]{64}:[A-Za-z0-9_-]{16,128}$/.test(surface);
+const ordinarySurface = (surface: string) => surface.startsWith('bricks') ? 'bricks' : 'admin';
 const selectionEvent = 'pixflow-design:select-floating-conversation';
 type SelectionRequest = { historyKey: string; owner: string; accepted?: () => void; completed?: () => void; signal?: AbortSignal };
+
+/** Resolve the panel's current address, never replace it with an article-specific chat. */
+export async function currentFloatingChat(): Promise<PixflowChatHistoryBinding | null> {
+  const active = readFloatingConversation();
+  if (active) return resolveChatHistory({sessionKey: active.historyKey});
+  return restoreLastActiveChat();
+}
 
 /** Explicit, same-document selection. Active owners defer adoption until settled. */
 export function selectFloatingConversation(binding: PixflowChatHistoryBinding, options?: { signal?: AbortSignal; onWaiting?: () => void }): Promise<void> {
@@ -114,7 +123,7 @@ export function useFloatingConversation(historyKey: string, surface: string, bus
     return () => { cancelled = true; };
   }, [restoring, historyKey, surface]);
   useEffect(() => {
-    if (!ordinary(surface)) return;
+    if (!selectable(surface)) return;
     const select = (event: Event) => {
       const request = (event as CustomEvent<SelectionRequest>).detail;
       if (request?.owner === referenceKey() && conversationBinding(request.historyKey) && !request.signal?.aborted) {
@@ -128,7 +137,8 @@ export function useFloatingConversation(historyKey: string, surface: string, bus
   useEffect(() => {
     if (!requested || busy) return;
     if (requested.owner !== referenceKey() || requested.signal?.aborted) { setRequested(null); return; }
-    const address = { historyKey: requested.historyKey, surface, runKey: `${legacyRunKey(surface).replace(/:post:\d+$/, '')}:conversation:${encodeURIComponent(requested.historyKey)}` };
+    const selectedSurface = ordinarySurface(surface);
+    const address = { historyKey: requested.historyKey, surface: selectedSurface, runKey: `${legacyRunKey(selectedSurface).replace(/:post:\d+$/, '')}:conversation:${encodeURIComponent(requested.historyKey)}` };
     try { sessionStorage.setItem(referenceKey(), JSON.stringify(address)); } catch { /* The mounted selection remains usable. */ }
     setSelection({ source: historyKey, address, changed: false });
     rememberLastActiveChat(conversationBinding(requested.historyKey)!);

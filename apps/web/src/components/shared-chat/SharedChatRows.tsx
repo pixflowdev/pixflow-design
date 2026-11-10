@@ -1,3 +1,4 @@
+import { HandoffMessage } from '../chat/HandoffMessage';
 import { Bubble, BubbleContent } from '../chat/Bubble';
 import { ChatTranscriptItem } from '../chat/MessageScroller';
 import { Message, MessageContent, MessageFooter } from '../chat/Message';
@@ -25,6 +26,7 @@ const EMPTY_PROJECT_FILES: ProjectFile[] = [];
 
 export type SharedChatInputMessage = {
   historyOrigin?: ChatMessage['historyOrigin'];
+  handoffPresentation?: { title: string; summary: string };
   id?: string;
   role?: string;
   content?: string;
@@ -356,6 +358,7 @@ const SharedUserMessage = memo(function SharedUserMessage({
 
   const ts = messageTime(message);
   const attachments = message.attachments ?? [];
+  if (message.handoffPresentation) return <HandoffMessage message={message} t={t} />;
 
   return (
     <Message align="end" className="msg user" data-chat-user-id={message.id}>

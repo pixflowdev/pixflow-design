@@ -1,3 +1,4 @@
+import type { PixflowMediaItem } from '../../providers/registry';
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nProvider, useT } from '../../i18n';
@@ -8,7 +9,7 @@ import styles from './GeneratedMedia.module.css';
 
 type ChatImage = { attachmentId?: number; url: string; title: string };
 
-function MediaDialog({ image, close }: { image?: ChatImage; close: () => void }) {
+function MediaDialog({ image, close, onSelectImage }: { image?: ChatImage; close: () => void; onSelectImage?: (item: PixflowMediaItem) => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const t = useT();
   useEffect(() => {
@@ -21,7 +22,7 @@ function MediaDialog({ image, close }: { image?: ChatImage; close: () => void })
     onClick={event => { if (event.target === event.currentTarget) close(); }}
     onKeyDown={event => event.stopPropagation()}>
     <div className={styles.mediaBody}>
-      <MediaView onLeaveForSettings={close} attachmentId={image?.attachmentId} attachmentUrl={image?.url} headerAction={
+      <MediaView onSelectImage={onSelectImage ? item => { onSelectImage(item); close(); } : undefined} onLeaveForSettings={close} attachmentId={image?.attachmentId} attachmentUrl={image?.url} headerAction={
         <Button variant="subtle" size="icon" className="direct-media-close" aria-label={t('common.close')} onClick={close}>
           <Icon name="close" size={18} />
         </Button>
@@ -31,7 +32,7 @@ function MediaDialog({ image, close }: { image?: ChatImage; close: () => void })
 }
 
 /** The restored transcript can replace its rows while a visitor is browsing Media. */
-export function openMediaLibrary(trigger: HTMLElement, image?: ChatImage, theme?: string) {
+export function openMediaLibrary(trigger: HTMLElement, image?: ChatImage, theme?: string, onSelectImage?: (item: PixflowMediaItem) => void) {
   const doc = trigger.ownerDocument;
   const host = doc.createElement('div');
   host.className = 'pixflow-design-portal-scope';
@@ -55,7 +56,7 @@ export function openMediaLibrary(trigger: HTMLElement, image?: ChatImage, theme?
       .find(button => button.querySelector('img')?.src === image.url);
     target?.focus({ preventScroll: true });
   };
-  root.render(<I18nProvider><MediaDialog image={image} close={close} /></I18nProvider>);
+  root.render(<I18nProvider><MediaDialog image={image} close={close} onSelectImage={onSelectImage} /></I18nProvider>);
 }
 
 export function ChatMediaAttachment({ image }: { image: ChatImage }) {

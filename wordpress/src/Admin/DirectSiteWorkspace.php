@@ -26,6 +26,8 @@ final class DirectSiteWorkspace
             if (!$call) return \PixflowDesign\WordPress\Modules\AdvancedSiteAccess::not_allowed();
             return $call($tool, $args, $writable);
         }
+        $feature_call = \PixflowDesign\WordPress\Modules\FeatureContributions::direct_site_handler($tool);
+        if ($feature_call) return $feature_call($tool, $args, $writable);
         $reads = ['help', 'project.file.read', 'skills.list', 'skills.read', 'abilities.list', 'sitemap.read', 'sitemap.inventory', 'builder.destinations', 'builder.handoff.status'];
         if (!$writable && !$readonly_ability && !in_array($tool, $reads, true)) {
             throw new \RuntimeException('This existing session is read-only. Start a new request to use the current connection.');

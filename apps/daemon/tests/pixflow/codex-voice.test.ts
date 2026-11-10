@@ -70,6 +70,10 @@ describe('native Codex voice', () => {
     const controller = new AbortController(); controller.abort();
     await expect(runCodexVoice({ ...options(), signal: controller.signal })).rejects.toThrow('canceled'); expect(mocks.spawn).not.toHaveBeenCalled();
   });
+  it('rejects Ultra before starting a native process', async () => {
+    await expect(runCodexVoice({...options(),reasoning:'ultra'})).rejects.toThrow('Ultra reasoning is not supported');
+    expect(mocks.spawn).not.toHaveBeenCalled();
+  });
   it('does not start a call with an expired site session', async () => {
     await expect(runCodexVoice({ ...options(), expiresAt: Date.now() - 1000 })).rejects.toThrow('expired'); expect(mocks.spawn).not.toHaveBeenCalled();
   });

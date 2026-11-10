@@ -780,7 +780,7 @@ test('codex buildArgs clamps reasoning effort per model', () => {
   }
 });
 
-test('codex buildArgs omits model_reasoning_effort when reasoning is "default"', () => {
+test('codex buildArgs pins Medium instead of inheriting a possible Ultra default', () => {
   const args = codex.buildArgs(
     '',
     [],
@@ -791,9 +791,9 @@ test('codex buildArgs omits model_reasoning_effort when reasoning is "default"',
 
   assert.equal(
     args.some(
-      (a) => typeof a === 'string' && a.startsWith('model_reasoning_effort='),
+      (a) => a === 'model_reasoning_effort="medium"',
     ),
-    false,
+    true,
   );
 });
 

@@ -7,18 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
-- Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
-- Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.
-- Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
-- Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
-- Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
+- Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
+- Add anonymous desktop and mobile public-page inspection through Bridge and the od inspect-page command. Page inspection runs without an AI provider.
+- Support bounded specialist review workers for Codex, Claude and Grok Build, with provider capacity and timeout handling. Keep Ultra reasoning unavailable.
+- Preserve the original WordPress revision before an AI repair so the first edit can be recovered when revisions are enabled.
 
 - Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
 - Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
 - Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
 - Show Grok account allowance and reset times in the composer and Settings. The read-only check is also available through `od agents usage grok-build --json`.
 - Use the updated, theme-aware Grok mark in provider menus.
+
+- Support Blog Studio native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+- Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
+- Expose authorized, session-aware feature tools and reusable WordPress image-generation receipts to contributed Workspace modules.
+
+- Align chat controls with shadcn primitives and React 19 while preserving Pixflow themes, settings and saved conversations.
+- Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
+- Use searchable model choices, interactive questions, citation previews, compact code/tool details and file attachments. Internal plugin files no longer appear as generated downloads.
+- Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
+- Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
+- Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
 
 - Floating panel chats prepare saved history on open and after replies, show the first streamed text sooner, and keep your place when you scroll up. Plain Claude replies show Done as soon as Claude confirms completion.
 
@@ -313,8 +322,3 @@ Pixflow Design 2.0.4 adds live Gutenberg editing, the separate Pro add-on, compl
 - Fix the System appearance icon always showing a sun. Show the current operating-system light/dark preference and update the icon when that preference changes, independently of an explicit Pixflow theme choice.
 - Preserve accepted steering messages in the conversation stream and after reconnecting or reloading, without duplicate bubbles. Wait for an in-progress Codex reply before delivering guidance, retain a normal queued follow-up when its final reply completes, and keep active-turn steering working without an empty response or a new Preparing state. Use the same Steer control in Workspace and the floating panel.
 - Prevent unrelated settings saves from reapplying unchanged Bricks extension metadata to other content.
-
-
-
-
-

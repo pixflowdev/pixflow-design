@@ -236,8 +236,9 @@ class AssetRegistrar
     {
         if (($context['screen']['verified'] ?? false) !== true
             || ($context['object']['verified'] ?? false) !== true
-            || ($context['object']['kind'] ?? '') !== 'post'
-            || ($context['object']['type'] ?? '') !== 'page') return null;
+            || ($context['object']['kind'] ?? '') !== 'post') return null;
+        $post = get_post((int) ($context['object']['id'] ?? 0));
+        if (!$post || ($context['object']['type'] ?? '') !== $post->post_type) return null;
         $builder = $context['editor'] ?? '';
         if (in_array($builder, ['etch', 'elementor'], true)) {
             // These contexts are supplied by each native editor's enqueue hook,

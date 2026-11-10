@@ -39,6 +39,24 @@ const translations: Partial<Record<keyof Dict, string>> = {
 const t = (key: keyof Dict) => translations[key] ?? key;
 
 describe('SharedChatRows', () => {
+  it('renders a handoff checkpoint, individual file cards, then only the short bubble after reload', () => {
+    const message = {id:'handoff:user',role:'user',content:'PRIVATE FULL BUILD INSTRUCTIONS',
+      handoffPresentation:{title:'Blog Studio handoff',summary:'Build the reviewed article as a draft.'},
+      attachments:[{projectId:'source',path:'handoff/article.html',name:'article.html',kind:'file' as const},
+        {projectId:'source',path:'handoff/brief.md',name:'brief.md',kind:'file' as const}]};
+    const view=render(<SharedChatRows t={t} messages={[JSON.parse(JSON.stringify(message))]} />);
+    expect(screen.queryByText('PRIVATE FULL BUILD INSTRUCTIONS')).toBeNull();
+    expect(view.container.querySelector('.user-bubble')?.textContent).toBe(message.handoffPresentation.summary);
+    expect(view.container.querySelectorAll('[data-slot="attachment"]')).toHaveLength(2);
+    const marker=view.container.querySelector('[data-slot="marker"]')!;
+    const attachment=view.container.querySelector('[data-slot="attachment"]')!;
+    const bubble=view.container.querySelector('.user-bubble')!;
+    expect(marker.compareDocumentPosition(attachment)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(attachment.compareDocumentPosition(bubble)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(view.container.querySelectorAll('a[download]')).toHaveLength(2);
+    expect(normalizeSharedChatMessage(message,0).content).toBe(message.content);
+  });
+
   it('defers a steering bubble until the native reply ends and never inserts an empty assistant restart', () => {
     const events: NonNullable<ChatMessage['events']> = [
       { kind: 'assistant_message_boundary', phase: 'started', messageId: 'reply', contentOffset: 0 },

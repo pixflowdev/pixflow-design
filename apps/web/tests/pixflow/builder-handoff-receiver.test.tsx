@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PixflowBuilderHandoff, PixflowEditorTarget } from '@open-design/contracts';
 import { persistPixflowWordPressConfig } from '../../src/pixflow/wordpress-context';
+import {useBuilderHandoffHistory} from '../../src/pixflow/builder-handoff-receiver';
+import {conversationSessionKey} from '../../src/pixflow/conversation-address';
 import { assertBuilderHandoffTarget, builderHandoffAddress, builderHandoffDocumentAddress, builderHandoffPersistenceSurface, builderHandoffConversationKey, builderHandoffAttachments, receiveBuilderHandoff, useBuilderHandoffReceiver } from '../../src/pixflow/builder-handoff-receiver';
 const { mutate, read } = vi.hoisted(() => ({ mutate: vi.fn(), read: vi.fn() }));
 vi.mock('../../src/pixflow/builder-handoff-client', () => ({ mutateBuilderHandoff: mutate, readBuilderHandoff: read }));
@@ -11,6 +13,33 @@ const target: PixflowEditorTarget = { builder: 'gutenberg', canvasId: 'canvas-1'
 const receipt = { ...address, targetTabId: address.tabId, status: 'claimed', messageId: 'handoff-message', brief: 'Build the page', editorTarget: target, destination: { builder: 'gutenberg', postId: 42 }, assets: [{ projectId: 'project-a', path: 'hero.png', name: 'Hero', mime: 'image/png' }] } as unknown as PixflowBuilderHandoff;
 beforeEach(() => { read.mockReset().mockResolvedValue({ ...receipt, status: 'ready' }); mutate.mockReset(); sessionStorage.clear(); window.name = ''; window.history.replaceState({}, '', '/'); });
 afterEach(() => vi.useRealTimers());
+it('waits for persisted history before claiming and starting a new handoff',async()=>{
+  window.history.replaceState({},'',`/?post_id=42&pixflow_handoff=${address.id}&pixflow_handoff_tab=${address.tabId}`);
+  mutate.mockResolvedValue({handoff:receipt,shouldStart:true});
+  const start=vi.fn(()=>true);
+  const view=renderHook(({historyReady})=>useBuilderHandoffReceiver({builder:'gutenberg',enabled:true,historyReady,busy:false,target:async()=>target,start,notice:vi.fn()}),{initialProps:{historyReady:false}});
+  await act(async()=>{});
+  expect(start).not.toHaveBeenCalled();expect(mutate).not.toHaveBeenCalled();
+  view.rerender({historyReady:true});
+  await waitFor(()=>expect(start).toHaveBeenCalledTimes(1));
+  view.rerender({historyReady:true});expect(start).toHaveBeenCalledTimes(1);view.unmount();
+});
+it('continues a pre-existing ordinary chat on every native editor surface',async()=>{
+  const binding={projectId:'12345678-1234-1234-1234-123456789abc',conversationId:'existing-discussion'};
+  read.mockResolvedValue({...receipt,...binding,continueConversation:true});
+  for(const base of ['admin','bricks']){
+    const view=renderHook(()=>useBuilderHandoffHistory('unrelated-chat',`${base}-handoff:${address.id}:${address.tabId}`));
+    expect(view.result.current.ready).toBe(false);
+    await waitFor(()=>expect(view.result.current.ready).toBe(true));
+    expect(view.result.current.key).toBe(conversationSessionKey(binding));view.unmount();
+  }
+});
+it('never adopts a source chat after a denied handoff lookup',async()=>{
+  read.mockRejectedValue(new Error('Forbidden'));
+  const view=renderHook(()=>useBuilderHandoffHistory('isolated-receipt-chat',`admin-handoff:${address.id}:${address.tabId}`));
+  await waitFor(()=>expect(view.result.current.error).toBe('Forbidden'));
+  expect(view.result.current.ready).toBe(false);expect(view.result.current.key).toBe('isolated-receipt-chat');
+});
 it.each(['bricks', 'etch', 'elementor'] as const)('retries late %s connection only before claim and ignores duplicate events', async builder => {
   vi.useFakeTimers();
   window.history.replaceState({}, '', `/?post_id=42&pixflow_handoff=${address.id}&pixflow_handoff_tab=${address.tabId}`);
@@ -20,7 +49,7 @@ it.each(['bricks', 'etch', 'elementor'] as const)('retries late %s connection on
   const getTarget = vi.fn<() => Promise<PixflowEditorTarget | undefined>>().mockResolvedValue(undefined);
   const start = vi.fn(() => true), notice = vi.fn();
   mutate.mockResolvedValue({ handoff, shouldStart: true });
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder, enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder, enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
   expect(notice).toHaveBeenCalledWith(expect.stringContaining('did not connect'));
   expect(notice).toHaveBeenCalledWith(expect.stringContaining('continue automatically when this tab connects'));
@@ -49,7 +78,7 @@ it.each(['claim-error', 'start-error'] as const)('never retries a handoff after 
   if (failure === 'claim-error') mutate.mockRejectedValue(new Error('Uncertain claim'));
   else mutate.mockResolvedValue({ handoff, shouldStart: true });
   const start = vi.fn(async () => { throw new Error('Start failed'); }), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'etch', enabled: true, busy: false, target: async () => editor, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'etch', enabled: true, historyReady: true, busy: false, target: async () => editor, start, notice }));
   await waitFor(() => expect(notice).toHaveBeenCalledTimes(1));
   await act(async () => {
     for (let i = 0; i < 5; i++) window.dispatchEvent(new CustomEvent('pixflow-design:etch-connection', { detail: { connected: true } }));
@@ -65,7 +94,7 @@ it('does not resume a timed-out handoff after navigation to another page', async
   window.history.replaceState({}, '', `/?post_id=42&${query}`);
   const getTarget = vi.fn<() => Promise<PixflowEditorTarget | undefined>>().mockResolvedValue(undefined);
   const start = vi.fn(() => true), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'etch', enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'etch', enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
   getTarget.mockResolvedValue({ ...target, builder: 'etch', postId: 43 });
   window.history.replaceState({}, '', `/?post_id=43&${query}`);
@@ -86,10 +115,11 @@ it.each(['etch', 'elementor'] as const)('isolates %s handoff transcripts while r
   expect(builderHandoffConversationKey('pixflow-direct:site-a:user-2', surface, builder)).not.toBe(key);
   expect(builderHandoffConversationKey(base, 'admin', builder)).toBe(base);
 });
-it.each(['gutenberg', 'bricks'] as const)('preserves existing %s conversation recovery keys', builder => {
+it.each(['gutenberg', 'bricks'] as const)('isolates %s handoff history from ordinary editor chats', builder => {
   const base = 'pixflow-direct:site-a:user-1';
-  expect(builderHandoffConversationKey(base, `admin-handoff:${address.id}:${address.tabId}`, builder)).toBe(base);
-  expect(builderHandoffConversationKey(base, `bricks-handoff:${address.id}:${address.tabId}`, builder)).toBe(base);
+  expect(builderHandoffConversationKey(base, `admin-handoff:${address.id}:${address.tabId}`, builder)).not.toBe(base);
+  expect(builderHandoffConversationKey(base, `bricks-handoff:${address.id}:${address.tabId}`, builder)).not.toBe(base);
+  expect(builderHandoffConversationKey(base, 'admin', builder)).toBe(base);
 });
 it.each(['admin', 'bricks', 'admin-handoff:invalid:tab-1234567890123456', `admin-handoff:${'a'.repeat(64)}:short`])('does not scope ordinary or malformed launch surfaces: %s', surface => {
   expect(builderHandoffConversationKey('normal-key', surface, 'etch')).toBe('normal-key');
@@ -152,7 +182,7 @@ it('waits for an idle editor and never repeats after rerender', async () => {
   window.history.replaceState({}, '', `/?post=42&pixflow_handoff=${address.id}&pixflow_handoff_tab=${address.tabId}`);
   mutate.mockResolvedValue({ handoff: receipt, shouldStart: true });
   const start = vi.fn(() => true), notice = vi.fn(), getTarget = vi.fn(async () => target);
-  const view = renderHook(({ busy }) => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, busy, target: getTarget, start, notice }), { initialProps: { busy: true } });
+  const view = renderHook(({ busy }) => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, historyReady: true, busy, target: getTarget, start, notice }), { initialProps: { busy: true } });
   expect(mutate).not.toHaveBeenCalled();
   view.rerender({ busy: false });
   await waitFor(() => expect(start).toHaveBeenCalledTimes(1));
@@ -184,7 +214,7 @@ it('does not dispatch if its panel unmounts while the claim response is pending'
   let respond!: (value: unknown) => void;
   mutate.mockImplementationOnce(()=>new Promise(resolve=>{respond=resolve;})).mockResolvedValue({handoff:receipt});
   const start=vi.fn(()=>true),notice=vi.fn();
-  const view=renderHook(()=>useBuilderHandoffReceiver({builder:'gutenberg',enabled:true,busy:false,target:async()=>target,start,notice}));
+  const view=renderHook(()=>useBuilderHandoffReceiver({builder:'gutenberg',enabled:true,historyReady:true,busy:false,target:async()=>target,start,notice}));
   await waitFor(()=>expect(mutate).toHaveBeenCalledTimes(1));
   view.unmount();
   await act(async()=>{respond({handoff:receipt,shouldStart:true});});
@@ -279,7 +309,7 @@ it.each(['etch', 'elementor'] as const)('keeps a completed %s handoff idle on re
   read.mockResolvedValue({ ...receipt, status: 'completed', destination: { ...receipt.destination, builder } });
   const getTarget = vi.fn<() => Promise<PixflowEditorTarget | undefined>>().mockResolvedValue(undefined);
   const start = vi.fn(() => true), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder, enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder, enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
   await act(async () => {
     for (let i = 0; i < 5; i++) window.dispatchEvent(new CustomEvent(`pixflow-design:${builder}-connection`, { detail: { connected: true } }));
@@ -297,7 +327,7 @@ it.each(['cancelled', 'awaiting_input', 'failed'] as const)('settles %s before c
   window.history.replaceState({}, '', `/?post=42&pixflow_handoff=${address.id}&pixflow_handoff_tab=${address.tabId}`);
   read.mockResolvedValue({ ...receipt, status, error: status === 'failed' ? 'The original build failed.' : undefined });
   const getTarget = vi.fn(), start = vi.fn(), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await act(async () => {});
   expect(getTarget).not.toHaveBeenCalled();
   expect(mutate).not.toHaveBeenCalled();
@@ -315,7 +345,7 @@ it.each(['id', 'tab', 'builder', 'page'] as const)('rejects a terminal receipt w
     destination: { ...receipt.destination, ...(mismatch === 'builder' ? { builder: 'etch' } : {}), ...(mismatch === 'page' ? { postId: 43 } : {}) },
   });
   const getTarget = vi.fn(), start = vi.fn(), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await waitFor(() => expect(notice).toHaveBeenCalledWith(expect.stringContaining('does not match this editor page and tab')));
   expect(getTarget).not.toHaveBeenCalled();
   expect(mutate).not.toHaveBeenCalled();
@@ -327,7 +357,7 @@ it('does not mistake an unavailable receipt service for an editor connection tim
   window.history.replaceState({}, '', `/?post=42&pixflow_handoff=${address.id}&pixflow_handoff_tab=${address.tabId}`);
   read.mockRejectedValue(new Error('Could not read the builder handoff.'));
   const getTarget = vi.fn(), start = vi.fn(), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   await waitFor(() => expect(notice).toHaveBeenCalledWith('Could not read the builder handoff.'));
   await act(async () => { window.dispatchEvent(new CustomEvent('pixflow-design:gutenberg-connection', { detail: { connected: true } })); });
   expect(read).toHaveBeenCalledTimes(1);
@@ -343,7 +373,7 @@ it('does not settle or claim after navigating away while the receipt read is pen
   let respond!: (value: PixflowBuilderHandoff) => void;
   read.mockImplementation(() => new Promise(resolve => { respond = resolve; }));
   const getTarget = vi.fn(), start = vi.fn(), notice = vi.fn();
-  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, busy: false, target: getTarget, start, notice }));
+  const view = renderHook(() => useBuilderHandoffReceiver({ builder: 'gutenberg', enabled: true, historyReady: true, busy: false, target: getTarget, start, notice }));
   window.history.replaceState({}, '', `/?post=43&${query}`);
   await act(async () => { respond({ ...receipt, status: 'completed' }); });
   expect(notice).toHaveBeenCalledWith(expect.stringContaining('does not match this editor page and tab'));

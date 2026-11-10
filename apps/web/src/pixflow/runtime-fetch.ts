@@ -18,7 +18,7 @@ export function withWordPressNonce(init: RequestInit | undefined, url?: string):
     ? config.restBaseUrl.replace(/\/+$/, '')
     : '';
   const restRouteBaseUrl = typeof config?.restRouteBaseUrl === 'string'
-    ? config.restRouteBaseUrl.replace(/\/+$/, '')
+    ? config.restRouteBaseUrl
     : '';
   const queryTransportBaseUrl = restRouteBaseUrl || (restBaseUsesQueryTransport(restBaseUrl) ? restBaseUrl : '');
   if (
@@ -85,7 +85,7 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
     ? config.restBaseUrl.replace(/\/+$/, '')
     : '';
   const restRouteBaseUrl = typeof config?.restRouteBaseUrl === 'string'
-    ? config.restRouteBaseUrl.replace(/\/+$/, '')
+    ? config.restRouteBaseUrl
     : '';
 
   if (!hasPixflowWordPressContext() || !restBaseUrl) {

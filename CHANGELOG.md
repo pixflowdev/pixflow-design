@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Clarify in all supported languages that Design systems updates the Pixflow Framework and Bricks Theme Styles only when a system is applied.
+
 - Authorize production Google services with signed installation proofs, without embedding service credentials in plugin packages.
 
 - Reuse visually checked library images before generating new design imagery, including an installed Codex fallback for other CLI providers. Keep clearly marked WebP placeholders when suitable imagery or generation is unavailable.

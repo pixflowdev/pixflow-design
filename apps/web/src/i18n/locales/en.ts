@@ -5883,7 +5883,7 @@ export const en: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Apply global Theme Styles too",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Variables, colours and classes are always added. Existing styles are preserved.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Checking your Bricks setup…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Applying updates your Pixflow Framework, including its Bricks Theme Styles.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "When you apply a design system, it updates your Pixflow Framework and Bricks Theme Styles.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Previous application",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Restore the styles saved before your last application.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "A restore point becomes available after you apply a system.",

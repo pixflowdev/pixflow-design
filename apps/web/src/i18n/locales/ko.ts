@@ -4048,7 +4048,7 @@ export const ko: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "전역 테마 스타일도 적용",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "변수, 색상 및 클래스는 항상 추가됩니다. 기존 스타일은 유지됩니다.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Bricks 설정 확인 중…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "적용하면 Bricks 테마 스타일을 포함한 Pixflow Framework가 업데이트됩니다.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "디자인 시스템을 적용하면 Pixflow Framework와 Bricks 테마 스타일이 업데이트됩니다.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "이전 적용",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "마지막 적용 전에 저장된 스타일을 복원합니다.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "시스템을 적용하면 복원 지점을 사용할 수 있습니다.",

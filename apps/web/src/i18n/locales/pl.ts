@@ -4541,7 +4541,7 @@ export const pl: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Zastosuj również globalne style motywu",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Zmienne, kolory i klasy są zawsze dodawane. Istniejące style są zachowywane.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Sprawdzanie konfiguracji Bricks…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Zastosowanie aktualizuje Pixflow Framework, w tym style motywu Bricks.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Zastosowanie systemu projektowania aktualizuje Pixflow Framework i style motywu Bricks.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Poprzednie zastosowanie",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Przywróć style zapisane przed ostatnim zastosowaniem.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "Punkt przywracania będzie dostępny po zastosowaniu systemu.",

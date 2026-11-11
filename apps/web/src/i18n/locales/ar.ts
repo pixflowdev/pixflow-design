@@ -4541,7 +4541,7 @@ export const ar: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "تطبيق أنماط القالب العامة أيضًا",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "تُضاف المتغيرات والألوان والفئات دائمًا. تُحفظ الأنماط الحالية.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "جارٍ التحقق من إعداد Bricks…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "يؤدي التطبيق إلى تحديث إطار Pixflow، بما في ذلك أنماط قالب Bricks.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "عند تطبيق نظام تصميم، يتم تحديث إطار Pixflow وأنماط القالب في Bricks.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "التطبيق السابق",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "استعادة الأنماط المحفوظة قبل آخر تطبيق.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "تتاح نقطة استعادة بعد تطبيق نظام.",

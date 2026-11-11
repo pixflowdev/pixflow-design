@@ -4048,7 +4048,7 @@ export const th: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "ใช้สไตล์ธีมส่วนกลางด้วย",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "เพิ่มตัวแปร สี และคลาสเสมอ โดยคงสไตล์เดิมไว้",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "กำลังตรวจสอบการตั้งค่า Bricks…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "การนำไปใช้จะอัปเดต Pixflow Framework รวมถึงสไตล์ธีม Bricks",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "เมื่อคุณนำระบบการออกแบบไปใช้ Pixflow Framework และสไตล์ธีม Bricks จะได้รับการอัปเดต",
   "ui.pixflowDesignSystemLibrary.previousApplication": "การนำไปใช้ครั้งก่อน",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "คืนค่าสไตล์ที่บันทึกก่อนการนำไปใช้ครั้งล่าสุด",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "มีจุดคืนค่าหลังนำระบบไปใช้",

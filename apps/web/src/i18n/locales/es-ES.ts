@@ -6108,7 +6108,7 @@ export const esES: Dict = {
   "ui.pixflowDesignSystemLibrary.revision": "Revisión",
   "ui.pixflowDesignSystemLibrary.startManuallyOrDescribeYourBrandTo": "Empieza manualmente o describe tu marca a la IA. Revisa los colores, las fuentes y los componentes antes de aplicarlos.",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Las variables, los colores y las clases siempre se añaden. Los estilos existentes se conservan.",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Al aplicar, se actualiza tu Pixflow Framework, incluidos sus estilos de tema de Bricks.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Cuando aplicas un sistema de diseño, se actualizan tu Pixflow Framework y los estilos del tema de Bricks.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "Después de aplicar un sistema, habrá un punto de restauración disponible.",
   "ui.pixflowDesignSystemLibrary.useThisSystemSColoursAndTypography": "Usa los colores y la tipografía de este sistema en todo tu sitio.",
   "ui.pixflowDesignSystemLibrary.addReusableColoursTypographyAndComponentStyles": "Añade colores, tipografía y estilos de componentes reutilizables. Tus páginas existentes conservan su aspecto actual.",

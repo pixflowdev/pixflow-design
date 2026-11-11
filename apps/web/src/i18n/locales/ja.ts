@@ -4048,7 +4048,7 @@ export const ja: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "グローバルなテーマスタイルも適用",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "変数、色、クラスは常に追加されます。既存のスタイルは保持されます。",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Bricks の設定を確認中…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "適用すると、Bricks のテーマスタイルを含む Pixflow Framework が更新されます。",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "デザインシステムを適用すると、Pixflow Framework と Bricks のテーマスタイルが更新されます。",
   "ui.pixflowDesignSystemLibrary.previousApplication": "前回の適用",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "前回の適用前に保存したスタイルを復元します。",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "システムを適用すると復元ポイントを利用できます。",

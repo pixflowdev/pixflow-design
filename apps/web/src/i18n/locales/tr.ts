@@ -4541,7 +4541,7 @@ export const tr: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Genel Tema Stillerini de uygula",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Değişkenler, renkler ve sınıflar her zaman eklenir. Mevcut stiller korunur.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Bricks kurulumunuz kontrol ediliyor…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Uygulama, Bricks Tema Stilleri dahil Pixflow Framework’ünüzü günceller.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Bir tasarım sistemi uyguladığınızda Pixflow Framework ve Bricks tema stilleri güncellenir.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Önceki uygulama",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Son uygulamadan önce kaydedilen stilleri geri yükleyin.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "Bir sistemi uyguladıktan sonra geri yükleme noktası kullanılabilir olur.",

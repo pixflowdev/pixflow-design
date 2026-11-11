@@ -49,7 +49,7 @@ jobs:
       - run: pnpm --filter @open-design/daemon test claude-stream-tools
       - name: Shared shadcn controls, scrolling and saved history
         run: |
-          pnpm --filter @open-design/web test searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence FileOpsSummary assistant-progress
+          pnpm --filter @open-design/web test WorkspaceSelect searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence FileOpsSummary assistant-progress
           pnpm --filter @open-design/daemon test tests/pixflow/codex-turn.test.ts
       - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
       - run: pnpm --filter @open-design/web test EntryShell.onboarding

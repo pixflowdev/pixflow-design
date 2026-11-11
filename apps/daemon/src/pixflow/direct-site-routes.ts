@@ -30,6 +30,7 @@ import { generateMedia } from '../media.js';
 import { readMaskedConfig } from '../media-config.js';
 import { IMAGE_MODELS, MEDIA_PROVIDERS } from '../media-models.js';
 import { importNativeImage } from './native-image-import.js';
+import { generateCodexFallback } from './codex-image-fallback.js';
 import { runCodexTurn, type CodexSteer } from './codex-turn.js';
 import { runOpenCodeTurn } from './opencode-turn.js';
 import { isNativeSessionMissing } from './native-session-recovery.js';
@@ -360,13 +361,27 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       },agentId:def.id,clients:new Set(),done:false,cancel,credentialHash:directDigest(input.session.token),externalMcp:!!(Object.keys(externalMcp.codex).length || externalMcp.claude || externalMcp.opencode),legacyContinuation:!input.conversationId,voice:!!input.voice});
       const imageWorkspace = workspace;
       const imageRun = runs.get(id)!;
-      if (imageGenerationAllowed && input.session.writable && imageProviders?.length) {
+      if (imageGenerationAllowed && input.session.writable) {
+        let generatingImage = false;
         imageRun.generateImage = async (prompt, requestedModel) => {
-          const model = IMAGE_MODELS.find(candidate => imageProviders.includes(candidate.provider ?? '') && (!requestedModel || candidate.id === requestedModel));
-          if (!model) throw new Error('Select an available image model.');
+          if (generatingImage) throw new Error('An image is already being generated. Wait for its result.');
+          const model = config.codexImagegenOverride && !requestedModel ? undefined : IMAGE_MODELS.find(candidate => imageProviders?.includes(candidate.provider ?? '') && (!requestedModel || candidate.id === requestedModel));
+          if (requestedModel && !model) throw new Error('Select an available image model.');
           const toolId = randomUUID();
-          send({type:'tool_use', id:toolId, name:'generate_image', input:{model:model.id}});
+          send({type:'tool_use', id:toolId, name:'generate_image', input:{model:model?.id ?? 'Codex image generation'}});
+          generatingImage = true;
           try {
+            if (!model) {
+              const codex = getAgentDef('codex');
+              const codexEnv = agentCliEnvForAgent(config.agentCliEnv, 'codex');
+              const codexLaunch = codex && resolveAgentLaunch(codex, codexEnv);
+              if (!codexLaunch?.launchPath) throw new Error('No configured image provider or installed Codex CLI is available.');
+              const env = applyAgentLaunchEnv(spawnEnvForAgent('codex', process.env, codexEnv), codexLaunch);
+              const media = await generateCodexFallback({executable:codexLaunch.launchPath,env,prompt,signal:preparation.signal,
+                importImage:(item,threadId)=>importNativeImage(item,threadId,env.CODEX_HOME,input.session,preparation.signal)});
+              send({type:'tool_result',toolUseId:toolId,content:JSON.stringify({pixflowGeneratedMedia:media})});
+              return media;
+            }
             const result = await generateMedia({projectRoot:mediaRoot, projectsRoot:parent, projectId:path.basename(imageWorkspace),
               surface:'image', model:model.id, prompt, output:'image-'+toolId+'.png'});
             if (result.usedStubFallback || result.intentionalStub) throw new Error('The image provider did not return a generated image.');
@@ -376,8 +391,12 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
             send({type:'tool_result',toolUseId:toolId,content:JSON.stringify({pixflowGeneratedMedia:media})});
             return media;
           } catch (error) {
-            send({type:'tool_result',toolUseId:toolId,isError:true,content:error instanceof Error ? error.message : 'Image generation failed.'});
-            throw error;
+            if (preparation.signal.aborted) throw error;
+            const result = {status:'unavailable',message:error instanceof Error ? error.message : 'Image generation failed.',nextAction:'For layout imagery use wordpress.media.placeholders and explain the missing image. Do not retry generation automatically or claim an image was generated.'};
+            send({type:'tool_result',toolUseId:toolId,content:JSON.stringify(result)});
+            return result;
+          } finally {
+            generatingImage = false;
           }
         };
       }

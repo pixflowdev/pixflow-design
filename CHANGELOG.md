@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Reuse visually checked library images before generating new design imagery, including an installed Codex fallback for other CLI providers. Keep clearly marked WebP placeholders when suitable imagery or generation is unavailable.
+- Give Gutenberg, Elementor and Etch agents revision-aware native style snapshots, including typography and container measurements, to reuse site styles without repeatedly rediscovering them.
+- Improve Gutenberg typography guidance for inherited colours, palette collisions and saved-page layouts. Keep pending image-generation activity visibly working while later commentary streams.
+
 - Show tagged skills and pasted web links as inline badges in sent chat messages. Link badges show the domain and favicon, and Copy prompt retains the original text.
 - Show Design Layout, Design Critique and the other design operations under Skills with the shared package icon. Apply every selected design operation, even when it appears within a longer prompt.
 

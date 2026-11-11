@@ -20,6 +20,17 @@ function messageWithEvents(events: AgentEvent[]): ChatMessage {
 describe('AssistantMessage tool status', () => {
   afterEach(() => cleanup());
 
+  it('keeps background image generation working after later progress arrives', () => {
+    const {container}=render(<AssistantMessage projectKind="prototype" conversationId="conv-1" projectId="project-1" streaming
+      message={{...messageWithEvents([
+        {kind:'tool_use',id:'image',name:'generate_image',input:{model:'Codex image generation'}},
+        {kind:'text',text:'Building the layout while the image generates.'},
+        {kind:'thinking',text:'Checking native controls.'},
+      ]),endedAt:undefined,runStatus:'running'}} />);
+    const labels=[...container.querySelectorAll('[data-activity-group] > button')].map(el=>el.textContent);
+    expect(labels.some(label=>/^error/i.test(label ?? ''))).toBe(false);
+  });
+
   it('renders active Pixflow research as the current shared activity with a shimmer', () => {
     const { container } = render(
       <AssistantMessage

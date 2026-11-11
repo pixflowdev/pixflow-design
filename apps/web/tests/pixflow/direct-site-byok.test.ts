@@ -10,6 +10,42 @@ const context=vi.hoisted(()=>({prepare:vi.fn(),compact:vi.fn(),run:vi.fn()}));
 vi.mock('../../src/pixflow/working-context',async(importOriginal)=>({...await importOriginal<typeof import('../../src/pixflow/working-context')>(),prepareHistorySource:context.prepare,compactWorkingContext:context.compact,compactWorkingRun:context.run}));
 afterEach(()=>{window.sessionStorage.clear();vi.restoreAllMocks();vi.unstubAllGlobals();context.prepare.mockReset();context.compact.mockReset();context.run.mockReset();});
 const config={mode:'api',apiProtocol:'openai',model:'fixture',apiKey:'private-key',baseUrl:'https://provider.example'} as AppConfig;
+it.each(['bricks','gutenberg','elementor','etch'])('can complete the text-only placeholder path in %s without image payloads or generation', async editor => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+ const calls:string[]=[];let turn=0;
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);calls.push(body.tool);
+  if(body.tool==='provider.turn'){
+   expect(body.arguments.system).toContain('Without vision, skip autonomous library selection');
+   expect(body.arguments.images).toEqual([]);
+   turn++;
+   return Response.json(turn===1?{text:'Using a placeholder for this image-led layout.',calls:[{id:'placeholder',input:{name:'wordpress.media.placeholders',arguments:{}}}],turns:[]}:{text:'A 16:9 image placeholder is available for the native image element; photography remains to be selected.',calls:[],turns:[]});
+  }
+  if(body.tool==='wordpress.media.placeholders')return Response.json({items:[{url:'https://site.example/placeholder-16-9.webp',width:1280,height:720,placeholder:true}]});
+  return Response.json({integrations:{bricks:editor==='bricks'}});
+ }));
+ await runByokSite({config,prompt:'Build an image-led garden design section',context:{editor},history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(calls).toContain('wordpress.media.placeholders');
+ expect(calls).not.toContain('wordpress.media.inspect');
+ expect(calls).not.toContain('media.generate');
+});
+it.each(['direct','composio'] as const)('supplies library inspection as image content rather than text in %s', async apiTransport => {
+ requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
+ const received:any[]=[];
+ const provider=async(input:any)=>{received.push(input);return received.length===1?{text:'Inspecting a candidate.',calls:[{id:'image',input:{name:'wordpress.media.inspect',arguments:{attachmentId:7}}}],turns:[]}:{text:'Candidate inspected.',calls:[],turns:[]};};
+ composio.turn.mockImplementation(provider);
+ vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
+  if(init.method==='DELETE')return Response.json({closed:true});
+  const body=JSON.parse(init.body);
+  if(body.tool==='provider.turn')return Response.json(await provider(body.arguments));
+  if(body.tool==='wordpress.media.inspect')return Response.json({attachmentId:7,mimeType:'image/webp',content:'aW1hZ2U='});
+  return Response.json({integrations:{bricks:false}});
+ }));
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},prompt:'Choose a suitable library photo',history:[],signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(received).toHaveLength(2);
+ expect(received[1].results).toContainEqual(expect.objectContaining({images:[{mimeType:'image/webp',base64:'aW1hZ2U='}]}));
+});
 it.each(['direct','composio'] as const)('keeps selected guidance visible outside a large builder receipt in %s', async apiTransport => {
  const guidance={revision:3,source:'custom',product:'Use the confirmed name: QA Bakery.',design:'Keep the saved blue palette.',instructions:'Use current saved guidance.'};
  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',designGuidance:guidance}));

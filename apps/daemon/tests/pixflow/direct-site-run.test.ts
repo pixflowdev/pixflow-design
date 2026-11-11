@@ -6,6 +6,8 @@ import path from 'node:path';
 import type { Server } from 'node:http';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+const imageFallback = vi.hoisted(() => vi.fn());
+vi.mock('../../src/pixflow/codex-image-fallback.js', () => ({generateCodexFallback:imageFallback}));
 
 const runner = vi.hoisted(() => ({ script: '', imageGeneration: false, imagePaths: [] as string[], contexts: [] as Record<string, unknown>[], prompts: [] as string[], writable: true, userId:1, siteId:'fixture-site', authorized:true, parser:'codex', streamInput:false, filePrompt:false, failArgs:false }));
 vi.mock('../../src/agents.js', () => ({
@@ -50,6 +52,60 @@ afterEach(async () => {
 });
 
 describe('direct site agent connection', () => {
+  it('refreshes fixed style files from the current native editor receipt', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-styles-')); dirs.push(dir);
+    const app = express(); app.use(express.json()); let revision = 'first';
+    app.post('/tools', (_req,res) => res.json({ok:true,result:{styleSnapshot:{schema:'pixflow.editor-styles.v1',editor:'gutenberg',site:'fixture',documentId:'12',revision,markdown:'rootFontSize: '+revision,native:{},rendered:{}}}}));
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
+    await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    expect(await fs.readFile(path.join(dir,'EDITOR-STYLES.md'),'utf8')).toBe('rootFontSize: first');
+    revision='changed';
+    await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    expect(JSON.parse(await fs.readFile(path.join(dir,'EDITOR-STYLES.json'),'utf8')).revision).toBe('changed');
+  });
+
+  it('includes run-local image generation in help without generating an image', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-image-help-')); dirs.push(dir);
+    const app = express(); app.use(express.json());
+    const calls: string[] = [];
+    app.post('/tools', (req,res) => { calls.push(req.body.tool); res.json({tools:['wordpress.media.list']}); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',imageEndpoint:url+'/images',token:'fixture'}));
+    const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','media.generate','--help'],{cwd:dir});
+    const result=JSON.parse(stdout);
+    expect(result.localTools['media.generate'].description).toContain('Codex');
+    expect(result.tools).toEqual(['wordpress.media.list']);
+    expect(calls).toEqual(['help']);
+  });
+  it('materializes inspected library bytes for native vision without dumping base64 into the transcript', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-image-')); dirs.push(dir);
+    const app = express(); app.use(express.json());
+    const bytes = Buffer.from('fixture image bytes');
+    app.post('/tools', (_req,res) => res.json({attachmentId:1,mimeType:'image/webp',content:bytes.toString('base64')}));
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
+    const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','wordpress.media.inspect','{"attachmentId":1}'],{cwd:dir});
+    const result=JSON.parse(stdout);
+    expect(result.localImage).toBe('media-inspection-1.webp');
+    expect(result.content).toBeUndefined();
+    expect(await fs.readFile(path.join(dir,result.localImage))).toEqual(bytes);
+  });
+  it.each(['codex','claude','grok','cursor'])('keeps image fallback available for %s across native builders', agentId => {
+    for (const builder of ['bricks','gutenberg','elementor','etch']) {
+      const prompt=directSitePrompt({agentId,prompt:'Build a garden page',history:[],context:{editor:builder},session:{endpoint:'http://127.0.0.1/tools',token:'fixture',writable:true,expiresAt:0}});
+      expect(prompt).toContain('wordpress.media.inspect');
+      expect(prompt).toContain('Without vision, skip autonomous library selection');
+      expect(prompt).toContain('wordpress.media.placeholders');
+      expect(prompt).toContain('must not remove imagery');
+    }
+  });
   it('treats CLI help as discovery without executing the named operation', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-help-')); dirs.push(dir);
     const app = express(); app.use(express.json());
@@ -257,6 +313,22 @@ describe('direct site agent connection', () => {
     await (await post('run-stream', {...request, context:{imageGenerationAllowed:!allowed}})).text();
     expect(runner.prompts.at(-1)?.includes('Image generation and generated-image import are unavailable')).toBe(!allowed);
     expect(runner.prompts.at(-1)?.includes('No Pixflow image provider is configured')).toBe(allowed);
+  });
+  it.each(['claude','grok','codex'])('routes %s image generation through the shared endpoint', async agentId => {
+    runner.imageGeneration=true;
+    imageFallback.mockResolvedValueOnce({attachmentId:42,url:'https://site.example/generated.png'});
+    runner.script=`for await(const chunk of process.stdin) {};const fs=await import('node:fs/promises');const c=JSON.parse(await fs.readFile('site-connection.json','utf8'));const r=await fetch(c.imageEndpoint,{method:'POST',headers:{Authorization:'Bearer '+c.token,'Content-Type':'application/json'},body:JSON.stringify({prompt:'A jellyfish'})});console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:JSON.stringify(await r.json())}}));`;
+    const {request,post}=await fixture(true);
+    const output=await(await post('run-stream',{...request,agentId})).text();
+    expect(output).toContain('generated.png');
+    expect(imageFallback).toHaveBeenCalledWith(expect.objectContaining({prompt:'A jellyfish'}));
+  });
+  it('returns an honest placeholder fallback when generation cannot complete', async()=>{
+    runner.imageGeneration=true;imageFallback.mockRejectedValueOnce(new Error('No native imagegen available.'));
+    runner.script=`for await(const chunk of process.stdin) {};const fs=await import('node:fs/promises');const c=JSON.parse(await fs.readFile('site-connection.json','utf8'));const r=await fetch(c.imageEndpoint,{method:'POST',headers:{Authorization:'Bearer '+c.token,'Content-Type':'application/json'},body:JSON.stringify({prompt:'A jellyfish'})});console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:JSON.stringify(await r.json())}}));`;
+    const {request,post}=await fixture(true);const output=await(await post('run-stream',request)).text();
+    expect(output).toContain('wordpress.media.placeholders');expect(output).toContain('No native imagegen available.');
+    expect(output).not.toContain('pixflowGeneratedMedia');
   });
 
   it('enables design guidance for an unset preference and preserves explicit opt-out', async () => {
@@ -671,7 +743,7 @@ describe('direct site agent connection', () => {
       expect(prompt).not.toContain('Image generation preference:');
       expect(prompt).not.toContain('Use the configured Pixflow media providers');
     }
-    expect(directSitePrompt(input, true, true, false, true)).toContain('Image generation preference:');
+    expect(directSitePrompt(input, true, true, false, true)).toContain('site-tool.mjs media.generate');
   });
   it('keeps classes in both styling modes and applies explicit choices over saved defaults', () => {
     const input = { agentId: 'codex', canvasId: 'canvas', prompt: 'Build a section', history: [], session: { endpoint: 'https://example.test', token: 'test', expiresAt: 9999999999, writable: true } };
@@ -728,22 +800,16 @@ describe('direct site agent connection', () => {
     expect(directSitePrompt(input, false, true, true)).toContain(path);
     expect(directSitePrompt({ ...input, enhancedDesignGuidance: false })).not.toContain(path);
   });
-  it('uses native images for opted-in Codex or when there is no image provider', () => {
-    const input = { agentId: 'codex', prompt: 'Generate an image', history: [], session: { endpoint: 'https://site.example/tools', token: '', writable: true, expiresAt: 0 } };
-    expect(directSitePrompt(input, true)).toContain('Bridge imports the result');
-    for (const resumed of [false, true]) {
-      const native = directSitePrompt(input, false, true, resumed, true, false, []);
-      expect(native).toContain('No Pixflow image provider is configured');
-      expect(native).toContain('invoke native imagegen immediately');
-      const configured = directSitePrompt(input, false, true, resumed, true, false, ['openai']);
-      expect(configured).toContain('Configured Pixflow image providers: openai');
-      expect(configured).not.toContain('invoke native imagegen immediately');
-      expect(directSitePrompt({...input, agentId: 'claude'}, false, true, resumed, true, false, [])).toContain('an image provider must be configured');
+  it.each(['codex','claude','grok','cursor'])('exposes the shared generation fallback for %s', agentId => {
+    const input = {agentId,prompt:'Build an image-led page',history:[],session:{endpoint:'https://site.example/tools',token:'',writable:true,expiresAt:0}};
+    for (const resumed of [false,true]) {
+      const prompt=directSitePrompt(input,false,true,resumed,true,false,[]);
+      expect(prompt).toContain('site-tool.mjs media.generate');
+      expect(prompt).toContain('otherwise Codex native imagegen');
+      expect(prompt).toContain('status:unavailable');
+      expect(prompt).not.toContain('invoke native imagegen immediately');
     }
-    expect(directSitePrompt(input)).not.toContain('Image generation preference:');
-    expect(directSitePrompt({ ...input, agentId: 'claude' }, true)).not.toContain('Image generation preference:');
   });
-
   it('uploads actual generated bytes with descriptive metadata through the site importer', async () => {
     const site = express(); site.use(express.json());
     const calls: any[] = [];

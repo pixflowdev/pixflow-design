@@ -410,9 +410,10 @@ describe('ChatPane streaming state', () => {
       />,
     );
 
-    const bubble = screen.getByText('Generate a simple sign-in page');
-    expect(bubble.classList.contains('user-bubble')).toBe(true);
-    expect(bubble.closest('.msg.user')).not.toBeNull();
+    const text = screen.getByText('Generate a simple sign-in page');
+    const bubble = text.closest('.user-bubble');
+    expect(bubble).not.toBeNull();
+    expect(bubble?.closest('.msg.user')).not.toBeNull();
   });
 
   it('offers a Local CLI recovery action on BYOK error states', () => {

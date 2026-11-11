@@ -884,12 +884,12 @@ describe('direct site agent connection', () => {
 it('CLI uses only the current optional server guidance and preserves off', () => {
  const input = {session:{endpoint:'https://example.test/tools',token:'fixture',writable:true},context:{},history:[],prompt:'Help with this page',enhancedDesignGuidance:true} as any;
  expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
- input.session.designGuidance={revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{'/operation check':'FOCUSED CHECK'}}};
+ input.session.designGuidance={revision:0,source:'existing',product:'',instructions:'',extension:{instructions:'OPTIONAL FOUNDATION',commands:{'/design layout':'FOCUSED LAYOUT','/design critique':'FOCUSED CRITIQUE'}}};
  expect(directSitePrompt(input)).toContain('OPTIONAL FOUNDATION');
  input.enhancedDesignGuidance=false;
  expect(directSitePrompt(input)).not.toContain('OPTIONAL FOUNDATION');
- input.prompt='/operation check this';
- expect(directSitePrompt(input)).toContain('FOCUSED CHECK');
+ input.prompt='Improve the footer using /design layout and /design critique';
+ expect(directSitePrompt(input)).toContain('OPTIONAL FOUNDATION\nFOCUSED LAYOUT\nFOCUSED CRITIQUE');
  delete input.session.designGuidance;
- expect(directSitePrompt(input)).not.toContain('FOCUSED CHECK');
+ expect(directSitePrompt(input)).not.toContain('FOCUSED LAYOUT');
 });

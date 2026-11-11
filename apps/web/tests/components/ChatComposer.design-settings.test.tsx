@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ChatComposer } from '../../src/components/ChatComposer';
 import { composerText, typeAndSettle, pressEnter, getComposerEditor } from '../helpers/lexical-composer';
-import { $getRoot } from 'lexical';
+import { $getRoot, $isRangeSelection } from 'lexical';
 vi.mock('../../src/pixflow/feature-runtime',async importOriginal=>({...await importOriginal<typeof import('../../src/pixflow/feature-runtime')>(),pixflowFeatureConfiguration:()=>({operations:['audit','critique','polish','typeset','layout','colorize','clarify','harden','adapt','optimize']}), usePixflowFeatureAsset:()=>({}),pixflowFeatureEnabled:()=>true}));
 vi.mock('../../src/pixflow/planning-availability',()=>({planningAvailable:()=>true}));
 vi.mock('../../src/pixflow/composer-guidance-references',()=>({loadComposerGuidanceReferences:async()=>[
@@ -44,6 +44,28 @@ it.each(['audit','critique','polish','typeset','layout','colorize','clarify','ha
  history.replaceState(null,'','/?pixflowWpVersion=2.0.3');const send=vi.fn(),open=vi.fn();
  render(<ChatComposer projectId="p" projectFiles={[]} streaming={false} onEnsureProject={async()=> 'p'} onSend={send} onStop={()=>{}} onOpenSettings={open}/>);
  await typeAndSettle('/design');
- fireEvent.click(await screen.findByRole('option',{name:new RegExp('/design '+operation)}));
- expect(send).not.toHaveBeenCalled();expect(open).not.toHaveBeenCalled();expect(composerText()).toContain('/design '+operation);
+ fireEvent.click(await screen.findByRole('option',{name:new RegExp('^Design '+operation, 'i')}));
+ expect(send).not.toHaveBeenCalled();expect(open).not.toHaveBeenCalled();
+ expect(document.querySelector('.composer-inline-mention--skill')?.textContent).toBe('Design '+operation[0]!.toUpperCase()+operation.slice(1));
+});
+
+it('sends inline design skill tokens verbatim, including restored draft commands', async () => {
+ history.replaceState(null,'','/?pixflowWpVersion=2.0.3');
+ const send=vi.fn();
+ render(<ChatComposer projectId="p" projectFiles={[]} streaming={false} onEnsureProject={async()=> 'p'} onSend={send} onStop={()=>{}} initialDraft="Improve the footer using /design layout and " />);
+ await waitFor(() => expect(document.querySelector('.composer-inline-mention--skill')?.textContent).toBe('Design Layout'));
+ act(() => getComposerEditor().update(() => {
+   const selection = $getRoot().selectEnd();
+   if ($isRangeSelection(selection)) selection.insertText('/design');
+ }, { discrete: true }));
+ const critique = await screen.findByRole('option', { name: /^Design Critique/ });
+ expect(critique.closest('[role="listbox"]')?.textContent).toContain('Skills');
+ expect(critique.querySelector('.tabler-icon-packages')).not.toBeNull();
+ fireEvent.click(critique);
+ expect(Array.from(document.querySelectorAll('.composer-inline-mention--skill'), node => node.textContent))
+   .toEqual(['Design Layout', 'Design Critique']);
+ expect(composerText().trim()).toBe('Improve the footer using Design Layout and Design Critique');
+ fireEvent.click(screen.getByTestId('chat-send'));
+ await waitFor(() => expect(send).toHaveBeenCalledOnce());
+ expect(send.mock.calls[0]?.[0]).toBe('Improve the footer using /design layout and /design critique');
 });

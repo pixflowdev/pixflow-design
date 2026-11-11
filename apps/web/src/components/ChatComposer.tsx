@@ -1,7 +1,7 @@
 'use client';
 
 import { InputGroup, InputGroupAddon, InputGroupButton } from './chat/InputGroup';
-import { designCommandDescriptions } from '../pixflow/design-command-descriptions';
+import { designCommandDescriptions, designCommandDisplayLabel } from '../pixflow/design-command-descriptions';
 import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 
 import { TranslatedText } from '../i18n/TranslatedText';
@@ -153,6 +153,7 @@ interface SlashCommand {
   descKey?: keyof Dict;
   descText?: string;
   skill?: SkillSummary;
+  designSkill?: InlineMentionEntity & { token: string };
   // Optional argument hint shown after the description.
   argHint?: string;
   // Icon glyph from the project Icon set.
@@ -825,9 +826,21 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       () => DESIGN_TOOLBOX_ACTIONS,
       [],
     );
+    const featureRevision = usePixflowFeatureRuntime();
+    const designSkills = useMemo(() => {
+      if (!pixflowContextPicker || !planningAvailable()) return [];
+      const operations = (pixflowFeatureConfiguration('planning')?.operations ?? []) as string[];
+      return operations.map((operation) => {
+        const token = `/design ${operation}`;
+        return {
+          entity: { id: `design-${operation}`, kind: 'skill' as const, label: designCommandDisplayLabel(token) ?? token.slice(1), token },
+          description: designCommandDescriptions[operation],
+        };
+      });
+    }, [featureRevision, pixflowContextPicker]);
     const composerMentionEntities = useMemo(
       () =>
-        buildComposerMentionEntities({
+        [...designSkills.map(({ entity }) => entity), ...buildComposerMentionEntities({
           connectors,
           files: projectFiles,
           mcpServers: [...enabledMcpServers, ...stagedMcpServers.filter(server => !enabledMcpServers.some(enabled => enabled.id === server.id))],
@@ -835,8 +848,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           skills,
           staged,
           workspaceContexts,
-        }),
-      [connectors, enabledMcpServers, stagedMcpServers, pluginsForComposer, projectFiles, skills, staged, workspaceContexts],
+        })],
+      [designSkills, connectors, enabledMcpServers, stagedMcpServers, pluginsForComposer, projectFiles, skills, staged, workspaceContexts],
     );
     // Resolve which tabs to surface in the consolidated tools popover.
     // Plugins is always visible while a project is active so users can
@@ -846,12 +859,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // value is what we drop into the draft when the user picks the
     // entry â€” usually the canonical command form with a trailing space
     // ready for an argument.
-    const featureRevision = usePixflowFeatureRuntime();
     const slashCommands = useMemo<SlashCommand[]>(() => {
       const list: SlashCommand[] = [];
-      if (pixflowContextPicker && planningAvailable()) for (const operation of (pixflowFeatureConfiguration('planning')?.operations ?? []) as string[]) {
-        list.push({ id: `design-${operation}`, label: `/design ${operation}`, insert: `/design ${operation} `, descKey: designCommandDescriptions[operation], icon: 'sparkles' });
-      }
       if (onOpenSettings && planningAvailable()) list.push({ id: 'design-settings', label: '/design-settings', insert: '', descKey: 'guidance.title', icon: 'sliders' });
       if (onOpenBuilderHandoff) {
         list.push({id:'handoff',label:'/handoff',insert:'/handoff ',descKey:'builderDestination.handoffToBuilder',icon:'sparkles',argHint:''});
@@ -890,6 +899,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           argHint: t('pet.slashSearchArg'),
         });
       }
+      for (const { entity, description } of designSkills) {
+        list.push({ id: entity.id, label: entity.label, argHint: entity.token, insert: '', descKey: description, designSkill: entity, icon: 'sparkles' });
+      }
       // Pixflow-owned: Bricks Agent passes Pixflow MCP skills as normal
       // composer skills. Expose their server-defined slash triggers here so
       // `/dynamic-data` stages the same skill id as `@Dynamic Data`.
@@ -913,7 +925,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         list.push({id: `locked-skill-${skill.id}`, label: localizeSkillName(locale, skill), descText: localizeSkillDescription(locale, skill), argHint: `/${skill.id}`, insert: '', icon: 'sparkles', requiresPro: true});
       }
       return list;
-    }, [featureRevision, researchAvailable, t, enabledMcpServers, onOpenSettings, onOpenMcpSettings, onOpenBuilderHandoff, skills, lockedSkills, locale, pixflowContextPicker]);
+    }, [featureRevision, designSkills, researchAvailable, t, enabledMcpServers, onOpenSettings, onOpenMcpSettings, onOpenBuilderHandoff, skills, lockedSkills, locale, pixflowContextPicker]);
 
     const filteredSlash = useMemo(() => {
       if (!slash) return [] as SlashCommand[];
@@ -933,13 +945,14 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         onOpenBuilderHandoff();
         return;
       }
-      if (cmd.skill) {
-        stageSkillForCurrentTurn(cmd.skill);
+      const skill = cmd.skill;
+      const entity = cmd.designSkill ?? (skill && {
+        id: skill.id, kind: 'skill' as const, label: skill.name, token: inlineMentionToken(skill.name),
+      });
+      if (entity) {
+        if (skill) stageSkillForCurrentTurn(skill);
         editorRef.current?.replaceActiveTrigger('');
-        editorRef.current?.insertMention({
-          token: inlineMentionToken(cmd.skill.name),
-          entity: { id: cmd.skill.id, kind: 'skill', label: cmd.skill.name },
-        });
+        editorRef.current?.insertMention({ token: entity.token, entity });
         editorRef.current?.focus();
         setSlash(null);
         return;
@@ -4764,6 +4777,7 @@ function SlashPopover({
   t: TranslateFn;
 }) {
   const translateUi = usePixflowUiTranslation();
+  const isSkill = (item: SlashCommand) => Boolean(item.skill || item.designSkill || item.requiresPro);
   const listRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { listRef.current?.querySelector(`[aria-selected="true"]`)?.scrollIntoView?.({block:"nearest"}); }, [activeIndex]);
   return (
@@ -4778,9 +4792,10 @@ function SlashPopover({
       {!commands.length && <div className="mention-empty">{t('chat.pickerEmpty')}</div>}
       {commands.map((cmd, idx) => {
         const active = idx === activeIndex;
+        const skill = isSkill(cmd);
         return (
           <Fragment key={cmd.id}>
-          {(idx === 0 || Boolean(commands[idx - 1]?.skill || commands[idx - 1]?.requiresPro) !== Boolean(cmd.skill || cmd.requiresPro)) && <div className={pickerStyles.group}>{cmd.skill || cmd.requiresPro ? t('chat.mentionSectionSkills') : t('pet.slashPopoverAria')}</div>}
+          {(idx === 0 || isSkill(commands[idx - 1]!) !== skill) && <div className={pickerStyles.group}>{skill ? t('chat.mentionSectionSkills') : t('pet.slashPopoverAria')}</div>}
           <button
             id={`slash-opt-${idx}`}
             aria-label={[cmd.label, cmd.descText || (cmd.descKey ? t(cmd.descKey) : cmd.argHint), cmd.skill ? t(cmd.skill.source === 'official-library' ? 'skillLibrary.title' : cmd.skill.source === 'user' ? 'chat.skillPersonal' : 'chat.skillBuiltIn') : ''].filter(Boolean).join(' ')}
@@ -4799,7 +4814,7 @@ function SlashPopover({
             onClick={() => onPick(cmd)}
           >
             <span className="slash-item-icon" aria-hidden>
-              {cmd.skill || cmd.requiresPro ? <IconPackages size={16} stroke={1.65} /> : <Icon name={cmd.icon} size={16} />}
+              {skill ? <IconPackages size={16} stroke={1.65} /> : <Icon name={cmd.icon} size={16} />}
             </span>
             <span className="slash-item-body">
               <span className="slash-item-label">{cmd.label}</span>

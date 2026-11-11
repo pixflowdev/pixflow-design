@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Show Design Layout, Design Critique and the other design operations under Skills with the shared package icon. Apply every selected design operation, even when it appears within a longer prompt.
+
 - Use the same pinned chats, projects, recent chats and actions in Workspace and the floating panel, with changes and ordering synced between open views.
 - Keep the last floating-panel chat when reloading or moving between editors in the same browser tab; start empty in a new session without losing saved conversations.
 - Fade long chat and project names and smoothly reveal them on hover. Recover older automatically shortened chat titles without changing custom names or saved messages.

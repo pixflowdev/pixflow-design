@@ -138,3 +138,22 @@ it('restores Back navigation while a dirty editor waits, then resumes after savi
   expect(window.location.pathname).toBe('/media');expect(screen.getByTestId('route-label').textContent).toBe('media');
  }finally{window.removeEventListener('pixflow-design:workspace-navigation-request',guard);cleanup();}
 });
+
+it('shares Bricks routes between separately loaded module bundles', async () => {
+  (window as any).pixflowDesignShell = { runtime: 'wordpress', version: 'test' };
+  window.history.replaceState(null, '', '/builder/?bricks=run');
+  render(<RouteLabel />);
+  try {
+    vi.resetModules();
+    const separateRouter = await import('../src/router');
+    separateRouter.navigate({ kind: 'home', view: 'seo-audit' });
+    await flushMicrotasks();
+    expect(screen.getByTestId('route-label').textContent).toBe('seo-audit');
+    expect(window.location.search).toBe('?bricks=run');
+    expect(window.location.hash).toBe('');
+  } finally {
+    cleanup();
+    delete (window as any).pixflowDesignShell;
+    delete (window as any).__pixflowEmbeddedRoutePath;
+  }
+});

@@ -141,7 +141,8 @@ export function buildPath(route: Route): string {
 }
 
 const EMBEDDED_ROUTE_CHANGE_EVENT = 'pixflow-design:embedded-route-change';
-let embeddedRoutePath: string | null = null;
+// Share the embedded route across independently built Core and Pro modules.
+type EmbeddedRouteWindow = Window & { __pixflowEmbeddedRoutePath?: string };
 const ROUTE_HISTORY_INDEX = 'pixflowRouteIndex';
 let acceptedHistory: { href: string; path: string; index: number } | null = null;
 let restoringHistory = false;
@@ -207,8 +208,8 @@ function readWordPressHashRoute(): string | null {
 }
 
 function readActiveRoutePath(): string {
-  if (isBricksBuilderRouteRuntime() && embeddedRoutePath !== null) {
-    return embeddedRoutePath;
+  if (isBricksBuilderRouteRuntime() && (window as EmbeddedRouteWindow).__pixflowEmbeddedRoutePath != null) {
+    return (window as EmbeddedRouteWindow).__pixflowEmbeddedRoutePath!;
   }
   return readWordPressHashRoute() ?? window.location.pathname;
 }
@@ -251,7 +252,7 @@ function commitNavigation(targetPath: string, opts: { replace?: boolean }): void
   // by remounting the entire builder. Keep Pixflow workspace navigation in
   // memory in this embedded runtime so switching tabs never reloads the canvas.
   if (isBricksBuilderRouteRuntime()) {
-    embeddedRoutePath = targetPath;
+    (window as EmbeddedRouteWindow).__pixflowEmbeddedRoutePath = targetPath;
     queueMicrotask(() => {
       window.dispatchEvent(new Event(EMBEDDED_ROUTE_CHANGE_EVENT));
     });

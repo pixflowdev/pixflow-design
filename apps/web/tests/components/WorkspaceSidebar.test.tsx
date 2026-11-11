@@ -51,6 +51,7 @@ describe('WorkspaceSidebar organization and content preservation', () => {
   const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'close');
   const originalElementFromPoint = Object.getOwnPropertyDescriptor(document, 'elementFromPoint');
   beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} unobserve() {} });
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); } });
     Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function (this: HTMLDialogElement) { this.removeAttribute('open'); } });
   });
@@ -62,6 +63,20 @@ describe('WorkspaceSidebar organization and content preservation', () => {
       if (descriptor) Object.defineProperty(HTMLDialogElement.prototype, name, descriptor);
       else Reflect.deleteProperty(HTMLDialogElement.prototype, name);
     }
+  });
+
+  it('uses the same sections, row order and styles in the floating library without collapsing with the workspace', () => {
+    const organization = initial(); organization.chats['chat-b'] = { pinned: true, projectId: null };
+    const view = setup({ organization });
+    const before = [...view.container.querySelectorAll('[data-chat-id]')].map(row => [row.getAttribute('data-chat-id'), row.className]);
+    view.update({ chatOnly: true, organization: { ...organization, sidebarCollapsed: true } });
+    expect([...view.container.querySelectorAll('[data-chat-id]')].map(row => [row.getAttribute('data-chat-id'), row.className])).toEqual(before);
+    expect(screen.getByRole('region', { name: 'Pinned' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Projects' })).toBeTruthy();
+    expect(screen.getByRole('complementary').hasAttribute('inert')).toBe(false);
+    expect(screen.queryByRole('navigation')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Florist landing' }));
+    expect(view.props.onOpenChat).toHaveBeenCalledWith('chat-c');
   });
 
   it('shows existing chats under their group or Chats with the active chat marked and usable', () => {

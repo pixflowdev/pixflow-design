@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import { forgetLastActiveChat, rememberLastActiveChat, restoreLastActiveChat } from './last-active-chat';
+import { useEffect, useState } from 'react';
+import { rememberLastActiveChat, restoreLastActiveChat } from './last-active-chat';
 import { directTabStorageKey } from './direct-tab-storage';
 import { mergeChatHistory, resolveChatHistory, type HistoryMessage } from './chat-history-client';
 import type { AppConfig } from '../types';
 import { conversationBinding, conversationSessionKey } from './conversation-address';
 import type { PixflowChatHistoryBinding } from '@open-design/contracts';
+import { randomUUID } from '../utils/uuid';
 
 const executionKey = () => directTabStorageKey('pixflow:floating-execution:v1');
 /** Only execution choices cross documents. Credentials, CLI environment and personal data never do. */
@@ -100,66 +101,50 @@ export function rememberFloatingConversation(historyKey: string, surface: string
   try { sessionStorage.setItem(referenceKey(), JSON.stringify({historyKey, surface, runKey})); } catch { /* Durable history remains the source of truth. */ }
 }
 
-/** Adopt once on document mount. A native New chat selection still starts its own chat. */
+function initialPanelSelection(owner: string, surface: string) {
+  const address = ordinary(surface) ? readFloatingConversation() : null;
+  // A fresh tab must never resolve an older editor's default conversation.
+  const emptyKey = ordinary(surface) && !address ? `pixflow-panel:${randomUUID()}` : null;
+  return { owner, address, emptyKey };
+}
+
+/** Native editor initialization must never replace the session's selected chat. */
 export function useFloatingConversation(historyKey: string, surface: string, busy = false) {
-  const [selection, setSelection] = useState(() => ({source: historyKey, address: ordinary(surface) ? readFloatingConversation() : null, changed: false}));
-  const [restoring, setRestoring] = useState(() => ordinary(surface) && !readFloatingConversation());
-  const restoreGeneration = useRef(0);
+  const owner = referenceKey();
+  const [selection, setSelection] = useState(() => initialPanelSelection(owner, surface));
   const [requested, setRequested] = useState<SelectionRequest | null>(null);
-  useEffect(() => {
-    if (!restoring) return;
-    const generation = restoreGeneration.current;
-    let cancelled = false;
-    void restoreLastActiveChat().then(binding => {
-      if (cancelled || generation !== restoreGeneration.current) return;
-      if (binding) {
-        const restoredKey = conversationSessionKey(binding);
-        const address = { historyKey: restoredKey, surface, runKey: `${legacyRunKey(surface).replace(/:post:\d+$/, '')}:conversation:${encodeURIComponent(restoredKey)}` };
-        try { sessionStorage.setItem(referenceKey(), JSON.stringify(address)); } catch { /* Mounted state still works. */ }
-        setSelection({ source: historyKey, address, changed: false });
-      }
-      setRestoring(false);
-    });
-    return () => { cancelled = true; };
-  }, [restoring, historyKey, surface]);
   useEffect(() => {
     if (!selectable(surface)) return;
     const select = (event: Event) => {
       const request = (event as CustomEvent<SelectionRequest>).detail;
-      if (request?.owner === referenceKey() && conversationBinding(request.historyKey) && !request.signal?.aborted) {
-        restoreGeneration.current += 1; setRestoring(false);
-        request.accepted?.(); setRequested(request);
+      if (request?.owner === owner && conversationBinding(request.historyKey) && !request.signal?.aborted) {
+        request.accepted?.();
+        setRequested(request);
       }
     };
     window.addEventListener(selectionEvent, select);
     return () => window.removeEventListener(selectionEvent, select);
-  }, [surface]);
+  }, [owner, surface]);
   useEffect(() => {
     if (!requested || busy) return;
-    if (requested.owner !== referenceKey() || requested.signal?.aborted) { setRequested(null); return; }
+    if (requested.owner !== owner || requested.signal?.aborted) { setRequested(null); return; }
     const selectedSurface = ordinarySurface(surface);
     const address = { historyKey: requested.historyKey, surface: selectedSurface, runKey: `${legacyRunKey(selectedSurface).replace(/:post:\d+$/, '')}:conversation:${encodeURIComponent(requested.historyKey)}` };
-    try { sessionStorage.setItem(referenceKey(), JSON.stringify(address)); } catch { /* The mounted selection remains usable. */ }
-    setSelection({ source: historyKey, address, changed: false });
+    try { sessionStorage.setItem(owner, JSON.stringify(address)); } catch { /* The mounted selection remains usable. */ }
+    setSelection({ owner, address, emptyKey: null });
     rememberLastActiveChat(conversationBinding(requested.historyKey)!);
     requested.completed?.();
     setRequested(null);
-  }, [requested, busy, historyKey, surface]);
-  useEffect(() => {
-    if (selection.changed) {
-      forgetLastActiveChat();
-      rememberFloatingConversation(selection.source, surface);
-    }
-  }, [selection.changed, selection.source, surface]);
-  if (selection.source !== historyKey) {
-    restoreGeneration.current += 1;
-    if (restoring) setRestoring(false);
-    setSelection({source: historyKey, address: null, changed: true});
-    return {historyKey, surface, continuing: false, restoring: false, selectionPending: true};
-  }
-  // Keep composers paused in the render where an active run settles: adopting
-  // the requested chat and draining the old queue must not race in effects.
-  return { ...(selection.address ?? {historyKey, surface}), restoring, selectionPending: !!requested, continuing: !!selection.address && (selection.address.historyKey !== historyKey || selection.address.surface !== surface) };
+  }, [requested, busy, owner, surface]);
+  const current = selection.owner === owner ? selection : initialPanelSelection(owner, surface);
+  if (current !== selection) setSelection(current);
+  // Keep composers paused while a queued selection is waiting for an active run.
+  return {
+    ...(current.address ?? { historyKey: current.emptyKey ?? historyKey, surface }),
+    restoring: false,
+    selectionPending: !!requested,
+    continuing: !!current.address,
+  };
 }
 
 /** Both renderers consume the same recovery receipt without rewriting provider checkpoints. */

@@ -131,3 +131,16 @@ it.each([
   ]}} />);
   expect(ui.container.querySelector(`[data-activity-icon="${icon}"]`)).toBeTruthy();
 });
+
+it('keeps old builder handoff notices out of the transcript without hiding real replies', () => {
+  const ui = render(<SharedChatRows t={key => key} messages={[
+    { id: 'agent-reply', role: 'assistant', content: 'Keep your distance.', agentId: 'codex', runStatus: 'succeeded', endedAt: 20 },
+    { id: 'handoff-notice:1794084595000', role: 'assistant', content: 'The Gutenberg document does not match this page.', runStatus: 'failed' },
+    { id: 'handoff-status:1794084595001', role: 'assistant', content: 'The handoff status could not be saved.' },
+    { id: 'agent-error', role: 'assistant', content: 'The requested edit failed.', agentId: 'codex', runStatus: 'failed', endedAt: 25 },
+  ]} />);
+  expect(ui.getByText('Keep your distance.')).toBeTruthy();
+  expect(ui.getByText('The requested edit failed.')).toBeTruthy();
+  expect(ui.queryByText('The Gutenberg document does not match this page.')).toBeNull();
+  expect(ui.queryByText('The handoff status could not be saved.')).toBeNull();
+});

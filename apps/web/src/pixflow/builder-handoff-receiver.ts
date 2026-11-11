@@ -149,7 +149,7 @@ export function useBuilderHandoffReceiver(options: {
   builder: PixflowBuilderId; enabled: boolean; historyReady: boolean; busy: boolean;
   target(): Promise<PixflowEditorTarget | undefined>;
   start(execution: BuilderHandoffExecution): Promise<boolean> | boolean;
-  notice(message: string): void;
+  notice?(message: string): void;
 }): void {
   // Initial history hydration replaces the transcript. Starting before it ends
   // would let that replacement erase the new handoff's progress messages.
@@ -202,7 +202,7 @@ export function useBuilderHandoffReceiver(options: {
           || currentAddress?.id !== address.id || currentAddress.tabId !== address.tabId) {
           throw new Error('The handoff does not match this editor page and tab. Nothing was started.');
         }
-        if (settleTerminalHandoff(receipt, message => latest.current.notice(message))) {
+        if (settleTerminalHandoff(receipt, message => latest.current.notice?.(message))) {
           attempted.current = true;
           waitingForConnection.current = null;
           return;
@@ -222,13 +222,13 @@ export function useBuilderHandoffReceiver(options: {
         attempted.current = true;
         waitingForConnection.current = null;
         claimed = true;
-        await receiveBuilderHandoff(address, target, execution => cancelled || !latest.current.enabled || latest.current.busy ? false : latest.current.start(execution), message => latest.current.notice(message));
+        await receiveBuilderHandoff(address, target, execution => cancelled || !latest.current.enabled || latest.current.busy ? false : latest.current.start(execution), message => latest.current.notice?.(message));
       } catch (error) { if (!cancelled || claimed) {
         attempted.current = true;
         // Only a failed canvas-resolution attempt is recoverable automatically.
         // Claim/network/start failures remain sticky to prevent duplicate work.
         if (receiptChecked && !claimed && !resolved) waitingForConnection.current = { ...address, page: launchPage };
-        latest.current.notice(receiptChecked && !claimed && !resolved
+        latest.current.notice?.(receiptChecked && !claimed && !resolved
           ? 'The destination editor did not connect yet. Pixflow will continue automatically when this tab connects. No build has started.'
           : error instanceof Error ? error.message : String(error));
       } }

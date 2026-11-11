@@ -67,6 +67,7 @@ $GLOBALS['@pdo'] = $project_test_pdo;
 
 require_once dirname(__DIR__) . '/src/Database/Table.php';
 require_once dirname(__DIR__) . '/src/Projects/ProjectRepository.php';
+require_once dirname(__DIR__) . '/src/Chat/ChatTitle.php';
 
 $repository = new PixflowDesign\WordPress\Projects\ProjectRepository();
 $project = $repository->create([

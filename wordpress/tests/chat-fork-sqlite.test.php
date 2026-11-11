@@ -60,6 +60,7 @@ require __DIR__ . '/../src/Database/Table.php';
 require __DIR__ . '/../src/Chat/HistoryPayload.php';
 require __DIR__ . '/../src/Chat/HistoryStorage.php';
 require __DIR__ . '/../src/Chat/HistoryRepository.php';
+require __DIR__ . '/../src/Chat/ChatTitle.php';
 require __DIR__ . '/../src/Chat/HistoryArchive.php';
 $history = new PixflowDesign\WordPress\Chat\HistoryRepository();
 $checks = 0;

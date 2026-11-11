@@ -8,6 +8,8 @@ function is_wp_error(mixed $value): bool { return $value instanceof WP_Error; }
 function wp_salt(string $scheme): string { return 'isolated-sqlite-export-key'; }
 function get_current_user_id(): int { return 7; }
 function get_current_blog_id(): int { return 1; }
+function sanitize_text_field(string $value): string { return trim(strip_tags($value)); }
+function wp_trim_words(string $value, int $count, string $suffix): string { $words = preg_split('/\s+/', $value); return count($words) > $count ? implode(' ', array_slice($words, 0, $count)) . $suffix : $value; }
 if (!function_exists('mb_substr')) { function mb_substr(string $value, int $start, int $length): string { return substr($value, $start, $length); } }
 final class WP_Error { public function __construct(public string $code, public string $message, public array $data = []) {} }
 
@@ -52,6 +54,7 @@ require __DIR__ . '/../src/Database/Table.php';
 require __DIR__ . '/../src/Chat/HistoryPayload.php';
 require __DIR__ . '/../src/Chat/HistoryStorage.php';
 require __DIR__ . '/../src/Chat/HistoryRepository.php';
+require __DIR__ . '/../src/Chat/ChatTitle.php';
 require __DIR__ . '/../src/Chat/HistoryArchive.php';
 $history = new PixflowDesign\WordPress\Chat\HistoryRepository();
 $checks = 0;
@@ -159,4 +162,13 @@ history_sqlite_check($original !== $corrected, 'Earlier correction invalidates t
 $history->remove('project-1', 'revision-test', 'm-0');
 history_sqlite_check($corrected !== $revision(), 'Earlier deletion invalidates the prefix');
 history_sqlite_check(is_wp_error($history->prefix_revision('project-1', 'revision-test', 'absent')), 'Missing cutoff fails closed');
+$prompt = 'Please redesign the website header with a clearer navigation and accessible colours';
+$oldTitle = wp_trim_words($prompt, 8, '…');
+history_sqlite_check(PixflowDesign\WordPress\Chat\ChatTitle::from_prompt($prompt) === $prompt, 'New automatic title retains more than eight words without ellipsis');
+history_sqlite_check(PixflowDesign\WordPress\Chat\ChatTitle::restore($oldTitle, ['role' => 'user', 'content' => $prompt]) === $prompt, 'Legacy automatic title recovers its prompt');
+history_sqlite_check(PixflowDesign\WordPress\Chat\ChatTitle::restore('My custom title…', ['role' => 'user', 'content' => $prompt]) === 'My custom title…', 'Custom title punctuation is preserved');
+$history->migrate(['uuid' => 'project-1', 'title' => $oldTitle, 'metadata' => ['odState' => ['messages' => ['title-test' => [['id' => 'title-prompt', 'role' => 'user', 'content' => $prompt]]]]]], 'title-test');
+$rows = PixflowDesign\WordPress\Chat\ChatTitle::restore_project_rows([['uuid' => 'project-1', 'title' => $oldTitle]]);
+history_sqlite_check($rows[0]['title'] === $prompt, 'Batched list restores legacy title from durable history');
+history_sqlite_check($history->conversation('project-1', 'title-test')['title'] === $oldTitle, 'Read projection leaves saved history untouched');
 echo "chat-history-sqlite: {$checks} checks passed\n";

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Use the same pinned chats, projects, recent chats and actions in Workspace and the floating panel, with changes and ordering synced between open views.
+- Keep the last floating-panel chat when reloading or moving between editors in the same browser tab; start empty in a new session without losing saved conversations.
+- Fade long chat and project names and smoothly reveal them on hover. Recover older automatically shortened chat titles without changing custom names or saved messages.
+- Prevent internal builder handoff notices from appearing as failed assistant replies when continuing a conversation in another editor; keep editor-target checks in place.
+
 - Preserve existing resource files on restricted WordPress hosts with verified encrypted storage when a new private directory cannot be created.
 
 - Recover renewed licences without re-entering a saved key. Preserve credentials during temporary failures, reject invalid proofs, and prevent delayed validation from undoing a reset or newer activation.

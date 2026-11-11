@@ -1,0 +1,16 @@
+.title { --title-left-fade:.571429em; --title-right-fade:1.14286em; --title-direction:-1; --title-mask-direction:to right; display:block; flex:1; min-width:0; width:100%; white-space:nowrap; }
+.title:dir(rtl) { --title-direction:1; --title-mask-direction:to left; }
+.clip { display:block; width:calc(100% + var(--title-left-fade)); margin-inline-start:calc(-1 * var(--title-left-fade)); overflow:hidden; }
+.track { display:inline-flex; min-width:max-content; padding-inline-start:var(--title-left-fade); }
+.content { display:inline-block; min-width:max-content; }
+.title[data-overflow=true] .clip { mask-image:linear-gradient(var(--title-mask-direction), transparent, #000 var(--title-left-fade), #000 calc(100% - var(--title-right-fade)), transparent); mask-size:100% 100%; mask-repeat:no-repeat; }
+.title:dir(rtl) .clip { mask-position:100% 0; }
+:global(:is([data-chat-id],[data-title-row]):is(:hover,:focus-within)) .title[data-overflow=true] .track { animation:reveal var(--title-duration) var(--title-timing) forwards; will-change:transform; }
+:global(:is([data-chat-id],[data-title-row]):is(:hover,:focus-within)) .title[data-overflow=true] .clip { animation:revealEnd var(--title-duration) linear forwards; }
+@keyframes reveal { to { transform:translateX(calc(var(--title-direction) * var(--title-distance))); } }
+@keyframes revealEnd { 75% { mask-size:100% 100%; } to { mask-size:calc(100% + var(--title-right-fade)) 100%; } }
+@media(prefers-reduced-motion:reduce) {
+  :global(:is([data-chat-id],[data-title-row]):is(:hover,:focus-within)) .title[data-overflow=true] :is(.track,.clip) { animation:none; will-change:auto; }
+  :global(:is([data-chat-id],[data-title-row]):is(:hover,:focus-within)) .title .clip { mask-image:none; width:100%; margin:0; }
+  :global(:is([data-chat-id],[data-title-row]):is(:hover,:focus-within)) .title :is(.track,.content) { display:block; min-width:0; padding:0; white-space:normal; overflow-wrap:anywhere; }
+}

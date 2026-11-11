@@ -62,7 +62,7 @@ import {
   type SharedChatSendMeta,
 } from '../components/shared-chat/SharedChatComposer';
 import { SharedComposerDock } from '../components/shared-chat/SharedComposerDock';
-import { SharedChatRows, type SharedChatAgentIdentity, type SharedChatInputMessage } from '../components/shared-chat/SharedChatRows';
+import { isLegacyBuilderHandoffNotice, SharedChatRows, type SharedChatAgentIdentity, type SharedChatInputMessage } from '../components/shared-chat/SharedChatRows';
 import { SharedMessageStream } from '../components/shared-chat/SharedMessageStream';
 import { FloatingChatEmpty } from '../components/shared-chat/FloatingChatEmpty';
 import { useFloatingChatScroll } from '../components/shared-chat/use-floating-chat-scroll';
@@ -3255,7 +3255,11 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       || siteAccess.guarded || siteAccess.error || contextStatus !== 'ready'
       || !canPrepare || hydratedSessionKey !== sessionKey || pendingDirectSiteRun(persistenceSurface)) return;
     const controller = new AbortController();
-    const target = resolveEditorRunTarget({ context: withGutenbergTarget(applyBuilderContext(contextRef.current)) }, controller.signal);
+    // Gutenberg may expose its editor before the document store is ready.
+    // A failed background preparation must leave the panel available for Send.
+    const target = Promise.resolve().then(() => resolveEditorRunTarget({
+      context: withGutenbergTarget(applyBuilderContext(contextRef.current)),
+    }, controller.signal));
     const binding = preparationProject && preparationChat && preparationCutoff
       ? { projectId: preparationProject, conversationId: preparationChat, throughMessageId: preparationCutoff } : undefined;
     const prep = preparePanelSession(target, binding);
@@ -3283,7 +3287,8 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   directSessionKeyRef.current = sessionKey;
   const reattachedDirectRunRef = useRef('');
   const lastHydratedSessionKeyRef = useRef<string | null>(null);
-  const chatScroll = useFloatingChatScroll(logRef, tailSpacerRef, sessionKey, durableHistory.messages, streaming);
+  const visibleMessages = useMemo(() => durableHistory.messages.filter(message => !isLegacyBuilderHandoffNotice(message)), [durableHistory.messages]);
+  const chatScroll = useFloatingChatScroll(logRef, tailSpacerRef, sessionKey, visibleMessages, streaming);
   const contextUrl = runtime.contextUrl || '';
   const abortRef = useRef<AbortController | null>(null);
   const [workspaceStops,setWorkspaceStops]=useState<Array<() => void>>([]);
@@ -3528,7 +3533,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       },
     })).then(async outcome=>{
       if(directSessionKeyRef.current===owner)setMessages(current=>current.map(message=>message.id===metadata.messageId?{...message,status:'complete',runStatus:'succeeded',awaitingInput:outcome==='awaiting_input',endedAt:terminalAt ?? Date.now()}:message));
-      if (metadata.handoff) await finishBuilderHandoffReceipt(metadata.handoff, undefined, outcome === 'awaiting_input').catch(error => setMessages(current => [...current, { id: `handoff-status:${Date.now()}`, role: 'assistant', content: error instanceof Error ? error.message : String(error), createdAt: Date.now() }]));
+      if (metadata.handoff) await finishBuilderHandoffReceipt(metadata.handoff, undefined, outcome === 'awaiting_input').catch(() => undefined);
     }).catch(async error=>{
       if(directSessionKeyRef.current!==owner)return;
       const status=controller.signal.aborted?'canceled':directRunStatus(error);
@@ -4722,12 +4727,11 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       await sendPrompt(handoff.receipt.brief, builderHandoffAttachments(handoff.receipt), [], undefined, handoff);
       return true;
     },
-    notice: content => setMessages(current => [...current, { id: `handoff-notice:${Date.now()}`, role: 'assistant', content, createdAt: Date.now(), status: 'error', runStatus: 'failed' }]),
   });
 
   const pendingQuestion = latestQuestionRequest(messages);
   const activeQuestion = pendingQuestion && (directQuestion?.messageId === pendingQuestion.messageId ? directQuestion : pendingQuestion);
-  const streamLoading = streaming && !messages.some((message) => message.role === 'assistant');
+  const streamLoading = streaming && !visibleMessages.some(message => message.role === 'assistant');
 
   return (
     <PixflowAgentSurfaceShell
@@ -4741,12 +4745,12 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         loading={streamLoading && !continuing && !navigationReconnecting}
         chatLogScrollable={chatScroll.scrollable}
         chatLogScrolling={chatScroll.scrolling}
-        emptyState={!streamLoading && !streaming && !durableHistory.loading && !durableHistory.error && !durableHistory.messages.length ? <FloatingChatEmpty/> : null}
+        emptyState={durableHistory.ready && !streamLoading && !streaming && !durableHistory.loading && !durableHistory.error && !visibleMessages.length ? <FloatingChatEmpty/> : null}
         rows={(
           <>
           <ChatHistoryControls {...durableHistory} />
           <SharedChatRows
-            messages={durableHistory.messages}
+            messages={visibleMessages}
             projectId={outputProjectId}
             projectFiles={outputFiles}
             projectFileNames={outputFileNames}
@@ -4801,7 +4805,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
             <SharedChatComposer
                     mcpProvider={config.mode !== 'api' ? selectedAdminAgent(config, agents)?.id ?? null : null}
                     queueStorageKey={composerStorageKey('pixflow:composer-queue:admin:' + sessionKey)}
-                    queueOutcome={[...messages].reverse().find(message => message.role === 'assistant')?.runStatus}
+                    queueOutcome={[...messages].reverse().find(message => message.role === 'assistant' && !isLegacyBuilderHandoffNotice(message))?.runStatus}
                     acceptedSteeringIds={acceptedSteeringMessageIds(durableHistory.messages)}
                     onSteer={config.mode !== 'api' && ['codex', 'opencode'].includes(selectedAdminAgent(config, agents)?.id ?? '') ? item => steerDirectSite(persistenceSurface, item, readPanelDiscussion(item.prompt)) : undefined}
                   codexVoiceEnabled={siteAccess.ready && !siteAccess.error && config.mode !== 'api' && selectedAdminAgent(config, agents)?.id === 'codex'}

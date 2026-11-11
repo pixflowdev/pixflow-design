@@ -107,15 +107,15 @@ describe('floating conversation navigation', () => {
   });
 });
 
-it('adopts on mount but respects New chat and explicit builder handoffs', async () => {
+it('keeps the session chat during native initialization and respects explicit builder handoffs', async () => {
   const {renderHook,act,cleanup}=await import('@testing-library/react');
   const {useFloatingConversation}=await import('../../src/pixflow/floating-conversation');
   rememberFloatingConversation('bricks:original','bricks');
   const hook=renderHook(({key,surface})=>useFloatingConversation(key,surface),{initialProps:{key:'admin:default',surface:'admin'}});
   expect(hook.result.current.historyKey).toBe('bricks:original');
   act(()=>hook.rerender({key:'admin:new',surface:'admin'}));
-  expect(hook.result.current.historyKey).toBe('admin:new');
-  expect(readFloatingConversation()?.historyKey).toBe('admin:new');
+  expect(hook.result.current.historyKey).toBe('bricks:original');
+  expect(readFloatingConversation()?.historyKey).toBe('bricks:original');
   hook.unmount();
   const handoff=renderHook(()=>useFloatingConversation('handoff:own','admin-handoff:receipt:tab'));
   expect(handoff.result.current.historyKey).toBe('handoff:own');
@@ -125,6 +125,7 @@ it('adopts on mount but respects New chat and explicit builder handoffs', async 
 it('cancels a waiting selection without changing history when its picker closes', async () => {
   const {renderHook, act, cleanup} = await import('@testing-library/react');
   const hook = renderHook(({busy}) => useFloatingConversation('admin:original', 'admin', busy), {initialProps:{busy:true}});
+  const originalKey = hook.result.current.historyKey;
   const controller = new AbortController();
   let selection!: Promise<void>;
   act(() => { selection = selectFloatingConversation({projectId:'12345678-1234-1234-1234-123456789abc',conversationId:'other'}, {signal:controller.signal}); });
@@ -132,7 +133,7 @@ it('cancels a waiting selection without changing history when its picker closes'
   act(() => controller.abort());
   await rejected;
   hook.rerender({busy:false});
-  expect(hook.result.current.historyKey).toBe('admin:original');
+  expect(hook.result.current.historyKey).toBe(originalKey);
   cleanup();
 });
 

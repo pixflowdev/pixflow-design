@@ -1,3 +1,6 @@
+import { ChatTitle } from './ChatTitle';
+import { createPortal } from 'react-dom';
+import { workspacePortalTarget } from './workspacePortalTarget';
 import { NavigationTooltip } from './NavigationTooltip';
 import { LanguageUpdateIcon } from './LanguageUpdateDot';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -12,6 +15,8 @@ import { isWorkspaceDisclosureAction } from '../state/workspace-organization';
 import styles from './WorkspaceSidebar.module.css';
 
 export interface WorkspaceSidebarProps {
+  /** Reuse the exact chat library inside a floating drawer without the workspace rail. */
+  chatOnly?: boolean;
   chats: Project[];
   activeChatId: string | null;
   pendingProjectId?: string | null;
@@ -37,7 +42,7 @@ type MenuTarget = { kind: 'chat'; item: Project } | { kind: 'project'; item: Wor
 type Editor = { kind: 'create' } | { kind: 'rename' | 'remove'; target: MenuTarget };
 
 /** The sidebar changes organization only. Existing chat IDs, files and conversation routes stay intact. */
-export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, activeView, helpControl, connectionControl, additionalDestinations, onClose, organization, loading, error, onRetry, onMutate, onOpenChat, onRenameChat, onNewChat, onNavigate, onSettings, children }: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ chatOnly = false, chats, activeChatId, pendingProjectId, activeView, helpControl, connectionControl, additionalDestinations, onClose, organization, loading, error, onRetry, onMutate, onOpenChat, onRenameChat, onNewChat, onNavigate, onSettings, children }: WorkspaceSidebarProps) {
   const t = useT();
   const [query, setQuery] = useState('');
   const [menu, setMenu] = useState<{ target: MenuTarget; top: number; left: number } | null>(null);
@@ -57,7 +62,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
   const dialogRef = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const titleId = useId();
-  const collapsed = organization.sidebarCollapsed;
+  const collapsed = !chatOnly && organization.sidebarCollapsed;
   // Tool pages use the navigation rail, but do not own chat organization controls.
   const chatPanelVisible = !['media', 'sitemap', 'design-systems', 'translations', 'seo-audit', 'blog-studio'].includes(activeView ?? '');
   useEffect(() => {
@@ -168,17 +173,17 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       }} onPointerCancel={clearDrag}
       onClickCapture={event => { if (suppressDragClick.current) { event.preventDefault(); event.stopPropagation(); } }}
 >
-      <NavigationTooltip label={chat.name}><Button variant="ghost" className={styles.rowMain} draggable={false} onClick={() => onOpenChat(chat.id)} aria-current={activeChatId === chat.id ? 'page' : undefined}><span>{chat.name}</span></Button></NavigationTooltip>
+      <Button variant="ghost" className={styles.rowMain} draggable={false} onClick={() => onOpenChat(chat.id)} aria-current={activeChatId === chat.id ? 'page' : undefined}><ChatTitle>{chat.name}</ChatTitle></Button>
       {actions({ kind: 'chat', item: chat })}
     </div>;
   }
   function groupRow(group: WorkspaceProjectGroup) {
     const members = sorted.filter(chat => organization.chats[chat.id]?.projectId === group.id && !organization.chats[chat.id]?.pinned);
     return <div key={group.id} className={styles.group} data-project-id={group.id} data-drop-target={dropTarget === `project:${group.id}`}>
-      <div className={styles.row}>
-        <NavigationTooltip label={group.name}><Button variant="ghost" className={styles.rowMain} aria-expanded={!group.collapsed} onClick={() => void perform({ type: 'collapse-project', id: group.id, collapsed: !group.collapsed })}>
-          <span className={styles.folderIcon} aria-hidden="true"><IconFolder size={16} stroke={1.6} /><IconChevronDown size={14} stroke={1.6} className={styles.chevron} data-closed={group.collapsed} /></span><span>{group.name}</span>
-        </Button></NavigationTooltip>{actions({ kind: 'project', item: group })}
+      <div className={styles.row} data-title-row>
+        <Button variant="ghost" className={styles.rowMain} aria-expanded={!group.collapsed} onClick={() => void perform({ type: 'collapse-project', id: group.id, collapsed: !group.collapsed })}>
+          <span className={styles.folderIcon} aria-hidden="true"><IconFolder size={16} stroke={1.6} /><IconChevronDown size={14} stroke={1.6} className={styles.chevron} data-closed={group.collapsed} /></span><ChatTitle>{group.name}</ChatTitle>
+        </Button>{actions({ kind: 'project', item: group })}
       </div>
       <div className={styles.disclosure} data-open={!group.collapsed} ref={node => { node?.toggleAttribute('inert', group.collapsed); }} aria-hidden={group.collapsed || undefined}>
         <div className={styles.disclosureInner}><div className={styles.members}>{members.map(chatRow)}{!members.length && <p className={styles.empty}>{t('workspaceSidebar.emptyProject')}</p>}</div></div>
@@ -194,19 +199,19 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       <div className={styles.disclosure} data-open={!closed} ref={node => { node?.toggleAttribute('inert', closed); }} aria-hidden={closed || undefined}><div className={styles.disclosureInner}>{content}</div></div>
     </section>;
   }
-  return <div className={styles.layout} data-collapsed={collapsed} data-chat-panel={chatPanelVisible}>
-    <header className={styles.toolbar}>
+  return <div className={styles.layout} data-collapsed={collapsed} data-chat-panel={chatPanelVisible} data-chat-only={chatOnly}>
+    {!chatOnly && <header className={styles.toolbar}>
       {chatPanelVisible && <NavigationTooltip label={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')}><Button variant="ghost" size="icon" className={styles.collapse} aria-label={t(collapsed ? 'entry.navExpand' : 'entry.navCollapse')} aria-expanded={!collapsed} onClick={() => void perform({ type: 'collapse-sidebar', collapsed: !collapsed })}><IconLayoutSidebar size={19} stroke={1.6} /></Button></NavigationTooltip>}
       <div className={styles.toolbarActions}>{connectionControl}{onClose && <NavigationTooltip label={t('ui.workspaceTabsBar.closeWorkspace')}><Button variant="ghost" size="icon" aria-label={t('ui.workspaceTabsBar.closeWorkspace')} onClick={onClose}><IconX size={18} stroke={1.6} /></Button></NavigationTooltip>}</div>
-    </header>
-    <nav className={styles.rail} aria-label={t('workspaceSidebar.title')}>
+    </header>}
+    {!chatOnly && <nav className={styles.rail} aria-label={t('workspaceSidebar.title')}>
       <NavigationTooltip label={t('entry.navHome')}><Button variant="ghost" className={styles.destination} aria-label={t('entry.navHome')} aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => onNavigate('home')}><IconHome size={19} stroke={1.6} /></Button></NavigationTooltip>
       <NavigationTooltip label={t('workspaceSidebar.newChat')}><Button variant="ghost" className={styles.destination} aria-label={t('workspaceSidebar.newChat')} onClick={() => onNewChat(null)}><IconPencilPlus size={19} stroke={1.6} /></Button></NavigationTooltip>
       {([{ view: 'media', label: 'entry.navMedia', Icon: IconPhoto }, { view: 'sitemap', label: 'entry.navSitemap', Icon: IconSitemap }, { view: 'design-systems', label: 'entry.navDesignSystems', Icon: IconPalette }] as const).map(item => <NavigationTooltip label={t(item.label)} key={item.view}><Button variant="ghost" className={styles.destination} aria-label={t(item.label)} aria-current={activeView === item.view ? 'page' : undefined} onClick={() => onNavigate(item.view)}><item.Icon size={19} stroke={1.6} /></Button></NavigationTooltip>)}
       {additionalDestinations}
       <NavigationTooltip label={t('entry.openSettingsAria')}><Button variant="ghost" className={`${styles.destination} ${styles.settings}`} aria-label={t('entry.openSettingsAria')} onClick={onSettings}><LanguageUpdateIcon><IconSettings size={19} stroke={1.6} /></LanguageUpdateIcon></Button></NavigationTooltip>
       {helpControl}
-    </nav>
+    </nav>}
     {chatPanelVisible && <aside className={styles.sidebar} aria-label={t('workspaceSidebar.chats')} aria-hidden={collapsed || undefined} ref={node => { node?.toggleAttribute('inert', collapsed); }}>
       <div className={styles.sidebarInner}>
       <label className={styles.search}><IconSearch size={16} stroke={1.6} /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder={t('workspaceSidebar.search')} aria-label={t('workspaceSidebar.search')} /></label>
@@ -221,11 +226,11 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
       </div>
     </aside>}
     {dragPosition && draggedChat && <div className={styles.dragPreview} aria-hidden="true" style={{ left: dragPosition.x, top: dragPosition.y }}>{sorted.find(chat => chat.id === draggedChat)?.name}</div>}
-    <div className={styles.content}>
+    {!chatOnly && <div className={styles.content}>
       {chatPanelVisible && pendingProjectId && groups.some(group => group.id === pendingProjectId) && <div className={styles.projectContext}><IconFolder size={15} stroke={1.6} /><span>{t('workspaceSidebar.newChatIn', { name: groups.find(group => group.id === pendingProjectId)!.name })}</span></div>}
       <div className={styles.page}>{children}</div>
-    </div>
-    {menu && <div ref={menuRef} className={styles.menu} role="menu" style={{ top: menu.top, left: menu.left, maxHeight: `min(340px, calc(100dvh - ${menu.top + 8}px))` }} onKeyDown={event => {
+    </div>}
+    {menu && createPortal(<div className={styles.layout} style={{ display: 'contents' }}><div ref={menuRef} className={styles.menu} role="menu" style={{ top: menu.top, left: menu.left, maxHeight: `min(340px, calc(100dvh - ${menu.top + 8}px))` }} onKeyDown={event => {
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
       event.preventDefault(); const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]; const index = buttons.indexOf(document.activeElement as HTMLButtonElement); buttons[(index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
@@ -235,7 +240,7 @@ export function WorkspaceSidebar({ chats, activeChatId, pendingProjectId, active
         <Button role="menuitem" variant="ghost" onClick={() => edit({ kind: 'rename', target: menu.target })}>{t('common.rename')}</Button>
         {menu.target.kind === 'chat' ? <Button role="menuitem" variant="ghost" onClick={() => setMoving(true)}>{t('workspaceSidebar.moveTo')}</Button> : <Button role="menuitem" variant="ghost" onClick={() => edit({ kind: 'remove', target: menu.target })}>{t('workspaceSidebar.removeProject')}</Button>}
       </>}
-    </div>}
+    </div></div>, workspacePortalTarget(trigger.current) ?? document.body)}
     <dialog ref={dialogRef} className={styles.dialog} aria-labelledby={titleId} onCancel={event => { if (busy) event.preventDefault(); else setEditor(null); }}>
       {editor && <form onSubmit={event => { event.preventDefault(); void save(); }}><h2 id={titleId}>{t(editor.kind === 'create' ? 'workspaceSidebar.newProject' : editor.kind === 'remove' ? 'workspaceSidebar.removeProject' : 'common.rename')}</h2>
         {editor.kind === 'remove' ? <p>{t('workspaceSidebar.removeProjectNote')}</p> : <Input autoFocus aria-label={t(editor.kind === 'rename' && editor.target.kind === 'chat' ? 'workspaceSidebar.chatName' : 'workspaceSidebar.projectName')} value={name} maxLength={100} onChange={event => setName(event.target.value)} />}

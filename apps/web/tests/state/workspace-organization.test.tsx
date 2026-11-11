@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WorkspaceOrganization, WorkspaceOrganizationAction } from '@open-design/contracts';
 import { emptyWorkspaceOrganization, useWorkspaceOrganization } from '../../src/state/workspace-organization';
 const mock = vi.hoisted(() => ({ wordpress: true, rest: vi.fn(), runtime: vi.fn() }));
@@ -9,7 +9,22 @@ vi.mock('../../src/pixflow/runtime-fetch', () => ({ pixflowRuntimeFetch: mock.ru
 const response = (body: unknown, status = 200) => ({ ok: status === 200, status, body });
 beforeEach(() => { mock.wordpress = true; mock.rest.mockReset(); mock.runtime.mockReset(); });
 
+afterEach(cleanup);
+
 describe('workspace organization state', () => {
+  it('refreshes another mounted library after pinning without refetching the writer', async () => {
+    let saved = emptyWorkspaceOrganization();
+    mock.rest.mockImplementation(async (_path, init) => {
+      if (init.method === 'POST') saved = { ...saved, revision: 1, chats: { chat: { pinned: true, projectId: null } } };
+      return response(saved);
+    });
+    const first = renderHook(() => useWorkspaceOrganization());
+    const second = renderHook(() => useWorkspaceOrganization());
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    await act(async () => { await first.result.current.mutate({ type: 'pin-chat', chatId: 'chat', pinned: true }); });
+    await waitFor(() => expect(second.result.current.organization.chats.chat?.pinned).toBe(true));
+    expect(mock.rest.mock.calls.filter(([, init]) => init.method === 'GET')).toHaveLength(3);
+  });
   it('keeps independent pending folder and section choices when an earlier save completes', async () => {
     const saved: WorkspaceOrganization = { ...emptyWorkspaceOrganization(), projects: [{ id: 'keep', name: 'Keep', pinned: false, collapsed: false }] };
     const folderSaved = { ...saved, revision: 1, projects: [{ ...saved.projects[0]!, collapsed: true }] };

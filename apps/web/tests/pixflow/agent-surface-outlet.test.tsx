@@ -21,3 +21,11 @@ it('moves the shared conversation into the Sitemap panel and restores its host o
   expect(screen.getAllByLabelText('Draft')).toHaveLength(1);
   expect((screen.getByLabelText('Draft') as HTMLInputElement).value).toBe('Unsent page reference');
 });
+
+it('does not revive a conversation whose builder host was removed', () => {
+  const view = render(<PixflowAgentSurfaceShell surface="bricks_builder"><button>Closed host conversation</button></PixflowAgentSurfaceShell>);
+  const outlet = document.createElement('div'); outlet.id = 'pixflow-sitemap-conversation-outlet'; document.body.append(outlet);
+  view.container.remove();
+  act(() => window.dispatchEvent(new Event('pixflow-design:conversation-outlet')));
+  expect(outlet.childElementCount).toBe(0);
+});

@@ -28,6 +28,9 @@ export function PixflowAgentSurfaceShell({ surface, children, className = '' }: 
     const node = document.createElement('div');
     node.style.display = 'contents';
     const move = (event?: Event) => {
+      // A native host may remove its DOM before React unmounts. Never revive
+      // that detached conversation in a later Sitemap outlet.
+      if (!anchor.current?.isConnected) { node.remove(); return; }
       const outlet = (event as CustomEvent | undefined)?.detail?.active === false
         ? null : document.getElementById('pixflow-sitemap-conversation-outlet');
       (outlet ?? anchor.current)?.appendChild(node);

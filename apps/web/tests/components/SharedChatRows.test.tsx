@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
@@ -39,6 +39,29 @@ const translations: Partial<Record<keyof Dict, string>> = {
 const t = (key: keyof Dict) => translations[key] ?? key;
 
 describe('SharedChatRows', () => {
+  it('renders saved skill and link references inline while retaining the original prompt', () => {
+    const url = 'https://www.example.com/docs?q=design';
+    const content = `Try @Editorial, /design layout and (${url}). @Editorial`;
+    const message = {
+      id: 'references', role: 'user', content,
+      runContext: { skillMentions: [
+        { start: 4, token: '@Editorial', label: 'Editorial' },
+        { start: content.indexOf('/design layout'), token: '/design layout', label: 'design layout' },
+      ] },
+    };
+    const view = render(<SharedChatRows t={t} messages={[JSON.parse(JSON.stringify(message))]} />);
+    const bubble = view.container.querySelector('.user-bubble')!;
+    expect(Array.from(bubble.querySelectorAll('[data-slot="badge"]'), item => item.textContent))
+      .toEqual(['Editorial', 'Design Layout', 'example.com']);
+    expect(bubble.textContent).toBe('Try Editorial, Design Layout and (example.com). @Editorial');
+    const link = screen.getByRole('link', { name: url });
+    expect(link.getAttribute('href')).toBe(url);
+    expect(link.querySelector('img')?.getAttribute('src')).toBe('https://www.example.com/favicon.ico');
+    fireEvent.error(link.querySelector('img')!);
+    expect(link.querySelector('.tabler-icon-globe')).not.toBeNull();
+    expect(normalizeSharedChatMessage(message, 0).content).toBe(content);
+  });
+
   it('renders a handoff checkpoint, individual file cards, then only the short bubble after reload', () => {
     const message = {id:'handoff:user',role:'user',content:'PRIVATE FULL BUILD INSTRUCTIONS',
       handoffPresentation:{title:'Blog Studio handoff',summary:'Build the reviewed article as a draft.'},

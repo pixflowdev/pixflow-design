@@ -3705,6 +3705,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   }, [translateUi, agents, config, mode, sessionKey]);
 
   const sendPrompt = useCallback(async (prompt: string, attachments: ChatAttachment[], _comments: ChatCommentAttachment[], meta?: SharedChatSendMeta, handoff?: BuilderHandoffExecution, onAccepted?: () => void) => {
+    const runContext = meta?.context?.skillMentions?.length ? { skillMentions: meta.context.skillMentions } : undefined;
     const discussion = handoff ? {} : readPanelDiscussion(prompt);
     const annotationAgent = selectedAdminAgent(config, agents);
     const annotationImages = config.mode !== 'api' && annotationImageInput(annotationAgent, selectedModel(config, annotationAgent).model);
@@ -3719,7 +3720,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       stopRunRef.current = () => controller.abort();
       const id = handoff?.receipt.messageId || `direct:${Date.now()}`;
       let agent = selectedAdminAgent(config, agents);
-      const initial: WpAdminMessage[] = [...messages, { id: `${id}:user`, role: 'user', content: prompt, handoffPresentation: handoff?.receipt.presentation, createdAt: Date.now(), attachments, sessionMode: turnMode }, {
+      const initial: WpAdminMessage[] = [...messages, { id: `${id}:user`, role: 'user', content: prompt, handoffPresentation: handoff?.receipt.presentation, createdAt: Date.now(), attachments, sessionMode: turnMode, runContext }, {
         id, role: 'assistant', content: '', status: 'streaming', runStatus: 'running', createdAt: Date.now(), agentId: config.mode === 'api' ? apiExecutionAgentId(config) : agent?.id, agentName: config.mode === 'api' ? apiExecutionLabel(config) : agent?.name, sessionMode: turnMode,
         events: meta?.voice ? [{ kind: 'status', code: 'voice_connection', label: translateUi("ui.wpAdminAgentFrameApp.connecting") }] : [],
       }];
@@ -3831,7 +3832,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     if (!turnIdentity || !turnAuthority) {
       const now = Date.now();
       setMessages((current) => [...current, {
-        id: `wp-admin-user:${now.toString(36)}`, role: 'user', content: prompt, createdAt: now, endedAt: now, sessionMode: mode, attachments,
+        id: `wp-admin-user:${now.toString(36)}`, role: 'user', content: prompt, createdAt: now, endedAt: now, sessionMode: mode, attachments, runContext,
       }, {
         id: `wp-admin-assistant:${(now + 1).toString(36)}`, role: 'assistant',
         content: 'Pixflow could not verify the current WordPress Admin object, so it did not continue the request or prepare a review.',
@@ -3864,7 +3865,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         setPendingClarification(null);
         setPendingActions([]);
         setMessages((current) => [...authoritativeWpAdminMessages(current, turnIdentity, turnSessionKey), {
-          id: userId, role: 'user', content: prompt, createdAt: now, endedAt: now, sessionMode: mode, attachments,
+          id: userId, role: 'user', content: prompt, createdAt: now, endedAt: now, sessionMode: mode, attachments, runContext,
           originContext: buildWpAdminMessageOrigin(turnIdentity, turnSessionKey, userId, userId, now),
         }, {
           id: assistantId, role: 'assistant', content: notice, createdAt: now + 1, endedAt: now + 1, runStatus: 'failed', sessionMode: mode,
@@ -3894,6 +3895,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       id: userId,
       role: 'user',
       content: prompt,
+      runContext,
       createdAt: now,
       endedAt: now,
       sessionMode: mode,

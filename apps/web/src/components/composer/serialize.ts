@@ -8,11 +8,13 @@ import {
 } from 'lexical';
 import { $isMentionNode } from './MentionNode';
 import type { InlineMentionEntity } from '../../utils/inlineMentions';
+import type { ChatSkillMention } from '@open-design/contracts';
 
 export interface SerializedComposer {
   text: string;
   /** Entities backed by an actual MentionNode currently in the tree. */
   present: InlineMentionEntity[];
+  skillMentions: ChatSkillMention[];
 }
 
 // Walk the tree by hand rather than calling `root.getTextContent()`, which
@@ -23,18 +25,27 @@ export interface SerializedComposer {
 export function serializeComposer(state: EditorState): SerializedComposer {
   return state.read(() => {
     const present: InlineMentionEntity[] = [];
+    const skillMentions: ChatSkillMention[] = [];
     const blocks: string[] = [];
+    let blockStart = 0;
     for (const block of $getRoot().getChildren()) {
       if (!$isParagraphNode(block)) {
         // Stray non-paragraph block (shouldn't happen): fall back to its text.
-        blocks.push(block.getTextContent());
+        const text = block.getTextContent();
+        blocks.push(text);
+        blockStart += text.length + 1;
         continue;
       }
       let line = '';
       for (const child of block.getChildren()) {
         if ($isMentionNode(child)) {
-          line += child.getToken();
-          present.push(child.getEntity());
+          const entity = child.getEntity();
+          const token = child.getToken();
+          if (entity.kind === 'skill') {
+            skillMentions.push({ start: blockStart + line.length, token, label: entity.label });
+          }
+          line += token;
+          present.push(entity);
         } else if ($isLineBreakNode(child)) {
           line += '\n';
         } else if ($isTextNode(child)) {
@@ -44,7 +55,8 @@ export function serializeComposer(state: EditorState): SerializedComposer {
         }
       }
       blocks.push(line);
+      blockStart += line.length + 1;
     }
-    return { text: blocks.join('\n'), present };
+    return { text: blocks.join('\n'), present, skillMentions };
   });
 }

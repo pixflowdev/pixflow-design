@@ -44,6 +44,7 @@ import {
 } from 'lexical';
 import { MentionNode, $createMentionNode, $isMentionNode } from './MentionNode';
 import { serializeComposer } from './serialize';
+import type { ChatSkillMention } from '@open-design/contracts';
 import { setComposerFromText } from './deserialize';
 import { AnnotationNode } from './AnnotationNode';
 import { AnnotationBatchNode } from './AnnotationBatchNode';
@@ -181,6 +182,7 @@ export interface LexicalComposerInputProps {
 // but expressed in Lexical terms.
 export interface LexicalComposerInputHandle {
   getText(): string;
+  getSkillMentions(prompt: string): ChatSkillMention[];
   setText(text: string, additionalEntities?: InlineMentionEntity[]): void;
   clear(): void;
   focus(): void;
@@ -713,6 +715,15 @@ export const LexicalComposerInput = forwardRef<
           return domText;
         }
         return serialized;
+      },
+      getSkillMentions(prompt) {
+        const editor = editorRef.current;
+        if (!editor) return [];
+        const { text, skillMentions } = serializeComposer(editor.getEditorState());
+        const trimmed = text.trimStart();
+        if (!prompt.startsWith(trimmed.trimEnd())) return [];
+        const offset = text.length - trimmed.length;
+        return skillMentions.map(mention => ({ ...mention, start: mention.start - offset }));
       },
       setText(text: string, additionalEntities: InlineMentionEntity[] = []) {
         const editor = editorRef.current;

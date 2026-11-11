@@ -68,4 +68,8 @@ it('sends inline design skill tokens verbatim, including restored draft commands
  fireEvent.click(screen.getByTestId('chat-send'));
  await waitFor(() => expect(send).toHaveBeenCalledOnce());
  expect(send.mock.calls[0]?.[0]).toBe('Improve the footer using /design layout and /design critique');
+ expect(send.mock.calls[0]?.[3]?.context?.skillMentions).toEqual([
+   { start: 25, token: '/design layout', label: 'Design Layout' },
+   { start: 44, token: '/design critique', label: 'Design Critique' },
+ ]);
 });

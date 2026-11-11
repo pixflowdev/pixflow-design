@@ -1,0 +1,43 @@
+.skill[data-slot='badge'],
+.link[data-slot='badge'] {
+  max-width: 100%;
+  padding: 0 4px;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.skill[data-slot='badge'] {
+  color: color-mix(in srgb, var(--blue) 82%, var(--text) 18%);
+}
+
+.link[data-slot='badge'] {
+  color: inherit;
+  border: none;
+  background: color-mix(in srgb, var(--chat-bubble-bg, var(--bg-fill-tertiary)) 88%, var(--accent-solid-contrast));
+  gap: 5px;
+  text-decoration: none;
+}
+
+.link[data-slot='badge']:hover {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.link[data-slot='badge']:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
+}
+
+.link > img {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -4049,7 +4049,7 @@ export const zhCN: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "同时应用全局主题样式",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "始终添加变量、颜色和类。现有样式会保留。",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "正在检查 Bricks 设置…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "应用后会更新 Pixflow Framework，包括其 Bricks 主题样式。",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "应用设计系统时，会更新你的 Pixflow Framework 和 Bricks 主题样式。",
   "ui.pixflowDesignSystemLibrary.previousApplication": "上次应用",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "恢复上次应用前保存的样式。",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "应用设计系统后即可使用还原点。",

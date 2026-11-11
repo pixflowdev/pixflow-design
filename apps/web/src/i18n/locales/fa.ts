@@ -4541,7 +4541,7 @@ export const fa: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "سبک‌های سراسری پوسته نیز اعمال شوند",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "متغیرها، رنگ‌ها و کلاس‌ها همیشه اضافه می‌شوند. سبک‌های موجود حفظ می‌شوند.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "در حال بررسی تنظیمات Bricks شما…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "اعمال، چارچوب Pixflow شما از جمله سبک‌های پوستهٔ Bricks آن را به‌روزرسانی می‌کند.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "وقتی یک سیستم طراحی را اعمال می‌کنید، چارچوب Pixflow و سبک‌های قالب Bricks به‌روزرسانی می‌شوند.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "اعمال قبلی",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "سبک‌های ذخیره‌شده پیش از آخرین اعمال را بازیابی کنید.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "پس از اعمال یک سیستم، نقطهٔ بازیابی در دسترس قرار می‌گیرد.",

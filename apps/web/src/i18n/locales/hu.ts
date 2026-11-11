@@ -4541,7 +4541,7 @@ export const hu: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Globális témastílusok alkalmazása is",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "A változók, színek és osztályok mindig hozzáadódnak. A meglévő stílusok megmaradnak.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Bricks-beállítások ellenőrzése…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Az alkalmazás frissíti a Pixflow Frameworköt, beleértve a Bricks-témastílusokat is.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Amikor alkalmaz egy dizájnrendszert, frissül a Pixflow Framework és a Bricks témastílusai.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Előző alkalmazás",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Állítsa vissza az utolsó alkalmazás előtt mentett stílusokat.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "A rendszer alkalmazása után elérhetővé válik egy visszaállítási pont.",

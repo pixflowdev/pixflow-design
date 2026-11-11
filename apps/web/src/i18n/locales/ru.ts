@@ -4541,7 +4541,7 @@ export const ru: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Также применить глобальные стили темы",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Переменные, цвета и классы добавляются всегда. Существующие стили сохраняются.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Проверка конфигурации Bricks…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Применение обновляет Pixflow Framework, включая стили темы Bricks.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "При применении дизайн-системы обновляются Pixflow Framework и стили темы Bricks.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Предыдущее применение",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Восстановите стили, сохранённые перед последним применением.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "Точка восстановления появится после применения системы.",

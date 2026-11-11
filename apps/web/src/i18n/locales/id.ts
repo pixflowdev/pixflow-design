@@ -4048,7 +4048,7 @@ export const id: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "Terapkan juga gaya tema global",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "Variabel, warna, dan kelas selalu ditambahkan. Gaya yang ada tetap dipertahankan.",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "Memeriksa pengaturan Bricks…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Penerapan memperbarui Pixflow Framework, termasuk Gaya Tema Bricks-nya.",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "Saat Anda menerapkan sistem desain, Pixflow Framework dan gaya tema Bricks akan diperbarui.",
   "ui.pixflowDesignSystemLibrary.previousApplication": "Penerapan sebelumnya",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "Pulihkan gaya yang disimpan sebelum penerapan terakhir.",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "Titik pemulihan tersedia setelah Anda menerapkan sistem.",

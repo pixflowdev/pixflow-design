@@ -4049,7 +4049,7 @@ export const zhTW: Dict = {
   "ui.pixflowDesignSystemLibrary.applyGlobalThemeStylesToo": "同時套用全域佈景主題樣式",
   "ui.pixflowDesignSystemLibrary.variablesColoursAndClassesAreAlwaysAdded": "一律新增變數、色彩與類別。現有樣式會保留。",
   "ui.pixflowDesignSystemLibrary.checkingYourBricksSetup": "正在檢查 Bricks 設定…",
-  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "套用後會更新 Pixflow Framework，包括其 Bricks 佈景主題樣式。",
+  "ui.pixflowDesignSystemLibrary.applyingUpdatesYourPixflowFrameworkIncludingIts": "套用設計系統時，會更新你的 Pixflow Framework 和 Bricks 佈景主題樣式。",
   "ui.pixflowDesignSystemLibrary.previousApplication": "上次套用",
   "ui.pixflowDesignSystemLibrary.restoreTheStylesSavedBeforeYourLast": "還原上次套用前儲存的樣式。",
   "ui.pixflowDesignSystemLibrary.aRestorePointBecomesAvailableAfterYou": "套用設計系統後即可使用還原點。",

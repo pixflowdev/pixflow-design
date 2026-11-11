@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) exit;
 /** Bounded native WordPress operations shared by API and CLI tool callers. */
 final class WordPressAdminOperations
 {
-    private const READS = ['wordpress.posts.list', 'wordpress.posts.get', 'wordpress.terms.list', 'wordpress.terms.get', 'wordpress.media.list', 'wordpress.media.get', 'wordpress.settings.get'];
+    private const READS = ['wordpress.posts.list', 'wordpress.posts.get', 'wordpress.terms.list', 'wordpress.terms.get', 'wordpress.media.list', 'wordpress.media.get', 'wordpress.media.inspect', 'wordpress.media.placeholders', 'wordpress.settings.get'];
     private const ARGUMENTS = [
         'wordpress.posts.list' => ['postType','status','search','perPage','page'],
         'wordpress.posts.get' => ['postId'],
@@ -21,6 +21,8 @@ final class WordPressAdminOperations
         'wordpress.terms.delete' => ['taxonomy','termId','expectedFingerprint'],
         'wordpress.media.list' => ['search','mimeType','page','perPage'],
         'wordpress.media.get' => ['attachmentId'],
+        'wordpress.media.inspect' => ['attachmentId'],
+        'wordpress.media.placeholders' => [],
         'wordpress.media.update' => ['attachmentId','expectedFingerprint','fields'],
         'wordpress.media.delete' => ['attachmentId','expectedFingerprint'],
         'wordpress.settings.get' => [],
@@ -50,6 +52,8 @@ final class WordPressAdminOperations
             'wordpress.terms.delete' => ['taxonomy'=>'Registered editable taxonomy', 'termId'=>'Exact term ID', 'expectedFingerprint'=>'Fresh fingerprint; uses native term deletion and reassignment rules'],
             'wordpress.media.list' => ['search'=>'Optional search', 'mimeType'=>'image, audio, video or all', 'page'=>'1..1000', 'perPage'=>'1..50'],
             'wordpress.media.get' => ['attachmentId'=>'Exact attachment ID; returns metadata and fingerprint'],
+            'wordpress.media.inspect' => ['attachmentId'=>'Existing local image attachment ID; returns bounded image bytes for visual inspection, not a suitability verdict'],
+            'wordpress.media.placeholders' => ['description'=>'Bundled WebP design placeholders in six aspect ratios; no provider, upload or attachment required'],
             'wordpress.media.update' => ['attachmentId'=>'Exact attachment ID', 'expectedFingerprint'=>'Fresh fingerprint from wordpress.media.get', 'fields'=>'Nonempty object of title, caption, description, altText only'],
             'wordpress.media.delete' => ['attachmentId'=>'Exact attachment ID', 'expectedFingerprint'=>'Fresh fingerprint; permanently removes this native media attachment only'],
             'wordpress.settings.get' => ['description'=>'Read safe basic site settings and fingerprint; requires manage_options'],
@@ -101,6 +105,8 @@ final class WordPressAdminOperations
             'wordpress.terms.delete' => $this->delete_term($arguments),
             'wordpress.media.list' => current_user_can('upload_files') ? $this->core->list_media($arguments) : $this->error('target_permission_denied', 'Media operations require upload_files.', 403),
             'wordpress.media.get' => $this->media($arguments['attachmentId']),
+            'wordpress.media.inspect' => \PixflowDesign\WordPress\Media\DesignImages::inspect($arguments['attachmentId']),
+            'wordpress.media.placeholders' => \PixflowDesign\WordPress\Media\DesignImages::placeholders(),
             'wordpress.media.update' => $this->update_media($arguments),
             'wordpress.media.delete' => $this->delete_media($arguments),
             'wordpress.settings.get' => $this->settings->read(),

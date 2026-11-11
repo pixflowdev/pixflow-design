@@ -1,3 +1,4 @@
+import { editorStyleSnapshot, editorStyleSite, renderedEditorStyles } from './editor-style-snapshot';
 import { blockExtension, integrationInput, prepareIntegrationBlocks, settleIntegrationBlocks, integrationStyles, assertIntegrationTree } from './gutenberg-extensions';
 import { siteAuthoring, assertSiteAuthoring } from './gutenberg-site-authoring';
 import { liveGutenbergPatterns } from './gutenberg-patterns';
@@ -22,13 +23,17 @@ async function snapshot(wp: GutenbergApi) {
   const content = editor.getEditedPostContent();
   const title = editor.getEditedPostAttribute('title');
   const entity = gutenbergEntity(wp);
+  const nativeSettings = blocks.getSettings?.() ?? {};
+  const styleSnapshot = editorStyleSnapshot({ editor: 'gutenberg', site: editorStyleSite(), documentId: entity.type + ':' + entity.id,
+    native: Object.fromEntries(['colors', 'fontSizes', 'spacingSizes', 'styles', '__experimentalFeatures', '__experimentalStyles', 'layout', 'disableCustomColors', 'disableCustomFontSizes'].map(key => [key, nativeSettings[key] ?? null])),
+    rendered: renderedEditorStyles('iframe[name="editor-canvas"]', '.editor-styles-wrapper') });
   const settings = () => [editor.getEditedPostAttribute('meta'), editor.getEditedPostAttribute('status')];
   const serialized = JSON.stringify([entity, tree, content, title, settings()]);
   const bytes = new TextEncoder().encode(serialized);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
   // Hashing yields to the editor. Never dispatch against a snapshot changed by typing meanwhile.
   if (serialized !== JSON.stringify([gutenbergEntity(wp), blocks.getBlocks(), editor.getEditedPostContent(), editor.getEditedPostAttribute('title'), settings()])) throw new Error('The live document changed. Read it again before editing; no operation was applied.');
-  return { entity, shared: sharedGutenbergEntity(entity), postId: gutenbergPostId(wp), postType: editor.getCurrentPostType(), title, revision: Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, '0')).join(''), blocks: tree, content, dirty: editor.isEditedPostDirty(), selectedClientId: blocks.getSelectedBlockClientId(), canUndo: editor.hasEditorUndo(), canRedo: editor.hasEditorRedo() };
+  return { styleSnapshot, entity, shared: sharedGutenbergEntity(entity), postId: gutenbergPostId(wp), postType: editor.getCurrentPostType(), title, revision: Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, '0')).join(''), blocks: tree, content, dirty: editor.isEditedPostDirty(), selectedClientId: blocks.getSelectedBlockClientId(), canUndo: editor.hasEditorUndo(), canRedo: editor.hasEditorRedo() };
 }
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 100));

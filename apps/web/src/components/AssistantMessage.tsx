@@ -794,7 +794,8 @@ function AssistantMessageImpl({
           const pending = section.blocks.slice().reverse().find(isPendingActivity);
           const current = pending ?? section.blocks[section.blocks.length - 1]!;
           const live = streaming && section.start + section.blocks.length === blocks.length;
-          const active = live && (Boolean(pending) || current.kind === 'thinking');
+          // Background tools remain pending even when later commentary starts another group.
+          const active = streaming && (Boolean(pending) || (live && current.kind === 'thinking'));
           const label = activityGroupLabel(section.blocks, current, active, t);
           const errors = section.blocks.reduce((count, block) => count + (block.kind === 'tool-group'
             ? block.items.filter(item => item.result?.isError).length

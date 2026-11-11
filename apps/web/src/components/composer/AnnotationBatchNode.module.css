@@ -5,3 +5,7 @@
 .chip button:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .chip button:focus-visible { background: color-mix(in srgb, var(--text) 14%, transparent); }
 .chip svg { flex: none; }
+
+.chip[data-context-attachment] { gap: 0; }
+.chip[data-context-attachment] .review { padding-right: 1px; }
+.chip[data-context-attachment] .remove { width: 20px; }

@@ -3554,6 +3554,7 @@ export const de: Dict = {
   "ui.bricksExtensionsSection.scanning": "Scannen…",
   "ui.mcpClientSection.templates": "vorlagen",
   "ui.mcpClientSection.integration": "integration",
+  "ui.sitemapViewport.fitView": "Ansicht einpassen",
   "ui.sitemapFilters.pages": "seiten",
 
   // Pixflow interface copy.

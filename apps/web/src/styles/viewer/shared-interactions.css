@@ -2310,7 +2310,7 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
 /* ============================================================
    Assistant message footer (bottom-of-message status pill)
    ============================================================ */
-.assistant-completion-row {
+.assistant-flow .assistant-completion-row {
   display: flex;
   flex-direction: column;
   align-items: flex-start;

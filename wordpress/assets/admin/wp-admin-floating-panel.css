@@ -10,6 +10,7 @@
 #pixflow-admin-workspace > #pixflow-design-root { height: 100%; width: 100%; }
 body.pixflow-admin-workspace-open { overflow: hidden; }
 body.pixflow-admin-workspace-open #pixflow-wp-admin-agent-shell { visibility: hidden; }
+body.pixflow-admin-workspace-open.pixflow-sitemap-panel-open #pixflow-wp-admin-agent-shell.is-open,
 body.pixflow-admin-workspace-open.pixflow-audit-panel-open #pixflow-wp-admin-agent-shell.is-open,
 body.pixflow-admin-workspace-open.pixflow-blog-panel-open #pixflow-wp-admin-agent-shell.is-open {
   visibility: visible;
@@ -66,7 +67,7 @@ body.pixflow-admin-workspace-open.pixflow-blog-panel-open #pixflow-wp-admin-agen
   position: fixed;
   z-index: 100100;
   display: none;
-  min-width: min(380px, calc(100vw - 24px));
+  min-width: 450px;
   min-height: min(560px, calc(100vh - 64px));
   overflow: hidden;
   color: var(--od-text, #172033);

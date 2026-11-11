@@ -3554,6 +3554,7 @@ export const ptBR: Dict = {
   "ui.bricksExtensionsSection.scanning": "Escaneando…",
   "ui.mcpClientSection.templates": "modelos",
   "ui.mcpClientSection.integration": "integração",
+  "ui.sitemapViewport.fitView": "Ajustar à visualização",
   "ui.sitemapFilters.pages": "páginas",
 
   // Pixflow interface copy.

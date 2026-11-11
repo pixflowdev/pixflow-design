@@ -4186,6 +4186,7 @@ export const ja: Dict = {
   "ui.sitemapFilters.allStates": "すべての状態",
   "ui.sitemapFilters.planned": "計画済み",
   "ui.sitemapFilters.private": "非公開",
+  "ui.sitemapViewport.fitView": "全体を表示",
   "ui.sitemapFilters.pages": "ページ",
   "ui.sitemapFilters.refreshWordpressPages": "WordPress ページを更新",
   "ui.sitemapFloatingPanels.addSectionOrPage": "セクションまたはページを追加",

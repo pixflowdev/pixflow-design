@@ -2,7 +2,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { useRef } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { prepareResourceDraft, resourceBuilder, resourceDraftAvailable, useResourceDraft } from '../../src/pixflow/resource-draft';
+import { appendPanelDraft, prepareResourceDraft, resourceBuilder, resourceDraftAvailable, useResourceDraft } from '../../src/pixflow/resource-draft';
 import { fetchPlugin } from '../../src/state/projects';
 const hostWindow = window as Window & { pixflowDesignBricks?: { openPanel: (reason?: string) => void; getState?: () => { open?: boolean; streaming?: boolean } } };
 vi.mock('../../src/providers/registry', () => ({ fetchPluginPreviewHtml: vi.fn(async () => ({ html: '<main>Reference</main>' })) }));
@@ -87,4 +87,12 @@ it('does not expose Elementor handoff without its Pro contribution', () => {
   (window as any).__PIXFLOW_DESIGN_WORDPRESS__ = { runtime: 'wordpress', restBaseUrl: 'http://localhost/wp-json/pixflow-design/v1', elementorIntegrationActive: false };
   expect(resourceBuilder()).not.toBe('Elementor');
   expect(resourceDraftAvailable()).toBe(false);
+});
+
+it('appends page context inline without replacing existing tags or text', () => {
+  const first = '[Pixflow context attachment]{"label":"Sitemap page: Home","content":"home"}[/Pixflow context attachment]';
+  const second = '[Pixflow context attachment]{"label":"Sitemap page: About","content":"about"}[/Pixflow context attachment]';
+  const composer = mountDraft(first);
+  appendPanelDraft(second);
+  expect(composer.setDraft).toHaveBeenCalledWith(first + ' ' + second);
 });

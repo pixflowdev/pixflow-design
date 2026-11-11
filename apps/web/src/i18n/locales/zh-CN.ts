@@ -4187,6 +4187,7 @@ export const zhCN: Dict = {
   "ui.sitemapFilters.allStates": "所有状态",
   "ui.sitemapFilters.planned": "已规划",
   "ui.sitemapFilters.private": "私密",
+  "ui.sitemapViewport.fitView": "适应视图",
   "ui.sitemapFilters.pages": "页面",
   "ui.sitemapFilters.refreshWordpressPages": "刷新 WordPress 页面",
   "ui.sitemapFloatingPanels.addSectionOrPage": "添加区域或页面",

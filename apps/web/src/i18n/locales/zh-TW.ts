@@ -4187,6 +4187,7 @@ export const zhTW: Dict = {
   "ui.sitemapFilters.allStates": "所有狀態",
   "ui.sitemapFilters.planned": "已規劃",
   "ui.sitemapFilters.private": "私密",
+  "ui.sitemapViewport.fitView": "符合檢視",
   "ui.sitemapFilters.pages": "頁面",
   "ui.sitemapFilters.refreshWordpressPages": "重新整理 WordPress 頁面",
   "ui.sitemapFloatingPanels.addSectionOrPage": "新增區段或頁面",

@@ -4186,6 +4186,7 @@ export const id: Dict = {
   "ui.sitemapFilters.allStates": "Semua status",
   "ui.sitemapFilters.planned": "Direncanakan",
   "ui.sitemapFilters.private": "Pribadi",
+  "ui.sitemapViewport.fitView": "Sesuaikan tampilan",
   "ui.sitemapFilters.pages": "halaman",
   "ui.sitemapFilters.refreshWordpressPages": "Segarkan halaman WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Tambahkan bagian atau halaman",

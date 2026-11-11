@@ -82,8 +82,29 @@ export function useResourceDraft(ref: RefObject<Composer | null>): void {
       ref.current.setDraft(text);
       void ref.current.attachFiles(drafts.flatMap(item => item.files));
     };
+    const appendPrompt = () => {
+      if (!ref.current) return;
+      const prompts = panelDraftQueue().splice(0);
+      if (prompts.length) ref.current.setDraft(prompts.reduce((draft, prompt) => {
+        if (!draft.trim()) return prompt;
+        // Context chips are inline references; ordinary handoffs remain paragraphs.
+        return draft.trimEnd() + (prompt.startsWith('[Pixflow context attachment]') ? ' ' : '\n\n') + prompt;
+      }, ref.current.getDraft()));
+    };
+    window.addEventListener('pixflow-design:append-panel-draft', appendPrompt);
     window.addEventListener(EVENT, consume);
     consume();
-    return () => window.removeEventListener(EVENT, consume);
+    appendPrompt();
+    return () => { window.removeEventListener(EVENT, consume); window.removeEventListener('pixflow-design:append-panel-draft', appendPrompt); };
   }, [ref]);
+}
+
+function panelDraftQueue(): string[] {
+  const owner = window as Window & {__pixflowPanelDrafts?: string[]};
+  return owner.__pixflowPanelDrafts ??= [];
+}
+/** Queue before the shared panel mounts; append without sending or replacing the chat. */
+export function appendPanelDraft(prompt: string): void {
+  panelDraftQueue().push(prompt);
+  window.dispatchEvent(new Event('pixflow-design:append-panel-draft'));
 }

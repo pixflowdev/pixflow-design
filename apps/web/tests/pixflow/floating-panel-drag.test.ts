@@ -59,3 +59,14 @@ it('passes the dragged panel bounds to docking and restores floating size when d
     controller.releaseDockLocks();
   } finally { dom.window.close(); }
 });
+
+it('keeps the 450px minimum when floating, docked and restoring a narrow saved panel', () => {
+  const dom = new JSDOM('<body><div id="panel"></div></body>', {runScripts:'outside-only',url:'http://localhost/'});
+  try {
+    dom.window.eval(readFileSync(fileURLToPath(new URL('../../../../wordpress/assets/pixflow-design-floating-panel.js', import.meta.url)), 'utf8'));
+    for (const dock of ['float','left','right']) {
+      const state = dom.window.PixflowDesignFloatingPanel.normalizePanelState({dock,width:320,height:640}, {getDockRect:(_side: string,width: number)=>({x:0,y:0,width,height:640})});
+      expect(state.width).toBeGreaterThanOrEqual(450);
+    }
+  } finally { dom.window.close(); }
+});

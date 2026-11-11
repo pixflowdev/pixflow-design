@@ -4186,6 +4186,7 @@ export const ko: Dict = {
   "ui.sitemapFilters.allStates": "모든 상태",
   "ui.sitemapFilters.planned": "계획됨",
   "ui.sitemapFilters.private": "비공개",
+  "ui.sitemapViewport.fitView": "화면에 맞추기",
   "ui.sitemapFilters.pages": "페이지",
   "ui.sitemapFilters.refreshWordpressPages": "WordPress 페이지 새로고침",
   "ui.sitemapFloatingPanels.addSectionOrPage": "섹션 또는 페이지 추가",

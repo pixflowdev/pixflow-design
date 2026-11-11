@@ -4670,6 +4670,7 @@ export const tr: Dict = {
   "ui.sitemapFilters.allStates": "Tüm durumlar",
   "ui.sitemapFilters.planned": "Planlandı",
   "ui.sitemapFilters.private": "Özel",
+  "ui.sitemapViewport.fitView": "Görünüme sığdır",
   "ui.sitemapFilters.pages": "sayfalar",
   "ui.sitemapFilters.refreshWordpressPages": "WordPress sayfalarını yenile",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Bölüm veya sayfa ekle",

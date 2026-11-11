@@ -4670,6 +4670,7 @@ export const ar: Dict = {
   "ui.sitemapFilters.allStates": "جميع الحالات",
   "ui.sitemapFilters.planned": "مخطّط",
   "ui.sitemapFilters.private": "خاص",
+  "ui.sitemapViewport.fitView": "ملاءمة العرض",
   "ui.sitemapFilters.pages": "صفحات",
   "ui.sitemapFilters.refreshWordpressPages": "تحديث صفحات WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "إضافة قسم أو صفحة",

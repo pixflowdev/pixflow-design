@@ -1,10 +1,11 @@
-import { IconGlobe, IconPackages } from '@tabler/icons-react';
+import { IconGlobe, IconPackages, IconFileText } from '@tabler/icons-react';
 import { useState, type ReactNode } from 'react';
 import type { ChatSkillMention } from '@open-design/contracts';
 import { designCommandDisplayLabel } from '../../pixflow/design-command-descriptions';
 import { Badge } from '../Badge';
 import { citationSource } from './InlineCitation';
 import styles from './UserMessageReferences.module.css';
+import { contextAttachmentParts } from '../composer/context-attachment';
 
 function LinkBadge({ url }: { url: URL }) {
   const [missingIcon, setMissingIcon] = useState(false);
@@ -45,11 +46,19 @@ function renderLinks(text: string): ReactNode {
   return end ? [...parts, text.slice(end)] : text;
 }
 
+function renderReferences(text: string): ReactNode {
+  return contextAttachmentParts(text).map((part, index) => typeof part === 'string'
+    ? <span key={index}>{renderLinks(part)}</span>
+    : <Badge key={index} variant="ghost" className={styles.skill}>
+        <IconFileText aria-hidden="true" /><span className={styles.label}>{part.label}</span>
+      </Badge>);
+}
+
 export function UserMessageReferences({ content, skillMentions }: {
   content: string;
   skillMentions?: ChatSkillMention[];
 }) {
-  if (!Array.isArray(skillMentions) || !skillMentions.length) return <>{renderLinks(content)}</>;
+  if (!Array.isArray(skillMentions) || !skillMentions.length) return <>{renderReferences(content)}</>;
   const parts: ReactNode[] = [];
   let end = 0;
   for (const mention of skillMentions) {
@@ -58,7 +67,7 @@ export function UserMessageReferences({ content, skillMentions }: {
       typeof mention.token !== 'string' || !/^[@/]/.test(mention.token) ||
       !content.startsWith(mention.token, mention.start)) continue;
     parts.push(
-      <span key={'text-' + end}>{renderLinks(content.slice(end, mention.start))}</span>,
+      <span key={'text-' + end}>{renderReferences(content.slice(end, mention.start))}</span>,
       <Badge key={'skill-' + mention.start} variant="ghost" className={styles.skill}>
         <IconPackages aria-hidden="true" />
         <span className={styles.label}>{designCommandDisplayLabel(mention.token) ?? mention.label.replace(/^[@/]/, '')}</span>
@@ -66,5 +75,5 @@ export function UserMessageReferences({ content, skillMentions }: {
     );
     end = mention.start + mention.token.length;
   }
-  return <>{parts}{renderLinks(content.slice(end))}</>;
+  return <>{parts}{renderReferences(content.slice(end))}</>;
 }

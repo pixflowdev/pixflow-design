@@ -1031,6 +1031,7 @@ describe('ProjectView API empty response handling', () => {
     renderProjectView();
 
     await sendTestPrompt();
+    const assistantId = latestRenderedAssistantId();
 
     await waitFor(() => {
       expect(hasSavedAssistantMessage((message) => (
@@ -1040,16 +1041,16 @@ describe('ProjectView API empty response handling', () => {
           && event.label === 'source_artifact_persist_failed'
           && event.code === 'HTML_ARTIFACT_INVALID'
         )) === true
-      ))).toBe(true);
+      ), assistantId)).toBe(true);
     });
     expect(mockedWriteProjectTextFile).not.toHaveBeenCalled();
     expect(screen.getAllByText(/Retry source generation; conversion has not started/i).length).toBeGreaterThan(0);
     expect(hasSavedAssistantMessage((message) => (
       message.events?.some((event) => event.kind === 'status' && event.code === 'ARTIFACT_NOT_FOUND') === true
-    ))).toBe(false);
+    ), assistantId)).toBe(false);
     expect(hasSavedAssistantMessage((message) => (
       message.events?.some((event) => event.kind === 'status' && event.label === 'conversion_start') === true
-    ))).toBe(false);
+    ), assistantId)).toBe(false);
   });
 
   it('reports a valid artifact write failure as ARTIFACT_PERSISTENCE_FAILED', async () => {

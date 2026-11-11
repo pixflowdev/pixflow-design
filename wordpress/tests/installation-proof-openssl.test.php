@@ -26,7 +26,7 @@ $message = implode("\n", ['pixflow-installation-v2','POST','/api/licensing/v2/en
 $signature = base64_decode(strtr($envelope['signature'], '-_', '+/'));
 if (openssl_verify($message, $signature, $installation['public_key_pem'], OPENSSL_ALGO_SHA256) !== 1) throw new RuntimeException('Proof cannot be verified');
 echo "Installation RSA generation, encrypted storage and signed proof passed.\n";
-foreach (['skill-catalogue','skill-download'] as $purpose) {
+foreach (['skill-catalogue','skill-download','seo-google'] as $purpose) {
     $payload=['installation_id'=>$installation['id']];
     if ($purpose==='skill-download') $payload['artifact_id']='website-audit-1.0.0-'.str_repeat('a',64);
     $signed=$proof->envelope($installation,$purpose,$challenge,$payload);

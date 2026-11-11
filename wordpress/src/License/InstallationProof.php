@@ -78,7 +78,7 @@ final class InstallationProof
 
     public function envelope(array $installation, string $purpose, array $challenge, array $payload): array
     {
-        if (!in_array($purpose, ['enroll', 'refresh', 'revoke', 'artifacts', 'download', 'verify-site', 'skill-catalogue', 'skill-download'], true)) throw new \InvalidArgumentException('Unsupported proof purpose.');
+        if (!in_array($purpose, ['enroll', 'refresh', 'revoke', 'artifacts', 'download', 'verify-site', 'skill-catalogue', 'skill-download', 'seo-google'], true)) throw new \InvalidArgumentException('Unsupported proof purpose.');
         if (empty($challenge['challenge_id']) || empty($challenge['nonce']) || (int) ($challenge['expires_at'] ?? 0) <= time()) throw new \RuntimeException('Installation challenge is invalid or expired.');
         $encoded = SignedEntitlement::encode(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         $message = implode("\n", ['pixflow-installation-v2', 'POST', '/api/licensing/v2/' . $purpose, $challenge['challenge_id'], $challenge['nonce'], $encoded]);

@@ -73,7 +73,8 @@ final class CentralArtifacts
         return $temporary;
     }
 
-    private function request(string $purpose, array $payload): array|\WP_Error
+    /** Prepare an authenticated server request; never return this envelope to a browser. */
+    public function request(string $purpose, array $payload): array|\WP_Error
     {
         if (!CentralEntitlements::enabled()) return $this->failure(403);
         $state = get_option('pixflow_design_central_entitlements_v2', []);

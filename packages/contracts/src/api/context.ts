@@ -1,11 +1,19 @@
 export interface RunContextSelection {
   skillIds?: string[];
+  /** Display-only references to exact UTF-16 ranges of the submitted prompt. */
+  skillMentions?: ChatSkillMention[];
   pluginIds?: string[];
   mcpServerIds?: string[];
   /** Display-only snapshots for queued drafts; never include server credentials or commands. */
   mcpMentions?: Array<{ id: string; label: string }>;
   connectorIds?: string[];
   workspaceItems?: WorkspaceContextItem[];
+}
+
+export interface ChatSkillMention {
+  start: number;
+  token: string;
+  label: string;
 }
 
 export type WorkspaceContextKind =

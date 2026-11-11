@@ -2969,7 +2969,7 @@ function UserMessageImpl({
         </MessageContent>
       ) : message.content ? (
         <MessageContent className="user-text-wrap">
-          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={message.content} /></BubbleContent></Bubble>
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={message.content} skillMentions={message.runContext?.skillMentions} /></BubbleContent></Bubble>
           <MessageFooter className="user-actions">
             {ts ? (
               <time

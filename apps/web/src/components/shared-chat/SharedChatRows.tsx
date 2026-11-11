@@ -37,6 +37,7 @@ export type SharedChatInputMessage = {
   agentId?: string;
   agentName?: string;
   sessionMode?: ChatSessionMode;
+  runContext?: ChatMessage['runContext'];
   attachments?: ChatAttachment[];
   commentAttachments?: ChatCommentAttachment[];
   runStatus?: string;
@@ -402,7 +403,7 @@ const SharedUserMessage = memo(function SharedUserMessage({
       ) : null}
       {message.content ? (
         <MessageContent className="user-text-wrap">
-          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} /></BubbleContent></Bubble>
+          <Bubble align="end"><BubbleContent className="user-text user-bubble"><PageAnnotationMessage content={questionAnswerDisplayText(message.content)} skillMentions={message.runContext?.skillMentions} /></BubbleContent></Bubble>
           <MessageFooter className="user-actions">
             {ts ? (
               <time

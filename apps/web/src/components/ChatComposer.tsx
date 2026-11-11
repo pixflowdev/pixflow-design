@@ -1237,6 +1237,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     ): boolean {
       setStreamingAnnotationSendPending(false);
       if (!prompt && attachments.length === 0 && nextCommentAttachments.length === 0) return false;
+      const skillMentions = editorRef.current?.getSkillMentions(prompt);
+      if (skillMentions?.length) meta = { ...meta, context: { ...meta?.context, skillMentions } };
       const nextAttachments =
         activeFileContext && !attachments.some((attachment) => attachment.path === activeFileContext)
           ? [

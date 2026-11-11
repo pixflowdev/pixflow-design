@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Show tagged skills and pasted web links as inline badges in sent chat messages. Link badges show the domain and favicon, and Copy prompt retains the original text.
 - Show Design Layout, Design Critique and the other design operations under Skills with the shared package icon. Apply every selected design operation, even when it appears within a longer prompt.
 
 - Use the same pinned chats, projects, recent chats and actions in Workspace and the floating panel, with changes and ordering synced between open views.

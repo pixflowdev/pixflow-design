@@ -95,7 +95,7 @@ vi.mock('../../src/components/AssistantMessage', () => ({
           disabled={shareToOpenDesignBusy}
           onClick={onShareToOpenDesign}
         >
-          {shareToOpenDesignBusy ? 'Preparing package…' : 'Share to Pixflow Design'}
+          {shareToOpenDesignBusy ? 'Preparing packageâ€¦' : 'Share to Pixflow Design'}
         </button>
       ) : null}
     </>
@@ -410,9 +410,10 @@ describe('ChatPane streaming state', () => {
       />,
     );
 
-    const bubble = screen.getByText('Generate a simple sign-in page');
-    expect(bubble.classList.contains('user-bubble')).toBe(true);
-    expect(bubble.closest('.msg.user')).not.toBeNull();
+    const text = screen.getByText('Generate a simple sign-in page');
+    const bubble = text.closest('.user-bubble');
+    expect(bubble).not.toBeNull();
+    expect(bubble?.closest('.msg.user')).not.toBeNull();
   });
 
   it('offers a Local CLI recovery action on BYOK error states', () => {
@@ -434,7 +435,7 @@ describe('ChatPane streaming state', () => {
           {
             kind: 'status',
             label: 'error',
-            detail: 'Missing API key — open Settings and paste one in.',
+            detail: 'Missing API key â€” open Settings and paste one in.',
           },
         ],
       },
@@ -560,7 +561,7 @@ describe('ChatPane streaming state', () => {
     fireEvent.click(screen.getByTestId('msg-design-system-chip'));
     expect(onRequestDesignSystemDetails).toHaveBeenCalledWith(activeDesignSystem);
     // The plugin's resolved context is now collapsed into the single
-    // plugin chip — the per-category (asset/design/skill) fan-out is no
+    // plugin chip â€” the per-category (asset/design/skill) fan-out is no
     // longer rendered in the bubble, even though the full snapshot still
     // rides the run for the agent.
     expect(screen.queryByText('template.json')).toBeNull();

@@ -10,8 +10,20 @@ it('preserves off and explicit operation semantics', () => {
  expect(optionalRunGuidance(false, guidance, 'check something')).toBe('');
  expect(optionalRunGuidance(true, guidance, 'normal request')).toBe('Optional authorized guidance');
  expect(optionalRunGuidance(false, guidance, '/operation check this')).toContain('Read the check reference');
- expect(optionalRunGuidance(false, guidance, 'mentions /operation check')).toBe('');
+ expect(optionalRunGuidance(false, guidance, 'https://example.test/operation check')).toBe('');
  expect(optionalRunGuidance(false, guidance, '/operation checker')).toBe('');
+});
+
+it('includes each explicitly named operation once, in prompt order', () => {
+ const withOperations: PixflowRunDesignGuidance = {
+   ...guidance,
+   extension: {
+     instructions: 'Foundation',
+     commands: { '/design critique': 'Critique reference', '/design layout': 'Layout reference' },
+   },
+ };
+ expect(optionalRunGuidance(false, withOperations, 'Improve the footer using /design layout and /design critique\n/design layout'))
+   .toBe('Foundation\nLayout reference\nCritique reference');
 });
 
 it.each(['\n', '\r\n', '\t'])('recognizes a queued operation followed by whitespace %j while automatic guidance is off', separator => {

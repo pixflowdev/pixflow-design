@@ -9,9 +9,8 @@ import {
 import type { InlineMentionEntity, InlineMentionKind } from '../../utils/inlineMentions';
 import { connectorBrandColor, resolveBrandTheme } from '../../utils/connectorBrandColor';
 
-// The atomic @mention node. It extends TextNode so the node's *text* remains
-// the literal `@token` and serialization back to the wire format is free:
-// `getTextContent()` already yields `@token`. Lexical token mode deletes the
+// The atomic mention node. Slash skills display their label while the composer
+// serializes the original command via getToken(). Lexical token mode deletes the
 // node as one entity but still allows character-by-character caret navigation,
 // so LexicalComposerInput adds explicit keyboard normalization for arrows.
 type Kind = InlineMentionKind;
@@ -19,7 +18,7 @@ type Kind = InlineMentionKind;
 export interface MentionPayload {
   mentionId: string;
   mentionKind: Kind;
-  token: string; // literal "@..." — this IS the node text
+  token: string; // Literal token sent with the prompt.
   label: string;
   title?: string | undefined;
   accentColor?: string;
@@ -65,7 +64,7 @@ export class MentionNode extends TextNode {
   }
 
   constructor(p: MentionPayload, text?: string, key?: NodeKey) {
-    super(text ?? p.token, key); // node TEXT = token → serializes verbatim
+    super(text ?? (p.mentionKind === 'skill' && p.token.startsWith('/') ? p.label : p.token), key);
     this.__mentionId = p.mentionId;
     this.__mentionKind = p.mentionKind;
     this.__token = p.token;

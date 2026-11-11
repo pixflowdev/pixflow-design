@@ -604,14 +604,14 @@ it('fails closed when an old server grants a writable guidance session', async (
   expect(fetch).not.toHaveBeenCalled();
 });
 
-it.each(['direct','composio'] as const)('injects selected saved guidance for new %s runs without changing history or explicit references',async apiTransport=>{
- const guidance={revision:4,source:'custom',product:'BAKERY-FACTS',design:'PRESERVE-SITE-FONTS',instructions:'Preserve existing styles.'};
+it.each(['direct','composio'] as const)('injects saved and requested operation guidance for %s without changing history or references',async apiTransport=>{
+ const guidance={revision:4,source:'custom',product:'BAKERY-FACTS',design:'PRESERVE-SITE-FONTS',instructions:'Preserve existing styles.',extension:{instructions:'OPTIONAL FOUNDATION',commands:{'/design layout':'FOCUSED LAYOUT','/design critique':'FOCUSED CRITIQUE'}}};
  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned',designGuidance:guidance}));
- const provider=vi.fn(async(args:{system:string})=>{expect(args.system).toContain('BAKERY-FACTS');expect(args.system).toContain('PRESERVE-SITE-FONTS');expect(args.system).toContain('Explicit reference');expect(args.system).not.toContain('STALE-GUIDANCE');return {text:'Done',calls:[],turns:[]};});
+ const provider=vi.fn(async(args:{system:string})=>{expect(args.system).toContain('BAKERY-FACTS');expect(args.system).toContain('PRESERVE-SITE-FONTS');expect(args.system).toContain('Explicit reference');expect(args.system).toContain('OPTIONAL FOUNDATION\nFOCUSED LAYOUT\nFOCUSED CRITIQUE');expect(args.system).not.toContain('STALE-GUIDANCE');return {text:'Done',calls:[],turns:[]};});
  composio.turn.mockImplementation(provider);
  vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{if(init.method==='DELETE')return Response.json({closed:true});const body=JSON.parse(init.body);return Response.json(body.tool==='provider.turn'?await provider(body.arguments):{integrations:{bricks:false}});}));
  const history=[{role:'user' as const,content:'Preserved chat'}];
- await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},context:{siteDesignGuidance:'STALE-GUIDANCE',workspaceItems:[{label:'Explicit reference'}]},prompt:'Review the page',history,signal:new AbortController().signal,onUpdate:vi.fn()});
+ await runByokSite({config:{...config,apiTransport,composioProvider:'openai',composioModel:'fixture'},context:{siteDesignGuidance:'STALE-GUIDANCE',workspaceItems:[{label:'Explicit reference'}]},enhancedDesignGuidance:false,prompt:'Improve the footer using /design layout and /design critique',history,signal:new AbortController().signal,onUpdate:vi.fn()});
  expect(provider).toHaveBeenCalledOnce();expect(history).toEqual([{role:'user',content:'Preserved chat'}]);
 });
 

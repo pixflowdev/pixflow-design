@@ -36,25 +36,27 @@ export function buildInlineMentionParts(
   entities: InlineMentionEntity[],
   options: { highlightUnknown?: boolean } = {},
 ): InlineMentionPart[] | null {
-  if (!text) return null;
-  if (!text.includes('@')) return null;
+  if (!text || !/[@/]/.test(text)) return null;
   const highlightUnknown = options.highlightUnknown ?? true;
   const known = getMentionTokenIndex(entities);
+  const markers = known.root.children.has('/') ? /[@/]/g : /@/g;
   const parts: InlineMentionPart[] = [];
   let scanStart = 0;
   let copiedUntil = 0;
   let found = false;
 
   while (scanStart < text.length) {
-    const start = text.indexOf('@', scanStart);
-    if (start === -1) break;
+    markers.lastIndex = scanStart;
+    const marker = markers.exec(text);
+    if (!marker) break;
+    const start = marker.index;
     if (!isMentionBoundary(text, start)) {
       scanStart = start + 1;
       continue;
     }
 
     const knownMatch = findKnownMentionAt(text, known, start);
-    const unknownMatch = highlightUnknown ? findUnknownMentionAt(text, start) : null;
+    const unknownMatch = highlightUnknown && marker[0] === '@' ? findUnknownMentionAt(text, start) : null;
     const match =
       knownMatch && (!unknownMatch || knownMatch.token.length >= unknownMatch.token.length)
         ? knownMatch
@@ -71,7 +73,7 @@ export function buildInlineMentionParts(
     parts.push({
       kind: 'mention',
       entity: match.entity,
-      text: match.token,
+      text: marker[0] === '/' ? text.slice(start, start + match.token.length) : match.token,
     });
     found = true;
     copiedUntil = match.start + match.token.length;

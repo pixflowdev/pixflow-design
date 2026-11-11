@@ -3,10 +3,14 @@ import type { PixflowRunDesignGuidance } from '../api/pixflow-direct-site.js';
 export function optionalRunGuidance(enabled: boolean, guidance: PixflowRunDesignGuidance | null | undefined, prompt: string): string {
   const extension = guidance?.extension;
   if (!extension) return '';
-  // A registered operation can precede queued instructions on a new line.
-  // Match its command boundary without interpreting the following prose.
-  const request = prompt.trim();
-  const command = Object.keys(extension.commands).find(value => request.startsWith(value)
-    && (request.length === value.length || /\s/.test(request[value.length]!)));
-  return enabled || command ? [extension.instructions, command ? extension.commands[command] : ''].filter(Boolean).join('\n') : '';
+  // The composer can place several registered slash commands inside a prompt.
+  // Require whitespace boundaries so URLs and longer command names do not match.
+  const operations = Object.entries(extension.commands).flatMap(([command, instructions]) => {
+    const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const index = prompt.search(new RegExp('(?:^|\\s)' + escaped + '(?=\\s|$)', 'i'));
+    return index < 0 ? [] : [{ index, instructions }];
+  });
+  operations.sort((a, b) => a.index - b.index);
+  if (!enabled && operations.length === 0) return '';
+  return [extension.instructions, ...operations.map(({ instructions }) => instructions)].filter(Boolean).join('\n');
 }

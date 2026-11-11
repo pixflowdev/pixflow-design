@@ -6022,6 +6022,7 @@ export const en: Dict = {
   "ui.sitemapFilters.allStates": "All states",
   "ui.sitemapFilters.planned": "Planned",
   "ui.sitemapFilters.private": "Private",
+  "ui.sitemapViewport.fitView": "Fit to view",
   "ui.sitemapFilters.pages": "pages",
   "ui.sitemapFilters.refreshWordpressPages": "Refresh WordPress pages",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Add section or page",

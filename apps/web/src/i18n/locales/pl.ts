@@ -4670,6 +4670,7 @@ export const pl: Dict = {
   "ui.sitemapFilters.allStates": "Wszystkie stany",
   "ui.sitemapFilters.planned": "Zaplanowane",
   "ui.sitemapFilters.private": "Prywatne",
+  "ui.sitemapViewport.fitView": "Dopasuj do widoku",
   "ui.sitemapFilters.pages": "strony",
   "ui.sitemapFilters.refreshWordpressPages": "Odśwież strony WordPressa",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Dodaj sekcję lub stronę",

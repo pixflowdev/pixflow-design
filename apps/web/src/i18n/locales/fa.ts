@@ -4670,6 +4670,7 @@ export const fa: Dict = {
   "ui.sitemapFilters.allStates": "همهٔ وضعیت‌ها",
   "ui.sitemapFilters.planned": "برنامه‌ریزی‌شده",
   "ui.sitemapFilters.private": "خصوصی",
+  "ui.sitemapViewport.fitView": "متناسب با نما",
   "ui.sitemapFilters.pages": "صفحه",
   "ui.sitemapFilters.refreshWordpressPages": "تازه‌سازی صفحات WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "افزودن بخش یا صفحه",

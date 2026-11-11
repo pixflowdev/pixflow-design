@@ -4186,6 +4186,7 @@ export const th: Dict = {
   "ui.sitemapFilters.allStates": "ทุกสถานะ",
   "ui.sitemapFilters.planned": "วางแผนแล้ว",
   "ui.sitemapFilters.private": "ส่วนตัว",
+  "ui.sitemapViewport.fitView": "พอดีกับมุมมอง",
   "ui.sitemapFilters.pages": "หน้า",
   "ui.sitemapFilters.refreshWordpressPages": "รีเฟรชหน้า WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "เพิ่มส่วนหรือหน้า",

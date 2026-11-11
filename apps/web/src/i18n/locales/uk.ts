@@ -4670,6 +4670,7 @@ export const uk: Dict = {
   "ui.sitemapFilters.allStates": "Усі стани",
   "ui.sitemapFilters.planned": "Заплановано",
   "ui.sitemapFilters.private": "Приватне",
+  "ui.sitemapViewport.fitView": "Вписати у вікно",
   "ui.sitemapFilters.pages": "сторінки",
   "ui.sitemapFilters.refreshWordpressPages": "Оновити сторінки WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Додати розділ або сторінку",

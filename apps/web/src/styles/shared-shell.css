@@ -862,7 +862,7 @@ main.app.pixflow-bricks-agent-frame-app,
 
 .pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel,
 .pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel {
-  border-radius: 0;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
 
@@ -1874,7 +1874,7 @@ main.app.pixflow-bricks-agent-frame-app,
   overflow: hidden;
 }
 
-/* Floating-panel surface only: docked panels retain their square edges. */
+/* Preserve the same surface shape while floating or docked. */
 @supports (corner-shape: squircle) {
   .pixflow-bricks-agent-panel {
     corner-shape: squircle;
@@ -1884,7 +1884,7 @@ main.app.pixflow-bricks-agent-frame-app,
     filter: none;
   }
   .pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel,
-.pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel { border-radius: 0; filter: none; }
+.pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel { border-radius: calc(30px * 1.2); filter: none; }
 }
 
 

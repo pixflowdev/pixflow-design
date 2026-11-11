@@ -1110,7 +1110,8 @@ html .pixflow-bricks-agent-shell {
 
 .pixflow-bricks-agent-shell[data-dock="left"] .pixflow-bricks-agent-panel,
 .pixflow-bricks-agent-shell[data-dock="right"] .pixflow-bricks-agent-panel {
-  border-radius: 0;
+  border-radius: var(--radius-lg);
+  corner-shape: squircle;
   box-shadow: var(--shadow-md);
 }
 
@@ -1843,3 +1844,13 @@ body.pixflow-bricks-agent-panel-moving iframe {
     border-bottom: 1px solid var(--border);
   }
 }
+
+
+/* Menus must remain above the elevated Sitemap conversation panel. */
+body.pixflow-sitemap-panel-open .pixflow-bricks-agent-portal-root { z-index: 2147483002; }
+
+/* The Sitemap owns its panel; the host retains the shared conversation runtime only. */
+body.pixflow-sitemap-panel-open :is(#pixflow-bricks-agent-shell, #pixflow-wp-admin-agent-shell) { visibility: hidden; pointer-events: none; }
+#pixflow-sitemap-conversation-outlet { display: flex; flex: 1; min-height: 0; }
+#pixflow-sitemap-conversation-outlet[hidden] { display: none; }
+#pixflow-sitemap-conversation-outlet > .pixflow-agent-surface-shell { width: 100%; flex: 1; min-height: 0; }

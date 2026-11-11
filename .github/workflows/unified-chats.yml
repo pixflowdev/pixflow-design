@@ -54,5 +54,6 @@ jobs:
       - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
       - run: pnpm --filter @open-design/web test EntryShell.onboarding
       - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts
+      - run: pnpm --filter @open-design/web test agent-surface-outlet resource-draft user-message-context-reference floating-panel-drag
       - run: pnpm i18n:check
       - run: pnpm wordpress:web

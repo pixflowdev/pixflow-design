@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Keep the same chat, unsent text and page references when opening the Sitemap assistant, with shared conversation history and no duplicate composers.
+- Keep floating and docked assistant panels consistently sized and rounded, and align completion details correctly.
+
 - Keep Workspace navigation in sync across Core and Pro modules inside Bricks, so opening SEO Audit from another module does not reload the builder canvas.
 
 - Clarify in all supported languages that Design systems updates the Pixflow Framework and Bricks Theme Styles only when a system is applied.

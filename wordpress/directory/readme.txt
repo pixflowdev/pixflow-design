@@ -82,6 +82,9 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 == Changelog ==
 
 = Unreleased =
+
+* Keep the same chat, unsent text and page references when opening the Sitemap assistant, with shared conversation history and no duplicate composers.
+* Keep floating and docked assistant panels consistently sized and rounded, and align completion details correctly.
 * Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
 * Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
 

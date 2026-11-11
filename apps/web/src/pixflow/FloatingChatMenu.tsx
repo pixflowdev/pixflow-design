@@ -32,13 +32,17 @@ export function FloatingChatMenu() {
   const [panelHost, setPanelHost] = useState<HTMLElement | null>(null);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    const header = entry.current?.closest('.pixflow-bricks-agent-panel')?.querySelector('.pixflow-bricks-agent-panel__head');
-    if (!header) return;
     const slot = document.createElement('div');
     slot.className = `pixflow-design-token-scope ${styles.headerSlot}`;
-    header.prepend(slot); setHeaderSlot(slot);
-    setPanelHost(header.closest<HTMLElement>('.pixflow-bricks-agent-panel'));
-    return () => { slot.remove(); };
+    const move = () => {
+      const header = entry.current?.closest('.pixflow-bricks-agent-panel')?.querySelector('.pixflow-bricks-agent-panel__head');
+      if (!header) return;
+      header.prepend(slot); setHeaderSlot(slot);
+      setPanelHost(header.closest<HTMLElement>('.pixflow-bricks-agent-panel'));
+    };
+    move();
+    window.addEventListener('pixflow-design:conversation-surface-moved', move);
+    return () => { window.removeEventListener('pixflow-design:conversation-surface-moved', move); slot.remove(); };
   }, []);
   function close() {
     request.current?.abort(); generation.current++;

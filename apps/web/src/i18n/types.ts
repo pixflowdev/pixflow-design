@@ -3149,6 +3149,7 @@ export interface Dict {
   "ui.sitemapFilters.allStates": string;
   "ui.sitemapFilters.planned": string;
   "ui.sitemapFilters.private": string;
+  "ui.sitemapViewport.fitView": string;
   "ui.sitemapFilters.pages": string;
   "ui.sitemapFilters.refreshWordpressPages": string;
   "ui.sitemapFloatingPanels.addSectionOrPage": string;

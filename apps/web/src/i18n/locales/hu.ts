@@ -4670,6 +4670,7 @@ export const hu: Dict = {
   "ui.sitemapFilters.allStates": "Minden állapot",
   "ui.sitemapFilters.planned": "Tervezett",
   "ui.sitemapFilters.private": "Privát",
+  "ui.sitemapViewport.fitView": "Nézethez igazítás",
   "ui.sitemapFilters.pages": "oldal",
   "ui.sitemapFilters.refreshWordpressPages": "WordPress-oldalak frissítése",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Szakasz vagy oldal hozzáadása",

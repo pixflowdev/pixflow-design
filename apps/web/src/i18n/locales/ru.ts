@@ -4670,6 +4670,7 @@ export const ru: Dict = {
   "ui.sitemapFilters.allStates": "Все состояния",
   "ui.sitemapFilters.planned": "Запланировано",
   "ui.sitemapFilters.private": "Личное",
+  "ui.sitemapViewport.fitView": "Вписать в окно",
   "ui.sitemapFilters.pages": "страницы",
   "ui.sitemapFilters.refreshWordpressPages": "Обновить страницы WordPress",
   "ui.sitemapFloatingPanels.addSectionOrPage": "Добавить раздел или страницу",

@@ -47,6 +47,8 @@ export interface PageSummary {
   slug: string;
   kind?: string;
   wpPostId?: number | null;
+  editorLinks?: {id: string; label: string; url: string; current?: boolean; reason?: string}[];
+  previewUrl?: string;
   editUrl?: string;
   sectionCount?: number;
   pixflowDesignTargetPageTitle?: string;
@@ -158,6 +160,8 @@ export interface WorkspaceSitemapGenerationJob {
   bridgeJobId?: string;
   pairingId?: string;
   directRunId?: string;
+  editorLinks?: {id: string; label: string; url: string; current?: boolean; reason?: string}[];
+  previewUrl?: string;
   editUrl?: string;
   status: WorkspaceSitemapGenerationJobStatus;
   generationPipeline?: WorkspaceSitemapGenerationPipeline;
@@ -224,6 +228,8 @@ export interface WorkspaceSitemapNode {
   wpPostId?: number | null;
   wpPageId?: string | null;
   wpStatus?: string;
+  editorLinks?: {id: string; label: string; url: string; current?: boolean; reason?: string}[];
+  previewUrl?: string;
   editUrl?: string;
   permalink?: string;
   wpParentPostId?: number;
@@ -269,6 +275,7 @@ export interface WorkspaceSitemap {
   hasStaticHomepage?: boolean;
   wpPagesSyncedAt?: string;
   syncWarnings?: string[];
+  hiddenWpPostIds?: number[];
   sourceRequestId: string;
   createdAt: string;
   updatedAt: string;

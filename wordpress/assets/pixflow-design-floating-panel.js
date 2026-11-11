@@ -8,7 +8,7 @@
    * frame application for every Pixflow surface.
    */
   var PANEL_SIZES = {
-    sm: { width: 380, height: 560 },
+    sm: { width: 450, height: 560 },
     md: { width: 460, height: 680 },
     lg: { width: 560, height: 760 },
     xl: { width: 680, height: 820 }
@@ -93,7 +93,7 @@
 
   function panelLimits() {
     var view = viewport();
-    var maxWidth = Math.min(760, view.width - 24);
+    var maxWidth = Math.max(450, Math.min(760, view.width - 24));
     var maxHeight = Math.min(900, view.height - 64);
     return {
       minWidth: Math.min(PANEL_SIZES.sm.width, maxWidth),
@@ -140,7 +140,7 @@
       var dockWidth = clampNumber(panelDimension(panel && panel.width, defaultSize.width), limits.minWidth, limits.maxWidth);
       var dockRect = options.getDockRect(dock, dockWidth);
       // A host can decline docking when its canvas and native sidebars no longer fit.
-      if (dockRect) return {
+      if (dockRect && dockRect.width >= limits.minWidth) return {
         x: dockRect.x,
         y: dockRect.y,
         width: dockRect.width,
@@ -573,7 +573,7 @@
       target.style.width = panel.width + 'px';
       target.style.height = panel.collapsed ? 'auto' : panel.height + 'px';
       var limits = panelLimits();
-      target.style.minWidth = panel.dock === 'float' ? limits.minWidth + 'px' : '0px';
+      target.style.minWidth = limits.minWidth + 'px';
       target.style.minHeight = panel.collapsed || panel.dock !== 'float' ? '0px' : limits.minHeight + 'px';
       target.dataset.dock = panel.dock;
       target.dataset.collapsed = panel.collapsed ? 'true' : 'false';

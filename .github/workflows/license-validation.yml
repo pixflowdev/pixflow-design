@@ -24,6 +24,7 @@ jobs:
           persist-credentials: false
       - name: Artifact authorization and licence recovery
         run: |
+          php wordpress/tests/installation-proof-openssl.test.php
           php wordpress/tests/central-artifact-license-preservation.test.php
           php wordpress/tests/central-artifact-download.test.php
           php wordpress/tests/central-artifact-selection.test.php

@@ -83,10 +83,58 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 = Unreleased =
 
+**Added**
+
+* Connect eligible Pro installations to production Google services without manually configuring service API keys.
+* Give Gutenberg, Elementor and Etch agents current site typography, colours and layout information to reuse existing styles without repeatedly rediscovering them.
+* Show tagged skills and pasted web links as inline badges in sent chat messages. Link badges show the domain and favicon, and Copy prompt retains the original text.
+* Use the same pinned chats, projects, recent chats and actions in Workspace and the floating panel, with changes and ordering synced between open views.
+* Support SEO Audit in the WordPress Workspace and show its progress in the assistant panel. Restore the last Workspace view within the same browser tab.
+* Inspect anonymous desktop and mobile public pages without an AI provider, through Bridge or the od inspect-page command.
+* Run specialist reviews with Codex, Claude and Grok Build using supported parallel workers and provider timeout handling.
+* Load available Grok models from the CLI and show only reasoning levels supported by the selected model.
+* Show Grok account allowance and reset times in the composer and Settings.
+* Support Blog Studio native-editor handoffs in the existing conversation, with readable checkpoints and downloadable article/brief attachments.
+* Let contributed Workspace modules use authorized site tools and reuse generated WordPress images.
+
+**Changed**
+
+* Clarify in all supported languages that Design systems updates the Pixflow Framework and Bricks Theme Styles only when a system is applied.
+* Reuse visually checked library images before generating new design imagery, including an installed Codex fallback for other CLI providers. Keep clearly marked WebP placeholders when suitable imagery or generation is unavailable.
+* Show Design Layout, Design Critique and the other design operations under Skills with the shared package icon. Apply every selected design operation, even when it appears within a longer prompt.
+* Fade long chat and project names and smoothly reveal them on hover. Recover older automatically shortened chat titles without changing custom names or saved messages.
+* Use the updated, theme-aware Grok mark in provider menus.
+* Use consistent Pixflow-styled chat controls across Workspace and floating panels while preserving themes, settings and saved conversations.
+* Use searchable model choices, interactive questions, citation previews, compact code and tool details, and downloadable file attachments.
+* Show clearer preparation, provider-wait and completion states; keep supplied reasoning separate from routine tool traces.
+* Floating panel chats prepare saved history on open and after replies, show the first streamed text sooner, and keep your place when you scroll up. Plain Claude replies show Done as soon as Claude confirms completion.
+* The Bridge keeps Codex ready between prompts and reuses the active conversation on eligible follow-ups. WordPress checks the site owner and current chat history on each Send so edits from another tab reach the next reply.
+
+**Removed**
+
+* Internal plugin files from generated-download lists; genuine agent output remains available to download.
+* Ultra reasoning from specialist model options.
+
+**Fixed**
+
 * Keep the same chat, unsent text and page references when opening the Sitemap assistant, with shared conversation history and no duplicate composers.
 * Keep floating and docked assistant panels consistently sized and rounded, and align completion details correctly.
-* Support the Pro SEO Audit Workspace, assistant progress and anonymous desktop/mobile inspection without an AI provider.
-* Support Blog Studio native-editor handoffs in the existing chat, with article and brief attachments and recoverable conversation history.
+* Keep Workspace navigation in sync across Core and Pro modules inside Bricks, so opening SEO Audit from another module does not reload the builder canvas.
+* Improve Gutenberg typography guidance for inherited colours, palette collisions and saved-page layouts. Keep pending image-generation activity visibly working while later commentary streams.
+* Keep the last floating-panel chat when reloading or moving between editors in the same browser tab; start empty in a new session without losing saved conversations.
+* Prevent internal builder handoff notices from appearing as failed assistant replies when continuing a conversation in another editor; keep editor-target checks in place.
+* Preserve existing resource files on restricted WordPress hosts with verified encrypted storage when a new private directory cannot be created.
+* Recover renewed licences without re-entering a saved key. Preserve credentials during temporary failures, reject invalid proofs, and prevent delayed validation from undoing a reset or newer activation.
+* Preserve and save a newer appended reply retained when reopening a chat, instead of replacing it with an earlier saved snapshot. Existing revision and conflict protections remain enforced.
+* Prevent live builder commands from remaining stuck as busy because of stale WordPress caches. Preserve edits and command results without replaying operations.
+* Preserve the original WordPress revision before an AI repair so the first edit can be recovered when revisions are enabled.
+* Find Grok Build in its native installation folder without restarting the Bridge after a PATH change.
+* Stream Grok replies and tool activity in Workspace and floating panels, retain native conversation context, and distinguish rejected requests from interrupted Bridge connections.
+* Wait for saved chat hydration before starting a handoff; retain prior messages and add New chat with an empty state to floating panels.
+* Keep streaming replies at the bottom when following, preserve scrollback while reading, and make room for queued messages. Right-align user squircle bubbles and centre Jump to latest.
+* Apply consistent shimmer animation, question contrast and input focus styling. Question inputs keep their theme during reconnection, and account menus show concise CLI version numbers.
+* Offer history recovery copies only for confirmed conflicts; temporary save failures retain Retry without suggesting duplicate histories.
+* Detect Cursor CLI installed in its standard Windows location even when the Bridge was started before installation. Keep Cursor separate from other providers that use the `agent` command.
 
 = 2.2.0 =
 

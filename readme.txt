@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.2.2
+Stable tag: 2.3.0
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -33,7 +33,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 == Changelog ==
 
-= Unreleased =
+= 2.3.0 =
 
 **Added**
 

@@ -4374,6 +4374,8 @@ export const de: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Wähle eine veröffentlichte Seite als neue Startseite.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Veröffentliche eine Seite in WordPress und kehre hierher zurück, um sie als Startseite festzulegen.",
   "ui.sitemapView.replacementHomepageAdmin": "Bitte einen WordPress-Administrator, eine neue Startseite auszuwählen.",
+  "ui.sitemapView.confirmCollapseHomepage": "Wenn du „{name}“ als Startseite festlegst, werden alle Unterseiten in der Sitemap eingeklappt. Du kannst sie jederzeit wieder ausklappen.",
+  "ui.sitemapView.expandChildPages": "Unterseiten ausklappen",
   "ui.sitemapView.confirmTrashDescription": "„{name}“ wird aus der Sitemap entfernt und in den WordPress-Papierkorb verschoben. Du kannst die Seite in WordPress wiederherstellen.",
   "ui.sitemapCardMenu.cut": "Ausschneiden",
   "ui.sitemapCardMenu.addPage": "Seite hinzufügen",

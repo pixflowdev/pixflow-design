@@ -4276,6 +4276,8 @@ export const th: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "เลือกหน้าที่เผยแพร่แล้วเพื่อใช้แทนหน้าแรก",
   "ui.sitemapView.replacementHomepagePublishFirst": "เผยแพร่หน้าใน WordPress แล้วกลับมาที่นี่เพื่อตั้งเป็นหน้าแรก",
   "ui.sitemapView.replacementHomepageAdmin": "ขอให้ผู้ดูแล WordPress เลือกหน้าแรกใหม่",
+  "ui.sitemapView.confirmCollapseHomepage": "การตั้ง “{name}” เป็นหน้าแรกจะยุบหน้าย่อยทั้งหมดในแผนผังเว็บไซต์ คุณสามารถขยายอีกครั้งได้ทุกเมื่อ",
+  "ui.sitemapView.expandChildPages": "ขยายหน้าย่อย",
   "ui.sitemapView.confirmTrashDescription": "ระบบจะนำ “{name}” ออกจากแผนผังเว็บไซต์และย้ายไปที่ถังขยะของ WordPress หากต้องการเลิกทำ ให้กู้คืนหน้านี้ใน WordPress",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

@@ -4765,6 +4765,8 @@ export const hu: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Válasszon egy közzétett oldalt új kezdőlapnak.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Tegyen közzé egy oldalt a WordPressben, majd térjen vissza ide a kezdőlap beállításához.",
   "ui.sitemapView.replacementHomepageAdmin": "Kérje meg a WordPress rendszergazdáját, hogy válasszon új kezdőlapot.",
+  "ui.sitemapView.confirmCollapseHomepage": "A(z) „{name}” kezdőlapként való beállítása összecsukja az összes aloldalt a webhelytérképen. Bármikor újra kibonthatsz minden aloldalt.",
+  "ui.sitemapView.expandChildPages": "Aloldalak kibontása",
   "ui.sitemapView.confirmTrashDescription": "A(z) „{name}” eltűnik a webhelytérképről, és a WordPress lomtárába kerül. A művelet visszavonásához állítsa vissza az oldalt a WordPressben.",
   "ui.sitemapCardMenu.cut": "Kivágás",
   "ui.sitemapCardMenu.addPage": "Oldal hozzáadása",

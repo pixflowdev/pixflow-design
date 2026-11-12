@@ -6112,6 +6112,8 @@ export const en: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Select a published page to replace the homepage.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publish a page in WordPress, then return here to set it as the homepage.",
   "ui.sitemapView.replacementHomepageAdmin": "Ask a WordPress administrator to choose a new homepage.",
+  "ui.sitemapView.confirmCollapseHomepage": "Setting “{name}” as the homepage will collapse all child pages on the Sitemap. You can expand them again at any time.",
+  "ui.sitemapView.expandChildPages": "Expand child pages",
   "ui.sitemapView.confirmTrashDescription": "“{name}” will be removed from the sitemap and moved to WordPress Trash. To undo this, restore it in WordPress.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

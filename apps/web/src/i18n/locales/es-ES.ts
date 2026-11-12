@@ -4374,6 +4374,8 @@ export const esES: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Selecciona una página publicada para sustituir la página de inicio.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publica una página en WordPress y vuelve aquí para establecerla como página de inicio.",
   "ui.sitemapView.replacementHomepageAdmin": "Pide a un administrador de WordPress que elija una nueva página de inicio.",
+  "ui.sitemapView.confirmCollapseHomepage": "Al establecer «{name}» como página de inicio, se contraerán todas las páginas secundarias en el mapa del sitio. Puedes volver a expandirlas cuando quieras.",
+  "ui.sitemapView.expandChildPages": "Expandir páginas secundarias",
   "ui.sitemapView.confirmTrashDescription": "«{name}» se quitará del mapa del sitio y se moverá a la papelera de WordPress. Para deshacerlo, restáurala en WordPress.",
   "ui.sitemapCardMenu.cut": "Cortar",
   "ui.sitemapCardMenu.addPage": "Añadir página",

@@ -4374,6 +4374,8 @@ export const fr: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Sélectionnez une page publiée pour remplacer la page d’accueil.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publiez une page dans WordPress, puis revenez ici pour la définir comme page d’accueil.",
   "ui.sitemapView.replacementHomepageAdmin": "Demandez à un administrateur WordPress de choisir une nouvelle page d’accueil.",
+  "ui.sitemapView.confirmCollapseHomepage": "Définir « {name} » comme page d’accueil repliera toutes les sous-pages dans le plan du site. Vous pourrez les déplier à tout moment.",
+  "ui.sitemapView.expandChildPages": "Déplier les sous-pages",
   "ui.sitemapView.confirmTrashDescription": "« {name} » sera retirée du plan du site et déplacée dans la corbeille de WordPress. Pour annuler cette action, restaurez-la dans WordPress.",
   "ui.sitemapCardMenu.cut": "Couper",
   "ui.sitemapCardMenu.addPage": "Ajouter une page",

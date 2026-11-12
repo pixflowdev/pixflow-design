@@ -4374,6 +4374,8 @@ export const ptBR: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Selecione uma página publicada para substituir a página inicial.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publique uma página no WordPress e volte aqui para defini-la como página inicial.",
   "ui.sitemapView.replacementHomepageAdmin": "Peça a um administrador do WordPress para escolher uma nova página inicial.",
+  "ui.sitemapView.confirmCollapseHomepage": "Definir “{name}” como página inicial recolherá todas as subpáginas no mapa do site. Você pode expandi-las novamente a qualquer momento.",
+  "ui.sitemapView.expandChildPages": "Expandir subpáginas",
   "ui.sitemapView.confirmTrashDescription": "“{name}” será removida do mapa do site e movida para a lixeira do WordPress. Para desfazer, restaure a página no WordPress.",
   "ui.sitemapCardMenu.cut": "Recortar",
   "ui.sitemapCardMenu.addPage": "Adicionar página",

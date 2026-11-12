@@ -4276,6 +4276,8 @@ export const ko: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "홈페이지를 대신할 공개 페이지를 선택하세요.",
   "ui.sitemapView.replacementHomepagePublishFirst": "워드프레스에서 페이지를 공개한 뒤 여기로 돌아와 홈페이지로 설정하세요.",
   "ui.sitemapView.replacementHomepageAdmin": "워드프레스 관리자에게 새 홈페이지를 선택해 달라고 요청하세요.",
+  "ui.sitemapView.confirmCollapseHomepage": "“{name}”을 홈페이지로 설정하면 사이트맵의 모든 하위 페이지가 접힙니다. 언제든 다시 펼칠 수 있습니다.",
+  "ui.sitemapView.expandChildPages": "하위 페이지 펼치기",
   "ui.sitemapView.confirmTrashDescription": "“{name}” 페이지가 사이트맵에서 제거되어 워드프레스 휴지통으로 이동합니다. 되돌리려면 워드프레스에서 복원하세요.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

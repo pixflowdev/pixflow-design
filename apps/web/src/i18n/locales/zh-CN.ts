@@ -4277,6 +4277,8 @@ export const zhCN: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "选择一个已发布的页面来替换首页。",
   "ui.sitemapView.replacementHomepagePublishFirst": "请在 WordPress 中发布一个页面，然后返回这里将其设为首页。",
   "ui.sitemapView.replacementHomepageAdmin": "请让 WordPress 管理员选择新的首页。",
+  "ui.sitemapView.confirmCollapseHomepage": "将“{name}”设为首页后，站点地图中的所有子页面都会折叠。你可以随时重新展开。",
+  "ui.sitemapView.expandChildPages": "展开子页面",
   "ui.sitemapView.confirmTrashDescription": "“{name}”将从站点地图中移除并移至 WordPress 回收站。要撤销此操作，请在 WordPress 中还原页面。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

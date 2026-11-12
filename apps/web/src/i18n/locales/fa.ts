@@ -4765,6 +4765,8 @@ export const fa: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "یک برگهٔ منتشرشده را برای جایگزینی صفحهٔ اصلی انتخاب کنید.",
   "ui.sitemapView.replacementHomepagePublishFirst": "برگه‌ای را در وردپرس منتشر کنید و برای تنظیم آن به‌عنوان صفحهٔ اصلی به اینجا بازگردید.",
   "ui.sitemapView.replacementHomepageAdmin": "از مدیر وردپرس بخواهید صفحهٔ اصلی جدیدی انتخاب کند.",
+  "ui.sitemapView.confirmCollapseHomepage": "تنظیم «{name}» به‌عنوان صفحهٔ اصلی، همهٔ زیربرگه‌ها را در نقشهٔ سایت جمع می‌کند. هر زمان می‌توانید دوباره آن‌ها را باز کنید.",
+  "ui.sitemapView.expandChildPages": "باز کردن زیربرگه‌ها",
   "ui.sitemapView.confirmTrashDescription": "«{name}» از نقشهٔ سایت حذف و به زباله‌دان وردپرس منتقل می‌شود. برای واگرد، آن را در وردپرس بازیابی کنید.",
   "ui.sitemapCardMenu.cut": "برش",
   "ui.sitemapCardMenu.addPage": "افزودن صفحه",

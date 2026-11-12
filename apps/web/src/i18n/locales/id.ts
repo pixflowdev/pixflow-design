@@ -4276,6 +4276,8 @@ export const id: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Pilih halaman yang sudah diterbitkan untuk menggantikan beranda.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Terbitkan halaman di WordPress, lalu kembali ke sini untuk menjadikannya beranda.",
   "ui.sitemapView.replacementHomepageAdmin": "Minta administrator WordPress memilih beranda baru.",
+  "ui.sitemapView.confirmCollapseHomepage": "Menjadikan “{name}” sebagai beranda akan menciutkan semua halaman anak pada peta situs. Anda dapat membukanya kembali kapan saja.",
+  "ui.sitemapView.expandChildPages": "Perluas halaman anak",
   "ui.sitemapView.confirmTrashDescription": "“{name}” akan dihapus dari peta situs dan dipindahkan ke tempat sampah WordPress. Untuk membatalkannya, pulihkan halaman di WordPress.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

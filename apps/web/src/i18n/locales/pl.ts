@@ -4765,6 +4765,8 @@ export const pl: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Wybierz opublikowaną stronę, która zastąpi stronę główną.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Opublikuj stronę w WordPressie, a następnie wróć tutaj, aby ustawić ją jako stronę główną.",
   "ui.sitemapView.replacementHomepageAdmin": "Poproś administratora WordPressa o wybranie nowej strony głównej.",
+  "ui.sitemapView.confirmCollapseHomepage": "Ustawienie „{name}” jako strony głównej zwinie wszystkie podstrony w mapie witryny. Możesz je ponownie rozwinąć w dowolnym momencie.",
+  "ui.sitemapView.expandChildPages": "Rozwiń podstrony",
   "ui.sitemapView.confirmTrashDescription": "„{name}” zostanie usunięta z mapy witryny i przeniesiona do kosza WordPressa. Aby cofnąć tę zmianę, przywróć stronę w WordPressie.",
   "ui.sitemapCardMenu.cut": "Wytnij",
   "ui.sitemapCardMenu.addPage": "Dodaj stronę",

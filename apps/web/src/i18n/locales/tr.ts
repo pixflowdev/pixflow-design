@@ -4765,6 +4765,8 @@ export const tr: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Ana sayfanın yerine yayımlanmış bir sayfa seçin.",
   "ui.sitemapView.replacementHomepagePublishFirst": "WordPress’te bir sayfa yayımlayın, ardından ana sayfa olarak ayarlamak için buraya dönün.",
   "ui.sitemapView.replacementHomepageAdmin": "Bir WordPress yöneticisinden yeni bir ana sayfa seçmesini isteyin.",
+  "ui.sitemapView.confirmCollapseHomepage": "“{name}” ana sayfa olarak ayarlandığında site haritasındaki tüm alt sayfalar daraltılır. İstediğiniz zaman yeniden genişletebilirsiniz.",
+  "ui.sitemapView.expandChildPages": "Alt sayfaları genişlet",
   "ui.sitemapView.confirmTrashDescription": "“{name}” site haritasından kaldırılıp WordPress çöp kutusuna taşınacak. Bu işlemi geri almak için sayfayı WordPress’te geri yükleyin.",
   "ui.sitemapCardMenu.cut": "Kes",
   "ui.sitemapCardMenu.addPage": "Sayfa ekle",

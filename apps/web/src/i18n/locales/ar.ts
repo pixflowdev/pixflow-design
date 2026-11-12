@@ -4765,6 +4765,8 @@ export const ar: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "اختر صفحة منشورة لتحل محل الصفحة الرئيسية.",
   "ui.sitemapView.replacementHomepagePublishFirst": "انشر صفحة في ووردبريس، ثم ارجع إلى هنا لتعيينها صفحة رئيسية.",
   "ui.sitemapView.replacementHomepageAdmin": "اطلب من مسؤول ووردبريس اختيار صفحة رئيسية جديدة.",
+  "ui.sitemapView.confirmCollapseHomepage": "سيؤدي تعيين «{name}» صفحةً رئيسية إلى طي جميع الصفحات الفرعية في خريطة الموقع. يمكنك توسيعها مجددًا في أي وقت.",
+  "ui.sitemapView.expandChildPages": "توسيع الصفحات الفرعية",
   "ui.sitemapView.confirmTrashDescription": "ستُزال «{name}» من خريطة الموقع وتُنقل إلى سلة مهملات ووردبريس. للتراجع عن ذلك، استعدها في ووردبريس.",
   "ui.sitemapCardMenu.cut": "قص",
   "ui.sitemapCardMenu.addPage": "إضافة صفحة",

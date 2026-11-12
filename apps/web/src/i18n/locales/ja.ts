@@ -4276,6 +4276,8 @@ export const ja: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "ホームページの代わりとなる公開済みページを選択してください。",
   "ui.sitemapView.replacementHomepagePublishFirst": "WordPress でページを公開してから、ここに戻ってホームページに設定してください。",
   "ui.sitemapView.replacementHomepageAdmin": "WordPress の管理者に新しいホームページの選択を依頼してください。",
+  "ui.sitemapView.confirmCollapseHomepage": "「{name}」をホームページに設定すると、サイトマップ上のすべての子ページが折りたたまれます。いつでも再び展開できます。",
+  "ui.sitemapView.expandChildPages": "子ページを展開",
   "ui.sitemapView.confirmTrashDescription": "「{name}」はサイトマップから削除され、WordPress のゴミ箱に移動します。元に戻すには、WordPress で復元してください。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

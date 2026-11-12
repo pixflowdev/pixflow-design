@@ -4765,6 +4765,8 @@ export const uk: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "Виберіть опубліковану сторінку, яка замінить головну.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Опублікуйте сторінку у WordPress і поверніться сюди, щоб зробити її головною.",
   "ui.sitemapView.replacementHomepageAdmin": "Попросіть адміністратора WordPress вибрати нову головну сторінку.",
+  "ui.sitemapView.confirmCollapseHomepage": "Якщо призначити «{name}» головною сторінкою, усі дочірні сторінки на карті сайту буде згорнуто. Їх можна розгорнути будь-коли.",
+  "ui.sitemapView.expandChildPages": "Розгорнути дочірні сторінки",
   "ui.sitemapView.confirmTrashDescription": "Сторінку «{name}» буде вилучено з карти сайту й переміщено до кошика WordPress. Щоб скасувати дію, відновіть сторінку в WordPress.",
   "ui.sitemapCardMenu.cut": "Вирізати",
   "ui.sitemapCardMenu.addPage": "Додати сторінку",

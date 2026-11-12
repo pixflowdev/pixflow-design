@@ -4277,6 +4277,8 @@ export const zhTW: Dict = {
   "ui.sitemapView.chooseReplacementHomepage": "選擇已發佈的頁面來取代首頁。",
   "ui.sitemapView.replacementHomepagePublishFirst": "請先在 WordPress 發佈頁面，再回到這裡將其設為首頁。",
   "ui.sitemapView.replacementHomepageAdmin": "請 WordPress 管理員選擇新的首頁。",
+  "ui.sitemapView.confirmCollapseHomepage": "將「{name}」設為首頁後，網站地圖中的所有子頁面都會收合。你可以隨時重新展開。",
+  "ui.sitemapView.expandChildPages": "展開子頁面",
   "ui.sitemapView.confirmTrashDescription": "「{name}」將從網站地圖移除並移至 WordPress 回收桶。若要復原，請在 WordPress 還原此頁面。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

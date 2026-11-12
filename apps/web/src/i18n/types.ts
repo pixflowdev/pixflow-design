@@ -3199,6 +3199,10 @@ export interface Dict {
   "ui.sitemapCardMenu.removePlan": string;
   "ui.sitemapView.confirmTrashTitle": string;
   "ui.sitemapView.trashPage": string;
+  "ui.sitemapView.replacementHomepageTitle": string;
+  "ui.sitemapView.chooseReplacementHomepage": string;
+  "ui.sitemapView.replacementHomepagePublishFirst": string;
+  "ui.sitemapView.replacementHomepageAdmin": string;
   "ui.sitemapView.confirmTrashDescription": string;
   "ui.sitemapCardMenu.backspace": string;
   "ui.sitemapCardMenu.ctrlC": string;

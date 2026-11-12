@@ -273,6 +273,8 @@ export interface WorkspaceSitemap {
   wpHomepageId?: number;
   wpPostsPageId?: number;
   hasStaticHomepage?: boolean;
+  replacementHomepageId?: number;
+  canManageHomepage?: boolean;
   wpPagesSyncedAt?: string;
   syncWarnings?: string[];
   hiddenWpPostIds?: number[];

@@ -102,6 +102,7 @@ Pro's advanced operations still require WordPress's edit_plugins capability, hon
 
 **Changed**
 
+* Expanded interface translations across all 19 supported languages, including Media Library labels and the shared language catalogue used by Pro SEO Audit.
 * Clarify in all supported languages that Design systems updates the Pixflow Framework and Bricks Theme Styles only when a system is applied.
 * Reuse visually checked library images before generating new design imagery, including an installed Codex fallback for other CLI providers. Keep clearly marked WebP placeholders when suitable imagery or generation is unavailable.
 * Show Design Layout, Design Critique and the other design operations under Skills with the shared package icon. Apply every selected design operation, even when it appears within a longer prompt.

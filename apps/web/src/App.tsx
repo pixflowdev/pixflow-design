@@ -16,7 +16,7 @@ import { useModalWindowDragGuard } from './hooks/useModalWindowDragGuard';
 import { useLocalAgentHydration } from './hooks/useLocalAgentHydration';
 import { useI18n, useT as usePixflowUiTranslation } from './i18n';
 import { PixflowBridgeUpdateProvider, usePixflowBridgeUpdateState, } from './pixflow/bridge-update-gate';
-import { translationsShortcutLabel, usePixflowFeatureRuntime } from './pixflow/feature-runtime';
+import { pixflowFeatureConfiguration, translationsShortcutLabel, usePixflowFeatureRuntime } from './pixflow/feature-runtime';
 import { isPixflowWordPressEmbed, requestWordPressRest, type PixflowLicenseStatus, } from './pixflow/license';
 import { applyPixflowOnboardingProfile, fetchPixflowOnboardingProfile, resetPixflowOnboardingProfile, syncPixflowOnboardingProfile, } from './pixflow/onboarding-profile';
 import { createPixflowSharedAppConfigNotification, publishPixflowSharedAppConfigNotification, subscribePixflowSharedAppConfigNotifications, } from './pixflow/shared-app-config-notification';
@@ -1473,7 +1473,9 @@ function useAppController({ settingsPortal, workspaceInitiallyVisible }: AppProp
           setSettingsInitialSection('designSystems');
           setPendingWorkspaceTool(null);
           setSettingsOpen(true);
-        } else if (data.tool === 'media' || data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())) {
+        } else if (data.tool === 'media' || data.tool === 'sitemap' || data.tool === 'design-systems' || (data.tool === 'translations' && translationsShortcutLabel())
+          || (data.tool === 'seo-audit' && pixflowFeatureConfiguration('workspace')?.canAudit === true)
+          || (data.tool === 'blog-studio' && pixflowFeatureConfiguration('workspace')?.canUseBlogStudio === true)) {
           setToolbarWorkspaceTool(null);
           setPendingWorkspaceTool(null);
           setSettingsOpen(false);

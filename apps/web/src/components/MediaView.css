@@ -520,6 +520,7 @@ input.direct-media-width[aria-invalid=true] { border-color:var(--danger,var(--te
 
 /* Bound the library to its host. The two panes own scrolling; the Upscaler keeps its own layout. */
 .entry-main--scroll:has(.direct-media-header):not(:has(.direct-upscale-view)) { display:flex; flex-direction:column; overflow:hidden; }
+.entry-main__inner:has(> [data-testid="entry-view-media"][data-active="true"]) { max-width:none; }
 .entry-main__inner:has(.direct-media-header):not(:has(.direct-upscale-view)) { flex:1; min-height:0; box-sizing:border-box; padding-block:16px; }
 [data-testid="entry-view-media"][data-active="true"]:not(:has(.direct-upscale-view)),
 [data-testid="entry-view-media"] .entry-section:has(.direct-media-header):not(:has(.direct-upscale-view)),

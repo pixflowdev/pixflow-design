@@ -83,6 +83,30 @@ function mountMenu(
 }
 
 describe('Bricks toolbar workspace menu', () => {
+  it('opens each available Pro shortcut and hides it when the current user loses access', () => {
+    const onOpenTool = vi.fn();
+    const { dom, controller } = mountMenu(async () => true, { onOpenTool });
+    const shortcut = (tool: string) => dom.window.document.querySelector<HTMLButtonElement>(`[data-tool="${tool}"]`)!;
+    expect(shortcut('seo-audit').parentElement?.hidden).toBe(true);
+    expect(shortcut('blog-studio').parentElement?.hidden).toBe(true);
+    const workspace = { canAudit: false, canUseBlogStudio: true };
+    const runtime = { features: ['workspace', 'planning'], configuration: { workspace } };
+    Object.assign(dom.window, { __PIXFLOW_FEATURE_RUNTIME__: runtime });
+    dom.window.dispatchEvent(new dom.window.Event('pixflow-design:feature-runtime-changed'));
+    expect(shortcut('seo-audit').parentElement?.hidden).toBe(true);
+    expect(shortcut('blog-studio').parentElement?.hidden).toBe(false);
+    shortcut('blog-studio').click();
+    workspace.canAudit = true;
+    controller.toggle();
+    expect(shortcut('seo-audit').parentElement?.hidden).toBe(false);
+    shortcut('seo-audit').click();
+    expect(onOpenTool.mock.calls).toEqual([['blog-studio'], ['seo-audit']]);
+    runtime.features = [];
+    controller.toggle();
+    expect(shortcut('seo-audit').parentElement?.hidden).toBe(true);
+    expect(shortcut('blog-studio').parentElement?.hidden).toBe(true);
+  });
+
   it('opens the translated Workspace destination and removes access when the Pro capability changes', () => {
     const openTool = vi.fn();
     const { dom, controller } = mountMenu(async () => true, { onOpenTool: openTool });

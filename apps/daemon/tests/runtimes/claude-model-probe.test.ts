@@ -4,7 +4,7 @@ import { test, expect, vi, afterEach } from 'vitest';
 import { spawn } from 'node:child_process';
 import { stopChildProcessTree } from '@open-design/platform';
 import { discoverClaudeModels } from '../../src/runtimes/claude-models.js';
-vi.mock('node:child_process', () => ({ spawn: vi.fn() }));
+vi.mock('node:child_process', async original => ({ ...await original<object>(), spawn: vi.fn() }));
 vi.mock('@open-design/platform', async importOriginal => ({...await importOriginal<object>(),stopChildProcessTree:vi.fn(async()=>{})}));
 afterEach(()=>vi.clearAllMocks());
 function child(output?:unknown){

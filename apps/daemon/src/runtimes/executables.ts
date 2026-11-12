@@ -326,6 +326,7 @@ function appBundleExecutable(def: RuntimeAgentDef): string | null {
 }
 
 let windowsCodexPackages: { at: number; roots: string[] } | undefined;
+let windowsCodexVerifiedPaths: string[] = [];
 
 const execFileAsync = promisify(execFile);
 let windowsCodexPackagesRequest: Promise<void> | undefined;
@@ -334,7 +335,10 @@ let windowsCodexPackagesRequest: Promise<void> | undefined;
 export async function refreshCodexAppDiscovery(options: { force?: boolean } = {}): Promise<void> {
   if (process.platform !== 'win32' || resolveDetectionHome().hasOverride) return;
   if (windowsCodexPackagesRequest) return windowsCodexPackagesRequest;
-  if (!options.force && windowsCodexPackages && Date.now() - windowsCodexPackages.at < 60000) return;
+  const installationRemoved = windowsCodexVerifiedPaths.some(candidate => !existsSync(candidate));
+  if (!options.force && !installationRemoved && windowsCodexPackages && Date.now() - windowsCodexPackages.at < 60000) return;
+  // Consume invalidation even if the Store lookup fails, avoiding a retry storm.
+  windowsCodexVerifiedPaths = [];
   windowsCodexPackagesRequest = (async () => {
     try {
       const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
@@ -344,6 +348,7 @@ export async function refreshCodexAppDiscovery(options: { force?: boolean } = {}
       const parsed: unknown = JSON.parse(stdout.trim() || '[]');
       const roots = (Array.isArray(parsed) ? parsed : [parsed]).filter((entry): entry is string => typeof entry === 'string' && path.isAbsolute(entry));
       windowsCodexPackages = { at: Date.now(), roots };
+      windowsCodexVerifiedPaths = roots.map(root => path.join(root, 'app', 'resources', 'codex.exe')).filter(candidate => existsSync(candidate));
     } catch {
       // A temporary Store lookup failure must not forget an installed app.
       windowsCodexPackages = { at: Date.now(), roots: windowsCodexPackages?.roots ?? [] };

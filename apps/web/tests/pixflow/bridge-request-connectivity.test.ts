@@ -178,13 +178,15 @@ it('retains verified providers and Claude authentication when a stream ends at i
   expect(await api.fetchPixflowOptionalBridgeAgents()).toEqual(saved);
 });
 
-it('keeps a recently confirmed connection on a health timeout but reports connection refusal', async () => {
+it('keeps a confirmed connection past cache expiry on a health timeout but reports connection refusal', async () => {
   const fetch = vi.fn().mockResolvedValueOnce(Response.json({ ok: true }))
     .mockRejectedValueOnce(new DOMException('timeout', 'TimeoutError'))
     .mockRejectedValueOnce(new Error('connection refused'));
   const dispatch = setup(fetch);
   const {probePixflowOptionalBridge} = await import('../../src/pixflow/optional-bridge');
   await probePixflowOptionalBridge({force:true});
+  const later = Date.now() + 120_000;
+  vi.spyOn(Date, 'now').mockReturnValue(later);
   expect((await probePixflowOptionalBridge({force:true})).available).toBe(true);
   expect(dispatch).not.toHaveBeenCalled();
   expect((await probePixflowOptionalBridge({force:true})).available).toBe(false);

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
@@ -33,9 +33,11 @@ describe('Workspace CLI builder connection', () => {
   it('stages a working restricted helper outside project files and revokes/removes it', async () => {
     const root = await mkdtemp(path.join(tmpdir(), 'pixflow-workspace-helper-'));
     const calls: unknown[] = [];
+    let responseStatus = 200;
     const server = createServer(async (request, response) => {
       let body = ''; for await (const chunk of request) body += chunk;
       calls.push({ method: request.method, authorization: request.headers.authorization, body: body && JSON.parse(body) });
+      response.statusCode = responseStatus;
       response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({ ok: true, handoff: { id: 'receipt-1' } }));
     });
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -50,6 +52,21 @@ describe('Workspace CLI builder connection', () => {
       expect(JSON.parse(context.stdout)).toMatchObject({ scope: 'workspace', helper, siteTitle: null });
       expect(context.stdout).not.toContain(session.token);
       expect(calls).toHaveLength(0);
+      const discoveryResult = await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '--builder', 'bricks']);
+      expect(JSON.parse(discoveryResult.stdout).ok).toBe(true);
+      expect(calls.pop()).toMatchObject({ body: { tool: 'builder.destinations', arguments: { builder: 'bricks' } } });
+      const invalid = await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '{broken']).catch(error => error);
+      expect(JSON.parse(invalid.stdout)).toMatchObject({ ok: false, code: 'INVALID_ARGUMENTS' });
+      expect(invalid.stdout).not.toContain(session.token);
+      const argumentFile = path.join(root, 'arguments with spaces.json');
+      await writeFile(argumentFile, '\uFEFF' + JSON.stringify({ builder: 'bricks' }));
+      await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '@' + argumentFile]);
+      expect(calls.pop()).toMatchObject({ body: { arguments: { builder: 'bricks' } } });
+      responseStatus = 403;
+      const denied = await promisify(execFile)(process.execPath, [helper, 'builder.destinations']).catch(error => error);
+      expect(JSON.parse(denied.stdout)).toMatchObject({ code: 'HTTP_REJECTED', status: 403 });
+      expect(denied.stdout).not.toContain(session.token);
+      calls.pop(); responseStatus = 200;
       expect(await readFile(helper, 'utf8')).not.toContain(session.token);
       const result = await promisify(execFile)(process.execPath, [helper, 'builder.handoff', JSON.stringify({ action: 'open', builder: 'gutenberg', postId: 44, brief: 'Preserve content' })]);
       expect(JSON.parse(result.stdout)).toEqual({ ok: true, handoff: { id: 'receipt-1' } });

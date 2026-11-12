@@ -1,4 +1,5 @@
 import { execAgentFile } from './invocation.js';
+import { existsSync } from 'node:fs';
 import { discoveryPathLookup, refreshCodexAppDiscovery } from './executables.js';
 import { resolveSystemProxyEnvAsync } from '@open-design/platform';
 import { AGENT_DEFS } from './registry.js';
@@ -39,6 +40,10 @@ type AgentDetectionOptions = {
 };
 
 const AGENT_DETECTION_CACHE_MS = 60_000;
+/** Store updates replace versioned paths even while a detection cache is fresh. */
+function installationStillPresent(agent: DetectedAgent): boolean {
+  return agent.id !== 'codex' || !agent.available || !agent.path || existsSync(agent.path);
+}
 let cachedAgentDetection: {
   checkedAt: number;
   key: string;
@@ -406,6 +411,7 @@ function stripFns(
 // One completed observation per adapter, scoped to its configured environment.
 const lastProbe = new Map<string, { key: string; agent: DetectedAgent; at: number }>();
 const activeProbes = new Map<string, Promise<DetectedAgent>>();
+const probeGenerations = new Map<string, symbol>();
 
 function safeProbe(
   def: RuntimeAgentDef,
@@ -416,10 +422,26 @@ function safeProbe(
   const active = activeProbes.get(key);
   if (active) return active;
   const last = lastProbe.get(def.id);
+  const generation = Symbol(def.id);
+  probeGenerations.set(def.id, generation);
   const previous = last?.key === key && Date.now() - last.at < AGENT_DETECTION_CACHE_MS ? last.agent : undefined;
   const pending = runProbe(def, configuredEnv, systemProxyEnv, previous, agent => {
+    if (probeGenerations.get(def.id) !== generation) return;
     lastProbe.set(def.id, { key, agent, at: Date.now() });
-  }).finally(() => activeProbes.delete(key));
+    // A slow catalogue may finish after the responsive scan has returned.
+    // Replace that partial observation rather than leaving Default cached.
+    targetedAgentDetectionCache.set(`${def.id}:${key}`, { checkedAt: Date.now(), value: agent });
+    if (cachedAgentDetection) {
+      const environment = JSON.parse(cachedAgentDetection.key) as [string, [string, string][]][];
+      const values = Object.fromEntries(environment.find(([id]) => id === def.id)?.[1] ?? []);
+      if (stableAgentEnvKey({ [def.id]: values }) === key) {
+        cachedAgentDetection.value = cachedAgentDetection.value.map(item => item.id === def.id ? agent : item);
+      }
+    }
+    rememberDetectedLiveModels(def, configuredEnv, agent);
+  }, () => {
+    if (activeProbes.get(key) === pending) activeProbes.delete(key);
+  });
   activeProbes.set(key, pending);
   return pending;
 }
@@ -430,16 +452,16 @@ async function runProbe(
   systemProxyEnv: NodeJS.ProcessEnv,
   previous: DetectedAgent | undefined,
   remember: (agent: DetectedAgent) => void,
+  settled: () => void,
 ): Promise<DetectedAgent> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let installed: DetectedAgent | null = null;
   try {
     return await Promise.race([
       probe(def, configuredEnv, agent => { installed = agent; }, systemProxyEnv).then(agent => {
-        // A late completion may belong to a superseded scan.
-        if (timeout !== null) remember(agent);
+        remember(agent);
         return agent;
-      }),
+      }).finally(settled),
       new Promise<DetectedAgent>((resolve) => {
         timeout = setTimeout(() => {
           const sameInstallation = previous?.available && (!installed || previous.path === installed.path);
@@ -488,7 +510,8 @@ export async function detectAgents(
     !options.force &&
     cachedAgentDetection &&
     cachedAgentDetection.key === key &&
-    now - cachedAgentDetection.checkedAt < AGENT_DETECTION_CACHE_MS
+    now - cachedAgentDetection.checkedAt < AGENT_DETECTION_CACHE_MS &&
+    cachedAgentDetection.value.every(installationStillPresent)
   ) {
     return cachedAgentDetection.value;
   }
@@ -539,14 +562,14 @@ export async function detectAgent(
   const key = `${agentId}:${envKey}`;
   const now = Date.now();
   const cached = targetedAgentDetectionCache.get(key);
-  if (!options.force && cached && now - cached.checkedAt < AGENT_DETECTION_CACHE_MS) {
+  if (!options.force && cached && now - cached.checkedAt < AGENT_DETECTION_CACHE_MS && installationStillPresent(cached.value)) {
     return cached.value;
   }
 
   const fullCache = cachedAgentDetection;
   if (!options.force && fullCache && now - fullCache.checkedAt < AGENT_DETECTION_CACHE_MS) {
     const detected = fullCache.value.find((candidate) => candidate.id === agentId);
-    if (detected) {
+    if (detected && installationStillPresent(detected)) {
       targetedAgentDetectionCache.set(key, { checkedAt: now, value: detected });
       return detected;
     }
@@ -585,7 +608,8 @@ export async function* detectAgentsStream(
     !options.force &&
     cachedAgentDetection &&
     cachedAgentDetection.key === key &&
-    Date.now() - cachedAgentDetection.checkedAt < AGENT_DETECTION_CACHE_MS
+    Date.now() - cachedAgentDetection.checkedAt < AGENT_DETECTION_CACHE_MS &&
+    cachedAgentDetection.value.every(installationStillPresent)
   ) {
     for (const agent of cachedAgentDetection.value) {
       yield agent;

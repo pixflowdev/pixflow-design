@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Make Windows builder discovery avoid fragile JSON command quoting and report clearer connection failures.
+- Keep Claude model choices when discovery finishes slowly, and share ongoing scans instead of starting duplicate checks.
+- Rediscover Codex when an app update removes its previous executable, without requiring a CLI reinstall.
+- Preserve an established Bridge connection when a health check times out, while still reporting confirmed connection failures.
+
 - Keep the same chat, unsent text and page references when opening the Sitemap assistant, with shared conversation history and no duplicate composers.
 - Keep floating and docked assistant panels consistently sized and rounded, and align completion details correctly.
 - Keep Workspace navigation in sync across Core and Pro modules inside Bricks, so opening SEO Audit from another module does not reload the builder canvas.

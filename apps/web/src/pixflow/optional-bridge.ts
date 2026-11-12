@@ -350,7 +350,7 @@ function requestWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 3_5
     const normalized = normalizePixflowOptionalBridgeError(error);
     if (normalized instanceof PixflowOptionalBridgeUnavailableError) {
       if (url === pixflowOptionalBridgeApiUrl('health')) {
-        if (!isRequestTimeout(error) || !cachedHealth?.value.available || Date.now() - cachedHealth.checkedAt > HEALTH_CACHE_MS) {
+        if (!isRequestTimeout(error) || !cachedHealth?.value.available) {
           notifyPixflowOptionalBridgeDisconnected(error);
         }
       } else {
@@ -539,7 +539,9 @@ export async function probePixflowOptionalBridge(options?: {
     return value;
   } catch (error) {
     if (error instanceof PixflowOptionalBridgeUnavailableError && isRequestTimeout(error.cause)
-      && cachedHealth?.value.available && Date.now() - cachedHealth.checkedAt <= HEALTH_CACHE_MS) {
+      && cachedHealth?.value.available) {
+      // Cache expiry schedules a fresh check; it is not evidence of a lost
+      // connection. Do not renew checkedAt: subsequent checks must still run.
       return cachedHealth.value;
     }
     const value: PixflowOptionalBridgeHealth = {

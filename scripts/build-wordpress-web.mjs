@@ -146,6 +146,7 @@ try {
   if (Object.keys(gutenbergBuild.metafile.inputs).some(path => /apps[\\/]web[\\/]src[\\/]pro[\\/]/.test(path))) throw new Error('Core Gutenberg must not import Pro implementations.');
   await buildWithDirectorySource({
     entryPoints: [join(root, 'apps/web/src/pixflow/fit-media-picker.ts')],
+    plugins: [sharedRuntimePlugin],
     outfile: join(stagingOutdir, 'pixflow-fit-media.js'),
     bundle: true, format: 'iife', platform: 'browser', target: ['es2020'], minify: distribution !== 'directory',
   });

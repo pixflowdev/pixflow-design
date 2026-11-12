@@ -79,7 +79,7 @@ export function pixflowRuntimeFetch(path: string, init?: RequestInit): Promise<R
   return fetch(url, withWordPressNonce(init, url));
 }
 
-export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Promise<Response> {
+export function pixflowWordPressRestFetch(path: string, init?: RequestInit, onUploadProgress?: (percent: number) => void): Promise<Response> {
   const config = pixflowWordPressConfig();
   const restBaseUrl = typeof config?.restBaseUrl === 'string'
     ? config.restBaseUrl.replace(/\/+$/, '')
@@ -89,7 +89,7 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
     : '';
 
   if (!hasPixflowWordPressContext() || !restBaseUrl) {
-    return fetch(path, init);
+    return onUploadProgress ? uploadWithProgress(path, init, onUploadProgress) : fetch(path, init);
   }
 
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -104,5 +104,22 @@ export function pixflowWordPressRestFetch(path: string, init?: RequestInit): Pro
   const url = useQueryRoute
     ? queryRouteUrl(queryTransportBaseUrl, cleanPath)
     : `${restBaseUrl}${cleanPath}`;
-  return observeLicenceRequest(cleanPath, () => fetch(url, withWordPressNonce(init, url)), responseFormat);
+  return observeLicenceRequest(cleanPath, () => onUploadProgress ? uploadWithProgress(url, withWordPressNonce(init, url), onUploadProgress) : fetch(url, withWordPressNonce(init, url)), responseFormat);
+}
+
+/** Report bytes sent without treating transfer completion as server-side success. */
+export function uploadWithProgress(url: string, init: RequestInit | undefined, progress: (percent: number) => void): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(init?.method ?? 'POST', url);
+    xhr.timeout = 300000;
+    xhr.withCredentials = init?.credentials === 'include';
+    new Headers(init?.headers).forEach((value, key) => xhr.setRequestHeader(key, value));
+    xhr.upload.onprogress = event => { if (event.lengthComputable && event.total > 0) progress(Math.min(100, Math.round(event.loaded / event.total * 100))); };
+    xhr.onload = () => resolve(new Response(xhr.responseText, {status:xhr.status, headers:{'Content-Type':xhr.getResponseHeader('Content-Type') ?? 'application/json'}}));
+    xhr.onerror = () => reject(new Error('Upload connection failed.'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out.'));
+    xhr.onabort = () => reject(new Error('Upload cancelled.'));
+    xhr.send(init?.body as XMLHttpRequestBodyInit);
+  });
 }

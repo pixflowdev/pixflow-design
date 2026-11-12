@@ -205,6 +205,8 @@ export interface PixflowMediaListResponse {
 }
 
 export async function fetchPixflowMedia(params: {
+  folder?: number | 'all';
+  folderProvider?: 'pixflow' | 'happyfiles';
   attachmentId?: number;
   attachmentUrl?: string;
   type?: string;
@@ -214,6 +216,10 @@ export async function fetchPixflowMedia(params: {
   perPage?: number;
 } = {}, signal?:AbortSignal): Promise<PixflowMediaListResponse> {
   const query = new URLSearchParams();
+  if (params.folder !== undefined && params.folder !== 'all') {
+    query.set('folder', String(params.folder));
+    query.set('folderProvider', params.folderProvider ?? 'pixflow');
+  }
   if (params.attachmentUrl) query.set('attachmentUrl', params.attachmentUrl);
   if (params.attachmentId) query.set('attachmentId', String(params.attachmentId));
   if (params.type && params.type !== 'all') query.set('type', params.type);
@@ -244,7 +250,7 @@ export async function importPixflowWpMedia(attachmentIds: number[]): Promise<Pix
   return json.items ?? [];
 }
 
-export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>, options?: { upscaled?: boolean }): Promise<PixflowMediaItem> {
+export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMediaItem, 'altText' | 'caption' | 'description'>, options?: { upscaled?: boolean; onProgress?: (percent: number) => void }): Promise<PixflowMediaItem> {
   const form = new FormData();
   form.append('file', file);
   if (options?.upscaled) form.append('surface', 'upscaler');
@@ -256,9 +262,10 @@ export async function uploadPixflowMedia(file: File, metadata?: Pick<PixflowMedi
   const resp = await pixflowWordPressRestFetch('/media/upload', {
     method: 'POST',
     body: form,
-  });
+  }, options?.onProgress);
   if (!resp.ok) {
-    throw new Error(`media upload ${resp.status}`);
+    const detail = await resp.json().catch(() => null) as {message?:unknown}|null;
+    throw new Error(typeof detail?.message === 'string' ? detail.message : `Upload failed (${resp.status}).`);
   }
   const json = (await resp.json()) as { item?: PixflowMediaItem };
   if (!json.item) {

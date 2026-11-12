@@ -96,7 +96,7 @@ final class MediaLibraryService
         }
     }
 
-    public function list(array $args = []): array
+    public function list(array $args = []): array|\WP_Error
     {
         $page = max(1, (int) ($args['page'] ?? 1));
         $per_page = min(100, max(1, (int) ($args['perPage'] ?? 40)));
@@ -160,6 +160,11 @@ final class MediaLibraryService
             ];
         }
 
+        if (isset($args['folder']) && $args['folder'] !== 'all') {
+            $filter = MediaFolders::filter((string)($args['folderProvider'] ?? 'pixflow'), (int)$args['folder']);
+            if (is_wp_error($filter)) return $filter;
+            $query_args['tax_query'] = $filter;
+        }
         $query = new \WP_Query($query_args);
         $items = [];
         foreach ($query->posts as $post) {

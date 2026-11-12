@@ -157,3 +157,23 @@ describe('WordPress REST transport', () => {
     expect(new Headers(init.headers).get('X-WP-Nonce')).toBe('fixture-nonce');
   });
 });
+
+it('preserves WordPress upload authentication and waits for the server after byte progress',async()=>{
+ const headers:Record<string,string>={};let request:MockXHR|undefined;
+ class MockXHR {
+  upload:{onprogress?:(event:{lengthComputable:boolean;loaded:number;total:number})=>void}={};
+  onload?:()=>void;onerror?:()=>void;ontimeout?:()=>void;onabort?:()=>void;
+  status=201;responseText='{"item":{"attachmentId":1}}';timeout=0;withCredentials=false;
+  open=vi.fn();setRequestHeader=(key:string,value:string)=>{headers[key]=value;};getResponseHeader=()=> 'application/json';send=vi.fn();
+  constructor(){request=this;}
+ }
+ vi.stubGlobal('window',{location:{href:'http://wp.test/'},parent:null,top:null,__PIXFLOW_DESIGN_WORDPRESS__:{runtime:'wordpress',version:'2.2.2',restBaseUrl:'http://wp.test/wp-json/pixflow-design/v1',restNonce:'upload-nonce'}});
+ vi.stubGlobal('XMLHttpRequest',MockXHR);
+ try{
+  const progress=vi.fn(),finished=vi.fn();const result=pixflowWordPressRestFetch('/media/upload',{method:'POST',body:new FormData()},progress).then(value=>{finished();return value;});
+  expect(headers['x-wp-nonce']).toBe('upload-nonce');
+  request!.upload.onprogress!({lengthComputable:true,loaded:5,total:10});expect(progress).toHaveBeenLastCalledWith(50);
+  request!.upload.onprogress!({lengthComputable:true,loaded:10,total:10});expect(finished).not.toHaveBeenCalled();
+  request!.onload!();expect((await result).status).toBe(201);
+ }finally{vi.unstubAllGlobals();}
+});

@@ -4270,6 +4270,8 @@ export const ja: Dict = {
   "ui.sitemapCardMenu.ctrlD": "Ctrl+D",
   "ui.sitemapCardMenu.moveToPlanned": "計画中に移動",
   "ui.sitemapCardMenu.removePlan": "計画を削除",
+  "ui.sitemapView.confirmTrashTitle": "このページをゴミ箱に移動しますか？",
+  "ui.sitemapView.confirmTrashDescription": "「{name}」はサイトマップから削除され、WordPress のゴミ箱に移動します。元に戻すには、WordPress で復元してください。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",
   "ui.sitemapCardMenu.cut": "切り取り",

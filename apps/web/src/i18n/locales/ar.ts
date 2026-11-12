@@ -4759,6 +4759,8 @@ export const ar: Dict = {
   "ui.sitemapCardMenu.duplicate": "تكرار",
   "ui.sitemapCardMenu.moveToPlanned": "نقل إلى المخطّط",
   "ui.sitemapCardMenu.removePlan": "إزالة الخطة",
+  "ui.sitemapView.confirmTrashTitle": "هل تريد نقل هذه الصفحة إلى سلة المهملات؟",
+  "ui.sitemapView.confirmTrashDescription": "ستُزال «{name}» من خريطة الموقع وتُنقل إلى سلة مهملات ووردبريس. للتراجع عن ذلك، استعدها في ووردبريس.",
   "ui.sitemapCardMenu.cut": "قص",
   "ui.sitemapCardMenu.addPage": "إضافة صفحة",
   "ui.sitemapCardMenu.addSection": "إضافة قسم",

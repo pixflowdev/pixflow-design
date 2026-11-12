@@ -4270,6 +4270,8 @@ export const ko: Dict = {
   "ui.sitemapCardMenu.ctrlD": "Ctrl+D",
   "ui.sitemapCardMenu.moveToPlanned": "계획됨으로 이동",
   "ui.sitemapCardMenu.removePlan": "계획 제거",
+  "ui.sitemapView.confirmTrashTitle": "이 페이지를 휴지통으로 이동할까요?",
+  "ui.sitemapView.confirmTrashDescription": "“{name}” 페이지가 사이트맵에서 제거되어 워드프레스 휴지통으로 이동합니다. 되돌리려면 워드프레스에서 복원하세요.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",
   "ui.sitemapCardMenu.cut": "잘라내기",

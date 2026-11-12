@@ -6106,6 +6106,8 @@ export const en: Dict = {
   "ui.sitemapCardMenu.ctrlD": "Ctrl+D",
   "ui.sitemapCardMenu.moveToPlanned": "Move to planned",
   "ui.sitemapCardMenu.removePlan": "Remove plan",
+  "ui.sitemapView.confirmTrashTitle": "Move this page to Trash?",
+  "ui.sitemapView.confirmTrashDescription": "“{name}” will be removed from the sitemap and moved to WordPress Trash. To undo this, restore it in WordPress.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",
   "ui.sitemapCardMenu.cut": "Cut",

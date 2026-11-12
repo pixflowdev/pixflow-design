@@ -3197,6 +3197,8 @@ export interface Dict {
   "ui.sitemapCardMenu.ctrlD": string;
   "ui.sitemapCardMenu.moveToPlanned": string;
   "ui.sitemapCardMenu.removePlan": string;
+  "ui.sitemapView.confirmTrashTitle": string;
+  "ui.sitemapView.confirmTrashDescription": string;
   "ui.sitemapCardMenu.backspace": string;
   "ui.sitemapCardMenu.ctrlC": string;
   "ui.sitemapCardMenu.cut": string;

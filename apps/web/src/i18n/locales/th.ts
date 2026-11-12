@@ -4270,6 +4270,8 @@ export const th: Dict = {
   "ui.sitemapCardMenu.ctrlD": "Ctrl+D",
   "ui.sitemapCardMenu.moveToPlanned": "ย้ายไปที่วางแผนไว้",
   "ui.sitemapCardMenu.removePlan": "นำแผนออก",
+  "ui.sitemapView.confirmTrashTitle": "ย้ายหน้านี้ไปที่ถังขยะหรือไม่",
+  "ui.sitemapView.confirmTrashDescription": "ระบบจะนำ “{name}” ออกจากแผนผังเว็บไซต์และย้ายไปที่ถังขยะของ WordPress หากต้องการเลิกทำ ให้กู้คืนหน้านี้ใน WordPress",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",
   "ui.sitemapCardMenu.cut": "ตัด",

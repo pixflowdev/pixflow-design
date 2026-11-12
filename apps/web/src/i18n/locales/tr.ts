@@ -4759,6 +4759,8 @@ export const tr: Dict = {
   "ui.sitemapCardMenu.duplicate": "Çoğalt",
   "ui.sitemapCardMenu.moveToPlanned": "Planlananlara taşı",
   "ui.sitemapCardMenu.removePlan": "Planı kaldır",
+  "ui.sitemapView.confirmTrashTitle": "Bu sayfa çöpe taşınsın mı?",
+  "ui.sitemapView.confirmTrashDescription": "“{name}” site haritasından kaldırılıp WordPress çöp kutusuna taşınacak. Bu işlemi geri almak için sayfayı WordPress’te geri yükleyin.",
   "ui.sitemapCardMenu.cut": "Kes",
   "ui.sitemapCardMenu.addPage": "Sayfa ekle",
   "ui.sitemapCardMenu.addSection": "Bölüm ekle",

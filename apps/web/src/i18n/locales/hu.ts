@@ -4759,6 +4759,8 @@ export const hu: Dict = {
   "ui.sitemapCardMenu.duplicate": "Másolat készítése",
   "ui.sitemapCardMenu.moveToPlanned": "Áthelyezés a tervezettek közé",
   "ui.sitemapCardMenu.removePlan": "Terv eltávolítása",
+  "ui.sitemapView.confirmTrashTitle": "A lomtárba helyezi ezt az oldalt?",
+  "ui.sitemapView.confirmTrashDescription": "A(z) „{name}” eltűnik a webhelytérképről, és a WordPress lomtárába kerül. A művelet visszavonásához állítsa vissza az oldalt a WordPressben.",
   "ui.sitemapCardMenu.cut": "Kivágás",
   "ui.sitemapCardMenu.addPage": "Oldal hozzáadása",
   "ui.sitemapCardMenu.addSection": "Szakasz hozzáadása",

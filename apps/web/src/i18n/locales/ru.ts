@@ -4759,6 +4759,8 @@ export const ru: Dict = {
   "ui.sitemapCardMenu.duplicate": "Дублировать",
   "ui.sitemapCardMenu.moveToPlanned": "Перевести в запланированные",
   "ui.sitemapCardMenu.removePlan": "Удалить план",
+  "ui.sitemapView.confirmTrashTitle": "Переместить эту страницу в корзину?",
+  "ui.sitemapView.confirmTrashDescription": "Страница «{name}» будет удалена из карты сайта и перемещена в корзину WordPress. Чтобы отменить действие, восстановите страницу в WordPress.",
   "ui.sitemapCardMenu.cut": "Вырезать",
   "ui.sitemapCardMenu.addPage": "Добавить страницу",
   "ui.sitemapCardMenu.addSection": "Добавить раздел",

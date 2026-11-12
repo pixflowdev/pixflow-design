@@ -1,0 +1,25 @@
+name: Windows v2.3.0 installer acceptance
+on:
+  push:
+    branches: [codex/windows-2.3.0-acceptance]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  installer:
+    runs-on: windows-2025
+    timeout-minutes: 22
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install and upgrade the verified installer
+        shell: pwsh
+        run: ./scripts/windows-release-acceptance.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-2.3.0-acceptance
+          path: ${{ runner.temp }}/pixflow-230-qa/receipt.json
+          if-no-files-found: error

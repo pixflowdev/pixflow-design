@@ -54,6 +54,10 @@ jobs:
         run: pnpm --filter @open-design/web test tests/components/ChatComposer.design-settings.test.tsx
       - name: Tooltip portal regression
         run: pnpm --filter @open-design/web test tests/components/TooltipLayer.test.tsx
+      - name: Media Library folders and upload regression
+        run: |
+          pnpm --filter @open-design/web test tests/components/MediaFolders.test.tsx tests/components/MediaUploads.test.tsx tests/components/useMediaUploads.test.ts tests/pixflow/runtime-fetch.test.ts
+          php wordpress/tests/media-folders.test.php
       - name: Translation consistency
         run: pnpm i18n:check
       - name: Directory packaging regression

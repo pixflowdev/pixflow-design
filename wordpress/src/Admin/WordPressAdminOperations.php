@@ -6,8 +6,10 @@ if (!defined('ABSPATH')) exit;
 /** Bounded native WordPress operations shared by API and CLI tool callers. */
 final class WordPressAdminOperations
 {
-    private const READS = ['wordpress.posts.list', 'wordpress.posts.get', 'wordpress.terms.list', 'wordpress.terms.get', 'wordpress.media.list', 'wordpress.media.get', 'wordpress.media.inspect', 'wordpress.media.placeholders', 'wordpress.settings.get'];
+    private const READS = ['wordpress.media.folders.list', 'wordpress.posts.list', 'wordpress.posts.get', 'wordpress.terms.list', 'wordpress.terms.get', 'wordpress.media.list', 'wordpress.media.get', 'wordpress.media.inspect', 'wordpress.media.placeholders', 'wordpress.settings.get'];
     private const ARGUMENTS = [
+        'wordpress.media.folders.list' => ['provider'],
+        'wordpress.media.folders.change' => ['provider','action','id','beforeId','name','parent','attachmentIds','append'],
         'wordpress.posts.list' => ['postType','status','search','perPage','page'],
         'wordpress.posts.get' => ['postId'],
         'wordpress.posts.create' => ['postType','status','title','slug','content','excerpt','parent','terms','featuredMediaId'],
@@ -53,6 +55,8 @@ final class WordPressAdminOperations
             'wordpress.media.list' => ['search'=>'Optional search', 'mimeType'=>'image, audio, video or all', 'page'=>'1..1000', 'perPage'=>'1..50'],
             'wordpress.media.get' => ['attachmentId'=>'Exact attachment ID; returns metadata and fingerprint'],
             'wordpress.media.inspect' => ['attachmentId'=>'Existing local image attachment ID; returns bounded image bytes for visual inspection, not a suitability verdict'],
+            'wordpress.media.folders.list' => ['provider'=>'pixflow or happyfiles; returns virtual folders'],
+            'wordpress.media.folders.change' => ['provider'=>'pixflow or happyfiles','action'=>'create, update, delete, assign or reorder','id'=>'Exact folder ID; zero means unfiled for assign','beforeId'=>'Sibling folder to insert before; zero appends for reorder','name'=>'Folder name','parent'=>'Parent folder ID or zero','attachmentIds'=>'1 to 100 attachment IDs for assign','append'=>'Optional boolean; HappyFiles multiple-folder mode only'],
             'wordpress.media.placeholders' => ['description'=>'Bundled WebP design placeholders in six aspect ratios; no provider, upload or attachment required'],
             'wordpress.media.update' => ['attachmentId'=>'Exact attachment ID', 'expectedFingerprint'=>'Fresh fingerprint from wordpress.media.get', 'fields'=>'Nonempty object of title, caption, description, altText only'],
             'wordpress.media.delete' => ['attachmentId'=>'Exact attachment ID', 'expectedFingerprint'=>'Fresh fingerprint; permanently removes this native media attachment only'],
@@ -92,6 +96,8 @@ final class WordPressAdminOperations
         }
         if (isset($arguments['fields']['title'])) $arguments['fields']['title'] = sanitize_text_field($arguments['fields']['title']);
         return match ($tool) {
+            'wordpress.media.folders.list' => \PixflowDesign\WordPress\Media\MediaFolders::read($arguments['provider']??'pixflow'),
+            'wordpress.media.folders.change' => \PixflowDesign\WordPress\Media\MediaFolders::change($arguments),
             'wordpress.posts.list' => $this->core->list_posts($arguments),
             'wordpress.posts.get' => $this->core->get_post($arguments['postId']),
             'wordpress.posts.create' => $this->core->create_post($arguments),
@@ -117,6 +123,7 @@ final class WordPressAdminOperations
     private function validate(string $tool, array $args): ?\WP_Error
     {
         if (array_diff(array_keys($args), self::ARGUMENTS[$tool])) return $this->error('argument_not_allowlisted', 'This operation accepts only its documented arguments.', 400);
+        if ($tool === 'wordpress.media.folders.change') return null; // Shared folder service validates the full request for UI and CLI.
         foreach ($args as $key => $value) {
             if (in_array($key, ['fields','settings','terms'], true)) {
                 if (!is_array($value) || ($value !== [] && array_is_list($value))) return $this->error('invalid_arguments', $key . ' must be an object.', 400);

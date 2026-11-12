@@ -181,6 +181,17 @@
 
 .direct-media-file-row {
   cursor: pointer;
+  user-select: none;
+}
+
+.direct-media-file-row:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.direct-media-file-row:focus-visible {
+  outline: 2px solid var(--media-accent);
+  outline-offset: -2px;
 }
 
 .direct-media-file-row:hover,
@@ -357,10 +368,7 @@
   background: color-mix(in srgb, var(--media-accent) 12%, var(--media-subtle));
 }
 
-.pixflow-media-view.is-dragging {
-  outline: 2px dashed var(--media-accent);
-  outline-offset: 6px;
-}
+.pixflow-media-view { position: relative; }
 
 @container (max-width: 840px) {
   .direct-media-titlebar,
@@ -582,7 +590,7 @@ input.direct-media-width[aria-invalid=true] { border-color:var(--danger,var(--te
 .direct-media-layout-select {width:min(150px,100%);}
 .direct-media-table:not([data-layout=list]) .direct-media-entries {display:grid;gap:8px;padding:10px;}
 .direct-media-table:not([data-layout=list]) .direct-media-file-row {display:block;position:relative;min-width:0;min-height:0;padding:4px;border:1px solid var(--media-border);border-radius:var(--radius-sm,8px);}
-.direct-media-table:not([data-layout=list]) .direct-media-file-row.is-selected {border-color:var(--media-accent);}
+.direct-media-table:not([data-layout=list]) .direct-media-file-row.is-selected:not([aria-pressed]) {border-color:var(--media-accent);}
 .direct-media-table:not([data-layout=list]) .direct-media-file-row > span:not(.direct-media-file-name) {display:none;}
 .direct-media-table:not([data-layout=list]) .direct-media-file-name {display:grid;gap:4px;}
 .direct-media-table:not([data-layout=list]) .direct-media-row-icon {width:100%;height:auto;aspect-ratio:4/3;border-radius:4px;}

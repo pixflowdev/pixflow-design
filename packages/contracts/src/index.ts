@@ -103,3 +103,5 @@ export * from './api/pixflow-editor-style-snapshot.js';
 export * from './api/codex-usage.js';
 export * from './api/site-translations.js';
 export * from './api/upscaler.js';
+
+export * from './api/media-folders.js';

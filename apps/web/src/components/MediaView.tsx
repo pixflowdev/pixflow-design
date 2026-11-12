@@ -1,3 +1,8 @@
+import { MediaUploadQueue, MediaDropOverlay } from './MediaUploads';
+import { useMediaUploads } from './useMediaUploads';
+import { MediaFolders, MEDIA_DRAG_TYPE, type MediaFolderScope } from './MediaFolders';
+import { mediaFolders } from '../providers/media-folders';
+import folderStyles from './MediaFolders.module.css';
 import { Button } from '@open-design/components';
 import { useUpscalerInventory } from '../pixflow/upscaler-access';
 import { WorkspaceSelect } from './WorkspaceSelect';
@@ -110,6 +115,8 @@ function MediaImagePreview({item,onOptimise,onUpscale}:{item:PixflowMediaItem;on
 
 export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveForSettings, onSelectImage }: { onSelectImage?: (item: PixflowMediaItem) => void; onLeaveForSettings?: () => void; headerAction?: React.ReactNode; attachmentId?: number; attachmentUrl?: string } = {}) {
   const translateUi = usePixflowUiTranslation();
+  const [folderScope,setFolderScope]=useState<MediaFolderScope>(()=>{try{const value=JSON.parse(sessionStorage.getItem('pixflow.media.folders')??'null');if(value&&(value.provider==='pixflow'||value.provider==='happyfiles')&&(value.folder==='all'||Number.isSafeInteger(value.folder)&&value.folder>=0))return value;}catch{}return {provider:'pixflow',folder:'all'};});
+  useEffect(()=>{try{sessionStorage.setItem('pixflow.media.folders',JSON.stringify(folderScope));}catch{}},[folderScope]);
   const [items, setItems] = useState<PixflowMediaItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -152,6 +159,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
     try {
       const result = await fetchPixflowMedia({
         type,
+        folder:folderScope.folder, folderProvider:folderScope.provider,
         search: debouncedSearch,
         page: nextPage,
         perPage: MEDIA_PAGE_SIZE,
@@ -167,6 +175,8 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
           : result.items[0]?.id ?? '',
       );
     } catch (error) {
+      if(id!==requestId.current)return;
+      setItems([]);setTotal(0);
       setMessage(error instanceof Error ? error.message : translateUi("ui.mediaView.feedback57"));
     } finally {
       if(id===requestId.current)setLoading(false);
@@ -175,7 +185,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
 
   useEffect(() => {
     setPage(1);
-  }, [type, debouncedSearch]);
+  }, [type, debouncedSearch, folderScope]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -187,10 +197,11 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
   useEffect(() => {
     void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, debouncedSearch, page]);
+  }, [type, debouncedSearch, page, folderScope]);
 
   const [bulk, setBulk] = useState(false);
   const [selection, setSelection] = useState<PixflowMediaItem[]>([]);
+  const rangeAnchor = useRef<string | undefined>(undefined);
   const [compress,setCompress]=useState(false);
   const [queue,setQueue]=useState<PixflowMediaItem[]>();
   const [quality, setQuality] = useState(82);
@@ -207,6 +218,44 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
     return ()=>lookup.current?.abort();
   },[bulk,search,type]);
 
+  function selectMediaRow(item: PixflowMediaItem, extend: boolean, toggle: boolean) {
+    if (extend && !running && !selecting) {
+      const anchorId = bulk ? rangeAnchor.current : selected?.id;
+      const anchorIndex = items.findIndex(entry => entry.id === anchorId);
+      const itemIndex = items.indexOf(item);
+      const range = anchorIndex < 0 ? [item] : items.slice(
+        Math.min(anchorIndex, itemIndex), Math.max(anchorIndex, itemIndex) + 1,
+      );
+      rangeAnchor.current = anchorIndex < 0 ? item.id : anchorId;
+      setBulk(true);
+      setSelection(previous => {
+        const byId = new Map(previous.map(entry => [entry.id, entry]));
+        for (const entry of range) byId.set(entry.id, entry);
+        return [...byId.values()];
+      });
+      return;
+    }
+
+    rangeAnchor.current = item.id;
+    if (toggle && !bulk && !running && !selecting) {
+      const anchor = items.find(entry => entry.id === selected?.id);
+      setBulk(true);
+      setSelection(anchor?.id === item.id ? [] : anchor ? [anchor, item] : [item]);
+      return;
+    }
+
+    if (bulk) {
+      setSelection(previous => previous.some(entry => entry.id === item.id)
+        ? previous.filter(entry => entry.id !== item.id)
+        : [...previous, item]);
+      return;
+    }
+
+    pickedRow.current = true;
+    setLinked(null);
+    setSelectedId(item.id);
+  }
+
   async function selectAllImages(){
     if(running||selecting||(type!=='all'&&type!=='image'))return;
     const task=new AbortController();lookup.current=task;setSelecting(true);setMessage('');
@@ -214,7 +263,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
       const matches=new Map<string,PixflowMediaItem>();
       let pages=1;
       for(let current=1;current<=pages;current++){
-        const result=await fetchPixflowMedia({type:'image',search,page:current,perPage:100},task.signal);
+        const result=await fetchPixflowMedia({type:'image',search,page:current,perPage:100,folder:folderScope.folder,folderProvider:folderScope.provider},task.signal);
         if(current===1)pages=Math.ceil(result.total/100);
         for(const item of result.items)if(eligible(item))matches.set(item.id,item);
       }
@@ -302,19 +351,20 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
     void load();
   }
 
-  async function uploadFiles(files: File[]) {
-    if (files.length === 0) return;
-    setLoading(true);
-    setMessage('');
-    try {
-      for (const file of files) {
-        await uploadPixflowMedia(file);
-      }
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : translateUi("ui.mediaView.feedback58"));
-      setLoading(false);
-    }
+  const uploads=useMediaUploads(()=>{void load();});
+  function uploadFiles(files: File[]) {
+    const destination={...folderScope};
+    uploads.add(files,file=>{
+      let uploaded:PixflowMediaItem|undefined;
+      return async onProgress=>{
+        if(!uploaded)uploaded=await uploadPixflowMedia(file,undefined,{onProgress});
+        onProgress(100);
+        if(typeof destination.folder==='number'&&destination.folder>0){
+          try{await mediaFolders(destination.provider,{provider:destination.provider,action:'assign',id:destination.folder,attachmentIds:[uploaded.attachmentId]});}
+          catch(error){throw new Error(translateUi('media.folders.uploadFailed',{message:error instanceof Error?error.message:String(error)}));}
+        }
+      };
+    });
   }
 
   function openWpMedia() {
@@ -341,6 +391,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
     <section
       className={`direct-media-files-panel pixflow-media-view${dragging ? ' is-dragging' : ''}`}
       onDragOver={(event) => {
+        if (!event.dataTransfer.types.includes('Files')) return;
         event.preventDefault();
         setDragging(true);
       }}
@@ -355,6 +406,8 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
         void uploadFiles(Array.from(event.dataTransfer.files));
       }}
     >
+      <MediaDropOverlay active={dragging}/>
+      <MediaUploadQueue jobs={uploads.jobs} onRetry={uploads.retry} onClear={uploads.clear}/>
       <input
         ref={fileInputRef}
         type="file"
@@ -370,6 +423,8 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
         closeUpscaler();
         selectCopy(copy);
       }} />}
+      <div className={folderStyles.shell} style={upscaleItem ? {display:'none'} : undefined}>
+      <MediaFolders scope={folderScope} onScope={next=>{rangeAnchor.current=undefined;setFolderScope(next);setSelection([]);setLinked(null);setSelectedId('');setPage(1);}} attachmentIds={bulk?selection.map(item=>item.attachmentId):selected?[selected.attachmentId]:[]} onChanged={()=>void load()}/>
       <div className="direct-media-files-main" style={upscaleItem ? {display:'none'} : undefined}>
         <header className="direct-media-header">
           <div className="direct-media-titlebar">
@@ -382,6 +437,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
             </div>
             <div className="direct-media-files-actions">
               <button type="button" disabled={running} aria-pressed={bulk} onClick={() => {
+                rangeAnchor.current = undefined;
                 setCompress(false);setBulk(!bulk); setSelection([]); setResults([]);
               }}>{translateUi(bulk?'common.cancel':'media.bulk.select')}</button>
               <button type="button" onClick={() => void load()} disabled={loading}>
@@ -428,12 +484,12 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
           <div className="direct-media-batch-selection">
             <button type="button" disabled={running||selecting||(type!=='all'&&type!=='image')} onClick={()=>void selectAllImages()}>
               {translateUi(selecting?'common.loading':'media.bulk.selectAll')}</button>
-            <button type="button" disabled={running||selecting||!selection.length} onClick={()=>setSelection([])}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
+            <button type="button" disabled={running||selecting||!selection.length} onClick={()=>{rangeAnchor.current=undefined;setSelection([]);}}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
           </div>
-          <button type="button" aria-pressed={compress} disabled={running||selecting||!selection.length} onClick={()=>setCompress(!compress)}>{translateUi('media.bulk.action')} ({selection.length})</button>
-          {showUpscaleAction && <button type="button" disabled={running||selecting||!selection.length} onClick={event=>{openUpscaler(selection[0]!,event.currentTarget,[...selection]);}}>{translateUi('media.upscale.action')} ({selection.length})</button>}
+          <button type="button" aria-pressed={compress} disabled={running||selecting||!selection.length||selection.some(item=>!eligible(item))} onClick={()=>setCompress(!compress)}>{translateUi('media.bulk.action')} ({selection.length})</button>
+          {showUpscaleAction && <button type="button" disabled={running||selecting||!selection.length||selection.some(item=>!eligible(item))} onClick={event=>{openUpscaler(selection[0]!,event.currentTarget,[...selection]);}}>{translateUi('media.upscale.action')} ({selection.length})</button>}
           {compress && <><span>{translateUi('media.bulk.hint')}</span><MediaQualitySlider value={quality} onChange={setQuality} disabled={running} />
-          <button type="button" disabled={running || selecting || !selection.length} onClick={() => void runBatch()}>
+          <button type="button" disabled={running || selecting || !selection.length || selection.some(item=>!eligible(item))} onClick={() => void runBatch()}>
             {translateUi('media.optimise.save')} ({selection.length})
           </button></>}
           <ul aria-live="polite">{results.map((line, index) => <li key={index}>{line}</li>)}</ul>
@@ -456,22 +512,23 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
               <div className="direct-media-entries" style={layout==='list'?undefined:{gridTemplateColumns:'repeat('+layout+',minmax(0,1fr))'}}>{items.map((item) => (
                 <button
                   key={item.id}
+                  draggable={!running && !selecting}
+                  onDragStart={event=>{
+                    const dragged=bulk&&selection.some(entry=>entry.id===item.id)?selection:[item];
+                    event.dataTransfer.effectAllowed='move';
+                    event.dataTransfer.setData(MEDIA_DRAG_TYPE,JSON.stringify(dragged.map(entry=>entry.attachmentId)));
+                  }}
                   type="button"
-                  disabled={bulk && (!eligible(item) || running || selecting)}
+                  disabled={bulk && (running || selecting)}
                   aria-pressed={bulk ? selection.some(entry => entry.id === item.id) : undefined}
                   className={`direct-media-file-row${(bulk ? selection.some(entry => entry.id === item.id) : selected?.id === item.id) ? ' is-selected' : ''}`}
-                  onClick={() => {
-                    if (bulk) {
-                      setSelection(previous => previous.some(entry => entry.id === item.id)
-                        ? previous.filter(entry => entry.id !== item.id) : [...previous, item]);
-                    } else { pickedRow.current = true; setLinked(null); setSelectedId(item.id); }
-                  }}
+                  onClick={event => selectMediaRow(item, event.shiftKey, event.ctrlKey || event.metaKey)}
                 >
                   <span className="direct-media-file-name">
                     {bulk && <span aria-hidden="true" className="direct-media-check">{selection.some(entry => entry.id === item.id) ? '✓' : ''}</span>}
                     <span className={`direct-media-row-icon direct-media-row-icon--${item.type}`}>
                       {item.type === 'image' ? (
-                        <img src={item.url} alt="" loading="lazy" />
+                        <img src={item.url} alt="" loading="lazy" draggable={false} />
                       ) : (
                         shortKind(item)
                       )}
@@ -572,6 +629,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
             )}
           </aside>
         </div>
+      </div>
       </div>
     </section>
   );

@@ -37,6 +37,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Added**
 
+* Organise media in nested Pixflow folders or use existing HappyFiles Pro folders. Create and rename folders inline, reorder them by dragging, and save your preferred sort order.
+* Use Ctrl-click or Cmd-click to select individual media items, or Shift-click to select a range. Drag the selection into a folder in one move.
+* Drop files into the Media Library and track each upload in a floating queue with progress, completion, and retry controls.
+
 * Connect eligible Pro installations to production Google services without manually configuring service API keys.
 * Give Gutenberg, Elementor and Etch agents current site typography, colours and layout information to reuse existing styles without repeatedly rediscovering them.
 * Show tagged skills and pasted web links as inline badges in sent chat messages. Link badges show the domain and favicon, and Copy prompt retains the original text.

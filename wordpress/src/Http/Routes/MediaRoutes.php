@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PixflowDesign\WordPress\Http\Routes;
 
 use PixflowDesign\WordPress\Media\MediaLibraryService;
+use PixflowDesign\WordPress\Media\MediaFolders;
 use PixflowDesign\WordPress\Media\MediaGenerationService;
 
 if (!defined('ABSPATH')) {
@@ -25,11 +26,18 @@ final class MediaRoutes
     {
         \PixflowDesign\WordPress\Media\DynamicFit::register();
         \PixflowDesign\WordPress\Media\FitMedia::register_source_tracking();
+        add_action('init', [MediaFolders::class, 'register']);
         add_action('rest_api_init', [$this, 'register_routes']);
     }
 
     public function register_routes(): void
     {
+        register_rest_route(self::NAMESPACE, '/media/folders', [
+            ['methods'=>'GET', 'permission_callback'=>[$this, 'can_manage_media'],
+                'callback'=>static fn(\WP_REST_Request $request)=>MediaFolders::read((string)($request->get_param('provider')??'pixflow'))],
+            ['methods'=>'POST', 'permission_callback'=>[$this, 'can_manage_media'],
+                'callback'=>static fn(\WP_REST_Request $request)=>MediaFolders::change((array)$request->get_json_params())],
+        ]);
         register_rest_route(self::NAMESPACE, '/media', [
             [
                 'methods' => 'GET',
@@ -134,8 +142,11 @@ final class MediaRoutes
             'type' => (string) ($request->get_param('type') ?? 'all'),
             'source' => (string) ($request->get_param('source') ?? 'all'),
             'search' => (string) ($request->get_param('search') ?? ''),
+            'folder' => $request->get_param('folder'),
+            'folderProvider' => (string) ($request->get_param('folderProvider') ?? 'pixflow'),
         ]);
 
+        if (is_wp_error($result)) return $result;
         return $this->response([
             'ok' => true,
             ...$result,

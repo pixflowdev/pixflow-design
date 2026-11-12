@@ -1,9 +1,28 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import path from 'node:path';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const child = vi.hoisted(() => ({ exec: vi.fn() }));
 vi.mock('node:child_process', () => ({ execFile: child.exec }));
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
+it('refreshes a removed Store installation immediately after an app update', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+  vi.stubEnv('OD_AGENT_HOME', ''); vi.stubEnv('OD_SANDBOX_MODE', ''); vi.stubEnv('OD_DATA_DIR', '');
+  const root = mkdtempSync(path.join(tmpdir(), 'codex-update-'));
+  const oldRoot = path.join(root, 'old'); const newRoot = path.join(root, 'new');
+  for (const dir of [oldRoot, newRoot]) { mkdirSync(path.join(dir, 'app', 'resources'), { recursive: true }); writeFileSync(path.join(dir, 'app', 'resources', 'codex.exe'), 'fixture'); }
+  let current = oldRoot;
+  child.exec.mockImplementation((_file, _args, _options, callback) => callback(null, { stdout: JSON.stringify(current) }));
+  try {
+    const discovery = await import('../../src/runtimes/executables.js');
+    await discovery.refreshCodexAppDiscovery();
+    rmSync(oldRoot, { recursive: true, force: true }); current = newRoot;
+    await discovery.refreshCodexAppDiscovery();
+    expect(child.exec).toHaveBeenCalledTimes(2);
+    expect(discovery.codexAppBundleCandidates()).toContain(path.join(newRoot, 'app', 'resources', 'codex.exe'));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 afterEach(() => { Object.defineProperty(process, 'platform', platform); vi.unstubAllEnvs(); vi.resetModules(); child.exec.mockReset(); });
 
 it('maps current Mac CLI launchers to the containing app archive without escaping a scoped home', async () => {

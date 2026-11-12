@@ -54,7 +54,7 @@ export function parseClaudeModels(value: unknown): RuntimeModelOption[] | null {
 }
 
 /** Initialize the CLI control protocol without a user prompt, tools, hooks or saved session. */
-export async function discoverClaudeModels(executable: string, env: RuntimeEnv, timeoutMs = 7000): Promise<RuntimeModelOption[] | null> {
+export async function discoverClaudeModels(executable: string, env: RuntimeEnv, timeoutMs = 15000): Promise<RuntimeModelOption[] | null> {
   const cwd = await mkdtemp(join(tmpdir(), 'pixflow-claude-models-'));
   try {
     const invocation = createCommandInvocation({ command: executable, env, args: [

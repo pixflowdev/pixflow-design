@@ -4271,6 +4271,7 @@ export const id: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Pindahkan ke direncanakan",
   "ui.sitemapCardMenu.removePlan": "Hapus rencana",
   "ui.sitemapView.confirmTrashTitle": "Pindahkan halaman ini ke tempat sampah?",
+  "ui.sitemapView.trashPage": "Pindahkan halaman ke tempat sampah",
   "ui.sitemapView.confirmTrashDescription": "“{name}” akan dihapus dari peta situs dan dipindahkan ke tempat sampah WordPress. Untuk membatalkannya, pulihkan halaman di WordPress.",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

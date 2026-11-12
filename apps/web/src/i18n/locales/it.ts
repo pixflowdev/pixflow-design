@@ -4369,6 +4369,7 @@ export const it: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Segna come pianificata",
   "ui.sitemapCardMenu.removePlan": "Rimuovi piano",
   "ui.sitemapView.confirmTrashTitle": "Spostare questa pagina nel cestino?",
+  "ui.sitemapView.trashPage": "Sposta la pagina nel cestino",
   "ui.sitemapView.confirmTrashDescription": "«{name}» verrà rimossa dalla mappa del sito e spostata nel cestino di WordPress. Per annullare l’operazione, ripristina la pagina in WordPress.",
   "ui.sitemapCardMenu.cut": "Taglia",
   "ui.sitemapCardMenu.addPage": "Aggiungi pagina",

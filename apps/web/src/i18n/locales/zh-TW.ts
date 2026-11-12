@@ -4272,6 +4272,7 @@ export const zhTW: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "移至規劃中",
   "ui.sitemapCardMenu.removePlan": "移除計畫",
   "ui.sitemapView.confirmTrashTitle": "將此頁面移至回收桶？",
+  "ui.sitemapView.trashPage": "將頁面移至回收桶",
   "ui.sitemapView.confirmTrashDescription": "「{name}」將從網站地圖移除並移至 WordPress 回收桶。若要復原，請在 WordPress 還原此頁面。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

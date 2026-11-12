@@ -4369,6 +4369,7 @@ export const fr: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Marquer comme planifié",
   "ui.sitemapCardMenu.removePlan": "Supprimer le plan",
   "ui.sitemapView.confirmTrashTitle": "Mettre cette page à la corbeille ?",
+  "ui.sitemapView.trashPage": "Mettre la page à la corbeille",
   "ui.sitemapView.confirmTrashDescription": "« {name} » sera retirée du plan du site et déplacée dans la corbeille de WordPress. Pour annuler cette action, restaurez-la dans WordPress.",
   "ui.sitemapCardMenu.cut": "Couper",
   "ui.sitemapCardMenu.addPage": "Ajouter une page",

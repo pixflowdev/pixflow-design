@@ -4272,6 +4272,7 @@ export const zhCN: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "移至计划中",
   "ui.sitemapCardMenu.removePlan": "移除计划",
   "ui.sitemapView.confirmTrashTitle": "将此页面移至回收站？",
+  "ui.sitemapView.trashPage": "将页面移至回收站",
   "ui.sitemapView.confirmTrashDescription": "“{name}”将从站点地图中移除并移至 WordPress 回收站。要撤销此操作，请在 WordPress 中还原页面。",
   "ui.sitemapCardMenu.backspace": "Backspace",
   "ui.sitemapCardMenu.ctrlC": "Ctrl+C",

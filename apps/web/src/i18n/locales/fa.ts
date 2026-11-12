@@ -4760,6 +4760,7 @@ export const fa: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "انتقال به برنامه‌ریزی‌شده",
   "ui.sitemapCardMenu.removePlan": "حذف طرح",
   "ui.sitemapView.confirmTrashTitle": "این برگه به زباله‌دان منتقل شود؟",
+  "ui.sitemapView.trashPage": "انتقال برگه به زباله‌دان",
   "ui.sitemapView.confirmTrashDescription": "«{name}» از نقشهٔ سایت حذف و به زباله‌دان وردپرس منتقل می‌شود. برای واگرد، آن را در وردپرس بازیابی کنید.",
   "ui.sitemapCardMenu.cut": "برش",
   "ui.sitemapCardMenu.addPage": "افزودن صفحه",

@@ -4369,6 +4369,7 @@ export const esES: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Marcar como planificada",
   "ui.sitemapCardMenu.removePlan": "Eliminar plan",
   "ui.sitemapView.confirmTrashTitle": "¿Mover esta página a la papelera?",
+  "ui.sitemapView.trashPage": "Mover página a la papelera",
   "ui.sitemapView.confirmTrashDescription": "«{name}» se quitará del mapa del sitio y se moverá a la papelera de WordPress. Para deshacerlo, restáurala en WordPress.",
   "ui.sitemapCardMenu.cut": "Cortar",
   "ui.sitemapCardMenu.addPage": "Añadir página",

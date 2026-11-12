@@ -4369,6 +4369,7 @@ export const ptBR: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Marcar como planejada",
   "ui.sitemapCardMenu.removePlan": "Remover plano",
   "ui.sitemapView.confirmTrashTitle": "Mover esta página para a lixeira?",
+  "ui.sitemapView.trashPage": "Mover página para a lixeira",
   "ui.sitemapView.confirmTrashDescription": "“{name}” será removida do mapa do site e movida para a lixeira do WordPress. Para desfazer, restaure a página no WordPress.",
   "ui.sitemapCardMenu.cut": "Recortar",
   "ui.sitemapCardMenu.addPage": "Adicionar página",

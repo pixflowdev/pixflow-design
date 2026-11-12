@@ -4760,6 +4760,7 @@ export const pl: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Przenieś do zaplanowanych",
   "ui.sitemapCardMenu.removePlan": "Usuń plan",
   "ui.sitemapView.confirmTrashTitle": "Przenieść tę stronę do kosza?",
+  "ui.sitemapView.trashPage": "Przenieś stronę do kosza",
   "ui.sitemapView.confirmTrashDescription": "„{name}” zostanie usunięta z mapy witryny i przeniesiona do kosza WordPressa. Aby cofnąć tę zmianę, przywróć stronę w WordPressie.",
   "ui.sitemapCardMenu.cut": "Wytnij",
   "ui.sitemapCardMenu.addPage": "Dodaj stronę",

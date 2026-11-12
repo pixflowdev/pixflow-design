@@ -4369,6 +4369,7 @@ export const de: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Als geplant markieren",
   "ui.sitemapCardMenu.removePlan": "Plan entfernen",
   "ui.sitemapView.confirmTrashTitle": "Diese Seite in den Papierkorb verschieben?",
+  "ui.sitemapView.trashPage": "Seite in den Papierkorb verschieben",
   "ui.sitemapView.confirmTrashDescription": "„{name}“ wird aus der Sitemap entfernt und in den WordPress-Papierkorb verschoben. Du kannst die Seite in WordPress wiederherstellen.",
   "ui.sitemapCardMenu.cut": "Ausschneiden",
   "ui.sitemapCardMenu.addPage": "Seite hinzufügen",

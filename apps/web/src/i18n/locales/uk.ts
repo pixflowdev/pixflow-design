@@ -4760,6 +4760,7 @@ export const uk: Dict = {
   "ui.sitemapCardMenu.moveToPlanned": "Перенести до запланованих",
   "ui.sitemapCardMenu.removePlan": "Видалити план",
   "ui.sitemapView.confirmTrashTitle": "Перемістити цю сторінку до кошика?",
+  "ui.sitemapView.trashPage": "Перемістити сторінку до кошика",
   "ui.sitemapView.confirmTrashDescription": "Сторінку «{name}» буде вилучено з карти сайту й переміщено до кошика WordPress. Щоб скасувати дію, відновіть сторінку в WordPress.",
   "ui.sitemapCardMenu.cut": "Вирізати",
   "ui.sitemapCardMenu.addPage": "Додати сторінку",

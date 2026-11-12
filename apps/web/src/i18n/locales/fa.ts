@@ -4761,6 +4761,8 @@ export const fa: Dict = {
   "ui.sitemapCardMenu.removePlan": "حذف طرح",
   "ui.sitemapView.confirmTrashTitle": "این برگه به زباله‌دان منتقل شود؟",
   "ui.sitemapView.trashPage": "انتقال برگه به زباله‌دان",
+  "ui.sitemapView.removeFromSitemap": "حذف از نقشهٔ سایت",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "انتخاب صفحهٔ اصلی جدید",
   "ui.sitemapView.chooseReplacementHomepage": "یک برگهٔ منتشرشده را برای جایگزینی صفحهٔ اصلی انتخاب کنید.",
   "ui.sitemapView.replacementHomepagePublishFirst": "برگه‌ای را در وردپرس منتشر کنید و برای تنظیم آن به‌عنوان صفحهٔ اصلی به اینجا بازگردید.",

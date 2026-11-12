@@ -4272,6 +4272,8 @@ export const ja: Dict = {
   "ui.sitemapCardMenu.removePlan": "計画を削除",
   "ui.sitemapView.confirmTrashTitle": "このページをゴミ箱に移動しますか？",
   "ui.sitemapView.trashPage": "ページをゴミ箱に移動",
+  "ui.sitemapView.removeFromSitemap": "サイトマップから削除",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "新しいホームページを選択",
   "ui.sitemapView.chooseReplacementHomepage": "ホームページの代わりとなる公開済みページを選択してください。",
   "ui.sitemapView.replacementHomepagePublishFirst": "WordPress でページを公開してから、ここに戻ってホームページに設定してください。",

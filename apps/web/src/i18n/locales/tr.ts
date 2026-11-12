@@ -4761,6 +4761,8 @@ export const tr: Dict = {
   "ui.sitemapCardMenu.removePlan": "Planı kaldır",
   "ui.sitemapView.confirmTrashTitle": "Bu sayfa çöpe taşınsın mı?",
   "ui.sitemapView.trashPage": "Sayfayı çöpe taşı",
+  "ui.sitemapView.removeFromSitemap": "Site haritasından kaldır",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Yeni bir ana sayfa seçin",
   "ui.sitemapView.chooseReplacementHomepage": "Ana sayfanın yerine yayımlanmış bir sayfa seçin.",
   "ui.sitemapView.replacementHomepagePublishFirst": "WordPress’te bir sayfa yayımlayın, ardından ana sayfa olarak ayarlamak için buraya dönün.",

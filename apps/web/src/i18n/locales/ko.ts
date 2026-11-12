@@ -4272,6 +4272,8 @@ export const ko: Dict = {
   "ui.sitemapCardMenu.removePlan": "계획 제거",
   "ui.sitemapView.confirmTrashTitle": "이 페이지를 휴지통으로 이동할까요?",
   "ui.sitemapView.trashPage": "페이지를 휴지통으로 이동",
+  "ui.sitemapView.removeFromSitemap": "사이트맵에서 제거",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "새 홈페이지 선택",
   "ui.sitemapView.chooseReplacementHomepage": "홈페이지를 대신할 공개 페이지를 선택하세요.",
   "ui.sitemapView.replacementHomepagePublishFirst": "워드프레스에서 페이지를 공개한 뒤 여기로 돌아와 홈페이지로 설정하세요.",

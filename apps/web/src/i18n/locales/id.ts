@@ -4272,6 +4272,8 @@ export const id: Dict = {
   "ui.sitemapCardMenu.removePlan": "Hapus rencana",
   "ui.sitemapView.confirmTrashTitle": "Pindahkan halaman ini ke tempat sampah?",
   "ui.sitemapView.trashPage": "Pindahkan halaman ke tempat sampah",
+  "ui.sitemapView.removeFromSitemap": "Hapus dari peta situs",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Pilih beranda baru",
   "ui.sitemapView.chooseReplacementHomepage": "Pilih halaman yang sudah diterbitkan untuk menggantikan beranda.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Terbitkan halaman di WordPress, lalu kembali ke sini untuk menjadikannya beranda.",

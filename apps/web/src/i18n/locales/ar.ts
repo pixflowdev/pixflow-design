@@ -4761,6 +4761,8 @@ export const ar: Dict = {
   "ui.sitemapCardMenu.removePlan": "إزالة الخطة",
   "ui.sitemapView.confirmTrashTitle": "هل تريد نقل هذه الصفحة إلى سلة المهملات؟",
   "ui.sitemapView.trashPage": "نقل الصفحة إلى سلة المهملات",
+  "ui.sitemapView.removeFromSitemap": "إزالة من خريطة الموقع",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "اختيار صفحة رئيسية جديدة",
   "ui.sitemapView.chooseReplacementHomepage": "اختر صفحة منشورة لتحل محل الصفحة الرئيسية.",
   "ui.sitemapView.replacementHomepagePublishFirst": "انشر صفحة في ووردبريس، ثم ارجع إلى هنا لتعيينها صفحة رئيسية.",

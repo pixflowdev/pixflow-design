@@ -4761,6 +4761,8 @@ export const pl: Dict = {
   "ui.sitemapCardMenu.removePlan": "Usuń plan",
   "ui.sitemapView.confirmTrashTitle": "Przenieść tę stronę do kosza?",
   "ui.sitemapView.trashPage": "Przenieś stronę do kosza",
+  "ui.sitemapView.removeFromSitemap": "Usuń z mapy witryny",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Wybierz nową stronę główną",
   "ui.sitemapView.chooseReplacementHomepage": "Wybierz opublikowaną stronę, która zastąpi stronę główną.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Opublikuj stronę w WordPressie, a następnie wróć tutaj, aby ustawić ją jako stronę główną.",

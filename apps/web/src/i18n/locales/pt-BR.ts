@@ -4370,6 +4370,8 @@ export const ptBR: Dict = {
   "ui.sitemapCardMenu.removePlan": "Remover plano",
   "ui.sitemapView.confirmTrashTitle": "Mover esta página para a lixeira?",
   "ui.sitemapView.trashPage": "Mover página para a lixeira",
+  "ui.sitemapView.removeFromSitemap": "Remover do mapa do site",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Escolher uma nova página inicial",
   "ui.sitemapView.chooseReplacementHomepage": "Selecione uma página publicada para substituir a página inicial.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publique uma página no WordPress e volte aqui para defini-la como página inicial.",

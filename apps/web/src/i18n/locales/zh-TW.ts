@@ -4273,6 +4273,8 @@ export const zhTW: Dict = {
   "ui.sitemapCardMenu.removePlan": "移除計畫",
   "ui.sitemapView.confirmTrashTitle": "將此頁面移至回收桶？",
   "ui.sitemapView.trashPage": "將頁面移至回收桶",
+  "ui.sitemapView.removeFromSitemap": "從網站地圖移除",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "選擇新的首頁",
   "ui.sitemapView.chooseReplacementHomepage": "選擇已發佈的頁面來取代首頁。",
   "ui.sitemapView.replacementHomepagePublishFirst": "請先在 WordPress 發佈頁面，再回到這裡將其設為首頁。",

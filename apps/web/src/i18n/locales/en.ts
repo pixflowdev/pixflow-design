@@ -6108,6 +6108,8 @@ export const en: Dict = {
   "ui.sitemapCardMenu.removePlan": "Remove plan",
   "ui.sitemapView.confirmTrashTitle": "Move this page to Trash?",
   "ui.sitemapView.trashPage": "Trash page",
+  "ui.sitemapView.removeFromSitemap": "Remove from sitemap",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Choose a new homepage",
   "ui.sitemapView.chooseReplacementHomepage": "Select a published page to replace the homepage.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publish a page in WordPress, then return here to set it as the homepage.",

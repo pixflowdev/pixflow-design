@@ -4273,6 +4273,8 @@ export const zhCN: Dict = {
   "ui.sitemapCardMenu.removePlan": "移除计划",
   "ui.sitemapView.confirmTrashTitle": "将此页面移至回收站？",
   "ui.sitemapView.trashPage": "将页面移至回收站",
+  "ui.sitemapView.removeFromSitemap": "从站点地图中移除",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "选择新的首页",
   "ui.sitemapView.chooseReplacementHomepage": "选择一个已发布的页面来替换首页。",
   "ui.sitemapView.replacementHomepagePublishFirst": "请在 WordPress 中发布一个页面，然后返回这里将其设为首页。",

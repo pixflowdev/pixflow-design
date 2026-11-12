@@ -213,6 +213,7 @@
     var seoAuditTool = addTool('SEO Audit', 'seo-audit', 'seo-audit');
     seoAuditTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'ui.seoAudit.seoAudit');
     var blogStudioTool = addTool('Blog Studio', 'blog-studio', 'blog-studio');
+    blogStudioTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'ui.workspaceToolbar.blogStudio');
     seoAuditTool.hidden = blogStudioTool.hidden = true;
     var stopWatchingTranslations = null;
     translationsTool.hidden = true;

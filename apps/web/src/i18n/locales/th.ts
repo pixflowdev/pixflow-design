@@ -4272,6 +4272,8 @@ export const th: Dict = {
   "ui.sitemapCardMenu.removePlan": "นำแผนออก",
   "ui.sitemapView.confirmTrashTitle": "ย้ายหน้านี้ไปที่ถังขยะหรือไม่",
   "ui.sitemapView.trashPage": "ย้ายหน้าไปที่ถังขยะ",
+  "ui.sitemapView.removeFromSitemap": "นำออกจากแผนผังเว็บไซต์",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "เลือกหน้าแรกใหม่",
   "ui.sitemapView.chooseReplacementHomepage": "เลือกหน้าที่เผยแพร่แล้วเพื่อใช้แทนหน้าแรก",
   "ui.sitemapView.replacementHomepagePublishFirst": "เผยแพร่หน้าใน WordPress แล้วกลับมาที่นี่เพื่อตั้งเป็นหน้าแรก",

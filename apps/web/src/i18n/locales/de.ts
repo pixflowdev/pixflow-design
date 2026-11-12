@@ -4370,6 +4370,8 @@ export const de: Dict = {
   "ui.sitemapCardMenu.removePlan": "Plan entfernen",
   "ui.sitemapView.confirmTrashTitle": "Diese Seite in den Papierkorb verschieben?",
   "ui.sitemapView.trashPage": "Seite in den Papierkorb verschieben",
+  "ui.sitemapView.removeFromSitemap": "Aus der Sitemap entfernen",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Neue Startseite auswählen",
   "ui.sitemapView.chooseReplacementHomepage": "Wähle eine veröffentlichte Seite als neue Startseite.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Veröffentliche eine Seite in WordPress und kehre hierher zurück, um sie als Startseite festzulegen.",

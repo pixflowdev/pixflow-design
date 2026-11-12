@@ -4370,6 +4370,8 @@ export const fr: Dict = {
   "ui.sitemapCardMenu.removePlan": "Supprimer le plan",
   "ui.sitemapView.confirmTrashTitle": "Mettre cette page à la corbeille ?",
   "ui.sitemapView.trashPage": "Mettre la page à la corbeille",
+  "ui.sitemapView.removeFromSitemap": "Retirer du plan du site",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Choisir une nouvelle page d’accueil",
   "ui.sitemapView.chooseReplacementHomepage": "Sélectionnez une page publiée pour remplacer la page d’accueil.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Publiez une page dans WordPress, puis revenez ici pour la définir comme page d’accueil.",

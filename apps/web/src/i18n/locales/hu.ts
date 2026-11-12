@@ -4761,6 +4761,8 @@ export const hu: Dict = {
   "ui.sitemapCardMenu.removePlan": "Terv eltávolítása",
   "ui.sitemapView.confirmTrashTitle": "A lomtárba helyezi ezt az oldalt?",
   "ui.sitemapView.trashPage": "Oldal áthelyezése a lomtárba",
+  "ui.sitemapView.removeFromSitemap": "Eltávolítás a webhelytérképről",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Új kezdőlap választása",
   "ui.sitemapView.chooseReplacementHomepage": "Válasszon egy közzétett oldalt új kezdőlapnak.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Tegyen közzé egy oldalt a WordPressben, majd térjen vissza ide a kezdőlap beállításához.",

@@ -4761,6 +4761,8 @@ export const uk: Dict = {
   "ui.sitemapCardMenu.removePlan": "Видалити план",
   "ui.sitemapView.confirmTrashTitle": "Перемістити цю сторінку до кошика?",
   "ui.sitemapView.trashPage": "Перемістити сторінку до кошика",
+  "ui.sitemapView.removeFromSitemap": "Вилучити з карти сайту",
+  "ui.workspaceToolbar.blogStudio": "Blog Studio",
   "ui.sitemapView.replacementHomepageTitle": "Виберіть нову головну сторінку",
   "ui.sitemapView.chooseReplacementHomepage": "Виберіть опубліковану сторінку, яка замінить головну.",
   "ui.sitemapView.replacementHomepagePublishFirst": "Опублікуйте сторінку у WordPress і поверніться сюди, щоб зробити її головною.",

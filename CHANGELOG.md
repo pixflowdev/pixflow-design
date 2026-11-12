@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Show one continuous loading indicator when opening the Sitemap Builder.
 - Keep chat project icons compact, make sidebar search easier to spot, and let the Workspace Media Library fill wide screens.
 - Keep floating-panel composer controls on one row at the minimum width, with a single Send control.
 - Make Windows builder discovery avoid fragile JSON command quoting and report clearer connection failures.

@@ -1,5 +1,7 @@
 import { pixflowFeatureEnabled, usePixflowFeatureAsset } from './feature-runtime';
 import { FeatureContributionLoading } from './FeatureContributionLoading';
+import { WorkspaceLoading } from '../components/WorkspaceLoading';
+import styles from './SitemapContribution.module.css';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as JSXRuntime from 'react/jsx-runtime';
@@ -68,8 +70,13 @@ export function DesignSystemSwitch(props: React.ComponentProps<Contribution['Des
 }
 export function SitemapView(props: React.ComponentProps<Contribution['SitemapView']>) {
   const status = usePixflowFeatureAsset('pixflow-planning');
-  const Component = pixflowFeatureEnabled('planning') && renderer()?.SitemapView;
-  return Component ? <Component {...props} /> : pixflowFeatureEnabled('planning') ? <FeatureContributionLoading {...status} /> : null;
+  if (!pixflowFeatureEnabled('planning')) return null;
+  const Component = renderer()?.SitemapView;
+  if (!Component && status.error) return <FeatureContributionLoading {...status} />;
+  return <div className={styles.frame}>
+    <div className={styles.loading}><WorkspaceLoading /></div>
+    {Component && <Component {...props} />}
+  </div>;
 }
 
 export function EnhancedDesignGuidance(props: { enabled?: boolean; surface?: import('@open-design/contracts').PixflowSurface }) {

@@ -27,6 +27,26 @@ const codexAgent: AgentInfo = {
 };
 
 describe('agent model selection', () => {
+  it('selects the newest available named release and Medium for a first run', () => {
+    const catalog = {
+      ...codexAgent,
+      models: [
+        ...codexAgent.models!,
+        { id: 'older', label: 'Older', releasedAt: '2026-10-01', reasoningOptions: [{ id: 'medium', label: 'Medium' }] },
+        { id: 'newest', label: 'Newest', releasedAt: '2026-11-01', reasoningOptions: [{ id: 'medium', label: 'Medium' }] },
+        { id: 'unavailable', label: 'Unavailable', releasedAt: '2026-11-04', enabled: false },
+      ],
+    };
+    expect(effectiveAgentModelChoice(catalog, undefined)).toEqual({ model: 'newest', reasoning: 'medium' });
+    expect(normalizeAgentModelChoice(catalog, { model: 'default' })).toEqual({ model: 'newest', reasoning: 'medium' });
+    expect(effectiveAgentModelChoice(catalog, { model: 'older', reasoning: 'high' })).toEqual({ model: 'older', reasoning: 'high' });
+  });
+
+  it('uses provider order without dates and omits a placeholder when the catalogue is empty', () => {
+    expect(effectiveAgentModelChoice(amrAgent, undefined)?.model).toBe('glm-5');
+    expect(effectiveAgentModelChoice(codexAgent, { model: 'default' })?.model).toBeUndefined();
+  });
+
   it('normalizes stale saved AMR models to the first live model', () => {
     expect(
       normalizeAgentModelChoice(amrAgent, {

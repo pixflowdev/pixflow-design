@@ -10,3 +10,21 @@
 .action:hover { background: color-mix(in srgb, var(--text) 7%, var(--bg-fill-tertiary)); color: var(--text); text-decoration: none; }
 .action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .action svg { flex: none; }
+
+.attachment[data-size="sm"] { flex-wrap: nowrap; gap: 8px; padding: 6px 8px; border-radius: 12px; }
+.attachment[data-size="sm"] .media { width: 28px; height: 28px; border-radius: 8px; }
+.attachment[data-size="sm"] .content { min-width: 0; }
+.attachment[data-size="sm"] .description { margin-top: 1px; }
+.attachment[data-size="sm"] .action { width: 28px; min-height: 28px; padding: 0; }
+.trigger {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.trigger:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
+.trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.attachment:has(.trigger) .actions { z-index: 1; }

@@ -17,6 +17,7 @@ import { reuseWordPressHostStyles } from './wordpress-shared-styles.ts';
 import { wordpressRetiredSurfaces } from './wordpress-retired-surfaces.ts';
 import { buildWordPressSharedRuntime } from './wordpress-shared-runtime.ts';
 import { copyDirectoryLogoAssets } from './wordpress-directory-logo-assets.ts';
+import { buildWordPressDocumentAssets } from './wordpress-document-assets.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildWordPressWeb(options = {}) {
@@ -72,6 +73,7 @@ try {
     const languageRoot = configuration.outdir ? join(buildWorkdir, 'languages') : undefined;
     await buildWordPressTranslations(false, { outputRoot: languageRoot });
     await buildWordPressLanguagePacks(root, resolve(process.env.PIXFLOW_LANGUAGE_OUTPUT_DIR || join(root, '.tmp/language-packs')), { languageRoot, writeManifest: !configuration.outdir });
+    if (distribution === 'website') await buildWordPressDocumentAssets(root, stagingOutdir);
   }
   const lazyDataPlugin = await buildWordPressLazyAssets(root, join(stagingOutdir, 'lazy'), distribution);
   const sharedDataPlugin = await buildWordPressSharedData(root, stagingOutdir, distribution);

@@ -1,3 +1,4 @@
+import { effectiveAgentModelChoice, namedAgentModels } from './agentModelSelection';
 import { agentReasoningOptions } from '../utils/agentReasoning';
 import { LanguageUpdateDot } from './LanguageUpdateDot';
 import { ClaudeSignIn } from './ClaudeSignIn';
@@ -1495,9 +1496,7 @@ export function SettingsDialog({
   // deliberate choice, even when that choice equals the provider preset id.
   const apiModelUserSelectedRef = useRef(false);
   const [apiModelCustomEditing, setApiModelCustomEditing] = useState(false);
-  const [agentCustomModelIds, setAgentCustomModelIds] = useState<
-    ReadonlySet<string>
-  >(() => new Set());
+
   const wordpressRuntimeInfo = useMemo(readPixflowWordPressRuntimeInfo, []);
   const [bridgeReleaseManifest, setBridgeReleaseManifest] = useState<PixflowBridgeReleaseManifest | null>(null);
   const [bridgeUpdateStatus, setBridgeUpdateStatus] = useState<'idle' | 'checking' | 'error'>('idle');
@@ -3187,19 +3186,15 @@ export function SettingsDialog({
     return label || id;
   };
   const agentModelSummary = (agent: AgentInfo) => {
-    if (!Array.isArray(agent.models) || agent.models.length === 0) return null;
-    const choice = cfg.agentModels?.[agent.id] ?? {};
-    const modelValue = choice.model ?? agent.models[0]?.id ?? '';
-    if (!modelValue) return t('settings.modelCustom');
-    return agentModelOptionLabel(
-      agent.models.find((m) => m.id === modelValue),
-      modelValue,
-    );
+    const modelValue = effectiveAgentModelChoice(agent, cfg.agentModels?.[agent.id])?.model;
+    if (!modelValue) return null;
+    return agentModelOptionLabel(namedAgentModels(agent).find(model => model.id === modelValue), modelValue);
   };
   const renderAgentModelConfig = (selected: AgentInfo) => {
-    const hasModels =
-      Array.isArray(selected.models) && selected.models.length > 0;
-    const reasoningOptions = agentReasoningOptions(selected, cfg.agentModels?.[selected.id]?.model);
+    const models = namedAgentModels(selected);
+    const hasModels = models.length > 0;
+    const choice = effectiveAgentModelChoice(selected, cfg.agentModels?.[selected.id]) ?? {};
+    const reasoningOptions = agentReasoningOptions(selected, choice.model);
     const hasReasoning = reasoningOptions.length > 0;
     // AMR's live catalog only lands a beat after sign-in. While the user is
     // signed in but the model list hasn't arrived yet, show the picker in a
@@ -3237,18 +3232,6 @@ export function SettingsDialog({
       );
     }
     if (!hasModels && !hasReasoning) return null;
-    const choice = cfg.agentModels?.[selected.id] ?? {};
-    const knownModelIds = selected.models?.map((m) => m.id) ?? [];
-    // Adapters opt out via `supportsCustomModel: false` on their
-    // RuntimeAgentDef when their CLI has no `--model` flag (Antigravity,
-    // upstream issue #35) or when free-text ids silently fail at spawn
-    // (AMR routes through ACP `session/set_model` and validates against
-    // a live catalog). Undefined === allow, matching today's UX.
-    const allowCustomModel = selected.supportsCustomModel !== false;
-    const configuredModel =
-      typeof choice.model === 'string' && choice.model
-        ? choice.model
-        : null;
     const setChoice = (next: AgentModelChoice) => {
       setCfg((c) => {
         const prev = c.agentModels?.[selected.id] ?? {};
@@ -3261,25 +3244,9 @@ export function SettingsDialog({
         };
       });
     };
-    const modelValue =
-      selected.id === 'amr' &&
-      configuredModel &&
-      !knownModelIds.includes(configuredModel)
-        ? selected.models?.[0]?.id ?? ''
-        : configuredModel ?? selected.models?.[0]?.id ?? '';
-    const reasoningValue =
-      (reasoningOptions.some(option => option.id === choice.reasoning) ? choice.reasoning : reasoningOptions[0]?.id) ?? '';
-    const customActive =
-      allowCustomModel &&
-      hasModels &&
-      shouldShowCustomModelInput(
-        modelValue,
-        knownModelIds,
-        agentCustomModelIds.has(selected.id),
-      );
-    const selectValue = customActive
-      ? CUSTOM_MODEL_SENTINEL
-      : modelValue;
+    const modelValue = choice.model ?? '';
+    const reasoningValue = reasoningOptions.find(option => option.id === choice.reasoning)?.id
+      ?? reasoningOptions.find(option => option.id === 'medium')?.id ?? reasoningOptions[0]?.id ?? '';
     const fastModeAvailable = codexModelSupportsFastMode(selected, modelValue);
     const modelSource = selected.modelsSource ?? 'fallback';
     const modelSourceLabel =
@@ -3290,9 +3257,7 @@ export function SettingsDialog({
       modelSource === 'cli-fallback' ? t('settings.modelPickerLiveHint') : modelSource === 'live'
         ? selected.runtimeSource === 'desktop'
           ? t('settings.modelPickerDesktopHint')
-          : selected.supportsCustomModel === false
-          ? t('settings.modelPickerLiveCatalogOnlyHint')
-          : t('settings.modelPickerLiveHint')
+          : t('settings.modelPickerLiveCatalogOnlyHint')
         : t(selected.id === 'claude' ? 'settings.modelDiscoveryUnavailable' : 'settings.modelPickerFallbackHint');
     return (
       <div className="agent-card-config">
@@ -3311,47 +3276,18 @@ export function SettingsDialog({
               <div className="agent-model-select-wrap">
                 <SearchableModelSelect
                   className="inline-switcher__select settings-model-select"
-                  value={selectValue}
+                  value={modelValue}
                   aria-label={t('settings.modelPicker')}
                   searchPlaceholder={t('designs.searchPlaceholder')}
                   searchInputTestId={`settings-agent-model-search-${selected.id}`}
                   popoverTestId={`settings-agent-model-popover-${selected.id}`}
                   minSearchableOptions={5}
                   popoverMinWidth={340}
-                  models={selected.models!}
-                  onChange={(nextValue) => {
-                    if (nextValue === CUSTOM_MODEL_SENTINEL) {
-                      setAgentCustomModelIds((prev) => {
-                        const next = new Set(prev);
-                        next.add(selected.id);
-                        return next;
-                      });
-                      setChoice({ model: '', fastMode: false });
-                    } else {
-                      setAgentCustomModelIds((prev) => {
-                        if (!prev.has(selected.id)) return prev;
-                        const next = new Set(prev);
-                        next.delete(selected.id);
-                        return next;
-                      });
-                      setChoice({
-                        model: nextValue,
-                        ...(!codexModelSupportsFastMode(selected, nextValue)
-                          ? { fastMode: false }
-                          : {}),
-                      });
-                    }
-                  }}
-                  additionalOptions={
-                    allowCustomModel
-                      ? [
-                          {
-                            value: CUSTOM_MODEL_SENTINEL,
-                            label: t('settings.modelCustom'),
-                          },
-                        ]
-                      : undefined
-                  }
+                  models={models}
+                  onChange={(model) => setChoice({
+                    model,
+                    ...(!codexModelSupportsFastMode(selected, model) ? { fastMode: false } : {}),
+                  })}
                 />
               </div>
             </label>
@@ -3359,21 +3295,6 @@ export function SettingsDialog({
               {modelSourceHint}
             </p>
           </>
-        ) : null}
-        {customActive ? (
-          <label className="field">
-            <span className="field-label">
-              {t('settings.modelCustomLabel')}
-            </span>
-            <input
-              type="text"
-              value={modelValue}
-              placeholder={t('settings.modelCustomPlaceholder')}
-              onChange={(e) =>
-                setChoice({ model: e.target.value.trim() })
-              }
-            />
-          </label>
         ) : null}
         {hasReasoning ? (
           <label className="field">

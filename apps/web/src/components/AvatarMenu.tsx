@@ -18,6 +18,7 @@ import { useT } from '../i18n';
 import { AgentIcon } from './AgentIcon';
 import { RemixIcon } from './RemixIcon';
 import { SearchableModelSelect } from './modelOptions';
+import { effectiveAgentModelChoice, namedAgentModels } from './agentModelSelection';
 import type { AgentInfo, AgentModelChoice, AppConfig, ExecMode, ProviderModelOption } from '../types';
 import { SUGGESTED_MODELS_BY_PROTOCOL } from '../state/apiProtocols';
 import { isByokExecutionConfigured, KNOWN_PROVIDERS } from '../state/config';
@@ -201,19 +202,13 @@ export function AvatarMenu({
   const amrProfile = config.agentCliEnv?.amr?.OPEN_DESIGN_AMR_PROFILE;
   const amrConsoleUrl = amrConsoleUrlForProfile(amrProfile);
 
-  // Resolve the user's model + reasoning pick for the active agent. Falls
-  // back to the agent's first declared option (`'default'`) when the user
-  // hasn't touched the picker yet so the labels don't read as empty.
-  const currentChoice =
-    (config.agentId && config.agentModels?.[config.agentId]) || {};
-  const currentModelId =
-    currentChoice.model ?? currentAgent?.models?.[0]?.id ?? null;
+  const currentChoice = effectiveAgentModelChoice(currentAgent, config.agentId ? config.agentModels?.[config.agentId] : undefined) ?? {};
+  const currentModelId = currentChoice.model ?? null;
+  const cliModels = namedAgentModels(currentAgent);
   const reasoningOptions = agentReasoningOptions(currentAgent, currentModelId);
-  const currentReasoningId =
-    (reasoningOptions.some(option => option.id === currentChoice.reasoning) ? currentChoice.reasoning : reasoningOptions[0]?.id) ?? null;
-  const currentModelLabel = currentAgent?.models?.find(
-    (m) => m.id === currentModelId,
-  )?.label;
+  const currentReasoningId = reasoningOptions.find(option => option.id === currentChoice.reasoning)?.id
+    ?? reasoningOptions.find(option => option.id === 'medium')?.id ?? reasoningOptions[0]?.id ?? null;
+  const currentModelLabel = cliModels.find(model => model.id === currentModelId)?.label;
   const fastModeAvailable = codexModelSupportsFastMode(currentAgent, currentModelId);
 
   const apiProtocol = config.apiProtocol ?? 'openai';
@@ -453,11 +448,11 @@ export function AvatarMenu({
               })}
               {currentAgent &&
               currentAgent.available &&
-              ((currentAgent.models && currentAgent.models.length > 0) ||
+              ((cliModels.length > 0) ||
                 (reasoningOptions &&
                   reasoningOptions.length > 0)) ? (
                 <div className="avatar-model-section">
-                  {currentAgent.models && currentAgent.models.length > 0 ? (
+                  {cliModels.length > 0 ? (
                     <label className="avatar-select-row">
                       <span className="avatar-select-label">
                         {t('avatar.modelLabel')}
@@ -473,18 +468,7 @@ export function AvatarMenu({
                               : {}),
                           })
                         }
-                        models={currentAgent.models}
-                        additionalOptions={
-                          currentModelId &&
-                          !currentAgent.models.some((m) => m.id === currentModelId)
-                            ? [
-                                {
-                                  value: currentModelId,
-                                  label: `${currentModelId} ${t('avatar.customSuffix')}` ,
-                                },
-                              ]
-                            : undefined
-                        }
+                        models={cliModels}
                         searchPlaceholder={t('newproj.modelSearch')}
                         searchInputTestId="avatar-model-search"
                         popoverTestId="avatar-model-popover"
@@ -503,7 +487,7 @@ export function AvatarMenu({
                         className="inline-switcher__select avatar-select"
                         aria-label={t('avatar.reasoningLabel')}
                         value={currentReasoningId ?? ''}
-                        onChange={(value) => onAgentModelChange(currentAgent.id, { reasoning: value })}
+                        onChange={(value) => onAgentModelChange(currentAgent.id, { model: currentModelId ?? undefined, reasoning: value })}
                         models={reasoningOptions}
                         searchPlaceholder={t('avatar.reasoningLabel')}
                         popoverTestId="avatar-reasoning-popover"
@@ -566,19 +550,7 @@ export function AvatarMenu({
                   className="inline-switcher__select avatar-select"
                   value={config.model ?? ''}
                   onChange={(value) => onApiModelChange?.(value)}
-                  models={byokModelOptions.map((m) => ({ id: m.id, label: m.label }))}
-                  additionalOptions={
-                    config.model && !byokModelOptions.some((m) => m.id === config.model)
-                      ? [
-                          {
-                            value: config.model,
-                            label: byokProvider?.models?.includes(config.model)
-                              ? config.model
-                              : `${config.model} ${t('avatar.customSuffix')}`,
-                          },
-                        ]
-                      : undefined
-                  }
+                  models={byokModelOptions.filter(model => model.id !== 'default')}
                   searchPlaceholder={t('newproj.modelSearch')}
                   searchInputTestId="avatar-byok-model-search"
                   popoverTestId="avatar-byok-model-popover"

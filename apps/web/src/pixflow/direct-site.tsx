@@ -20,6 +20,7 @@ import { createFrameCheckpoint } from '../runtime/frame-checkpoint';
 import { recoverDirectStream, StreamAttachmentHttpError } from './direct-stream-recovery';
 import { withoutTranscriptEvents } from './direct-history-storage';
 import { chatHistoryOwnerScope, readChatHistory, type ChatHistoryBinding } from './chat-history-client';
+import { prepareDocumentAttachments, siteDocumentRead } from './document-attachments';
 import type { SavedHistoryPage } from './working-context';
 const SITE_ACCESS_CHANGED = 'pixflow:site-access-changed';
 
@@ -183,10 +184,12 @@ export async function steerDirectSite(surface: string, item: ComposerQueueItem, 
   });
   if (!response.ok) return { messageId: item.id, state: 'rejected', message: 'Reconnect to WordPress before steering.' };
   const session = await response.json() as PixflowDirectSiteSession;
+  const signal = AbortSignal.timeout(240_000);
+  const attachments = await prepareDocumentAttachments(item.attachments, siteDocumentRead(session), signal);
   const result = await pixflowRuntimeFetch('/api/pixflow/direct-site/steer', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...run.connection, session, messageId: item.id, prompt: item.prompt, attachments: item.attachments, context: { ...workspaceContext, ...item.meta?.context, ...directMcpMentionContext(item.meta), comments: item.comments } }),
-    signal: AbortSignal.timeout(240_000),
+    body: JSON.stringify({ ...run.connection, session, messageId: item.id, prompt: item.prompt, attachments, context: { ...workspaceContext, ...item.meta?.context, ...directMcpMentionContext(item.meta), comments: item.comments } }),
+    signal,
   });
   const value = await result.json();
   return result.ok ? value : { messageId: item.id, state: value.state === 'rejected' ? 'rejected' : result.status >= 500 ? 'unconfirmed' : 'rejected', message: value.message || 'Could not deliver guidance. Keep this message queued.' };
@@ -419,9 +422,10 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
       const pending=pendingDirectSiteRun(input.persistenceSurface);
       if(pending?.connection.id===continuation.id)try{window.sessionStorage.setItem(storageKey,JSON.stringify({...pending,conversationId}));}catch { /* Optional storage. */ }
     }
+    const attachments = input.resume ? undefined : await prepareDocumentAttachments(request.attachments, siteDocumentRead(session), signal);
     timings.bridgeRequestMs = elapsed();
     const submit = () => pixflowRuntimeFetch(input.resume ? '/api/pixflow/direct-site/resume-stream' : '/api/pixflow/direct-site/run-stream', {
-      method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input.resume ? {...continuation,session,afterSequence:sequence} : { ...request, session, continuation, conversationId,surface:input.persistenceSurface || 'bricks' }),
+      method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input.resume ? {...continuation,session,afterSequence:sequence} : { ...request, attachments, session, continuation, conversationId,surface:input.persistenceSurface || 'bricks' }),
     });
     let response = await submit();
     if (response.status === 403) {

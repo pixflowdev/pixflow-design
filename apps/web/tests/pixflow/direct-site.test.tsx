@@ -602,7 +602,7 @@ describe('direct site panel', () => {
     } })));
     const revoke = vi.fn().mockResolvedValue(Response.json({ closed: true })); vi.stubGlobal('fetch', revoke);
     const onUpdate = vi.fn();
-    const attachments = [{ projectId: 'project', name: 'brief.txt', path: 'brief.txt', kind: 'file' as const }];
+    const attachments = [{ projectId: 'project', name: 'brief.png', path: 'brief.png', kind: 'image' as const }];
     await runDirectSite({ agentId: 'codex', prompt: 'Edit site', attachments, history: [], mode: 'design', signal: new AbortController().signal, onUpdate });
     expect(JSON.parse(requests.daemon.mock.calls[0]?.[1].body).attachments).toEqual(attachments);
     expect(onUpdate).toHaveBeenLastCalledWith('Updated', [{ kind: 'text', text: 'Updated' }]);

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AssistantMessage } from '../../src/components/AssistantMessage';
 import type { ChatMessage } from '../../src/types';
@@ -13,11 +13,56 @@ describe('voice message identity', () => {
   it('renders genuine output as a shadcn attachment with its own download target', () => {
     const view=render(<AssistantMessage projectId="saved" message={{id:'file',role:'assistant',content:'Your checklist is ready.',runStatus:'succeeded',producedFiles:[{name:'rainy-bird-checklist.md',type:'file',kind:'text',mime:'text/plain',size:3300,mtime:1500}]}} streaming={false} />);
     expect(view.container.querySelector('[data-slot="attachment-title"]')?.textContent).toBe('rainy-bird-checklist.md');
-    const download=screen.getByRole('link',{name:'Download'});
+    const download=screen.getByRole('link',{name:'Download rainy-bird-checklist.md'});
     expect(download.getAttribute('download')).toBe('rainy-bird-checklist.md');
     expect(download.getAttribute('href')).toContain('rainy-bird-checklist.md');
     expect(screen.queryByText('Files from this turn')).toBeNull();
   });
+  it.each(['claude', 'codex', 'grok-build', 'byok'])('lists project files once below the %s reply after completion', (agentId) => {
+    const report = { name: 'report.md', kind: 'text' as const, mime: 'text/markdown', size: 1024, mtime: 100 };
+    const brief = { ...report, name: 'brief.csv', path: 'brief.csv', mime: 'text/csv' };
+    const message: ChatMessage = {
+      id: 'files', role: 'assistant', agentId, content: 'Here is your report.', runStatus: 'succeeded',
+      producedFiles: [report],
+      events: [
+        { kind: 'tool_use', id: 'internal', name: 'Read', input: { file_path: '/outside/project/brief.csv' } },
+        { kind: 'tool_result', toolUseId: 'internal', content: 'Runtime-only data', isError: false },
+        { kind: 'tool_use', id: 'brief', name: 'Read', input: { file_path: '/project/brief.csv' } },
+        { kind: 'tool_result', toolUseId: 'brief', content: 'The brief', isError: false },
+        { kind: 'tool_use', id: 'write', name: 'Write', input: { file_path: 'report.md' } },
+        { kind: 'tool_result', toolUseId: 'write', content: 'Saved', isError: false },
+        { kind: 'text', text: 'Here is your report.' },
+      ],
+    };
+    const onRequestOpenFile = vi.fn();
+    const props = { projectId: 'saved', projectResolvedDir: '/project', projectFiles: [report, brief], message, onRequestOpenFile };
+    const view = render(<AssistantMessage {...props} streaming />);
+    expect(screen.queryByTestId('turn-file-attachments')).toBeNull();
+    expect(screen.queryByText('Files from this turn')).toBeNull();
+    view.rerender(<AssistantMessage {...props} streaming={false} />);
+    const attachments = screen.getByTestId('turn-file-attachments');
+    expect(screen.getByText('Here is your report.').compareDocumentPosition(attachments) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(attachments.querySelectorAll('[data-slot="attachment"][data-size="sm"]')).toHaveLength(2);
+    expect(attachments.textContent).not.toContain('/outside/project');
+    const open = screen.getByRole('button', { name: 'Open brief.csv in a tab' });
+    expect(open.getAttribute('data-slot')).toBe('attachment-trigger');
+    fireEvent.click(open);
+    expect(onRequestOpenFile).toHaveBeenCalledWith('brief.csv');
+    expect(screen.getByRole('link', { name: 'Download report.md' }).getAttribute('download')).toBe('report.md');
+  });
+
+  it('leaves a private file read in the activity trace without creating a file attachment', () => {
+    render(<AssistantMessage projectId="saved" projectResolvedDir="/project"
+      projectFiles={[{ name: 'secret.md', kind: 'text', mime: 'text/markdown', size: 100, mtime: 100 }]}
+      message={{ id: 'private', role: 'assistant', agentId: 'claude', content: 'Done.', runStatus: 'succeeded', events: [
+        { kind: 'tool_use', id: 'read', name: 'Read', input: { file_path: '/private/secret.md' } },
+        { kind: 'tool_result', toolUseId: 'read', content: 'Read complete', isError: false },
+      ] }}
+      streaming={false} />);
+    expect(screen.queryByTestId('turn-file-attachments')).toBeNull();
+    expect(screen.queryByText('Files from this turn')).toBeNull();
+  });
+
   it('does not present a staged plugin manifest as output from a text-only reply', () => {
     render(<AssistantMessage projectId="saved" message={{id:'text-only', role:'assistant', content:'A short reply.', runStatus:'succeeded', startedAt:1000, endedAt:2000, producedFiles:[{name:'plugin-assets/od-default/plugin-manifest.json',type:'file',kind:'text',mime:'text/plain',size:2900,mtime:1500}]}} streaming={false} />);
     expect(screen.getByText('A short reply.')).toBeTruthy();

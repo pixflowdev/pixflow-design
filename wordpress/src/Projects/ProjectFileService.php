@@ -369,7 +369,13 @@ final class ProjectFileService
             }
         }
         $extension = strtolower(pathinfo(trim($name), PATHINFO_EXTENSION));
-        if (!$directory && !in_array($extension, ['html', 'htm', 'css', 'js', 'mjs', 'cjs', 'ts', 'tsx', 'jsx', 'json', 'map', 'md', 'txt', 'csv', 'xml', 'yaml', 'yml', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico', 'mp4', 'webm', 'mov', 'mp3', 'wav', 'ogg', 'm4a', 'pdf', 'woff', 'woff2', 'ttf', 'otf', 'zip'], true)) {
+        if (!$directory && !in_array($extension, [
+            'html', 'htm', 'css', 'js', 'mjs', 'cjs', 'ts', 'tsx', 'jsx', 'map',
+            'json', 'jsonl', 'ndjson', 'md', 'markdown', 'txt', 'csv', 'tsv', 'xml', 'yaml', 'yml',
+            'pdf', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'rtf', 'doc', 'xls', 'ppt',
+            'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico', 'mp4', 'webm', 'mov', 'mp3', 'wav', 'ogg', 'm4a',
+            'woff', 'woff2', 'ttf', 'otf', 'zip',
+        ], true)) {
             return $this->error('unsupported_project_file', 'This file type is not supported by the WordPress workspace.', 400);
         }
         return null;

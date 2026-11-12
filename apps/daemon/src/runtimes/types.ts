@@ -1,21 +1,12 @@
 import type { ExecFileOptions } from 'node:child_process';
 import type { AgentDiagnostic } from '@open-design/contracts';
-import type { ModelInputCapabilities, ModelMetadata } from '@open-design/contracts';
+import type { AgentModelOption, ModelInputCapabilities } from '@open-design/contracts';
 
 export type { AgentDiagnostic } from '@open-design/contracts';
 
 export type RuntimeEnv = NodeJS.ProcessEnv | Record<string, string>;
 
-export type RuntimeModelOption = {
-  reasoningOptions?: Array<{ id: string; label: string }>;
-  id: string;
-  label: string;
-  enabled?: boolean;
-  default?: boolean;
-  inputPriceUsdPerMillion?: number;
-  outputPriceUsdPerMillion?: number;
-  metadata?: ModelMetadata;
-};
+export type RuntimeModelOption = AgentModelOption;
 
 export type RuntimeModelSource = 'live' | 'fallback' | 'cli-fallback';
 

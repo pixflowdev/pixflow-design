@@ -49,8 +49,13 @@ jobs:
       - run: pnpm --filter @open-design/daemon test claude-stream-tools
       - name: Shared shadcn controls, scrolling and saved history
         run: |
-          pnpm --filter @open-design/web test WorkspaceSelect searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence FileOpsSummary assistant-progress
+          pnpm --filter @open-design/web test WorkspaceSelect searchable-model-select QuestionRequestCard shared-message-scroller chat-bubble use-conversation-files chat-history-controls workspace-history-persistence AssistantMessage.voice-role assistant-progress
           pnpm --filter @open-design/daemon test tests/pixflow/codex-turn.test.ts
+      - name: Document attachments and model selection
+        run: |
+          pnpm --filter @open-design/web test tests/pixflow/direct-site-byok.test.ts tests/components/agentModelSelection.test.ts
+          pnpm --filter @open-design/daemon test tests/pixflow/direct-site-run.test.ts
+          php wordpress/tests/project-file-security.test.php
       - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
       - run: pnpm --filter @open-design/web test EntryShell.onboarding
       - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts

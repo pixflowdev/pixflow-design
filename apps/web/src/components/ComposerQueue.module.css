@@ -18,7 +18,9 @@
 @media(prefers-reduced-motion:reduce) { .spinner { animation:none; } }
 .composer:global(.composer) :global(.composer-shell) { border-radius: 22px; padding: 12px; background: var(--composer-surface, var(--bg-elevated)); border-color: var(--border-strong); box-shadow: 0 5px 20px rgb(0 0 0 / .08); }
 .composer :global(.composer-input-wrap) { min-height: 54px; padding: 4px 4px 12px; }
-.composer :global(.composer-row) { gap: 6px; align-items: center; flex-wrap: wrap; }
+.composer :global(.composer-row) { gap: 6px; align-items: center; flex-wrap: nowrap; }
+.composer :global(.composer-row > :not(.avatar-menu, .composer-spacer)) { flex-shrink: 0; }
+.composer :global(.composer-row > .avatar-menu) { flex: 0 1 auto; min-width: 0; max-width: 190px; }
 .composer :global(.composer-send) { width: 32px; height: 32px; min-width: 32px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
 .composer :global(.composer-send span) { display: none; }
 .composer :global(.composer-send svg) { width: 20px; height: 20px; flex: 0 0 20px; }
@@ -37,7 +39,9 @@
 .composer :global(.plus-menu__trigger) { border-radius: 50%; width: 30px; height: 30px; }
 .composer :global(.staged-context-row:empty) { display: none; }
 
-.composer:global(.composer) :global(.composer-row .avatar-agent-trigger) { display: flex; width: auto; max-width: 190px; grid-template-columns: none; }
+.composer:global(.composer) :global(.composer-row .avatar-agent-trigger) { display: flex; width: auto; min-width: 0; max-width: 100%; grid-template-columns: none; }
+.composer :global(.composer-row .avatar-agent-trigger__model) { min-width: 0; }
+.composer :global(.composer-row .avatar-agent-trigger > svg) { flex: none; }
 .composer:global(.composer) :global(.composer-input-wrap) { background: transparent; border: 0; padding: 2px 4px 10px; }
 .composer:global(.composer) :global(.composer-input-editor), .composer:global(.composer) :global(.composer-input-editor .composer-editable) { min-height: 44px; }
 .composer:global(.composer) :global(.composer-input-editor .composer-editable) { padding: 4px 2px; font-weight: 400; }

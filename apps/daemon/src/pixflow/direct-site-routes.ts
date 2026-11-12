@@ -12,8 +12,10 @@ import path from 'node:path';
 import type Database from 'better-sqlite3';
 import type { Express, RequestHandler, Response } from 'express';
 import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
-import type { PixflowDirectSiteContinuationRequest, PixflowDirectSiteRunRequest, PixflowDirectSiteOutcome, PixflowDirectSiteTimings, PixflowDirectSiteVoiceSdpEvent } from '@open-design/contracts';
+import type { PixflowDirectSiteAttachment, PixflowDirectSiteContinuationRequest, PixflowDirectSiteRunRequest, PixflowDirectSiteOutcome, PixflowDirectSiteTimings, PixflowDirectSiteVoiceSdpEvent } from '@open-design/contracts';
 import { getAgentDef, resolveAgentLaunch, applyAgentLaunchEnv, spawnEnvForAgent } from '../agents.js';
+import { getRememberedLiveModels } from '../runtimes/models.js';
+import { resolveRuntimeReasoning } from '../runtimes/claude-models.js';
 import { preparePromptFileForAgent } from '../runtimes/prompt-file.js';
 import { agentCliEnvForAgent, readAppConfig } from '../app-config.js';
 import { openDatabase } from '../db.js';
@@ -38,7 +40,8 @@ import { directHistoryLineage as lineage, directTurnLineage, type AcceptedDirect
 import { runCodexVoice } from './codex-voice.js';
 import { installedVoiceSample } from './voice-preview.js';
 import { cachedVoiceSample } from './voice-preview-cache.js';
-import { PIXFLOW_CODEX_VOICES } from '@open-design/contracts';
+import { PIXFLOW_CODEX_VOICES, preferredNamedModel } from '@open-design/contracts';
+import { pixflowDocumentInstructions } from '@open-design/contracts';
 import { registerPixflowRuntimeWork } from './runtime-idle.js';
 import { readDirectMcpConfiguration, configureDirectMcpProcess } from './direct-site-mcp.js';
 import type { PixflowDirectToolHistoryRequest, PixflowDirectToolHistoryResponse } from '@open-design/contracts';
@@ -47,7 +50,12 @@ interface DirectResources {
   helper: string;
   prompt: (input: PixflowDirectSiteRunRequest, imagegen: boolean, siteStyles: boolean, resuming?: boolean, imageGenerationAllowed?: boolean, composioConfigured?: boolean, imageProviders?: string[], capture?: (parts: CodexPromptParts) => void) => string;
   skills: (input: PixflowDirectSiteRunRequest, signal: AbortSignal) => Promise<unknown>;
-  attachments: (input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) => Promise<Array<{name:string;path:string;kind:string}>>;
+  attachments: (input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) => Promise<Array<{name:string;path:string;kind:string;rulesPath?:string}>>;
+}
+function attachmentGuidance(files: Awaited<ReturnType<DirectResources['attachments']>>) {
+  if (!files.length) return '';
+  return '\n\nUser reference files:\n' + JSON.stringify(files)
+    + (files.some(file => file.rulesPath) ? '\n' + pixflowDocumentInstructions + ' Read the referenced rulesPath and documentPath files.' : '');
 }
 type LiveRun = { generateImage?: (prompt: string, model?: string) => Promise<unknown>; recordSteering?: (messageId: string, prompt: string, attachments: unknown, comments: unknown) => void; agentId: string; clients: Set<Response>; done: boolean; cancel: () => void; credentialHash: string; externalMcp?: boolean; legacyContinuation: boolean; storageFailure?: string; voice?: boolean; endVoiceRequested?: boolean; endVoice?: () => void; steer?: CodexSteer | undefined };
 const storageFailureMessage = 'Bridge could not save this conversation. Work has stopped; changes already applied may remain. Free disk space or check storage access, then restart Bridge and inspect the site before continuing.';
@@ -157,14 +165,16 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           if(!live||!['codex','opencode'].includes(live.agentId)||!steer||live.done){res.status(409).json({message:'Steering is not available for this active run. Keep the message queued.'});return;}
           if (live.externalMcp || hasMcpMentions(req.body.context)) await authorizeExternalMcp(input.session!);
           const files=await resources.attachments({session:input.session!,agentId:live.agentId,prompt,history:[],attachments:req.body.attachments},run.workspace,new AbortController().signal);
-          const guidance=prompt+(req.body.context?'\n\nAttached request context:\n'+JSON.stringify(req.body.context):'')+(files.length?'\n\nUser reference files in the current workspace:\n'+JSON.stringify(files):'');
+          const guidance=prompt+(req.body.context?'\n\nAttached request context:\n'+JSON.stringify(req.body.context):'')+attachmentGuidance(files);
           // Preparation awaits WordPress and reference I/O. The run may finish
           // meanwhile; never dereference a handler that its cleanup removed.
           const outcome = store.get(run.id)?.outcome;
           if (outcome) { res.json({messageId,state:['completed','answered'].includes(outcome)?'queued':'rejected',message:['completed','answered'].includes(outcome)?undefined:'The run stopped before this guidance was sent. Keep it queued.'});return; }
           phase = 'delivery';
           const delivery = await steer(messageId,guidance);
-          if (delivery.state === 'accepted') live.recordSteering?.(messageId,prompt,req.body.attachments,req.body.context?.comments);
+          if (delivery.state === 'accepted') live.recordSteering?.(messageId,prompt,
+            Array.isArray(req.body.attachments) ? req.body.attachments.map(({ document: _extract, ...attachment }: PixflowDirectSiteAttachment) => attachment) : req.body.attachments,
+            req.body.context?.comments);
           res.json(delivery);
         } else if (action === 'voice-end') {
           const live = runs.get(run.id);
@@ -312,6 +322,14 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(!def)throw new Error('Select an installed CLI agent in Settings â†’ Execution.');
       if(!['claude-stream-json','json-event-stream','stream-json'].includes(def.streamFormat))throw new Error(`Direct mode does not yet support ${def.name}'s ${def.streamFormat} transport. Select Codex, Claude, or OpenCode.`);
       const config=await readAppConfig(dataDir);
+      const savedModel = config.agentModels?.[def.id];
+      const requestedModel = input.model && input.model !== 'default' ? input.model : savedModel?.model;
+      const model = requestedModel && requestedModel !== 'default' ? requestedModel
+        : preferredNamedModel(getRememberedLiveModels(def.id))?.id ?? preferredNamedModel(def.fallbackModels)?.id;
+      if (model) input.model = model;
+      else delete input.model;
+      const reasoning = input.reasoning ?? savedModel?.reasoning ?? resolveRuntimeReasoning(def, model, 'medium');
+      if (reasoning) input.reasoning = reasoning;
       const imageProviders = imageGenerationAllowed ? await readMaskedConfig(mediaRoot).then(({providers}) =>
         MEDIA_PROVIDERS.filter(provider => {
           const setting = providers[provider.id];
@@ -451,7 +469,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       for(let attempt=0;attempt<2;attempt++) {
         let promptParts: CodexPromptParts | undefined;
         const fullPrompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId && def.id !== 'claude' && !(def.id === 'codex' && warmWorker),imageGenerationAllowed,composioConfigured,imageProviders, parts => { promptParts = parts; })
-          +(attachments.length?'\n\nUser reference files:\n'+JSON.stringify(attachments):'');
+          +attachmentGuidance(attachments);
         const snapshot = def.id === 'claude' && promptParts ? snapshotPrompt(promptParts) : undefined;
         const priorKey = resumeSessionId && previousConversation && directDigest([conversationKey, compatibility, resumeSessionId, previousConversation.lineage]);
         const previous = priorKey && lastClaude?.key === priorKey ? lastClaude.snapshot : undefined;

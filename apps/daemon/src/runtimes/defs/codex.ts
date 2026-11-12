@@ -22,6 +22,7 @@ export function parseCodexDebugModels(stdout: string): RuntimeModelOption[] | nu
       slug?: unknown;
       id?: unknown;
       display_name?: unknown;
+      released_at?: unknown;
       name?: unknown;
       visibility?: unknown;
       input_modalities?: unknown;
@@ -69,6 +70,7 @@ export function parseCodexDebugModels(stdout: string): RuntimeModelOption[] | nu
     out.push({
       id,
       label,
+      ...(typeof entry.released_at === 'string' && Number.isFinite(Date.parse(entry.released_at)) ? { releasedAt: entry.released_at } : {}),
       ...(Array.isArray(entry.supported_reasoning_levels)?{reasoningOptions:entry.supported_reasoning_levels.flatMap(level=>{
         const effort=level&&typeof level==='object'?(level as {effort?:unknown}).effort:undefined;
         const labels:Record<string,string>={none:'None',minimal:'Minimal',low:'Light',medium:'Medium',high:'High',xhigh:'Extra High',max:'Max'};

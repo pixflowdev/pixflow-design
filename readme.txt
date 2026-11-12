@@ -37,6 +37,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Added**
 
+* Read supported chat attachments in Local CLI and API mode, including scanned PDFs with English OCR, Office documents, spreadsheets, presentations and text files.
 * Organise media in nested Pixflow folders or use existing HappyFiles Pro folders. Create and rename folders inline, reorder them by dragging, and save your preferred sort order.
 * Use Ctrl-click or Cmd-click to select individual media items, or Shift-click to select a range. Drag the selection into a folder in one move.
 * Drop files into the Media Library and track each upload in a floating queue with progress, completion, and retry controls.
@@ -55,6 +56,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Changed**
 
+* Show files you can open or download as compact attachments at the end of assistant replies across providers.
+* List named models in the chat picker. For the first CLI run, select the newest available model when release dates are known and use Medium reasoning where supported. Remember subsequent CLI and API model choices.
 * Expanded interface translations across all 19 supported languages, including Media Library labels and the shared language catalogue used by Pro SEO Audit.
 * Clarify in all supported languages that Design systems updates the Pixflow Framework and Bricks Theme Styles only when a system is applied.
 * Reuse visually checked library images before generating new design imagery, including an installed Codex fallback for other CLI providers. Keep clearly marked WebP placeholders when suitable imagery or generation is unavailable.
@@ -74,6 +77,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
+* Keep floating-panel composer controls on one row at the minimum width, with a single Send control.
 * Make Windows builder discovery avoid fragile JSON command quoting and report clearer connection failures.
 * Keep Claude model choices when discovery finishes slowly, and share ongoing scans instead of starting duplicate checks.
 * Rediscover Codex when an app update removes its previous executable, without requiring a CLI reinstall.

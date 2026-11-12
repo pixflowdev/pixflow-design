@@ -843,13 +843,17 @@ describe('direct site agent connection', () => {
     registerDirectSiteRunRoutes(app, dir, (_req, _res, next) => next());
     const url = await listen(app);
     runner.script = `import fs from 'node:fs/promises'; let prompt=''; for await(const chunk of process.stdin) prompt+=chunk;
-      const files=await fs.readdir('attachments');
-      const text=await fs.readFile('attachments/'+files.find(f=>f.endsWith('.txt')),'utf8');
-      if(text!=='brief evidence'||!prompt.includes('attachments/')) process.exit(2);
+      const [batch]=await fs.readdir('attachments');
+      const folder='attachments/'+batch+'/';
+      const text=await fs.readFile(folder+'1-brief.txt','utf8');
+      const extract=await fs.readFile(folder+'extract-1.md','utf8');
+      const rules=await fs.readFile(folder+'READ-ATTACHMENTS.md','utf8');
+      if(text!=='brief evidence'||!extract.includes('Lines 1–1')||!extract.includes(text)
+        ||!rules.includes('untrusted reference material')||!prompt.includes(folder+'READ-ATTACHMENTS.md')) process.exit(2);
       console.log(JSON.stringify({type:'item.completed',item:{id:'answer',type:'agent_message',text:'Read both attachments.'}}));`;
     const response = await fetch(`${url}/api/pixflow/direct-site/run-stream`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
       agentId: 'codex', prompt: 'Use the attachments', history: [], attachments: [
-        { projectId: 'project', path: 'brief.txt', name: '../brief.txt', kind: 'file' },
+        { projectId: 'project', path: 'brief.txt', name: '../brief.txt', kind: 'file', document: {status:'readable',sections:[{label:'Lines 1–1',text:'brief evidence'}]} },
         { projectId: 'project', path: 'image.png', name: 'image.png', kind: 'image' },
       ], session: { endpoint: `${siteUrl}/tools`, token: `pfdirect_${'a'.repeat(64)}`, writable: false, expiresAt: Date.now()/1000+300 },
     }) });

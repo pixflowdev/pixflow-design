@@ -1,3 +1,4 @@
+import { effectiveAgentModelChoice } from '../components/agentModelSelection';
 import { compactTranscriptEvents } from './direct-history-storage';
 import { conversationBinding, conversationDraftKey } from './conversation-address';
 import { useFloatingConversation, normalizeFloatingRunMetadata, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
@@ -665,7 +666,7 @@ function filterWpAdminAgents(agents: AgentInfo[]): AgentInfo[] {
 
 function selectedModel(config: AppConfig, agent: AgentInfo | null): { model: string | null; reasoning: string | null; fastMode: boolean } {
   if (!agent) return { model: null, reasoning: null, fastMode: false };
-  const choice = config.agentModels?.[agent.id];
+  const choice = effectiveAgentModelChoice(agent, config.agentModels?.[agent.id]);
   return {
     model: choice?.model || null,
     reasoning: choice?.reasoning || null,
@@ -722,9 +723,10 @@ async function persistWpAdminConfig(next: AppConfig, changed?: Partial<AppConfig
   if (!response.ok) throw new Error(`Could not save shared settings (${response.status}).`);
   // WordPress owns these preferences. An offline optional Bridge must not
   // delay or prevent saving the full admin settings modal.
-  if (!changed || changed.mode !== undefined || changed.agentId !== undefined || changed.codexImagegenOverride !== undefined) {
+  if (!changed || changed.mode !== undefined || changed.agentId !== undefined || changed.codexImagegenOverride !== undefined
+    || (next.mode === 'daemon' && changed.agentModels !== undefined)) {
     void persistPixflowOptionalBridgeConfig({ mode: next.mode, agentId: next.agentId,
-      ...(next.mode === 'daemon' ? { codexImagegenOverride: next.codexImagegenOverride } : {}) }).catch(() => undefined);
+      ...(next.mode === 'daemon' ? { agentModels: next.agentModels, codexImagegenOverride: next.codexImagegenOverride } : {}) }).catch(() => undefined);
   }
   window.dispatchEvent(new CustomEvent('pixflow-design:app-config-changed', {
     detail: notification.patch,

@@ -47,7 +47,8 @@ export function parseClaudeModels(value: unknown): RuntimeModelOption[] | null {
       ...levels.filter(level => level !== 'default').map(level => ({ id: level,
         label: level === 'xhigh' ? 'Extra' : level.charAt(0).toUpperCase() + level.slice(1) })),
     ] : [];
-    models.push({ id, label: label || id, reasoningOptions });
+    const releasedAt = typeof item.createdAt === 'string' && Number.isFinite(Date.parse(item.createdAt)) ? item.createdAt : undefined;
+    models.push({ id, label: label || id, reasoningOptions, ...(releasedAt ? { releasedAt } : {}) });
   }
   if (!models.length) return null;
   return seen.has('default') ? models : [DEFAULT_MODEL_OPTION, ...models];

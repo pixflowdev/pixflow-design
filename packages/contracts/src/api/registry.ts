@@ -36,6 +36,8 @@ export interface AgentModelOption {
   reasoningOptions?: Array<{ id: string; label: string }>;
   id: string;
   label: string;
+  /** Release date reported by the provider, when available. */
+  releasedAt?: string;
   /** Whether the current account/tier can use this model. */
   enabled?: boolean;
   /** Whether this is the default model for the current account/tier. */
@@ -101,6 +103,17 @@ export type AgentDiagnosticReason =
   | 'auth-unknown';
 
 export type AgentDiagnosticSeverity = 'error' | 'warning' | 'info';
+
+/** Select the newest dated release, or honor the provider's catalogue order when dates are incomplete. */
+export function preferredNamedModel<T extends Pick<AgentModelOption, 'id' | 'enabled' | 'releasedAt'>>(
+  models: readonly T[] | undefined,
+): T | undefined {
+  const available = models?.filter(model => model.id && model.id !== 'default' && model.enabled !== false) ?? [];
+  const dated = available.map(model => ({ model, date: Date.parse(model.releasedAt || '') }));
+  return dated.length && dated.every(item => Number.isFinite(item.date))
+    ? dated.sort((left, right) => right.date - left.date)[0]?.model
+    : available[0];
+}
 
 export interface AgentDiagnostic {
   reason: AgentDiagnosticReason;

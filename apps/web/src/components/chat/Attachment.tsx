@@ -5,8 +5,8 @@ import { mergeProps } from '@base-ui/react/merge-props';
 import { Button } from '@open-design/components';
 import styles from './Attachment.module.css';
 
-export function Attachment({ className = '', ...props }: ComponentProps<'div'>) {
-  return <div data-slot="attachment" data-state="done" className={`${styles.attachment} ${className}`} {...props} />;
+export function Attachment({ className = '', size = 'default', ...props }: ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
+  return <div data-slot="attachment" data-state="done" data-size={size} className={`${styles.attachment} ${className}`} {...props} />;
 }
 export function AttachmentGroup({ className = '', ...props }: ComponentProps<'div'>) {
   return <div data-slot="attachment-group" className={`${styles.group} ${className}`} {...props} />;
@@ -29,4 +29,13 @@ export function AttachmentActions({ className = '', ...props }: ComponentProps<'
 export function AttachmentAction({ className = '', render, ...props }: useRender.ComponentProps<'button'>) {
   return useRender({ defaultTagName: 'button', render: render ?? <Button variant="subtle" />,
     props: mergeProps<'button'>({ className: `${styles.action} ${className}` }, props), state: { slot: 'attachment-action' } });
+}
+
+export function AttachmentTrigger({ className = '', render, ...props }: useRender.ComponentProps<'button'>) {
+  return useRender({
+    defaultTagName: 'button',
+    render: render ?? <button type="button" />,
+    props: mergeProps<'button'>({ className: `${styles.trigger} ${className}` }, props),
+    state: { slot: 'attachment-trigger' },
+  });
 }

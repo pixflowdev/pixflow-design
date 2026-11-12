@@ -46,6 +46,11 @@
       path('M13 16h6');
     } else if (name === 'media') {
       path('M3 4h18v16H3z M3 16l5-5 4 4 3-3 6 6 M15 8h.01');
+    } else if (name === 'seo-audit') {
+      path('M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8l4 4v2M13 3v4h4M7 9h3M7 13h2M7 17h3');
+      path('M20 15a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-1 2 3 3');
+    } else if (name === 'blog-studio') {
+      path('M12 6C9 4 5 4 3 5v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-2-1-6-1-9 1v14');
     } else if (name === 'translations') {
       path('M4 5h10M9 3v2M6 8c1 3 3 5 6 7M13 5c0 4-3 8-8 11M13 20l4-9 4 9M15 17h4');
     } else if (name === 'settings') {
@@ -205,6 +210,10 @@
     updateText.textContent = 'Translations need updating';
     updateBadge.appendChild(updateText);
     translationsTool.querySelector('button').appendChild(updateBadge);
+    var seoAuditTool = addTool('SEO Audit', 'seo-audit', 'seo-audit');
+    seoAuditTool.querySelector('.inline-switcher__agent-name').setAttribute('data-pixflow-i18n-text', 'ui.seoAudit.seoAudit');
+    var blogStudioTool = addTool('Blog Studio', 'blog-studio', 'blog-studio');
+    seoAuditTool.hidden = blogStudioTool.hidden = true;
     var stopWatchingTranslations = null;
     translationsTool.hidden = true;
     tools.appendChild(toolGrid);
@@ -264,6 +273,10 @@
         sitemapTool.hidden = !planning;
         designSystemTool.hidden = !planning;
       }
+      var workspace = runtime && Array.isArray(runtime.features) && runtime.features.indexOf('workspace') !== -1
+        && runtime.configuration && runtime.configuration.workspace;
+      seoAuditTool.hidden = !workspace || workspace.canAudit !== true;
+      blogStudioTool.hidden = !workspace || workspace.canUseBlogStudio !== true;
       var open = Boolean(options.isWorkspaceOpen());
       var onboardingCompleted = typeof options.isOnboardingCompleted !== 'function'
         || options.isOnboardingCompleted();

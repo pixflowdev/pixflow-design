@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use a compact two-column layout for the editor toolbar’s Design tools.
 - Show files you can open or download as compact attachments at the end of assistant replies across providers.
 - List named models in the chat picker. For the first CLI run, select the newest available model when release dates are known and use Medium reasoning where supported. Remember subsequent CLI and API model choices.
 - Expanded interface translations across all 19 supported languages, including Media Library labels and the shared language catalogue used by Pro SEO Audit.
@@ -49,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Show one continuous loading indicator when opening the Sitemap Builder.
+- Keep chat project icons compact, make sidebar search easier to spot, and let the Workspace Media Library fill wide screens.
 - Keep floating-panel composer controls on one row at the minimum width, with a single Send control.
 - Make Windows builder discovery avoid fragile JSON command quoting and report clearer connection failures.
 - Keep Claude model choices when discovery finishes slowly, and share ongoing scans instead of starting duplicate checks.

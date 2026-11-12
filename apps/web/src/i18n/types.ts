@@ -3197,6 +3197,17 @@ export interface Dict {
   "ui.sitemapCardMenu.ctrlD": string;
   "ui.sitemapCardMenu.moveToPlanned": string;
   "ui.sitemapCardMenu.removePlan": string;
+  "ui.sitemapView.confirmTrashTitle": string;
+  "ui.sitemapView.trashPage": string;
+  "ui.sitemapView.removeFromSitemap": string;
+  "ui.workspaceToolbar.blogStudio": string;
+  "ui.sitemapView.replacementHomepageTitle": string;
+  "ui.sitemapView.chooseReplacementHomepage": string;
+  "ui.sitemapView.replacementHomepagePublishFirst": string;
+  "ui.sitemapView.replacementHomepageAdmin": string;
+  "ui.sitemapView.confirmCollapseHomepage": string;
+  "ui.sitemapView.expandChildPages": string;
+  "ui.sitemapView.confirmTrashDescription": string;
   "ui.sitemapCardMenu.backspace": string;
   "ui.sitemapCardMenu.ctrlC": string;
   "ui.sitemapCardMenu.cut": string;

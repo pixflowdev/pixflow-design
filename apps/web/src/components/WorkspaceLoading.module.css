@@ -21,7 +21,6 @@
 }
 
 .spinner { display: block; animation: rotate 900ms linear infinite; }
-.track { opacity: .16; }
 
 @keyframes rotate { to { transform: rotate(360deg); } }
 @keyframes appear { from { opacity: 0; } to { opacity: 1; } }

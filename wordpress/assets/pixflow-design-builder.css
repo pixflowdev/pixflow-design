@@ -697,7 +697,7 @@ li#pixflow-design-library-toolbar-entry {
 
 .pixflow-design-toolbar-menu .inline-switcher__agent-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 2px;
 }
 

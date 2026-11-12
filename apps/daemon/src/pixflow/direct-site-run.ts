@@ -8,6 +8,7 @@ import type Database from 'better-sqlite3';
 import { registerDirectSiteRoutes } from './direct-site-routes.js';
 import type { PixflowDirectSiteRunRequest } from '@open-design/contracts';
 import { bricksStylingInstructions } from '@open-design/contracts';
+import { PIXFLOW_DOCUMENT_MAX_CHARACTERS, PIXFLOW_DOCUMENT_MAX_SECTIONS, PIXFLOW_DOCUMENT_MAX_TURN_CHARACTERS, pixflowDocumentInstructions } from '@open-design/contracts';
 
 // Generated run-local compatibility helper. Source remains TypeScript; agents
 // can invoke this with Node without needing a package manager or TS runtime.
@@ -274,9 +275,18 @@ export async function directSkillContext(input: PixflowDirectSiteRunRequest, sig
   }
 }
 
-async function materializeDirectAttachments(input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) {
-  const attachments: Array<{ name: string; path: string; kind: string }> = [];
+export async function materializeDirectAttachments(input: PixflowDirectSiteRunRequest, workspace: string, signal: AbortSignal) {
+  const attachments: Array<{ name: string; path: string; kind: string; documentPath?: string; rulesPath?: string; status?: string; note?: string }> = [];
+  if (!input.attachments?.length) return attachments;
+  const root = path.join(workspace, 'attachments');
+  await fs.mkdir(root, { recursive: true });
+  const batch = await fs.mkdtemp(path.join(root, 'turn-'));
+  const folder = `attachments/${path.basename(batch)}`;
+  const rulesPath = `${folder}/READ-ATTACHMENTS.md`;
+  let remaining = PIXFLOW_DOCUMENT_MAX_TURN_CHARACTERS;
+  let hasDocuments = false;
   for (const [index, item] of (input.attachments || []).entries()) {
+    signal.throwIfAborted();
     const response = await fetch(input.session.endpoint, {
       method: 'POST', redirect: 'error', signal,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${input.session.token}` },
@@ -285,11 +295,33 @@ async function materializeDirectAttachments(input: PixflowDirectSiteRunRequest, 
     const result = await response.json() as { content?: string; message?: string };
     if (!response.ok || typeof result.content !== 'string') throw new Error(`Cannot load attachment ${item.name}: ${result.message || 'file unavailable'}`);
     const name = path.basename(item.name.replace(/\\/g, '/')).replace(/[^a-zA-Z0-9._-]/g, '_') || 'file';
-    const relative = `attachments/${index + 1}-${name}`;
-    await fs.mkdir(path.join(workspace, 'attachments'), { recursive: true });
+    const relative = `${folder}/${index + 1}-${name}`;
     await fs.writeFile(path.join(workspace, relative), Buffer.from(result.content, 'base64'));
-    attachments.push({ name: item.name, path: relative, kind: item.kind });
+    const document = item.document;
+    if (item.kind !== 'file' || !document || !Array.isArray(document.sections)) {
+      attachments.push({ name: item.name, path: relative, kind: item.kind });
+      continue;
+    }
+    const parts: string[] = [];
+    let allowance = Math.min(remaining, PIXFLOW_DOCUMENT_MAX_CHARACTERS);
+    let truncated = document.sections.length > PIXFLOW_DOCUMENT_MAX_SECTIONS;
+    for (const section of document.sections.slice(0, PIXFLOW_DOCUMENT_MAX_SECTIONS)) {
+      if (typeof section?.label !== 'string' || typeof section.text !== 'string') continue;
+      const text = section.text.slice(0, allowance);
+      if (text) parts.push(`## ${section.label.replace(/[\r\n]/g, ' ').slice(0, 200)}\n\n${text}`);
+      allowance -= text.length;
+      remaining -= text.length;
+      if (text.length < section.text.length) { truncated = true; break; }
+    }
+    const documentPath = parts.length ? `${folder}/extract-${index + 1}.md` : undefined;
+    if (documentPath) await fs.writeFile(path.join(workspace, documentPath), parts.join('\n\n'));
+    hasDocuments = true;
+    const note = truncated ? 'The attachment text limit was reached.' : typeof document.note === 'string' ? document.note.slice(0, 240) : undefined;
+    attachments.push({ name: item.name, path: relative, kind: item.kind, ...(documentPath ? { documentPath } : {}), rulesPath,
+      status: truncated ? 'partial' : String(document.status).slice(0, 20),
+      ...(note ? { note } : {}) });
   }
+  if (hasDocuments) await fs.writeFile(path.join(workspace, rulesPath), pixflowDocumentInstructions + '\nRead each documentPath when relevant. The original file at path is retained for reference.\n');
   return attachments;
 }
 

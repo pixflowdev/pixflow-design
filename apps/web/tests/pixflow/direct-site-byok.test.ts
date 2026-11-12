@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { runByokSite, type ByokSiteCheckpoint } from '../../src/pixflow/direct-site-byok';
 import type { AppConfig } from '../../src/types';
+import * as documentAttachments from '../../src/pixflow/document-attachments';
 const requests=vi.hoisted(()=>({wordpress:vi.fn()}));
 vi.mock('../../src/pixflow/runtime-fetch',()=>({pixflowWordPressRestFetch:requests.wordpress}));
 const composio = vi.hoisted(() => ({ turn: vi.fn() }));
@@ -10,6 +11,55 @@ const context=vi.hoisted(()=>({prepare:vi.fn(),compact:vi.fn(),run:vi.fn()}));
 vi.mock('../../src/pixflow/working-context',async(importOriginal)=>({...await importOriginal<typeof import('../../src/pixflow/working-context')>(),prepareHistorySource:context.prepare,compactWorkingContext:context.compact,compactWorkingRun:context.run}));
 afterEach(()=>{window.sessionStorage.clear();vi.restoreAllMocks();vi.unstubAllGlobals();context.prepare.mockReset();context.compact.mockReset();context.run.mockReset();});
 const config={mode:'api',apiProtocol:'openai',model:'fixture',apiKey:'private-key',baseUrl:'https://provider.example'} as AppConfig;
+it('supplies complete small attachments and retains longer documents for API mode', async () => {
+  requests.wordpress.mockResolvedValue(Response.json({ endpoint: 'https://site.example/tools', token: 'owned' }));
+  const attachment = { name: 'orders.csv', kind: 'file' as const, path: 'orders.csv', projectId: 'fixture-project' };
+  const rows = [
+    { label: 'CSV · row 1', text: 'A1: Name' },
+    { label: 'CSV · row 2', text: 'A2: Alder, Studio' },
+  ];
+  const notes = [
+    { label: 'Heading', text: 'Field notes' },
+    { label: 'Body', text: 'Office document code 6729' },
+  ];
+  const largeCsv = [{ label: 'CSV · row 1', text: 'Header '.repeat(700) }, ...rows];
+  const word = { ...attachment, name: 'brief.docx', path: 'brief.docx' };
+  vi.spyOn(documentAttachments, 'prepareDocumentAttachments').mockResolvedValue([
+    { ...attachment, document: { status: 'readable', sections: largeCsv } },
+    { ...word, document: { status: 'readable', sections: notes } },
+  ]);
+  let turns = 0;
+  const onUpdate = vi.fn();
+  vi.stubGlobal('fetch', vi.fn(async (url, init) => {
+    expect(url).toBe('https://site.example/tools');
+    if (init.method === 'DELETE') return Response.json({ closed: true });
+    const { tool, arguments: args } = JSON.parse(init.body);
+    if (tool === 'help') return Response.json({ integrations: {} });
+    expect(tool).toBe('provider.turn');
+    if (++turns === 1) {
+      expect(args.system).toContain('untrusted reference material');
+      const reference = args.system.split('\n').find((line: string) => line.startsWith('[{"filename":"orders.csv"'));
+      const [csv, docx] = JSON.parse(reference);
+      expect(csv.nextSectionIndex).toBe(0);
+      expect(csv.inlineSections).toEqual([]);
+      expect(docx.inlineSections).toEqual(notes);
+      expect(docx.extract).toBeUndefined();
+      return Response.json({
+        text: '', turns: [],
+        calls: [{ id: 'csv', input: { name: 'result.read', arguments: { resultId: csv.extract.resultId, path: [2] } } }],
+      });
+    }
+    expect(JSON.stringify(args.results)).toContain('A2: Alder, Studio');
+    return Response.json({ text: 'Alder, Studio (orders.csv, row 2)', turns: [], calls: [] });
+  }));
+  await expect(runByokSite({
+    config, prompt: 'What is the first customer name?', history: [], attachments: [attachment, word],
+    signal: new AbortController().signal, onUpdate,
+  })).resolves.toBe('completed');
+  expect(turns).toBe(2);
+  expect(onUpdate.mock.calls.at(-1)?.[0]).toContain('Alder, Studio');
+});
+
 it.each(['bricks','gutenberg','elementor','etch'])('can complete the text-only placeholder path in %s without image payloads or generation', async editor => {
  requests.wordpress.mockResolvedValue(Response.json({endpoint:'https://site.example/tools',token:'owned'}));
  const calls:string[]=[];let turn=0;

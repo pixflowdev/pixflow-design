@@ -15,7 +15,6 @@ import { observedSourceUrls } from './chat/observed-source-urls';
 import type { ActivityIconKind } from './chat/ActivityIcon';
 import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ToolCard } from "./ToolCard";
-import { FileOpsSummary } from "./FileOpsSummary";
 import {
   collectMarkdownSources,
   type MarkdownLinkClickHandler,
@@ -74,7 +73,7 @@ import { agentDisplayName, agentIconId, exactAgentDisplayName } from "../utils/a
 import { AgentIcon } from "./AgentIcon";
 import { VoiceOrb } from './VoiceOrb';
 import { AgentActivity } from "./AgentActivity";
-import { Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentGroup } from './chat/Attachment';
+import { Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentGroup, AttachmentTrigger } from './chat/Attachment';
 import { filterImplicitProducedFiles, isUserFacingProducedFile } from "../produced-files";
 import type {
   AgentEvent,
@@ -700,14 +699,6 @@ function AssistantMessageImpl({
         <span className="role-name">{isVoiceMessage ? translateUi("ui.assistantMessage.codexVoice") : roleName}</span>
       </MessageHeader>
       <MessageContent className="assistant-flow">
-        {fileOps.length > 0 ? (
-          <FileOpsSummary
-            entries={fileOps}
-            streaming={streaming}
-            projectFileNames={projectFileNames}
-            onRequestOpenFile={onRequestOpenFile}
-          />
-        ) : null}
         {groupActivity(blocks, isCollapsibleActivity).map((section) => {
           const renderSection = () => section.blocks.map((b, offset) => {
           const i = section.start + offset;
@@ -811,13 +802,6 @@ function AssistantMessageImpl({
         ))}
         {pendingMediaGenerations(events, streaming).map(item => <MediaGenerationPlaceholder key={item.id} kind={item.kind} startedAtMs={item.startedAtMs} />)}
         {projectId && displayedProduced.some(isInlineMedia) && <GeneratedMedia files={displayedProduced.filter(isInlineMedia)} projectId={projectId} onRequestOpenFile={onRequestOpenFile} />}
-        {!streaming && displayedProduced.some(file => !isInlineMedia(file)) && projectId ? (
-          <ProducedFiles
-            files={displayedProduced.filter(file => !isInlineMedia(file))}
-            projectId={projectId}
-            onRequestOpenFile={onRequestOpenFile}
-          />
-        ) : null}
         {!streaming && projectId && pluginActionFolders.length > 0 ? (
           <PluginActionPanel
             folders={pluginActionFolders}
@@ -852,6 +836,16 @@ function AssistantMessageImpl({
               ))
           : null}
         {sources.length > 0 && <Sources sources={sources} />}
+        {!streaming && projectId ? (
+          <TurnFileAttachments
+            produced={displayedProduced}
+            projectFiles={projectFiles}
+            fileOps={fileOps}
+            projectId={projectId}
+            projectResolvedDir={projectResolvedDir}
+            onRequestOpenFile={onRequestOpenFile}
+          />
+        ) : null}
         {showCompletionRow ? (
           <MessageFooter className="assistant-completion-row">
             {showFeedback ? (
@@ -1900,33 +1894,93 @@ function feedbackReasonLabel(
   return code;
 }
 
-function ProducedFiles({
-  files,
+const attachmentOperationLabels = {
+  read: 'tool.read',
+  write: 'tool.write',
+  edit: 'tool.edit',
+} as const;
+
+function TurnFileAttachments({
+  produced,
+  projectFiles,
+  fileOps,
   projectId,
+  projectResolvedDir,
   onRequestOpenFile,
 }: {
-  files: ProjectFile[];
+  produced: ProjectFile[];
+  projectFiles: ProjectFile[];
+  fileOps: FileOpEntry[];
   projectId: string;
+  projectResolvedDir?: string | null;
   onRequestOpenFile?: (name: string) => void;
 }) {
   const t = useT();
+  const rows = useMemo(() => {
+    const files = new Map<string, { file: ProjectFile; operations: FileOpEntry['ops'] }>();
+    for (const file of produced) {
+      if (file.type !== 'dir' && !isInlineMedia(file)) {
+        files.set(normalizeTouchedPath(file.path || file.name), { file, operations: [] });
+      }
+    }
+    if (!fileOps.length) return files;
+    const workspaceFiles = new Map<string, ProjectFile>();
+    for (const file of projectFiles) {
+      if (file.type === 'dir' || !isUserFacingProducedFile(file) || isInlineMedia(file)) continue;
+      workspaceFiles.set(normalizeTouchedPath(file.path || file.name), file);
+    }
+    for (const entry of fileOps) {
+      if (entry.status !== 'done') continue;
+      const target = resolveChatFileLink(entry.fullPath, undefined, projectId, projectResolvedDir);
+      if (target?.kind !== 'workspace-file') continue;
+      const path = normalizeTouchedPath(target.filePath);
+      const file = workspaceFiles.get(path);
+      if (file && !files.has(path)) files.set(path, { file, operations: entry.ops });
+    }
+    return files;
+  }, [fileOps, produced, projectFiles, projectId, projectResolvedDir]);
+  if (!rows.size) return null;
+
   return (
-    <AttachmentGroup>
-      {files.map((f) => (
-        <Attachment key={f.name}>
-          <AttachmentMedia><Icon name={kindIconName(f.kind)} size={18} /></AttachmentMedia>
-          <AttachmentContent>
-            <AttachmentTitle title={f.name}>{f.name.split(/[\\/]/).pop()}</AttachmentTitle>
-            <AttachmentDescription>{[f.name.split('.').pop()?.toUpperCase(), humanBytes(f.size)].filter(Boolean).join(' · ')}</AttachmentDescription>
-          </AttachmentContent>
-          <AttachmentActions>
-            {onRequestOpenFile ? <AttachmentAction onClick={() => onRequestOpenFile(f.name)} title={f.name}>{t('assistant.openFile')}</AttachmentAction> : null}
-            <AttachmentAction render={<a href={projectFileUrl(projectId, f.name)} download={f.name.split(/[\\/]/).pop()} />}>
-              <Icon name="download" size={14} />{t('assistant.downloadFile')}
-            </AttachmentAction>
-          </AttachmentActions>
-        </Attachment>
-      ))}
+    <AttachmentGroup data-testid="turn-file-attachments">
+      {[...rows].map(([path, { file, operations }]) => {
+        const name = path.split('/').pop() || file.name;
+        const downloadUrl = projectFileUrl(projectId, file.name);
+        const downloadLabel = `${t('assistant.downloadFile')} ${name}`;
+        const metadata = [
+          name.includes('.') ? name.split('.').pop()?.toUpperCase() : undefined,
+          humanBytes(file.size),
+          ...operations.map(operation => t(attachmentOperationLabels[operation])),
+        ].filter(Boolean).join(' · ');
+        return (
+          <Attachment key={path} size="sm">
+            <AttachmentMedia><Icon name={onRequestOpenFile ? kindIconName(file.kind) : 'download'} size={16} /></AttachmentMedia>
+            <AttachmentContent>
+              <AttachmentTitle title={file.name}>{name}</AttachmentTitle>
+              <AttachmentDescription>{metadata}</AttachmentDescription>
+            </AttachmentContent>
+            {onRequestOpenFile ? (
+              <>
+                <AttachmentTrigger
+                  aria-label={t('tool.openInTab', { name })}
+                  onClick={() => onRequestOpenFile(file.name)}
+                />
+                <AttachmentActions>
+                  <AttachmentAction
+                    aria-label={downloadLabel}
+                    title={t('assistant.downloadFile')}
+                    render={<a href={downloadUrl} download={name} />}
+                  >
+                    <Icon name="download" size={14} />
+                  </AttachmentAction>
+                </AttachmentActions>
+              </>
+            ) : (
+              <AttachmentTrigger aria-label={downloadLabel} render={<a href={downloadUrl} download={name} />} />
+            )}
+          </Attachment>
+        );
+      })}
     </AttachmentGroup>
   );
 }

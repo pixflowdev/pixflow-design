@@ -53,7 +53,7 @@ import {
   amrLoginStatusEventReason,
   notifyAmrLoginStatusChanged,
 } from './amrLoginPolling';
-import { normalizeAgentModelChoice } from './agentModelSelection';
+import { effectiveAgentModelChoice, namedAgentModels, normalizeAgentModelChoice } from './agentModelSelection';
 import { SearchableModelSelect } from './modelOptions';
 import {
   mergeProviderModelOptions,
@@ -383,17 +383,8 @@ export function InlineModelSwitcher({
   const currentAgentId = currentAgent?.id ?? null;
   const normalizedCurrentModelId = normalizedCurrentChoice?.model ?? null;
   const normalizedCurrentReasoning = normalizedCurrentChoice?.reasoning;
-  const currentAgentModelIds = currentAgent?.models?.map((m) => m.id) ?? [];
-  const configuredModelId =
-    typeof currentChoice.model === 'string' && currentChoice.model
-      ? currentChoice.model
-      : null;
-  const currentModelId =
-    currentAgent?.id === 'amr' &&
-    configuredModelId &&
-    !currentAgentModelIds.includes(configuredModelId)
-      ? currentAgent?.models?.[0]?.id ?? null
-      : configuredModelId ?? currentAgent?.models?.[0]?.id ?? null;
+  const cliModels = namedAgentModels(currentAgent);
+  const currentModelId = effectiveAgentModelChoice(currentAgent, currentChoice)?.model ?? null;
 
   useEffect(() => {
     if (!currentAgentId || !normalizedCurrentModelId) return;
@@ -521,12 +512,8 @@ export function InlineModelSwitcher({
     () => mergeProviderModelOptions(fetchedApiModelOptions, suggestedApiModelIds),
     [fetchedApiModelOptions, suggestedApiModelIds],
   );
-  const apiModelIds = useMemo(
-    () => apiModelOptions.map((model) => model.id),
-    [apiModelOptions],
-  );
   const apiModelChoices = useMemo(
-    () => apiModelOptions.map((model) => ({ id: model.id, label: model.label })),
+    () => apiModelOptions.filter(model => model.id !== 'default'),
     [apiModelOptions],
   );
 
@@ -548,9 +535,7 @@ export function InlineModelSwitcher({
     config.mode === 'daemon'
       ? localCliUnavailable
         ? ''
-      : currentModelLabel && currentModelId !== 'default'
-        ? currentModelLabel
-        : t('inlineSwitcher.modelDefault')
+      : currentModelLabel || currentModelId || ''
       : config.model.trim() || t('inlineSwitcher.modelDefault');
 
   const handleChipClick = useCallback(() => {
@@ -804,9 +789,7 @@ export function InlineModelSwitcher({
                 )}
               </div>
 
-              {currentAgent &&
-              currentAgent.models &&
-              currentAgent.models.length > 0 ? (
+              {currentAgent && cliModels.length > 0 ? (
                 <div className="inline-switcher__row">
                   <span className="inline-switcher__label">
                     {t('inlineSwitcher.modelLabel')}
@@ -818,7 +801,7 @@ export function InlineModelSwitcher({
                     popoverTestId="inline-model-switcher-agent-model-popover"
                     searchPlaceholder={t('designs.searchPlaceholder')}
                     aria-label={t('inlineSwitcher.modelLabel')}
-                    models={currentAgent.models}
+                    models={cliModels}
                     value={currentModelId ?? ''}
                     onChange={(nextValue) => {
                       trackExecutionSettingsPopoverClick(analytics.track, {
@@ -832,18 +815,7 @@ export function InlineModelSwitcher({
                         model: nextValue,
                       });
                     }}
-                    additionalOptions={
-                      currentAgent.id !== 'amr' &&
-                      currentModelId &&
-                      !currentAgent.models.some((m) => m.id === currentModelId)
-                        ? [
-                            {
-                              value: currentModelId,
-                              label: `${currentModelId} ${t('inlineSwitcher.customSuffix')}`,
-                            },
-                          ]
-                        : undefined
-                    }
+
                   />
                 </div>
               ) : null}
@@ -915,16 +887,7 @@ export function InlineModelSwitcher({
                       });
                       onApiModelChange?.(nextValue);
                     }}
-                    additionalOptions={
-                      config.model && !apiModelIds.includes(config.model)
-                        ? [
-                            {
-                              value: config.model,
-                              label: `${config.model} ${t('inlineSwitcher.customSuffix')}`,
-                            },
-                          ]
-                        : undefined
-                    }
+
                   />
                 ) : (
                   <span className="inline-switcher__hint">

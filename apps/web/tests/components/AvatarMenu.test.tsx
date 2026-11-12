@@ -18,9 +18,13 @@ const codexAgent: AgentInfo = {
   bin: 'codex',
   available: true,
   version: '0.134.0',
-  models: [{ id: 'default', label: 'Default (CLI config)' }],
+  models: [
+    { id: 'default', label: 'Default (CLI config)' },
+    { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
+  ],
   reasoningOptions: [
     { id: 'default', label: 'Default' },
+    { id: 'medium', label: 'Medium' },
     { id: 'high', label: 'High' },
   ],
 };
@@ -257,8 +261,22 @@ describe('AvatarMenu', () => {
     fireEvent.click(screen.getByRole('option', { name: /^High$/ }));
 
     expect(onAgentModelChange).toHaveBeenCalledWith('codex', {
+      model: 'gpt-6.1-sol',
       reasoning: 'high',
     });
+  });
+
+  it('shows named models and Medium when no model has been selected', () => {
+    renderMenu({ config: { ...baseConfig, agentModels: {} } });
+    openMenu();
+
+    const [model, reasoning] = screen.getAllByRole('combobox');
+    expect(model?.textContent).toContain('GPT-6.1 Sol');
+    expect(reasoning?.textContent).toContain('Medium');
+    fireEvent.click(model!);
+    const options = within(screen.getByTestId('avatar-model-popover'));
+    expect(options.getByRole('option', { name: 'GPT-6.1 Sol' })).toBeTruthy();
+    expect(options.queryByRole('option', { name: /Default/ })).toBeNull();
   });
 
   it('shows Fast only for a Codex model advertised as eligible and persists the toggle', () => {
@@ -298,7 +316,7 @@ describe('AvatarMenu', () => {
     expect(screen.queryByText('Fast mode')).toBeNull();
   });
 
-  it('keeps a custom saved model visible when it is not in the declared agent model list', () => {
+  it('shows the saved custom model and offers only catalogue models in the list', () => {
     renderMenu({
       config: {
         ...baseConfig,
@@ -307,18 +325,13 @@ describe('AvatarMenu', () => {
     });
 
     openMenu();
-    // The model picker is a SearchableModelSelect: a combobox button whose
-    // label shows the active selection, backed by a popover listbox. A custom
-    // saved model that isn't in the agent's declared list is injected as an
-    // additional option so it stays selectable instead of silently dropping.
     const modelCombobox = screen.getAllByRole('combobox')[0] as HTMLButtonElement;
     expect(modelCombobox.textContent).toContain('custom-codex-model');
 
     fireEvent.click(modelCombobox);
-    const popover = screen.getByTestId('avatar-model-popover');
-    expect(
-      within(popover).getByRole('option', { name: /custom-codex-model/i }),
-    ).toBeTruthy();
+    const options = within(screen.getByTestId('avatar-model-popover'));
+    expect(options.getByRole('option', { name: 'GPT-6.1 Sol' })).toBeTruthy();
+    expect(options.queryByRole('option', { name: /custom-codex-model/i })).toBeNull();
   });
 
   it.skip('routes the retired AMR account shortcut through the active AMR profile', () => {

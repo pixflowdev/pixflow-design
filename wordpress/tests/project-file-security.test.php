@@ -27,6 +27,12 @@ try {
         $result = $type->getMethod('commit')->invoke($service, $root, $name, 'inert preview fixture', null);
         check(!is_wp_error($result) && file_get_contents($root . '/' . $name) === 'inert preview fixture', "$name remains supported");
     }
+    foreach (['report.pdf', 'brief.docx', 'budget.xlsx', 'deck.pptx', 'notes.odt', 'sales.ods', 'slides.odp',
+        'notes.rtf', 'archive.doc', 'ledger.xls', 'talk.ppt', 'rows.tsv', 'brief.markdown', 'records.jsonl'] as $name) {
+        $result = $type->getMethod('commit')->invoke($service, $root, $name, 'inert document fixture', null);
+        check(!is_wp_error($result) && file_get_contents($root . '/' . $name) === 'inert document fixture', "$name can be attached");
+    }
+    check(is_wp_error($type->getMethod('commit')->invoke($service, $root, 'payload.php.docx', 'inert document fixture', null)), 'A document suffix cannot disguise a server program');
     check($type->getMethod('safe_child_path')->invoke($service, $root, '../escape') === null, 'Child resolver independently rejects traversal');
     touch($root . '/README.md', 1700000000);
     clearstatcache();

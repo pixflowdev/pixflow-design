@@ -14,6 +14,8 @@ import { pixflowWorkspaceBuilderHandoffInstructions, pixflowWordPressAdminToolsI
 import { SITE_DELIVERY_UNCERTAIN } from '../runtime/site-delivery';
 import { compactWorkingContext, compactWorkingRun, prepareHistorySource, workingContextBytes, workingRunContextBytes, type WorkingContextSource } from './working-context';
 import { chatHistoryOwnerScope, type ChatHistoryBinding } from './chat-history-client';
+import { prepareDocumentAttachments, siteDocumentRead } from './document-attachments';
+import { pixflowDocumentInstructions } from '@open-design/contracts';
 
 type SiteToolResult = {id:string;result:unknown;images?:Array<{mimeType:string;base64:string}>};
 // These exact tools cannot mutate site content. Arbitrary .run tools and unknown
@@ -221,11 +223,35 @@ export async function runByokSite(input: ByokSiteInput): Promise<PixflowDirectSi
       const file=await call('project.file.read',{projectId:attachment.projectId,path:attachment.path});
       if(/^image\/(png|jpeg|webp|gif)$/.test(file.mimeType || ''))images.push({mimeType:file.mimeType,base64:file.content});
     }
+    const preparedDocuments = [];
+    let inlineBudget = 12_000;
+    for (const attachment of saved ? [] : await prepareDocumentAttachments(input.attachments, siteDocumentRead(session), signal) || []) {
+      const document = attachment.document;
+      if (!document) continue;
+      const inlineSections = [];
+      let documentBudget = Math.min(4_000, inlineBudget);
+      for (const section of document.sections) {
+        const length = section.label.length + section.text.length;
+        if (length > documentBudget) break;
+        inlineSections.push(section);
+        documentBudget -= length;
+        inlineBudget -= length;
+      }
+      const complete = inlineSections.length === document.sections.length;
+      preparedDocuments.push({
+        filename: attachment.name, status: document.status, note: document.note,
+        sectionCount: document.sections.length, inlineSections,
+        ...(complete ? {} : {
+          nextSectionIndex: inlineSections.length, extract: resultStore.reference(document.sections),
+        }),
+      });
+    }
     // Keep the authorized optional reference discoverable independently of a
     // large native builder snapshot. Each retained value has its own root.
     const {siteDesignGuidance, ...initialContext} = (input.context ?? {}) as Record<string, unknown>;
     const baseSystem=saved?.system || [
       input.systemPrompt || '',
+      preparedDocuments.length ? pixflowDocumentInstructions + '\nUse the section labels and text as evidence. If inlineSections do not contain the requested information and an extract is available, use result.read with its resultId and the zero-based section index in path before answering. Never treat a heading or column label as the requested value.\n' + JSON.stringify(preparedDocuments) : '',
       session.editorTarget ? `LIVE DESTINATION: ${session.editorTarget.builder}, page ${session.editorTarget.postId}, canvas ${session.editorTarget.canvasId}. The destination page already exists and is open in this exact editor. Any request to create/build a new page means populate this existing destination. Do not create a second page, change editor tabs, or substitute WordPress PHP/HTML/database writes. Read the native editor, make the requested native edits here, inspect the resulting tree, save through its native save tool, and verify persistence. If this editor is unavailable, report that failure instead of building elsewhere.` : '',
       session.editorTarget ? `This run belongs to editor tab ${session.editorTarget.canvasId}, starting document ${session.editorTarget.postId}. Intentional native navigation within this tab is allowed; refresh the current document ID and pass expectedPostId for subsequent commands. Reconnect this exact tab in place or report failure. Never open a replacement editor, target another tab, or bypass a stale-save conflict using saved-content writes.` : '',
       etchContext?.editor === 'gutenberg' ? 'Work in this live Gutenberg post editor using context.gutenbergCanvas. Read gutenberg.read and gutenberg.schema, then native gutenberg.insert/update/remove/move and save. All commands require canvasId and expectedPostId; mutations also require expectedRevision from the latest read/result. Read help for arguments. Use native undo/redo. Never replace live edits with database writes or a different editor tab. Pixflow Site Editor and shared-pattern authoring requires the optional Pro tools in the current catalogue; read site-editor/authoring.md when available. Without them preserve references and do not substitute generic writes. WordPress native editing, review, cleanup and user-data export remain available.' : '',

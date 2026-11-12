@@ -11,9 +11,9 @@ test('selected model controls effort without leaking choices to unsupported mode
  expect(agentReasoningOptions({...agent,reasoningOptions:[{id:'high',label:'High'}]},'haiku')).toEqual([]);
 });
 test('existing agents retain their agent-wide effort options',()=>{
- expect(agentReasoningOptions({id:'codex',name:'Codex',bin:'codex',available:true,reasoningOptions:[{id:'high',label:'High'}]},'model')).toEqual([{id:'high',label:'High'}]);
+ expect(agentReasoningOptions({id:'codex',reasoningOptions:[{id:'high',label:'High'}]},'model')).toEqual([{id:'high',label:'High'}]);
 });
 
 test('Codex hides Ultra from stale catalogues',()=>{
- expect(agentReasoningOptions({id:'codex',name:'Codex',bin:'codex',available:true,reasoningOptions:[{id:'ultra',label:'Ultra'},{id:'max',label:'Max'}]},'model')).toEqual([{id:'max',label:'Max'}]);
+ expect(agentReasoningOptions({id:'codex',reasoningOptions:[{id:'ultra',label:'Ultra'},{id:'max',label:'Max'}]},'model')).toEqual([{id:'max',label:'Max'}]);
 });

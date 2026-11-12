@@ -11,7 +11,7 @@ import { MediaQualitySlider } from './MediaQualitySlider';
 import './MediaView.css';
 import { MediaOptimiser, readMediaImage, encodeMediaImage, saveMediaCopy } from './MediaOptimiser';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
-import { useT as usePixflowUiTranslation } from '../i18n';
+import { useI18n, useT as usePixflowUiTranslation } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchPixflowMedia,
@@ -39,17 +39,17 @@ function MediaLayoutIcon({layout}:{layout:MediaLayout}){
 }
 const MEDIA_PAGE_SIZE = 30;
 
-function formatFileSize(size: number): string {
-  if (!Number.isFinite(size) || size <= 0) return 'Unknown size';
-  if (size < 1024) return `${Math.round(size)} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+function formatFileSize(size: number, t: ReturnType<typeof usePixflowUiTranslation>, locale: string): string {
+  if (!Number.isFinite(size) || size <= 0) return t("ui.mediaView.unknownSize");
+  if (size < 1024) return `${new Intl.NumberFormat(locale).format(size)} B`;
+  if (size < 1024 * 1024) return `${new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(size / 1024)} KB`;
+  return `${new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(size / 1024 / 1024)} MB`;
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string, t: ReturnType<typeof usePixflowUiTranslation>, locale: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Recently';
-  return new Intl.DateTimeFormat(undefined, {
+  if (Number.isNaN(date.getTime())) return t("ui.mediaView.recently");
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -57,11 +57,38 @@ function formatDate(value: string): string {
   }).format(date);
 }
 
-function mediaKindLabel(item: PixflowMediaItem): string {
-  if (item.type === 'image') return 'Image';
-  if (item.type === 'video') return 'Video';
-  if (item.type === 'audio') return 'Audio';
-  return 'File';
+function mediaKindLabel(item: PixflowMediaItem, t: ReturnType<typeof usePixflowUiTranslation>): string {
+  if (item.type === 'image') return t("ui.mediaView.image");
+  if (item.type === 'video') return t("ui.mediaView.video");
+  if (item.type === 'audio') return t("ui.mediaView.audio");
+  return t("ui.mediaView.file");
+}
+
+const mediaTypeLabels = {
+  image: "ui.mediaView.images",
+  video: "ui.mediaView.video",
+  audio: "ui.mediaView.audio",
+  font: "ui.mediaView.fonts",
+  document: "ui.mediaView.documents",
+  spreadsheet: "ui.mediaView.spreadsheets",
+  interactive: "ui.mediaView.interactive",
+  text: "ui.mediaView.text",
+  archive: "ui.mediaView.archives",
+  code: "ui.mediaView.code",
+  file: "ui.mediaView.files",
+} as const;
+
+const mediaSourceLabels = {
+  generated: "ui.mediaView.generated",
+  upload: "ui.mediaView.upload",
+  imported: "ui.mediaView.imported",
+  import: "ui.mediaView.imported",
+} as const;
+
+function mediaSourceLabel(item: PixflowMediaItem, t: ReturnType<typeof usePixflowUiTranslation>) {
+  if (!item.isPixflowMedia) return t('ui.mediaView.wpLibrary');
+  if (!Object.hasOwn(mediaSourceLabels, item.source)) return item.source;
+  return t(mediaSourceLabels[item.source as keyof typeof mediaSourceLabels]);
 }
 
 function shortKind(item: PixflowMediaItem): string {
@@ -114,7 +141,7 @@ function MediaImagePreview({item,onOptimise,onUpscale}:{item:PixflowMediaItem;on
 }
 
 export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveForSettings, onSelectImage }: { onSelectImage?: (item: PixflowMediaItem) => void; onLeaveForSettings?: () => void; headerAction?: React.ReactNode; attachmentId?: number; attachmentUrl?: string } = {}) {
-  const translateUi = usePixflowUiTranslation();
+  const { t: translateUi, locale } = useI18n();
   const [folderScope,setFolderScope]=useState<MediaFolderScope>(()=>{try{const value=JSON.parse(sessionStorage.getItem('pixflow.media.folders')??'null');if(value&&(value.provider==='pixflow'||value.provider==='happyfiles')&&(value.folder==='all'||Number.isSafeInteger(value.folder)&&value.folder>=0))return value;}catch{}return {provider:'pixflow',folder:'all'};});
   useEffect(()=>{try{sessionStorage.setItem('pixflow.media.folders',JSON.stringify(folderScope));}catch{}},[folderScope]);
   const [items, setItems] = useState<PixflowMediaItem[]>([]);
@@ -288,7 +315,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
           let status = translateUi('media.bulk.noSaving');
           if (blob.size < source.bytes) {
             const copy = await saveMediaCopy(item, blob);
-            status = copy.filename + ' · ' + formatFileSize(blob.size) + ' · ' +
+            status = copy.filename + ' · ' + formatFileSize(blob.size, translateUi, locale) + ' · ' +
               translateUi('media.optimise.smaller', { percent: ((1 - blob.size / source.bytes) * 100).toFixed(1) });
           }
           setResults(previous => [...previous, item.filename + ' — ' + status]);
@@ -370,7 +397,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
   function openWpMedia() {
     void openWordPressMediaLibrary({
       title: translateUi("ui.mediaView.addMediaToPixflow"),
-      buttonText: 'Add selected',
+      buttonText: translateUi("ui.mediaView.addSelected"),
       multiple: true,
       libraryTypes: ['image', 'video', 'audio'],
     })
@@ -464,7 +491,10 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
             </label>
             <div className="direct-media-layout-select">
               <WorkspaceSelect label={translateUi('ui.mediaView.mediaType')} value={type}
-                options={[{value:'all',label:translateUi('common.all')},...availableTypes]}
+                options={[{value:'all',label:translateUi('common.all')},...availableTypes.map(option => {
+                  if (!Object.hasOwn(mediaTypeLabels, option.value)) return option;
+                  return {...option, label: translateUi(mediaTypeLabels[option.value as keyof typeof mediaTypeLabels])};
+                })]}
                 onValueChange={value=>{pickedRow.current=true;setLinked(null);setPage(1);setType(value);}}/>
             </div>
             <div className="direct-media-layout-select">
@@ -535,12 +565,12 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
                     </span>
                     <span>
                       <strong>{item.title || item.filename}</strong>
-                      <small>{item.filename} · {formatFileSize(item.sizeBytes)}</small>
+                      <small>{item.filename} · {formatFileSize(item.sizeBytes, translateUi, locale)}</small>
                     </span>
                   </span>
-                  <span>{mediaKindLabel(item)}</span>
-                  <span>{item.isPixflowMedia ? item.source : translateUi("ui.mediaView.wpLibrary")}</span>
-                  <span>{formatDate(item.modifiedAt || item.createdAt)}</span>
+                  <span>{mediaKindLabel(item, translateUi)}</span>
+                  <span>{mediaSourceLabel(item, translateUi)}</span>
+                  <span>{formatDate(item.modifiedAt || item.createdAt, translateUi, locale)}</span>
                 </button>
               ))}</div>
             )}
@@ -589,15 +619,15 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
                   )}
                 </div>
                 <div className="direct-media-preview-meta">
-                  {onSelectImage && selected.type === 'image' && <Button onClick={() => onSelectImage(selected)}>Use this image</Button>}
+                  {onSelectImage && selected.type === 'image' && <Button onClick={() => onSelectImage(selected)}>{translateUi("ui.blogStudio.useThisImage_b2f8cf")}</Button>}
                   <div className="direct-media-preview-heading">
                     <h2>{selected.title || selected.filename}</h2>
                     <p><span title={selected.mimeType}>{selected.mimeType.split('/').pop()?.toUpperCase()}</span>
-                      <span aria-hidden="true"> · </span>{formatFileSize(selected.sizeBytes)}</p>
+                      <span aria-hidden="true"> · </span>{formatFileSize(selected.sizeBytes, translateUi, locale)}</p>
                   </div>
                   <dl>
                     <div><dt>{translateUi("chat.designToolbox.context.file")}</dt><dd>{selected.filename}</dd></div>
-                    <div><dt>{translateUi("pluginsView.source")}</dt><dd>{selected.isPixflowMedia ? selected.source : translateUi("ui.mediaView.wpLibrary")}</dd></div>
+                    <div><dt>{translateUi("pluginsView.source")}</dt><dd>{mediaSourceLabel(selected, translateUi)}</dd></div>
                     {selected.width && selected.height ? (
                       <div><dt>{translateUi("ui.mediaView.dimensions")}</dt><dd>{selected.width} × {selected.height}</dd></div>
                     ) : null}

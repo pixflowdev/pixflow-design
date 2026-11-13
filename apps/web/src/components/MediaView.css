@@ -518,13 +518,13 @@ input.direct-media-width[aria-invalid=true] { border-color:var(--danger,var(--te
 .direct-media-upscaler { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .direct-media-upscaler .direct-media-comparison { flex-basis:100%; }
 
-/* Bound each media view to its host so its panes own scrolling. */
-.entry-main--scroll:has(.direct-media-header) { display:flex; flex-direction:column; overflow:hidden; }
+/* Bound the library to its host. The two panes own scrolling; the Upscaler keeps its own layout. */
+.entry-main--scroll:has(.direct-media-header):not(:has(.direct-upscale-view)) { display:flex; flex-direction:column; overflow:hidden; }
 .entry-main__inner:has(> [data-testid="entry-view-media"][data-active="true"]) { max-width:none; }
-.entry-main__inner:has(.direct-media-header) { flex:1; min-height:0; box-sizing:border-box; padding-block:16px; }
-[data-testid="entry-view-media"][data-active="true"],
-[data-testid="entry-view-media"] .entry-section:has(.direct-media-header),
-.pixflow-media-view:has(.direct-media-header) { flex:1; min-height:0; display:flex; flex-direction:column; }
+.entry-main__inner:has(.direct-media-header):not(:has(.direct-upscale-view)) { flex:1; min-height:0; box-sizing:border-box; padding-block:16px; }
+[data-testid="entry-view-media"][data-active="true"]:not(:has(.direct-upscale-view)),
+[data-testid="entry-view-media"] .entry-section:has(.direct-media-header):not(:has(.direct-upscale-view)),
+.pixflow-media-view:has(.direct-media-header):not(:has(.direct-upscale-view)) { flex:1; min-height:0; display:flex; flex-direction:column; }
 .direct-media-files-main { flex:1; }
 .direct-media-batch { max-height:25%; overflow:auto; }
 @container (max-width:560px) {

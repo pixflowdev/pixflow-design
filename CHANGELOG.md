@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.3.0] - Release candidate
 
 ## [2.3.1] - Release candidate
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reconnect Workspace to the Bridge before syncing protected project files.
 - Send the connected site origin with authenticated Workspace, editor, and site-tool POSTs so hosts that require it can pass the requests to WordPress for authorization.
 
 - Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.

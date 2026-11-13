@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace PixflowDesign\WordPress\Media;
 
+use PixflowDesign\WordPress\Assets\AssetRegistrar;
+
 if (!defined('ABSPATH')) exit;
 
 final class FitMedia {
@@ -29,7 +31,7 @@ final class FitMedia {
         wp_enqueue_media();
         $css = 'builder/dynamic-fit.css';
         wp_enqueue_style('pixflow-dynamic-fit', PIXFLOW_DESIGN_ASSETS_URL . $css, [], (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . $css));
-        $deps = ['media-views', 'wp-api-fetch', 'wp-i18n'];
+        $deps = array_merge(['media-views', 'wp-api-fetch', 'wp-i18n'], AssetRegistrar::shared_data_dependencies());
         if (doing_action('enqueue_block_editor_assets')) $deps[] = 'wp-block-editor';
         wp_enqueue_script('pixflow-fit-media', PIXFLOW_DESIGN_ASSETS_URL . $asset,
             $deps, (string) filemtime(PIXFLOW_DESIGN_ASSETS_DIR . $asset), true);

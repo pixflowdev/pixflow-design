@@ -44,7 +44,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Changed**
 
-* Organise the upscaler into full-height settings and preview panels with separate scrolling, a draggable model carousel, linked dimensions, and matching Render and Save controls.
+* Redesign the Media Library Image Upscaler with full-height settings and preview panels, independent scrolling, a draggable model carousel, linked dimensions, and matching Render and Save controls.
 * Distinguish rendering, saving a copy, and replacing an original in the progress queue. Completed preview notices dismiss automatically.
 * Expose resumable translation progress to Pro, including active page and language batches and the saved translation scope.
 

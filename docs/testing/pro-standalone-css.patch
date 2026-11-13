@@ -1,0 +1,25 @@
+diff --git a/apps/web/src/pro/seo-audit/PageChecks.module.css b/apps/web/src/pro/seo-audit/PageChecks.module.css
+index 26b9124..7473396 100644
+--- a/apps/web/src/pro/seo-audit/PageChecks.module.css
++++ b/apps/web/src/pro/seo-audit/PageChecks.module.css
+@@ -38,9 +38,9 @@
+ .badge { flex: none; min-width: 84px; justify-content: center; }
+ .badge[data-state="passed"] { color: color-mix(in srgb,var(--success, #39a976) 55%,var(--text)); background: color-mix(in srgb,var(--success, #39a976) 10%,var(--bg-panel)); }
+ .badge[data-state="review"] { color: color-mix(in srgb,var(--warning, #c58b32) 55%,var(--text)); background: color-mix(in srgb,var(--warning, #c58b32) 10%,var(--bg-panel)); }
+-svg[data-state="passed"], .counts [data-state="passed"] > svg { color: var(--success, #39a976); }
+-svg[data-state="review"], .counts [data-state="review"] > svg { color: var(--warning, #c58b32); }
+-svg[data-state="unavailable"] { color: var(--text-muted); }
++.checkTitle svg[data-state="passed"], .counts [data-state="passed"] > svg { color: var(--success, #39a976); }
++.checkTitle svg[data-state="review"], .counts [data-state="review"] > svg { color: var(--warning, #c58b32); }
++.checkTitle svg[data-state="unavailable"] { color: var(--text-muted); }
+ .checkBody { padding: 4px 12px 8px; min-width: 0; }
+ .explanation { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 32px; margin-bottom: 16px; }
+ .explanation h4 { margin: 0; color: var(--text-muted); font-size: 12px; font-weight: 500; }
+@@ -64,6 +64,6 @@ svg[data-state="unavailable"] { color: var(--text-muted); }
+ @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+ .counts{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .badge[data-state="failed"]{color:color-mix(in srgb,var(--danger,#d85858) 65%,var(--text));background:color-mix(in srgb,var(--danger,#d85858) 10%,var(--bg-panel))}
+-svg[data-state="failed"]{color:var(--danger,#d85858)}
++.checkTitle svg[data-state="failed"]{color:var(--danger,#d85858)}
+ .badge[data-state="observed"],.badge[data-state="unavailable"]{background:var(--bg-fill-tertiary);color:var(--text-muted)}
+ @container(max-width:900px){.counts{grid-template-columns:repeat(2,minmax(0,1fr))}}

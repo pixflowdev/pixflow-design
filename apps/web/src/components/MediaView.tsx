@@ -360,7 +360,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
     scroll.scrollTop = 0;
   }
   function closeUpscaler() {
-    if(queue)void load();
+    void load();
     setQueue(undefined);setUpscaleItem(null);
     const target = returnTo.current;
     requestAnimationFrame(() => {

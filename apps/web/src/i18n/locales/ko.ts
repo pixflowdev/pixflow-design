@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const ko: Dict = {
+  "media.upscale.lockAspect": "종횡비 잠금",
+  "media.upscale.add": "이미지 추가",
+  "media.upscale.sharpen": "선명도",
+  "media.upscale.contrast": "대비",
+  "media.upscale.preserve": "디테일 보존",
+  "media.upscale.preserveHelp": "선명도를 높일 때 뚜렷한 가장자리를 보호합니다.",
+  "media.upscale.render": "이미지 처리",
+
   "ui.seoAudit.seoAudit": "SEO 감사",
   "ui.seoAudit.overview": "개요",
   "ui.seoAudit.auditResults": "감사 결과",

@@ -173,6 +173,7 @@ try {
     await cp(join(webPublicDir, 'model-icons'), join(stagingOutdir, 'model-icons'), { recursive: true });
   }
   await cp(join(webPublicDir, 'app-icon.svg'), join(stagingOutdir, 'app-icon.svg'));
+  await cp(join(webPublicDir, 'upscaler-models'), join(stagingOutdir, 'upscaler-models'), { recursive: true });
 
   }
   if (target === 'pro') {

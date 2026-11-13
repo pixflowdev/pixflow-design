@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const fa: Dict = {
+  "media.upscale.lockAspect": "قفل نسبت تصویر",
+  "media.upscale.add": "افزودن تصاویر",
+  "media.upscale.sharpen": "وضوح",
+  "media.upscale.contrast": "کنتراست",
+  "media.upscale.preserve": "حفظ جزئیات",
+  "media.upscale.preserveHelp": "محافظت از لبه‌های مشخص هنگام افزایش وضوح.",
+  "media.upscale.render": "پردازش تصویر",
+
   "ui.seoAudit.seoAudit": "ممیزی سئو",
   "ui.seoAudit.overview": "نمای کلی",
   "ui.seoAudit.auditResults": "نتایج ممیزی",

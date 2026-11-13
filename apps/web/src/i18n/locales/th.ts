@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const th: Dict = {
+  "media.upscale.lockAspect": "ล็อกอัตราส่วนภาพ",
+  "media.upscale.add": "เพิ่มรูปภาพ",
+  "media.upscale.sharpen": "เพิ่มความคมชัด",
+  "media.upscale.contrast": "คอนทราสต์",
+  "media.upscale.preserve": "รักษารายละเอียด",
+  "media.upscale.preserveHelp": "ปกป้องขอบที่ชัดเจนขณะเพิ่มความคมชัด",
+  "media.upscale.render": "ประมวลผลรูปภาพ",
+
   "ui.seoAudit.seoAudit": "การตรวจสอบ SEO",
   "ui.seoAudit.overview": "ภาพรวม",
   "ui.seoAudit.auditResults": "ผลการตรวจสอบ",

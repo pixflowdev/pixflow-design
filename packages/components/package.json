@@ -17,7 +17,8 @@
       "default": "./dist/index.mjs"
     },
     "./styles.css": "./src/styles.css",
-    "./empty": "./src/empty.tsx"
+    "./empty": "./src/empty.tsx",
+    "./button-group": "./src/button-group.tsx"
   },
   "scripts": {
     "build": "tsx ./esbuild.config.ts && tsc -p tsconfig.json --emitDeclarationOnly",

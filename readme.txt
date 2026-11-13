@@ -56,6 +56,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Changed**
 
+* Upscale multiple images in one workspace with individual model and adjustment settings, draggable model previews, linked dimensions and a combined Save action menu.
+
 * Use a compact two-column layout for the editor toolbar’s Design tools.
 * Show files you can open or download as compact attachments at the end of assistant replies across providers.
 * List named models in the chat picker. For the first CLI run, select the newest available model when release dates are known and use Medium reasoning where supported. Remember subsequent CLI and API model choices.

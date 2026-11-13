@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const ja: Dict = {
+  "media.upscale.lockAspect": "縦横比を固定",
+  "media.upscale.add": "画像を追加",
+  "media.upscale.sharpen": "シャープネス",
+  "media.upscale.contrast": "コントラスト",
+  "media.upscale.preserve": "ディテールを保持",
+  "media.upscale.preserveHelp": "シャープ化時に強いエッジを保護します。",
+  "media.upscale.render": "画像を処理",
+
   "ui.seoAudit.seoAudit": "SEO監査",
   "ui.seoAudit.overview": "概要",
   "ui.seoAudit.auditResults": "監査結果",

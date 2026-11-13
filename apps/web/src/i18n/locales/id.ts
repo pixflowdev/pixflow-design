@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const id: Dict = {
+  "media.upscale.lockAspect": "Kunci rasio aspek",
+  "media.upscale.add": "Tambah gambar",
+  "media.upscale.sharpen": "Pertajam",
+  "media.upscale.contrast": "Kontras",
+  "media.upscale.preserve": "Pertahankan detail",
+  "media.upscale.preserveHelp": "Lindungi tepi tegas saat mempertajam.",
+  "media.upscale.render": "Proses gambar",
+
   "ui.seoAudit.seoAudit": "Audit SEO",
   "ui.seoAudit.overview": "Ikhtisar",
   "ui.seoAudit.auditResults": "Hasil audit",

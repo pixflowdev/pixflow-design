@@ -11,6 +11,8 @@ Use Developer ID Application signing and the configured notary profile. If those
 
 Mount each final DMG read-only. Verify its integrity, version 2.3.1, bundle ID `dev.pixflow.bridge`, target architecture, strict signature, Gatekeeper acceptance and notarisation. Confirm the packaged config selects `open-design/bin/node`, its binary reports Node 24.22.3, and its architecture matches the app and SQLite binding. Run the in-memory SQLite check. Record Intel execution under Rosetta separately from native Intel hardware coverage.
 
+The matching WordPress ZIPs are on the [Core v2.3.1 draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-69eddf8e6f1542a308f1) and [Pro v2.3.1 draft](https://github.com/pixflowdev/pixflow-design-pro/releases/tag/untagged-a0e0354d4ec6366e0fa2). Check their supplied SHA-256 sums before installing them.
+
 On Apple Silicon, test an upgrade from 2.3.0 with an existing pairing, then verify the installed Bridge, Chrome connection and provider preferences. Use the final paired WordPress 2.3.1 plugins for live Codex and Claude checks. Verify Claude authentication, models and usage, and exercise Workspace-to-Bricks draft creation and native save plus translation stop, reload and resume. Use the earlier receipt as baseline and record the final results.
 
 Upload the two production DMGs to the [private Bridge v2.3.1 draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-c31e767d9f4f6f34f647), release ID `444589251`, tag `bridge-v2.3.1`. Confirm it is still a draft targeting the Core revision above. Upload:

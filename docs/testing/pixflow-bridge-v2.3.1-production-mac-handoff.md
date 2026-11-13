@@ -1,5 +1,11 @@
 # Pixflow Design Bridge v2.3.1 production Mac build
 
+## Mac build return
+
+Both architectures built from the exact commits below, with frozen dependencies and the normal clean-source check. The local DMGs passed image, bundle, architecture, strict signature, Node 24.22.3 and SQLite checks. Both launched as Bridge 2.3.1, including the Intel build under Rosetta. Apple Silicon also passed direct and packaged native host connectivity. The previous Bridge was restored. The matched WordPress draft ZIP hashes and versions were verified.
+
+The Mac has no valid Developer ID Application signing identity. Both local DMGs are ad hoc signed and Gatekeeper rejected them. The owner waived notarisation for this run. Upload of Mac production assets to draft 444589251 remains blocked on Developer ID signing. Final browser upgrade and live provider acceptance are still open. See the [validation receipt](pixflow-bridge-v2.3.1-production-mac-validation.md) for test scope and local validation checksums.
+
 Build both DMGs from this exact pair. The release is on hold. Upload validated production assets to the private GitHub draft for review.
 
 - Core: `pixflowdev/pixflow-design`, branch `codex/v231-core-candidate`, revision `7de674745c7207b5320a96e7f8c311c4f6f620fb`. Includes Node 24.22.3 for Mac sidecars, Core #133 pairing and Workspace admission, and the Bridge 2.3.1 stamp.

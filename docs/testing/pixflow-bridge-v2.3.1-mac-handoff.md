@@ -1,5 +1,11 @@
 # Pixflow Design Bridge v2.3.1 Mac handoff
 
+## Mac return — 13 November 2026
+
+The [private Windows handoff receipt and both Mac DMGs](https://github.com/pixflowdev/pixflow-design-pro/tree/b64f354dc8ec55a37862896edcdec4197e884e50/docs/testing/mac-v2.3.1) are staged for the release coordinator. The receipt includes SHA-256 hashes, retrieval instructions, full acceptance results and both review links. Core Bridge connection fixes are in [Core #133](https://github.com/pixflowdev/pixflow-design/pull/133). The Bricks editor fix is in the matched Pro review.
+
+The owner waived notarisation for this return. Both candidates are ad hoc signed; strict signature checks passed, and Gatekeeper rejected both apps during assessment. Review the private receipt for the remaining release checks. Publication and updater changes remain on hold. The original build brief follows for reference.
+
 Build signed and notarised stable DMGs for Apple Silicon and Intel. Run the live browser acceptance checks on Apple Silicon. Publication is on hold.
 
 This document and the adjacent Pro patch are on the private Core branch codex/mac-231-handoff. Use the pinned runtime revisions below for the builds.

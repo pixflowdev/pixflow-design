@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const zhCN: Dict = {
+  "media.upscale.lockAspect": "锁定宽高比",
+  "media.upscale.add": "添加图像",
+  "media.upscale.sharpen": "锐化",
+  "media.upscale.contrast": "对比度",
+  "media.upscale.preserve": "保留细节",
+  "media.upscale.preserveHelp": "锐化时保护明显边缘。",
+  "media.upscale.render": "处理图像",
+
   "ui.seoAudit.seoAudit": "SEO 审核",
   "ui.seoAudit.overview": "概览",
   "ui.seoAudit.auditResults": "审核结果",

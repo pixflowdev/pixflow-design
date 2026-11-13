@@ -1,0 +1,9 @@
+.group { display: inline-flex; align-items: stretch; isolation: isolate; }
+.group > button { position: relative; }
+.group > button:focus-visible { z-index: 1; }
+.group[data-slot='button-group'][data-orientation='horizontal'] > button:not(:first-of-type) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.group[data-slot='button-group'][data-orientation='horizontal'] > button:not(:last-of-type) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.group[data-orientation='vertical'] { flex-direction: column; }
+.group[data-orientation='vertical'] > button:not(:first-child) { border-top-left-radius: 0; border-top-right-radius: 0; }
+.group[data-orientation='vertical'] > button:not(:last-child) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.separator { flex: 0 0 1px; align-self: stretch; background: var(--border); }

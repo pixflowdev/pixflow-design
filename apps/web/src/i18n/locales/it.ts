@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const it: Dict = {
+  "media.upscale.lockAspect": "Blocca proporzioni",
+  "media.upscale.add": "Aggiungi immagini",
+  "media.upscale.sharpen": "Nitidezza",
+  "media.upscale.contrast": "Contrasto",
+  "media.upscale.preserve": "Preserva dettagli",
+  "media.upscale.preserveHelp": "Proteggi i bordi netti durante la nitidezza.",
+  "media.upscale.render": "Elabora immagine",
+
   "ui.seoAudit.seoAudit": "Audit SEO",
   "ui.seoAudit.overview": "Panoramica",
   "ui.seoAudit.auditResults": "Risultati dell’audit",

@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
+  "media.upscale.lockAspect": "قفل نسبة العرض إلى الارتفاع",
+  "media.upscale.add": "إضافة صور",
+  "media.upscale.sharpen": "زيادة الحدة",
+  "media.upscale.contrast": "التباين",
+  "media.upscale.preserve": "الحفاظ على التفاصيل",
+  "media.upscale.preserveHelp": "حماية الحواف الواضحة عند زيادة الحدة.",
+  "media.upscale.render": "معالجة الصورة",
+
   "ui.seoAudit.seoAudit": "تدقيق SEO",
   "ui.seoAudit.overview": "نظرة عامة",
   "ui.seoAudit.auditResults": "نتائج التدقيق",

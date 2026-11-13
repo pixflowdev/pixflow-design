@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const zhTW: Dict = {
+  "media.upscale.lockAspect": "鎖定長寬比",
+  "media.upscale.add": "新增影像",
+  "media.upscale.sharpen": "銳化",
+  "media.upscale.contrast": "對比度",
+  "media.upscale.preserve": "保留細節",
+  "media.upscale.preserveHelp": "銳化時保護明顯邊緣。",
+  "media.upscale.render": "處理影像",
+
   "ui.seoAudit.seoAudit": "SEO 稽核",
   "ui.seoAudit.overview": "總覽",
   "ui.seoAudit.auditResults": "稽核結果",

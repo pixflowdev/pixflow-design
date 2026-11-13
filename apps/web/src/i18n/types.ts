@@ -30,6 +30,14 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // flat (not deeply nested) so missing-key TS errors point straight at the
 // offending string instead of a generic object mismatch.
 export interface Dict {
+  "media.upscale.lockAspect": string;
+  "media.upscale.add": string;
+  "media.upscale.sharpen": string;
+  "media.upscale.contrast": string;
+  "media.upscale.preserve": string;
+  "media.upscale.preserveHelp": string;
+  "media.upscale.render": string;
+
   "ui.seoAudit.seoAudit": string;
   "ui.seoAudit.overview": string;
   "ui.seoAudit.auditResults": string;

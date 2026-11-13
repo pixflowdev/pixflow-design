@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const tr: Dict = {
+  "media.upscale.lockAspect": "En boy oranını kilitle",
+  "media.upscale.add": "Görsel ekle",
+  "media.upscale.sharpen": "Keskinleştir",
+  "media.upscale.contrast": "Kontrast",
+  "media.upscale.preserve": "Ayrıntıları koru",
+  "media.upscale.preserveHelp": "Keskinleştirme sırasında belirgin kenarları korur.",
+  "media.upscale.render": "Görseli işle",
+
   "ui.seoAudit.seoAudit": "SEO denetimi",
   "ui.seoAudit.overview": "Genel bakış",
   "ui.seoAudit.auditResults": "Denetim sonuçları",

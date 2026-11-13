@@ -1,6 +1,14 @@
 import type { Dict } from '../types';
 
 export const hu: Dict = {
+  "media.upscale.lockAspect": "Képarány zárolása",
+  "media.upscale.add": "Képek hozzáadása",
+  "media.upscale.sharpen": "Élesítés",
+  "media.upscale.contrast": "Kontraszt",
+  "media.upscale.preserve": "Részletek megőrzése",
+  "media.upscale.preserveHelp": "Erős élek védelme élesítés közben.",
+  "media.upscale.render": "Kép feldolgozása",
+
   "ui.seoAudit.seoAudit": "SEO-audit",
   "ui.seoAudit.overview": "Áttekintés",
   "ui.seoAudit.auditResults": "Auditeredmények",

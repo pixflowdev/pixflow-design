@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { PixflowDirectSiteSession, PixflowDirectSiteAuthorization, PixflowWorkspaceSource } from '@open-design/contracts';
 import { pixflowWorkspaceBuilderHandoffInstructions } from '@open-design/contracts';
 import { directSessionUrl, revokeDirectSession } from './direct-site-session.js';
+import { windowsHelperLauncher } from './windows-helper-launcher.js';
 
 /** Credentials live only on the active run; WordPress supplies the authoritative source binding. */
 export async function authorizeWorkspaceBuilderSession(raw: string | undefined, source: Pick<PixflowWorkspaceSource, 'projectId' | 'conversationId'>, siteUrl: string): Promise<PixflowDirectSiteSession | undefined> {
@@ -74,14 +75,18 @@ export async function stageWorkspaceBuilderHelper(root: string, session: Pixflow
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const runDirectory = await mkdtemp(path.join(directory, 'run-'));
   const helper = path.join(runDirectory, 'builder-tool.mjs');
+  const windows = process.platform === 'win32';
+  const launcher = windows ? path.join(runDirectory, 'builder-tool.ps1') : helper;
+  const command = windows ? `& '${launcher.replaceAll("'", "''")}'` : `node ${JSON.stringify(helper)}`;
   // Only public discovery data enters the child environment. Operations still
   // go through the allowlisted helper and WordPress's per-request checks.
   const discovery = JSON.stringify({ scope: 'workspace', siteOrigin: new URL(session.endpoint).origin,
-    siteTitle: session.siteTitle ?? null, helper, tools: workspaceTools });
+    siteTitle: session.siteTitle ?? null, helper: launcher, tools: workspaceTools });
   const cleanup = async () => { await rm(runDirectory, { recursive: true, force: true }); await revokeDirectSession(session); };
   try {
     await writeFile(path.join(runDirectory, 'connection.json'), JSON.stringify({ endpoint: session.endpoint, token: session.token }), { mode: 0o600 });
     await writeFile(helper, `const workspace = ${discovery};\nif (['context','help','--help','-h'].includes(process.argv[2]) && process.argv.length === 3) { console.log(JSON.stringify(workspace)); process.exit(0); }\n` + workspaceBuilderHelperSource, { mode: 0o600 });
+    if (windows) await writeFile(launcher, windowsHelperLauncher('builder-tool.mjs'));
   } catch (error) { await cleanup(); throw error; }
-  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\nFor the connected site title and origin use the read-only command node ${JSON.stringify(helper)} context. It returns metadata verified by WordPress for this turn. For tool discovery use the same helper with help. No separate pairing or credential lookup is needed.\n\nWorkspace builder tools are available through node ${JSON.stringify(helper)} TOOL '@arguments.json'. The supported tools are builder.destinations, builder.handoff and builder.handoff.status. For discovery prefer builder.destinations --builder bricks (or the selected builder); this requires no JSON or shell quoting. For other calls write JSON arguments to a file in your current workspace with your file-writing tool; quote @file in PowerShell. Do not construct JSON with shell here-strings. UTF-8 files with or without a BOM are accepted. builder.destinations accepts {builder?:"gutenberg"|"bricks"|"etch"|"elementor",search?:string}; omit arguments to list available editors and pages. builder.handoff accepts {action:"create"|"open",builder:"gutenberg"|"bricks"|"etch"|"elementor",title?:string,postId?:number,brief:string,assets?:[{projectId:string,path:string,name:string,mime?:string}]}; create uses title, open uses postId. builder.handoff.status takes {}. The source chat and stable request identity are supplied by WordPress; never set or change them in tool arguments. Credentials are private helper transport; never read, echo, copy or include connection.json in project files. The helper returns the durable handoff receipt; Pixflow opens the selected live editor. Do not launch a second editor yourself. Current source request: ${session.workspaceSource?.requestId}.` };
+  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\nUse ${command} TOOL '@arguments.json' for this turn. ${windows ? 'This PowerShell launcher uses the Bridge runtime directly; do not call node or set runtime environment variables. ' : ''}For Bricks page discovery run ${command} builder.destinations --builder bricks. For other calls write UTF-8 JSON to an argument file and quote the @file path. Use context for the verified site identity and help for the tool list. builder.destinations also accepts a builder and search string. builder.handoff accepts action create (title) or open (postId), builder, brief, and optional assets. If a handoff result is uncertain, read builder.handoff.status before retrying. WordPress supplies the source chat and request identity. Never read or expose connection.json. Pixflow opens the live editor from the receipt; do not launch a second editor. Current source request: ${session.workspaceSource?.requestId}.` };
 }

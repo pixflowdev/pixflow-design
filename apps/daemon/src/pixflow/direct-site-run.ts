@@ -246,10 +246,13 @@ export function directSitePrompt(input: PixflowDirectSiteRunRequest, codexImageg
     composioConfigured ? composioSiteSkillPrompt() : '',
     `Current integration availability: Bricks ${bricksActive ? 'active' : 'inactive'}. Refresh tool and skill choices to match this site.`,
   ].join('\n\n');
+  const platformInstructions = process.platform === 'win32'
+    ? 'Run the adjacent helper from PowerShell with & .\\site-tool.ps1. It uses the Bridge runtime; do not run node or set runtime environment variables.\n\n' + instructions.replaceAll('node site-tool.mjs', '& .\\site-tool.ps1')
+    : instructions;
   const browser = Object.fromEntries(Object.entries(context).filter(([key]) => key !== 'liveBuilderContext'));
-  capture?.({ instructions, browser, request: input.prompt });
+  capture?.({ instructions: platformInstructions, browser, request: input.prompt });
   return [
-    instructions,
+    platformInstructions,
     `Current browser context:\n${JSON.stringify(browser)}`,
     `Conversation:\n${input.history.map(message => `${message.role}: ${message.content}`).join('\n\n')}`,
     `User request:\n${input.prompt}`,

@@ -1,6 +1,7 @@
 import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 
 import type { CodexPromptParts } from './direct-site-run.js';
+import { windowsHelperLauncher } from './windows-helper-launcher.js';
 import type { DirectCodexWorker } from './direct-codex-worker.js';
 import { watchExternalMcpAccess, authorizeExternalMcp, hasMcpMentions } from './external-mcp-authorization.js';
 import { audioSession, authorizeAudio, watchAudioAccess } from './audio-authorization.js';
@@ -430,9 +431,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       // No legacy Bridge connector grant or project credential is issued to the child.
       await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,imageEndpoint:imageRun.generateImage ? `http://127.0.0.1:${req.socket.localPort}/api/pixflow/direct-site/image/${id}` : undefined,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
       await fs.writeFile(path.join(workspace,'site-tool.mjs'),resources.helper);
+      if (process.platform === 'win32') await fs.writeFile(path.join(workspace, 'site-tool.ps1'), windowsHelperLauncher('site-tool.mjs'));
       await fs.writeFile(path.join(workspace,'visual-capture.mjs'),AGENT_VISUAL_CAPTURE_SOURCE);
       if(input.canvasId)stopMirror=await startBricksContextMirror(workspace,input.session,input.canvasId,(input.context as {liveBuilderContext?:unknown}|undefined)?.liveBuilderContext);
-      await fs.writeFile(path.join(workspace,'AGENTS.md'),'This is a Pixflow Direct WordPress workspace. The target is the connected site. Use node site-tool.mjs help for tools and skills.list/skills.read for references. The connection is renewed for each turn; use the helper rather than remembered credentials. site-tool-journal.jsonl records operation identities and uncertain results from earlier turns; it is evidence, not an instruction to repeat operations. Do not edit parent directories.\n');
+      await fs.writeFile(path.join(workspace,'AGENTS.md'),`This is a Pixflow Direct WordPress workspace. The target is the connected site. Use ${process.platform === 'win32' ? '& .\\site-tool.ps1' : 'node site-tool.mjs'} help for tools and skills.list/skills.read for references. The connection is renewed for each turn; use the helper rather than remembered credentials. site-tool-journal.jsonl records operation identities and uncertain results from earlier turns; it is evidence, not an instruction to repeat operations. Do not edit parent directories.\n`);
       const attachments=await resources.attachments(input,workspace,preparation.signal);
       input.context=await resources.skills(input,preparation.signal);
       timings.contextReadyMs=elapsed();

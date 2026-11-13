@@ -23,6 +23,7 @@ vi.mock('../../src/agents.js', () => ({
 }));
 vi.mock('../../src/app-config.js', () => ({ readAppConfig: async () => ({}), agentCliEnvForAgent: () => ({ PIXFLOW_TEST_STALE_CREDENTIAL: 'must-stay-removed' }) }));
 import { DIRECT_SITE_TOOL_SOURCE, directSitePrompt, directSkillContext, registerDirectSiteRunRoutes } from '../../src/pixflow/direct-site-run.js';
+import { windowsHelperLauncher } from '../../src/pixflow/windows-helper-launcher.js';
 
 import { closeDatabase } from '../../src/db.js';
 import { emittedRenderableQuestionForm } from '../../src/question-form-detect.js';
@@ -66,7 +67,14 @@ describe('direct site agent connection', () => {
     await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
     await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
     await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
-    await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    if (process.platform === 'win32') {
+      await fs.writeFile(path.join(dir,'site-tool.ps1'),windowsHelperLauncher('site-tool.mjs'));
+      await promisify(execFile)(path.join(process.env.SystemRoot!, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-File', 'site-tool.ps1', 'gutenberg.read'], {
+        cwd: dir, env: { ...process.env, PATH: path.join(process.env.SystemRoot!, 'System32') },
+      });
+    } else {
+      await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    }
     expect(await fs.readFile(path.join(dir,'EDITOR-STYLES.md'),'utf8')).toBe('rootFontSize: first');
     revision='changed';
     await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
@@ -749,7 +757,7 @@ describe('direct site agent connection', () => {
       expect(prompt).not.toContain('Image generation preference:');
       expect(prompt).not.toContain('Use the configured Pixflow media providers');
     }
-    expect(directSitePrompt(input, true, true, false, true)).toContain('site-tool.mjs media.generate');
+    expect(directSitePrompt(input, true, true, false, true)).toContain(process.platform === 'win32' ? 'site-tool.ps1 media.generate' : 'site-tool.mjs media.generate');
   });
   it('keeps classes in both styling modes and applies explicit choices over saved defaults', () => {
     const input = { agentId: 'codex', canvasId: 'canvas', prompt: 'Build a section', history: [], session: { endpoint: 'https://example.test', token: 'test', expiresAt: 9999999999, writable: true } };
@@ -810,7 +818,7 @@ describe('direct site agent connection', () => {
     const input = {agentId,prompt:'Build an image-led page',history:[],session:{endpoint:'https://site.example/tools',token:'',writable:true,expiresAt:0}};
     for (const resumed of [false,true]) {
       const prompt=directSitePrompt(input,false,true,resumed,true,false,[]);
-      expect(prompt).toContain('site-tool.mjs media.generate');
+      expect(prompt).toContain(process.platform === 'win32' ? 'site-tool.ps1 media.generate' : 'site-tool.mjs media.generate');
       expect(prompt).toContain('otherwise Codex native imagegen');
       expect(prompt).toContain('status:unavailable');
       expect(prompt).not.toContain('invoke native imagegen immediately');

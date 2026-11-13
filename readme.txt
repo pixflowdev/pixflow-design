@@ -61,6 +61,10 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Show one continuous loading indicator in Sitemap and localise its new controls and toolbar labels.
 * Remove unnecessary shared-data dependencies from the native Fit Media picker.
 
+**Security**
+
+* Bundle Node.js 24.22.3 for the Windows Bridge daemon and web processes.
+
 = 2.3.0 =
 
 **Added**

@@ -116,7 +116,7 @@ export function registerBridgePairing(app: Express, options: {
       if (record.expires <= clock()) return deny(res, 'pairing_expired', stage);
       if (record.site !== normalize(options.site()) || record.issuer !== options.issuer()) return deny(res, 'pairing_site_changed', stage);
       const response = await transport(`${record.site}/?rest_route=/pixflow-design/v1/license/pairing/exchange`, {
-        method:'POST',redirect:'manual',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json'},
+        method:'POST',redirect:'manual',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json',Origin:new URL(record.site).origin},
         body:JSON.stringify({code:body.code,verifier:record.verifier}),
       });
       if (!response.ok) return rejectResponse(res, response, stage);

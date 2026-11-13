@@ -23,6 +23,12 @@ export async function runSiteTranslationsCli(args: string[]): Promise<void> {
   if(jobAction){endpoint.searchParams.set('jobs','1');if(values['job-id'])endpoint.searchParams.set('jobId',values['job-id']);}
   const headers: unknown=JSON.parse(await readFile(values['headers-file'],'utf8'));
   if(!headers||typeof headers!=='object'||Array.isArray(headers)||Object.entries(headers).some(([name,value])=>typeof value!=='string'||/^(host|content-length)$/i.test(name))) throw new Error('Use a private JSON object of authentication headers.');
+  const requestHeaders = (post: boolean) => {
+    const result = new Headers(headers as Record<string, string>);
+    result.set('Content-Type', 'application/json');
+    if (post) result.set('Origin', endpoint.origin);
+    return result;
+  };
   if(action==='prepare') {
     if(values['prompt-file']) throw new Error('Preparation uses --scope, --locales and --post-ids, not a mutation file.');
     const scope=values.scope;
@@ -30,7 +36,7 @@ export async function runSiteTranslationsCli(args: string[]): Promise<void> {
     const selected=(values['post-ids']??'').split(',').filter(Boolean).map(Number);
     if(!['site','selected','updates'].includes(scope??'')||(scope!=='updates'&&!locales.length)||(scope==='selected'&&(!selected.length||selected.some(id=>!Number.isSafeInteger(id)||id===0)))) throw new Error('Choose site or selected scope and at least one target language. Selected scope requires valid --post-ids.');
     const call=async<T>(url:URL,body?:unknown):Promise<T>=>{
-      const response=await fetch(url,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(30000),headers:{...headers as Record<string,string>,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+      const response=await fetch(url,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(30000),headers:requestHeaders(Boolean(body)),...(body?{body:JSON.stringify(body)}:{})});
       const result=await response.json() as T & {message?:string};
       if(!response.ok)throw new Error(result.message||`WordPress returned ${response.status}.`);return result;
     };
@@ -73,7 +79,7 @@ export async function runSiteTranslationsCli(args: string[]): Promise<void> {
     if(!input||typeof input!=='object'||Array.isArray(input)||('action' in input&&input.action!==(jobAction??action))) throw new Error('Mutation action does not match the command.');
     body={...input,action:jobAction??action} as SiteTranslationMutation;
   }
-  const response=await fetch(endpoint,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(jobAction==='step'||action==='preview'?135000:30000),headers:{...headers as Record<string,string>,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+  const response=await fetch(endpoint,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(jobAction==='step'||action==='preview'?135000:30000),headers:requestHeaders(Boolean(body)),...(body?{body:JSON.stringify(body)}:{})});
   const result=await response.json() as {message?:string};
   if(!response.ok) throw new Error(result.message||`WordPress returned ${response.status}.`);
   process.stdout.write(JSON.stringify(result,null,values.json?undefined:2)+'\n');

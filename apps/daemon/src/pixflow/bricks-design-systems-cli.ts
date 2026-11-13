@@ -37,7 +37,10 @@ export async function runBricksDesignSystemsCli(args: string[]) {
     body = { revision, themeStyles: values['theme-styles'] === true };
   }
   const endpoint = `${site.href.replace(/\/$/, '')}/wp-json/pixflow-design/v1/od/design-systems/bricks${values.id ? `/${values.id}` : ''}${operation === 'apply' ? '/apply' : ''}`;
-  const response = await fetch(endpoint, { redirect: 'error', method: body ? 'POST' : 'GET', headers: { ...headers, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set('Content-Type', 'application/json');
+  if (body) requestHeaders.set('Origin', site.origin);
+  const response = await fetch(endpoint, { redirect: 'error', method: body ? 'POST' : 'GET', headers: requestHeaders, ...(body ? { body: JSON.stringify(body) } : {}) });
   const payload = await response.json() as { message?: string };
   if (!response.ok) throw new Error(payload.message || `WordPress returned ${response.status}.`);
   process.stdout.write(JSON.stringify(payload, null, values.json ? undefined : 2) + '\n');

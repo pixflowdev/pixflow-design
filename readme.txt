@@ -50,7 +50,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
-* Send the connected site origin with authenticated Workspace builder requests for hosts that reject origin-less POSTs. WordPress session and permission checks remain enforced.
+* Send the connected site origin with authenticated Workspace, editor, and site-tool POSTs so hosts that require it can pass the requests to WordPress for authorization.
 
 * Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.
 * Allow slower Claude startup during detection and sign-in verification instead of incorrectly reporting an unavailable or signed-out runtime.

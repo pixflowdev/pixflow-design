@@ -16,3 +16,20 @@ it('exposes per-file progress, queued and error states',()=>{
  expect(screen.getByText(/Queued/)).toBeTruthy();expect(screen.getByRole('alert').textContent).toBe('Rejected file');
  expect(screen.getByRole('button',{name:'Retry'})).toBeTruthy();
 });
+
+it('distinguishes rendered previews, saved copies, and replaced originals in a mixed queue', () => {
+ const jobs = [
+  {operation:'preview', status:'rendering', label:'Rendering preview…'},
+  {operation:'preview', status:'done', label:'Preview rendered (not saved)'},
+  {operation:'copy', status:'saving', label:'Saving copy…'},
+  {operation:'copy', status:'done', label:'Copy saved'},
+  {operation:'replace', status:'saving', label:'Replacing original…'},
+  {operation:'replace', status:'done', label:'Original replaced'},
+ ] as const;
+ render(<MediaUploadQueue
+  jobs={jobs.map(({operation,status},id)=>({id,operation,status,progress:0,file:new File([], `image-${id}.png`,{type:'image/png'}),run:async()=>{}}))}
+  onRetry={()=>{}} onClear={()=>{}} operationLabel="Image upscaling"
+ />);
+ for(const {label} of jobs) expect(screen.getByText(label)).toBeTruthy();
+ expect(screen.getByRole('progressbar',{name:'image-2.png'}).getAttribute('aria-valuenow')).toBeNull();
+});

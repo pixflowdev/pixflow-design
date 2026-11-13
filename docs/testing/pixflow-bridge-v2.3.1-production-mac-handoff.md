@@ -2,9 +2,18 @@
 
 ## Mac build return
 
+The verified Mac DMGs are attached to the [unpublished Bridge v2.3.1 draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-c31e767d9f4f6f34f647). Use a GitHub account with draft access to download them.
+
+- [Apple Silicon DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-c31e767d9f4f6f34f647/pixflow-design-bridge-2.3.1-mac-arm64.dmg) ([authenticated API download](https://api.github.com/repos/pixflowdev/pixflow-design/releases/assets/744754897), asset `744754897`)
+- [Intel DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-c31e767d9f4f6f34f647/pixflow-design-bridge-2.3.1-mac-x64.dmg) ([authenticated API download](https://api.github.com/repos/pixflowdev/pixflow-design/releases/assets/744757523), asset `744757523`)
+- [SHA-256 manifest](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-c31e767d9f4f6f34f647/SHA256SUMS-mac.txt) (asset `744760125`)
+- [Validation receipt](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-c31e767d9f4f6f34f647/validation-receipt-mac.md) (asset `744760686`)
+
+Both DMGs were downloaded from GitHub and verified against their local SHA-256 hashes. The API links require GitHub authentication and an `Accept: application/octet-stream` header.
+
 Both architectures built from the exact commits below, with frozen dependencies and the normal clean-source check. The local DMGs passed image, bundle, architecture, strict signature, Node 24.22.3 and SQLite checks. Both launched as Bridge 2.3.1, including the Intel build under Rosetta. Apple Silicon also passed direct and packaged native host connectivity. The previous Bridge was restored. The matched WordPress draft ZIP hashes and versions were verified.
 
-The Mac has no valid Developer ID Application signing identity. Both local DMGs are ad hoc signed and Gatekeeper rejected them. The owner authorised these ad hoc signed DMGs for v2.3.1 and approved uploading them to draft 444589251 without notarisation. Final browser upgrade and live provider acceptance are still open. See the [validation receipt](pixflow-bridge-v2.3.1-production-mac-validation.md) for test scope and local validation checksums.
+The Mac has no valid Developer ID Application signing identity. Both DMGs are ad hoc signed. Gatekeeper rejected both apps during assessment, so macOS may show a warning or block a quarantined download. The owner authorised these ad hoc signed DMGs for v2.3.1 and approved uploading them to draft 444589251 without notarisation. Final browser upgrade and live provider acceptance are still open. See the [validation receipt](pixflow-bridge-v2.3.1-production-mac-validation.md) for test scope and local validation checksums.
 
 Build both DMGs from this exact pair. The release is on hold. Upload validated production assets to the private GitHub draft for review.
 

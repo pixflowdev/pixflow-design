@@ -13,7 +13,7 @@ $headers = @{ Authorization = 'Bearer ' + $env:GH_TOKEN; Accept = 'application/v
 $draft = Invoke-RestMethod -Uri "$repo/releases/444589251" -Headers $headers
 if (!$draft.draft -or $draft.target_commitish -ne '7de674745c7207b5320a96e7f8c311c4f6f620fb') { throw 'Unexpected draft release' }
 $asset = $draft.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.1-win-x64-setup.exe'
-$expectedHash = '280918590794022352ac5c566e10d620e9462534d452cb0d6173e1b6cc4bfc4f'
+$expectedHash = 'b56afa2a2bb037f4f1748ce4706f2ec6fcf5693e8eeae5f12672c40dfa6e679d'
 if (!$asset -or $asset.digest -ne "sha256:$expectedHash") { throw 'Unexpected draft installer digest' }
 $candidate = Join-Path $qaRoot 'candidate.exe'
 $previous = Join-Path $qaRoot 'stable.exe'

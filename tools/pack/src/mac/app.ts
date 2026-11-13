@@ -31,6 +31,7 @@ import {
 } from "./constants.js";
 import { resolveMacInstallIdentity } from "./identity.js";
 import { readPackagedVersion } from "./manifest.js";
+import { bundleMacBridgeNode, MAC_BRIDGE_NODE_PATH } from "./node-runtime.js";
 import type { MacPaths, PackedTarballInfo } from "./types.js";
 
 function toPosixPath(value: string): string {
@@ -146,6 +147,7 @@ export async function copyResourceTree(config: ToolPackConfig, paths: MacPaths):
     resourceRoot: paths.resourceRoot,
   });
   if (process.env.PIXFLOW_DESIGN_PACK_BRIDGE_TRAY_MODE?.trim() === "1") {
+    await bundleMacBridgeNode(paths.resourceRoot, process.arch);
     await bundleMacDictation(config, paths.resourceRoot);
   }
 }
@@ -161,7 +163,7 @@ export function renderMacPackagedConfig(options: {
     {
       ...(options.config.amrProfile == null ? {} : { amrProfile: options.config.amrProfile }),
       appVersion: options.appVersion,
-      ...(bridgeTrayMode ? { bridgeTrayMode: true } : {}),
+      ...(bridgeTrayMode ? { bridgeTrayMode: true, nodeCommandRelative: MAC_BRIDGE_NODE_PATH } : {}),
       ...(options.usePrebundledStandaloneWeb ? { daemonCliEntryRelative: MAC_PREBUNDLED_DAEMON_CLI_RELATIVE_PATH } : {}),
       ...(options.usePrebundledStandaloneWeb
         ? { daemonSidecarEntryRelative: MAC_PREBUNDLED_DAEMON_SIDECAR_RELATIVE_PATH }
@@ -223,6 +225,9 @@ export async function runMacElectronRebuild(
   appRoot: string,
 ): Promise<void> {
   if (await stageSqlitePrebuild(appRoot, "darwin", process.arch)) return;
+  if (process.env.PIXFLOW_DESIGN_PACK_BRIDGE_TRAY_MODE?.trim() === "1") {
+    throw new Error("The Mac Bridge requires a Node-API SQLite binding for bundled Node.");
+  }
   const foundModules = new Set<string>();
   const rebuildResult = rebuild(createMacElectronRebuildOptions(config, appRoot));
   rebuildResult.lifecycle.on("modules-found", (modules: string[]) => {

@@ -224,7 +224,7 @@ describe("renderMacPackagedConfig", () => {
     }
   });
 
-  it("does not bake build-machine namespace paths for Pixflow bridge-tray mac builds", async () => {
+  it("selects bundled Node and omits build-machine paths for Mac Bridge builds", async () => {
     const root = await mkdtemp(join(tmpdir(), "open-design-tools-pack-mac-"));
     const previous = process.env.PIXFLOW_DESIGN_PACK_BRIDGE_TRAY_MODE;
     try {
@@ -240,6 +240,7 @@ describe("renderMacPackagedConfig", () => {
       ) as Record<string, unknown>;
 
       expect(packagedConfig.bridgeTrayMode).toBe(true);
+      expect(packagedConfig.nodeCommandRelative).toBe("open-design/bin/node");
       expect(packagedConfig).not.toHaveProperty("namespaceBaseRoot");
       expect(JSON.stringify(packagedConfig)).not.toContain(root);
     } finally {

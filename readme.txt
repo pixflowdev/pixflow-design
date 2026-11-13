@@ -64,7 +64,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Security**
 
-* Bundle Node.js 24.22.3 for the Windows Bridge daemon and web processes.
+* Bundle Node.js 24.22.3 for the Bridge daemon and web processes on Windows and on Apple Silicon and Intel Macs.
 
 = 2.3.0 =
 

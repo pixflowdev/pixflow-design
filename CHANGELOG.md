@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Bundle Node.js 24.22.3 for the Windows Bridge daemon and web processes.
+- Bundle Node.js 24.22.3 for the Bridge daemon and web processes on Windows and on Apple Silicon and Intel Macs.
 
 ## [2.3.0] - Release candidate
 

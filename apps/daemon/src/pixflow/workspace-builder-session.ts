@@ -45,7 +45,7 @@ try {
   const connection = JSON.parse(await fs.readFile(new URL('./connection.json', import.meta.url), 'utf8'));
   dispatchedHandoff = tool === 'builder.handoff';
   failureCode = 'REQUEST_FAILED';
-  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
+  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Origin:new URL(connection.endpoint).origin,Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
   status = response.status;
   failureCode = response.ok ? 'INVALID_RESPONSE' : 'HTTP_REJECTED';
   if (!response.ok) {

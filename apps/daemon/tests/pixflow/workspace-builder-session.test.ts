@@ -38,6 +38,13 @@ describe('Workspace CLI builder connection', () => {
     const server = createServer(async (request, response) => {
       let body = ''; for await (const chunk of request) body += chunk;
       calls.push({ method: request.method, authorization: request.headers.authorization, body: body && JSON.parse(body) });
+      // Some hosts reject tool POSTs before WordPress unless their bound site
+      // origin is supplied. Authorization is still required independently.
+      if (request.method === 'POST' && request.headers.origin !== `http://${request.headers.host}`) {
+        response.writeHead(403, { 'Content-Type': 'text/html' });
+        response.end('<html>Forbidden</html>');
+        return;
+      }
       response.statusCode = responseStatus;
       if (rejection) {
         response.setHeader('Content-Type', rejection.contentType);

@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Organise the upscaler into full-height settings and preview panels with separate scrolling, a draggable model carousel, linked dimensions, and matching Render and Save controls.
+- Redesign the Media Library Image Upscaler with full-height settings and preview panels, independent scrolling, a draggable model carousel, linked dimensions, and matching Render and Save controls.
 - Distinguish rendering, saving a copy, and replacing an original in the progress queue. Completed preview notices dismiss automatically.
 - Expose resumable translation progress to Pro, including active page and language batches and the saved translation scope.
 

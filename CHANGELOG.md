@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Send the connected site origin with authenticated Workspace builder requests for hosts that reject origin-less POSTs. WordPress session and permission checks remain enforced.
+- Send the connected site origin with authenticated Workspace, editor, and site-tool POSTs so hosts that require it can pass the requests to WordPress for authorization.
 
 - Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.
 - Allow slower Claude startup during detection and sign-in verification instead of incorrectly reporting an unavailable or signed-out runtime.
@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open SEO Audit and Blog Studio directly from the Bricks toolbar, improve sidebar search and project icon sizing, and let the Media Library use the available width.
 - Show one continuous loading indicator in Sitemap and localise its new controls and toolbar labels.
 - Remove unnecessary shared-data dependencies from the native Fit Media picker.
+
+### Security
+
+- Bundle Node.js 24.22.3 for the Windows Bridge daemon and web processes.
 
 ## [2.3.0] - Release candidate
 

@@ -56,7 +56,13 @@ describe('direct site agent connection', () => {
   it('refreshes fixed style files from the current native editor receipt', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-styles-')); dirs.push(dir);
     const app = express(); app.use(express.json()); let revision = 'first';
-    app.post('/tools', (_req,res) => res.json({ok:true,result:{styleSnapshot:{schema:'pixflow.editor-styles.v1',editor:'gutenberg',site:'fixture',documentId:'12',revision,markdown:'rootFontSize: '+revision,native:{},rendered:{}}}}));
+    app.post('/tools', (req,res) => {
+      if (req.headers.origin !== `http://${req.headers.host}` || req.headers.authorization !== 'Bearer fixture') {
+        res.status(403).type('html').send('Forbidden');
+        return;
+      }
+      res.json({ok:true,result:{styleSnapshot:{schema:'pixflow.editor-styles.v1',editor:'gutenberg',site:'fixture',documentId:'12',revision,markdown:'rootFontSize: '+revision,native:{},rendered:{}}}});
+    });
     const url = await listen(app);
     await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
     await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');

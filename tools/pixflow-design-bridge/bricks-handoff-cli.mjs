@@ -34960,10 +34960,14 @@ async function postBridgeSiteJson(site, url, payload) {
     throw new CliError('Paired Pixflow site is missing its bridge token.');
   }
 
+  const origin = new URL(site.siteUrl).origin;
+  if (new URL(url).origin !== origin) throw new CliError('Paired site requests must stay on the connected WordPress origin.');
   const response = await fetch(url, {
     method: 'POST',
+    redirect: 'error',
     headers: {
       Accept: 'application/json',
+      Origin: origin,
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
@@ -35782,8 +35786,10 @@ async function completeBridgePairingWithWordPress(context, payload) {
   try {
     response = await fetch(completeUrl, {
       method: 'POST',
+      redirect: 'error',
       headers: {
         Accept: 'application/json',
+        Origin: new URL(completeUrl).origin,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -37216,6 +37222,7 @@ function createPixflowClient(config) {
       const url = `${baseUrl}${route}`;
       const headers = {
         Accept: 'application/json',
+        Origin: new URL(config.siteUrl).origin,
         Authorization: `Bearer ${config.token}`,
         'Content-Type': 'application/json',
       };
@@ -37226,6 +37233,7 @@ function createPixflowClient(config) {
 
       const response = await fetch(url, {
         method: 'POST',
+        redirect: 'error',
         headers,
         body: JSON.stringify(payload || {}),
       });

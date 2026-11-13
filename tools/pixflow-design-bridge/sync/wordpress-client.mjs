@@ -105,12 +105,15 @@ export class WordPressProjectClient {
   }
 
   async fetchWithHeaders(url, init = {}) {
+    const siteOrigin = new URL(this.restBaseUrl).origin;
+    if (new URL(url).origin !== siteOrigin) throw new Error('Project requests must stay on the connected WordPress origin.');
     const headers = new Headers(init.headers || {});
     headers.set('Accept', headers.get('Accept') || 'application/json');
+    if (String(init.method || 'GET').toUpperCase() === 'POST') headers.set('Origin', siteOrigin);
     if (this.nonce) headers.set('X-WP-Nonce', this.nonce);
     if (this.token) headers.set('Authorization', `Bearer ${this.token}`);
 
-    return await this.fetchImpl(url, { ...init, headers });
+    return await this.fetchImpl(url, { ...init, headers, redirect: 'error' });
   }
 
   url(pathname, params = {}) {

@@ -84,11 +84,13 @@ async function request(site: string, token: string, path: string, init: RequestI
   }
   const response = await fetch(endpoint.toString(), {
     ...init,
+    redirect: 'error',
     headers: {
       accept: 'application/json',
       'content-type': 'application/json',
       authorization: `Bearer ${token}`,
       ...(init.headers || {}),
+      ...(init.method?.toUpperCase() === 'POST' ? { origin: endpoint.origin } : {}),
     },
   });
   const payload = await response.json().catch(() => null);

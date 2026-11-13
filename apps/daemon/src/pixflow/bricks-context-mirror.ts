@@ -38,7 +38,7 @@ export async function startBricksContextMirror(workspace: string, session: Pixfl
     try {
       const response = await fetch(session.endpoint, { method: 'POST', redirect: 'error',
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(8000)]),
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        headers: { 'Content-Type': 'application/json', Origin: new URL(session.endpoint).origin, Authorization: `Bearer ${session.token}` },
         body: JSON.stringify({ tool: 'bricks.context', arguments: { canvasId, revision: knownRevision } }),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

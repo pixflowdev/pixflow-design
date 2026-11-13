@@ -86,7 +86,7 @@ async function call(tool, args) {
   };
   await journal('dispatched');
   let response;
-  try { response = await fetch(connection.endpoint, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(30000), headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + connection.token }, body: JSON.stringify({ tool, arguments: args }) }); }
+  try { response = await fetch(connection.endpoint, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(30000), headers: { 'Content-Type': 'application/json', Origin: new URL(connection.endpoint).origin, Authorization: 'Bearer ' + connection.token }, body: JSON.stringify({ tool, arguments: args }) }); }
   catch(error) { await journal('uncertain'); throw error; }
   const text = await response.text();
   let result;
@@ -266,7 +266,7 @@ export async function directSkillContext(input: PixflowDirectSiteRunRequest, sig
   try {
     const response = await fetch(input.session.endpoint, { method: 'POST', redirect: 'error',
       signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + input.session.token },
+      headers: { 'Content-Type': 'application/json', Origin: new URL(input.session.endpoint).origin, Authorization: 'Bearer ' + input.session.token },
       body: JSON.stringify({ tool: 'skills.list', arguments: { ids } }),
     });
     if (!response.ok) return context;
@@ -292,7 +292,7 @@ export async function materializeDirectAttachments(input: PixflowDirectSiteRunRe
     signal.throwIfAborted();
     const response = await fetch(input.session.endpoint, {
       method: 'POST', redirect: 'error', signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${input.session.token}` },
+      headers: { 'Content-Type': 'application/json', Origin: new URL(input.session.endpoint).origin, Authorization: `Bearer ${input.session.token}` },
       body: JSON.stringify({ tool: 'project.file.read', arguments: { projectId: item.projectId, path: item.path } }),
     });
     const result = await response.json() as { content?: string; message?: string };

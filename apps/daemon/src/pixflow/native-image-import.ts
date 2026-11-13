@@ -21,7 +21,7 @@ export async function importNativeImage(item: Record<string, unknown>, threadId:
   if (!format) throw new Error('Unsupported generated image format.');
   const response = await fetch(session.endpoint, {method:'POST', redirect:'error',
     signal:AbortSignal.any([signal, AbortSignal.timeout(45000)]),
-    headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/json'},
+    headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/json',Origin:new URL(session.endpoint).origin},
     body:JSON.stringify({tool:'media.import',arguments:{contentBase64:encoded,mimeType:'image/'+format,
       filename:'generated-image.'+format,title:'Generated image',source:'generated'}})});
   if (!response.ok) throw new Error('WordPress declined the generated image (HTTP '+response.status+').');

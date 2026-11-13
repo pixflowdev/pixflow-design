@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show one continuous loading indicator in Sitemap and localise its new controls and toolbar labels.
 - Remove unnecessary shared-data dependencies from the native Fit Media picker.
 
+### Security
+
+- Bundle Node.js 24.22.3 for the Windows Bridge daemon and web processes.
+
 ## [2.3.0] - Release candidate
 
 ### Added

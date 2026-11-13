@@ -55,7 +55,7 @@ function detectClientType(): 'desktop' | 'web' | 'unknown' {
   return 'unknown';
 }
 import { parseSseFrame } from './sse';
-import { isPixflowWordPressEmbed, requestWordPressRest } from '../pixflow/license';
+import { ensurePixflowLicenseEntitlement, isPixflowWordPressEmbed, requestWordPressRest } from '../pixflow/license';
 import { toPixflowRuntimeUrl } from '../pixflow/bridge-url';
 import { pixflowRuntimeFetch as pixflowWordPressRuntimeFetch, pixflowWordPressRestFetch } from '../pixflow/runtime-fetch';
 import { getPixflowBridgeBaseUrl, getPixflowWordPressConfig } from '../pixflow/wordpress-context';
@@ -1107,6 +1107,11 @@ export async function streamViaDaemon({
   let runCreationAttempted = false;
   try {
     await ensurePixflowOptionalBridgeSiteContext({ timeoutMs: 30_000 });
+    if (isPixflowWordPressEmbed()) {
+      (cancelSignal ?? signal).throwIfAborted();
+      await ensurePixflowLicenseEntitlement({ allowSiteSwitch: false });
+      (cancelSignal ?? signal).throwIfAborted();
+    }
     // WordPress owns the durable project tree when the workspace is embedded.
     // Stage that tree into the optional Bridge before the daemon starts so a
     // Local CLI/Bridge agent sees the same files the user sees in the canvas.

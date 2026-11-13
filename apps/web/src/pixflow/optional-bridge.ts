@@ -472,8 +472,8 @@ export async function pixflowOptionalBridgeJson<T>(
   );
   if (!response.ok) {
     if (response.status === 403) {
-      const detail = await response.clone().json().catch(() => null) as {error?: {code?: string}} | null;
-      if (detail?.error?.code === 'PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED') {
+      const detail = await response.json().catch(() => null) as {message?: string; error?: {code?: string; message?: string} | string} | null;
+      if (typeof detail?.error === 'object' && detail.error?.code === 'PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED') {
         try {
           entitlementRecovery ??= import('./license')
             .then(({ ensurePixflowLicenseEntitlement }) => ensurePixflowLicenseEntitlement({allowSiteSwitch:false}))
@@ -486,8 +486,11 @@ export async function pixflowOptionalBridgeJson<T>(
         } catch (error) {
           throw new PixflowBridgeLicenseError(`Pixflow Design license: ${error instanceof Error ? error.message : 'Automatic bridge pairing failed.'}`);
         }
+        await response.body?.cancel();
         throw new PixflowBridgeLicenseError('Pixflow Design license authorization failed after automatic bridge pairing. Check License settings.');
       }
+      const message = detail?.message || (typeof detail?.error === 'string' ? detail.error : detail?.error?.message);
+      throw Object.assign(new Error(message || 'Pixflow Design Bridge returned HTTP 403'), { status: 403 });
     }
     const detail = await response.json().catch(() => null) as {message?:unknown;error?:unknown} | null;
     const nested = detail?.error && typeof detail.error === 'object' ? (detail.error as {message?:unknown}).message : detail?.error;

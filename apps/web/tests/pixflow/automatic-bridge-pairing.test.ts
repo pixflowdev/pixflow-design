@@ -71,3 +71,18 @@ it('shares automatic pairing across concurrent protected requests', async () => 
   await Promise.all([pixflowOptionalBridgeJson('agents'), pixflowOptionalBridgeJson('agents?force=1')]);
   expect(calls.filter(url => url.endsWith('/pairing/start'))).toHaveLength(1);
 });
+
+it('consumes the original denial body before attempting pairing', async () => {
+  const { win } = setup();
+  const original = win.fetch;
+  let denial: Response | undefined;
+  win.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input).endsWith('/pairing/start')) expect(denial?.bodyUsed).toBe(true);
+    const response = await original(input);
+    if (response.status === 403) denial = response;
+    return response;
+  });
+  vi.stubGlobal('fetch', win.fetch);
+  const { pixflowOptionalBridgeJson } = await import('../../src/pixflow/optional-bridge');
+  await expect(pixflowOptionalBridgeJson('agents')).resolves.toEqual({ agents: [{ id: 'codex' }] });
+});

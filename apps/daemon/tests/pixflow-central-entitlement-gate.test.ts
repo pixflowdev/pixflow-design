@@ -56,16 +56,20 @@ describe('opt-in central bridge execution boundary', () => {
     const nativeFetch = globalThis.fetch;
     const exchangeCalls: string[] = [];
     vi.stubEnv('PIXFLOW_DESIGN_LICENSE_AUTHORITY', configured);
-    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
       exchangeCalls.push(url);
-      if (url.includes('pairing/exchange')) return Response.json({
-        configuration: {
-          identity: { ...identity, issuer: expected },
-          installationPublicKey: installationJwk,
-          wordpressUrl: 'https://qa.test', wordpressPairingToken: 'pfwp_1_test',
-        }, token: 'test-token',
-      });
+      if (url.includes('pairing/exchange')) {
+        expect(new Headers(init?.headers).has('Origin')).toBe(false);
+        return Response.json({
+          configuration: {
+            identity: { ...identity, issuer: expected },
+            installationPublicKey: installationJwk,
+            wordpressUrl: 'https://qa.test', wordpressPairingToken: 'pfwp_1_test',
+          },
+          token: 'test-token',
+        });
+      }
       return new Response('', { status: 503 });
     }));
     try {

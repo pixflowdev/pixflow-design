@@ -7,6 +7,30 @@ import { codexAppBundleCandidates } from '../../src/runtimes/executables.js';
 
 const fsTest = process.platform === 'win32' ? test.skip : test;
 
+test('Claude prefers an explicit executable, then the standalone CLI, then Desktop', () => {
+  const home = mkdtempSync(join(tmpdir(), 'od claude windows '));
+  try {
+    withEnvSnapshot(['PATH', 'PATHEXT', 'OD_AGENT_HOME'], () => withPlatform('win32', () => {
+      process.env.OD_AGENT_HOME = home;
+      process.env.PATH = '';
+      process.env.PATHEXT = '.EXE;.CMD;.BAT';
+      const desktop = join(home, 'AppData', 'Roaming', 'Claude', 'claude-code', '2.1.321', 'hash', 'claude.exe');
+      const standalone = join(home, '.local', 'bin', 'claude.EXE');
+      const configured = join(home, 'configured claude.exe');
+      for (const executable of [desktop, standalone, configured]) {
+        mkdirSync(resolve(executable, '..'), { recursive: true });
+        writeFileSync(executable, 'fixture');
+      }
+      assert.equal(resolveAgentExecutable(claude, { CLAUDE_BIN: configured }), configured);
+      assert.equal(resolveAgentExecutable(claude), standalone);
+      rmSync(standalone);
+      assert.equal(resolveAgentExecutable(claude), desktop);
+    }));
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
 test('finds native Grok with a stale Windows PATH', async () => {
   const home = mkdtempSync(join(tmpdir(), 'od-grok-native-'));
   try {

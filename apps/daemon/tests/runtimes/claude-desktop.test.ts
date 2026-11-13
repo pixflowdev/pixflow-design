@@ -60,14 +60,17 @@ test.skipIf(process.platform !== 'darwin')('shared resolver prefers the macOS ap
   });
 });
 
-test.skipIf(process.platform !== 'win32')('shared resolver prefers Desktop and falls back when its download is absent', () => {
+test.skipIf(process.platform !== 'win32')('shared resolver keeps the configured executable when Desktop becomes available', () => {
   const home = root();
   const cli = runtime(join(home, 'standalone'), '2.1.162');
   withEnvSnapshot(['OD_AGENT_HOME', 'OD_SANDBOX_MODE', 'OD_DATA_DIR'], () => {
     process.env.OD_AGENT_HOME = home; delete process.env.OD_SANDBOX_MODE; delete process.env.OD_DATA_DIR;
     expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(cli);
     const app = runtime(join(home, 'AppData/Roaming/Claude/claude-code'), '2.1.309');
-    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(app);
+    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli })).toMatchObject({
+      appBundlePath: app,
+      selectedPath: cli,
+    });
     rmSync(app);
     expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(cli);
   });

@@ -53,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.
+- Report whether a Workspace builder request was rejected with an HTML response or a known WordPress error code, without exposing server messages or credentials.
+
 - Show one continuous loading indicator when opening the Sitemap Builder.
 - Keep chat project icons compact, make sidebar search easier to spot, and let the Workspace Media Library fill wide screens.
 - Keep floating-panel composer controls on one row at the minimum width, with a single Send control.

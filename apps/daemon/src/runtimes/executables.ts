@@ -306,8 +306,8 @@ function packagedBuiltInExecutable(
   }
 }
 
-// Desktop apps own the preferred CLI. Detection, model discovery and execution
-// all use this resolver; scoped detection never searches host applications.
+// Detection, model discovery and execution share this resolver. Scoped
+// detection never searches host applications.
 function appBundleExecutable(def: RuntimeAgentDef): string | null {
   if (def.id === 'claude') {
     const { home, hasOverride } = resolveDetectionHome();
@@ -493,7 +493,8 @@ export function inspectAgentExecutableResolution(
     configuredOverridePath,
     appBundlePath,
     pathResolvedPath,
-    selectedPath:
-      appBundlePath || configuredOverridePath || builtInPath || resolvedCliPath,
+    selectedPath: def.id === 'claude'
+      ? configuredOverridePath || resolvedCliPath || appBundlePath
+      : appBundlePath || configuredOverridePath || builtInPath || resolvedCliPath,
   };
 }

@@ -182,7 +182,8 @@ export function createClaudeSignIn(configuredEnv: () => Record<string, string>, 
     launch: target => spawn(target.command, target.args, { env: target.env, cwd: tmpdir(), windowsHide: true,
       windowsVerbatimArguments: target.windowsVerbatimArguments, stdio: ['pipe', 'pipe', 'pipe'] }),
     verify: async target => {
-      const { stdout } = await execAgentFile(target.executable, ['auth', 'status'], { env: target.env, timeout: 5000 });
+      const { args, timeoutMs } = claudeAgentDef.authProbe;
+      const { stdout } = await execAgentFile(target.executable, args, { env: target.env, timeout: timeoutMs });
       return JSON.parse(String(stdout)).loggedIn === true;
     },
     stop: stopChildProcessTree,

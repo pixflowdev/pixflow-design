@@ -13,6 +13,15 @@ Build both DMGs from this exact pair. The release is on hold. Upload validated p
 
 Read the repository instructions and the adjacent [original Mac handoff](pixflow-bridge-v2.3.1-mac-handoff.md) for the build command, app identity and detailed test procedure. The pins above already incorporate the version and CSS adjustments. Set `PIXFLOW_DESIGN_PRO_ROOT` to the pinned Pro checkout and use the normal clean-source check. Use separate worktrees and frozen dependencies for arm64 and x64. On Apple Silicon, use native Node for arm64 and x64 Node in an x64 shell under Rosetta for Intel. Check `process.arch` before packaging. Build the desktop dependency before the packaged launcher. The original handoff describes passing signing flags to the installer script in the isolated build checkout. Record any signing-only script adjustment.
 
+For each architecture, stage the production Chrome native-messaging payload from the pinned Core checkout before packaging:
+
+```sh
+pnpm exec tsx tools/pixflow-design-bridge/native-messaging/store-build.ts hbnbiboohlelmngadeolikeejamjlbkh
+export PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR="$PWD/.tmp/chrome-store/native"
+```
+
+Verify the mounted app includes `Contents/Resources/open-design/native-transport` and the installed app registers the `dev.pixflow.bridge` native host for the production extension. Check Chrome with the native connection enabled and direct connection with the extension disabled.
+
 Use Developer ID Application signing and the configured notary profile. If those credentials are unavailable, report the blocker before uploading production assets. The ad hoc signed QA DMGs returned earlier failed Gatekeeper assessment.
 
 Mount each final DMG read-only. Verify its integrity, version 2.3.1, bundle ID `dev.pixflow.bridge`, target architecture, strict signature, Gatekeeper acceptance and notarisation. Confirm the packaged config selects `open-design/bin/node`, its binary reports Node 24.22.3, and its architecture matches the app and SQLite binding. Run the in-memory SQLite check. Record Intel execution under Rosetta separately from native Intel hardware coverage.

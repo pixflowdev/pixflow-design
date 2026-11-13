@@ -45,7 +45,7 @@ test('discovers macOS app-bundled downloads and skips incomplete updates', () =>
   expect(claudeDesktopCandidates({ platform: 'darwin', home, scoped: true })).toEqual([file]);
 });
 
-test.skipIf(process.platform !== 'darwin')('shared resolver prefers the macOS app runtime and restores CLI fallback', () => {
+test.skipIf(process.platform !== 'darwin')('shared resolver keeps the configured macOS executable when Desktop becomes available', () => {
   const home = root();
   const cli = join(home, 'standalone-claude'); writeFileSync(cli, 'fixture'); chmodSync(cli, 0o755);
   withEnvSnapshot(['OD_AGENT_HOME', 'OD_SANDBOX_MODE', 'OD_DATA_DIR'], () => {
@@ -54,7 +54,7 @@ test.skipIf(process.platform !== 'darwin')('shared resolver prefers the macOS ap
     const dir = join(home, 'Library/Application Support/Claude/claude-code/2.1.309/abc/claude.app/Contents/MacOS');
     mkdirSync(dir, { recursive: true });
     const app = join(dir, 'claude'); writeFileSync(app, 'fixture'); chmodSync(app, 0o755);
-    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli })).toMatchObject({ selectedPath: app, appBundlePath: app });
+    expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli })).toMatchObject({ selectedPath: cli, appBundlePath: app });
     rmSync(app);
     expect(inspectAgentExecutableResolution(claudeAgentDef, { CLAUDE_BIN: cli }).selectedPath).toBe(cli);
   });

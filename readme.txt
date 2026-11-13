@@ -35,6 +35,28 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = Unreleased =
 
+= 2.3.1 =
+
+**Added**
+
+* Apply the active image's model, dimensions, adjustments and export settings to all images currently queued. Each image remains individually editable.
+* Upscale a batch as new copies or confirm replacing its originals. Track each image in the floating queue and retry failures individually.
+
+**Changed**
+
+* Organise the upscaler into full-height settings and preview panels with separate scrolling, a draggable model carousel, linked dimensions, and matching Render and Save controls.
+* Distinguish rendering, saving a copy, and replacing an original in the progress queue. Completed preview notices dismiss automatically.
+* Expose resumable translation progress to Pro, including active page and language batches and the saved translation scope.
+
+**Fixed**
+
+* Deselect images after a successful folder move so the next batch leaves previously moved images in place. Let Shift-click ranges expand and shrink from their starting image, or deselect a range with a new Shift gesture.
+* Open SEO Audit and Blog Studio directly from the Bricks toolbar, improve sidebar search and project icon sizing, and let the Media Library use the available width.
+* Show one continuous loading indicator in Sitemap and localise its new controls and toolbar labels.
+* Remove unnecessary shared-data dependencies from the native Fit Media picker.
+
+= 2.3.0 =
+
 **Added**
 
 * Read supported chat attachments in Local CLI and API mode, including scanned PDFs with English OCR, Office documents, spreadsheets, presentations and text files.
@@ -55,9 +77,6 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Let contributed Workspace modules use authorized site tools and reuse generated WordPress images.
 
 **Changed**
-
-* Upscale multiple images in one workspace with individual model and adjustment settings, draggable model previews, linked dimensions and a combined Save action menu.
-* Support resumable translation progress with independent workers, saved page selections and live batch activity.
 
 * Use a compact two-column layout for the editor toolbar’s Design tools.
 * Show files you can open or download as compact attachments at the end of assistant replies across providers.

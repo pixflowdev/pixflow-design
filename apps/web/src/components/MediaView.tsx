@@ -229,6 +229,22 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
   const [bulk, setBulk] = useState(false);
   const [selection, setSelection] = useState<PixflowMediaItem[]>([]);
   const rangeAnchor = useRef<string | undefined>(undefined);
+  const shiftRange = useRef<{base: PixflowMediaItem[]; remove: boolean} | null>(null);
+  useEffect(() => {
+    shiftRange.current = null;
+  }, [folderScope, page, type, debouncedSearch]);
+  useEffect(() => {
+    function endRange() { shiftRange.current = null; }
+    function onKeyUp(event: KeyboardEvent) {
+      if (event.key === 'Shift') endRange();
+    }
+    window.addEventListener('keyup', onKeyUp, true);
+    window.addEventListener('blur', endRange);
+    return () => {
+      window.removeEventListener('keyup', onKeyUp, true);
+      window.removeEventListener('blur', endRange);
+    };
+  }, []);
   const [compress,setCompress]=useState(false);
   const [queue,setQueue]=useState<PixflowMediaItem[]>();
   const [quality, setQuality] = useState(82);
@@ -255,14 +271,21 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
       );
       rangeAnchor.current = anchorIndex < 0 ? item.id : anchorId;
       setBulk(true);
-      setSelection(previous => {
-        const byId = new Map(previous.map(entry => [entry.id, entry]));
-        for (const entry of range) byId.set(entry.id, entry);
-        return [...byId.values()];
-      });
+      const gesture = shiftRange.current ?? {
+        base: selection,
+        remove: bulk && selection.some(entry => entry.id === item.id),
+      };
+      shiftRange.current = gesture;
+      const byId = new Map(gesture.base.map(entry => [entry.id, entry]));
+      for (const entry of range) {
+        if (gesture.remove) byId.delete(entry.id);
+        else byId.set(entry.id, entry);
+      }
+      setSelection([...byId.values()]);
       return;
     }
 
+    shiftRange.current = null;
     rangeAnchor.current = item.id;
     if (toggle && !bulk && !running && !selecting) {
       const anchor = items.find(entry => entry.id === selected?.id);
@@ -284,6 +307,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
   }
 
   async function selectAllImages(){
+    shiftRange.current = null;
     if(running||selecting||(type!=='all'&&type!=='image'))return;
     const task=new AbortController();lookup.current=task;setSelecting(true);setMessage('');
     try {
@@ -319,6 +343,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
               translateUi('media.optimise.smaller', { percent: ((1 - blob.size / source.bytes) * 100).toFixed(1) });
           }
           setResults(previous => [...previous, item.filename + ' — ' + status]);
+          shiftRange.current = null;
           setSelection(previous => previous.filter(entry => entry.id !== item.id));
         } catch {
           if (!controller.signal.aborted) setResults(previous => [...previous, item.filename + ' — ' + translateUi('ui.mediaView.feedback58')]);
@@ -451,7 +476,15 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
         selectCopy(copy);
       }} />}
       <div className={folderStyles.shell} style={upscaleItem ? {display:'none'} : undefined}>
-      <MediaFolders scope={folderScope} onScope={next=>{rangeAnchor.current=undefined;setFolderScope(next);setSelection([]);setLinked(null);setSelectedId('');setPage(1);}} attachmentIds={bulk?selection.map(item=>item.attachmentId):selected?[selected.attachmentId]:[]} onChanged={()=>void load()}/>
+      <MediaFolders scope={folderScope} onScope={next=>{rangeAnchor.current=undefined;setFolderScope(next);setSelection([]);setLinked(null);setSelectedId('');setPage(1);}} attachmentIds={bulk?selection.map(item=>item.attachmentId):selected?[selected.attachmentId]:[]} onChanged={change=>{
+        if(change.action==='assign'&&change.attachmentIds?.length){
+          shiftRange.current = null;
+          const movedIds=new Set(change.attachmentIds);
+          setSelection(current=>current.filter(item=>!movedIds.has(item.attachmentId)));
+          if(items.some(item=>item.id===rangeAnchor.current&&movedIds.has(item.attachmentId)))rangeAnchor.current=undefined;
+        }
+        void load();
+      }}/>
       <div className="direct-media-files-main" style={upscaleItem ? {display:'none'} : undefined}>
         <header className="direct-media-header">
           <div className="direct-media-titlebar">
@@ -465,6 +498,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
             <div className="direct-media-files-actions">
               <button type="button" disabled={running} aria-pressed={bulk} onClick={() => {
                 rangeAnchor.current = undefined;
+                shiftRange.current = null;
                 setCompress(false);setBulk(!bulk); setSelection([]); setResults([]);
               }}>{translateUi(bulk?'common.cancel':'media.bulk.select')}</button>
               <button type="button" onClick={() => void load()} disabled={loading}>
@@ -514,7 +548,7 @@ export function MediaView({ attachmentId, attachmentUrl, headerAction, onLeaveFo
           <div className="direct-media-batch-selection">
             <button type="button" disabled={running||selecting||(type!=='all'&&type!=='image')} onClick={()=>void selectAllImages()}>
               {translateUi(selecting?'common.loading':'media.bulk.selectAll')}</button>
-            <button type="button" disabled={running||selecting||!selection.length} onClick={()=>{rangeAnchor.current=undefined;setSelection([]);}}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
+            <button type="button" disabled={running||selecting||!selection.length} onClick={()=>{rangeAnchor.current=undefined;shiftRange.current=null;setSelection([]);}}>{translateUi('ui.pixflowGoogleFontsSection.deselectAll')}</button>
           </div>
           <button type="button" aria-pressed={compress} disabled={running||selecting||!selection.length||selection.some(item=>!eligible(item))} onClick={()=>setCompress(!compress)}>{translateUi('media.bulk.action')} ({selection.length})</button>
           {showUpscaleAction && <button type="button" disabled={running||selecting||!selection.length||selection.some(item=>!eligible(item))} onClick={event=>{openUpscaler(selection[0]!,event.currentTarget,[...selection]);}}>{translateUi('media.upscale.action')} ({selection.length})</button>}

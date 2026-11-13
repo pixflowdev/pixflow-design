@@ -4,7 +4,7 @@
 
 Both architectures built from the exact commits below, with frozen dependencies and the normal clean-source check. The local DMGs passed image, bundle, architecture, strict signature, Node 24.22.3 and SQLite checks. Both launched as Bridge 2.3.1, including the Intel build under Rosetta. Apple Silicon also passed direct and packaged native host connectivity. The previous Bridge was restored. The matched WordPress draft ZIP hashes and versions were verified.
 
-The Mac has no valid Developer ID Application signing identity. Both local DMGs are ad hoc signed and Gatekeeper rejected them. The owner waived notarisation for this run. Upload of Mac production assets to draft 444589251 remains blocked on Developer ID signing. Final browser upgrade and live provider acceptance are still open. See the [validation receipt](pixflow-bridge-v2.3.1-production-mac-validation.md) for test scope and local validation checksums.
+The Mac has no valid Developer ID Application signing identity. Both local DMGs are ad hoc signed and Gatekeeper rejected them. The owner authorised these ad hoc signed DMGs for v2.3.1 and approved uploading them to draft 444589251 without notarisation. Final browser upgrade and live provider acceptance are still open. See the [validation receipt](pixflow-bridge-v2.3.1-production-mac-validation.md) for test scope and local validation checksums.
 
 Build both DMGs from this exact pair. The release is on hold. Upload validated production assets to the private GitHub draft for review.
 
@@ -22,9 +22,9 @@ export PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR="$PWD/.tmp/chrome-store/native"
 
 Verify the mounted app includes `Contents/Resources/open-design/native-transport` and the installed app registers the `dev.pixflow.bridge` native host for the production extension. Check Chrome with the native connection enabled and direct connection with the extension disabled.
 
-Use Developer ID Application signing and the configured notary profile. If those credentials are unavailable, report the blocker before uploading production assets. The ad hoc signed QA DMGs returned earlier failed Gatekeeper assessment.
+Use ad hoc signing for this release. Record the strict signature verification and Gatekeeper assessment in the receipt. The exact-pin Mac builds above already contain the production native-messaging payload.
 
-Mount each final DMG read-only. Verify its integrity, version 2.3.1, bundle ID `dev.pixflow.bridge`, target architecture, strict signature, Gatekeeper acceptance and notarisation. Confirm the packaged config selects `open-design/bin/node`, its binary reports Node 24.22.3, and its architecture matches the app and SQLite binding. Run the in-memory SQLite check. Record Intel execution under Rosetta separately from native Intel hardware coverage.
+Mount each final DMG read-only. Verify its integrity, version 2.3.1, bundle ID `dev.pixflow.bridge`, target architecture, strict signature and the observed Gatekeeper result. Confirm the packaged config selects `open-design/bin/node`, its binary reports Node 24.22.3, and its architecture matches the app and SQLite binding. Run the in-memory SQLite check. Record Intel execution under Rosetta separately from native Intel hardware coverage.
 
 The matching WordPress ZIPs are on the [Core v2.3.1 draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-69eddf8e6f1542a308f1) and [Pro v2.3.1 draft](https://github.com/pixflowdev/pixflow-design-pro/releases/tag/untagged-a0e0354d4ec6366e0fa2). Check their supplied SHA-256 sums before installing them.
 
@@ -37,4 +37,4 @@ Upload the two production DMGs to the [private Bridge v2.3.1 draft](https://gith
 - `SHA256SUMS-mac.txt`
 - `validation-receipt-mac.md`
 
-Compute the hashes after signing and stapling. If a filename already exists, compare its hash before making changes. Report asset IDs and verified downloaded hashes. Leave the draft unpublished and updater pointers on hold.
+Compute the hashes after signing. If a filename already exists, compare its hash before making changes. Report asset IDs and verified downloaded hashes. Leave the draft unpublished and updater pointers on hold.

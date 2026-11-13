@@ -1,6 +1,21 @@
 import type { Dict } from '../types';
 
 export const esES: Dict = {
+  "media.upscale.previewRendered": "Preview rendered (not saved)",
+  "media.upscale.copySaved": "Copy saved",
+  "media.upscale.originalReplaced": "Original replaced",
+  "media.upscale.renderingPreview": "Rendering preview…",
+  "media.upscale.savingCopy": "Saving copy…",
+  "media.upscale.replacingOriginal": "Replacing original…",
+  "media.upscale.applyAll": "Apply settings to all",
+  "media.upscale.appliedAll": "Settings applied to all images.",
+  "media.upscale.completed": "Completed",
+  "media.upscale.count": "{done} of {total} completed",
+  "media.upscale.batch": "Upscale all",
+  "media.upscale.batchCopies": "Upscale all as copies",
+  "media.upscale.batchOverwrite": "Upscale and overwrite all",
+  "media.upscale.batchWarning": "Replace {count} original images using each image’s current settings. Existing references will use the new images. This cannot be undone here. Images that fail will remain unchanged.",
+  "media.upscale.progress": "Image upscaling",
   "media.upscale.lockAspect": "Bloquear relación de aspecto",
   "media.upscale.add": "Añadir imágenes",
   "media.upscale.sharpen": "Enfocar",

@@ -18,7 +18,7 @@ const FOLDER_DRAG_TYPE='application/x-pixflow-folder';
 type Sort='default'|'nameAsc'|'nameDesc'|'count';
 const sorts:Sort[]=['default','nameAsc','nameDesc','count'];
 export function MediaFolders({scope,onScope,attachmentIds,onChanged}: {
- scope:MediaFolderScope; onScope:(scope:MediaFolderScope)=>void; attachmentIds:number[]; onChanged:()=>void;
+ scope:MediaFolderScope; onScope:(scope:MediaFolderScope)=>void; attachmentIds:number[]; onChanged:(change:Omit<MediaFolderChange,'provider'>)=>void;
 }) {
  const t=useT();
  const [inventory,setInventory]=useState<MediaFolderInventory>();
@@ -27,6 +27,8 @@ export function MediaFolders({scope,onScope,attachmentIds,onChanged}: {
  const [loading,setLoading]=useState(true);
  const onScopeRef=useRef(onScope);
  onScopeRef.current=onScope;
+ const onChangedRef=useRef(onChanged);
+ onChangedRef.current=onChanged;
  const busy=saving||loading;
  const [revision,setRevision]=useState(0);
  const [container,setContainer]=useState<HTMLElement|null>(null);
@@ -60,7 +62,8 @@ export function MediaFolders({scope,onScope,attachmentIds,onChanged}: {
  async function change(input:Omit<MediaFolderChange,'provider'>){
   if(busy||!inventory?.writable)return;setBusy(true);setError('');
   try{setInventory(await mediaFolders(scope.provider,{...input,provider:scope.provider}));setEditor(null);setRenaming(null);
-   if(input.action==='delete'&&input.id===scope.folder)onScope({...scope,folder:'all'});onChanged();
+   if(input.action==='delete'&&input.id===scope.folder)onScope({...scope,folder:'all'});
+   onChangedRef.current(input);
   }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
  }
  function edit(action:'create'|'delete',folder?:MediaFolder){

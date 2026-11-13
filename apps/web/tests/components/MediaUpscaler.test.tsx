@@ -38,4 +38,30 @@ describe('multi-image upscaler settings', () => {
     fireEvent.click(lock);
     expect((screen.getByRole('spinbutton',{name:'Height'}) as HTMLInputElement).value).toBe('750');
   });
+
+  it('copies settings once to queued images while preserving their own proportions', async () => {
+    const image = (id: string, width: number, height: number) => ({
+      id, url: '/'+id+'.png', filename: id+'.png', mimeType: 'image/png', width, height,
+    } as PixflowMediaItem);
+    const first = image('first', 400, 300);
+    const second = image('second', 200, 100);
+    render(<MediaUpscaler item={first} queue={[first,second]} installedModels={['photo2','art4']} onBack={()=>{}} onSaved={()=>{}}/>);
+    fireEvent.click(screen.getByRole('radio',{name:/Illustration 4×/}));
+    fireEvent.click(screen.getByRole('radio',{name:'3×'}));
+    fireEvent.keyDown(screen.getByRole('slider',{name:'Sharpen'}),{key:'ArrowRight'});
+    fireEvent.click(screen.getByRole('button',{name:'Apply settings to all'}));
+    expect(screen.getByText('Settings applied to all images.')).toBeTruthy();
+    const cards = screen.getAllByRole('article');
+    fireEvent.click(within(cards[1]!).getByRole('button',{name:'second.png'}));
+    expect(screen.getByRole('radio',{name:/Illustration 4×/}).getAttribute('aria-checked')).toBe('true');
+    expect((screen.getByRole('spinbutton',{name:'Target width'}) as HTMLInputElement).value).toBe('600');
+    expect((screen.getByRole('spinbutton',{name:'Height'}) as HTMLInputElement).value).toBe('300');
+    expect(screen.getByRole('slider',{name:'Sharpen'}).getAttribute('aria-valuenow')).toBe('1');
+    fireEvent.keyDown(screen.getByRole('slider',{name:'Sharpen'}),{key:'ArrowRight'});
+    fireEvent.click(within(cards[0]!).getByRole('button',{name:'first.png'}));
+    expect(screen.getByRole('slider',{name:'Sharpen'}).getAttribute('aria-valuenow')).toBe('1');
+    fireEvent.click(within(cards[1]!).getByRole('button',{name:'second.png'}));
+    expect(screen.getByRole('slider',{name:'Sharpen'}).getAttribute('aria-valuenow')).toBe('2');
+  });
+
 });

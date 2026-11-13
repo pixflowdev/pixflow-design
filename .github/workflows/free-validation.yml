@@ -56,7 +56,7 @@ jobs:
         run: pnpm --filter @open-design/web test tests/components/TooltipLayer.test.tsx
       - name: Media Library folders and upload regression
         run: |
-          pnpm --filter @open-design/web test tests/components/MediaUpscaler.test.tsx tests/media/upscale-adjustments.test.ts tests/components/MediaFolders.test.tsx tests/components/MediaUploads.test.tsx tests/components/useMediaUploads.test.ts tests/pixflow/runtime-fetch.test.ts
+          pnpm --filter @open-design/web test tests/components/MediaUpscaler.test.tsx tests/media/upscale-adjustments.test.ts tests/media/upscale-queue.test.tsx tests/components/MediaFolders.test.tsx tests/components/MediaUploads.test.tsx tests/components/useMediaUploads.test.ts tests/pixflow/runtime-fetch.test.ts
           php wordpress/tests/media-folders.test.php
           pnpm --filter @open-design/web test tests/components/MediaView.test.tsx
       - name: Translation consistency

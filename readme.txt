@@ -56,7 +56,11 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Changed**
 
+<<<<<<< HEAD
 * Upscale multiple images in one workspace with individual model and adjustment settings, draggable model previews, linked dimensions and a combined Save action menu.
+=======
+* Support resumable translation progress with independent workers, saved page selections and live batch activity.
+>>>>>>> origin/main
 
 * Use a compact two-column layout for the editor toolbar’s Design tools.
 * Show files you can open or download as compact attachments at the end of assistant replies across providers.

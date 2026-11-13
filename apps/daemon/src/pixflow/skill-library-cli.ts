@@ -32,6 +32,9 @@ export async function runSkillLibraryCli(args: string[]): Promise<void> {
   // Query transport works with or without pretty permalinks.
   const endpoint = new URL(`${site.href.replace(/\/$/, '')}/`);
   endpoint.searchParams.set('rest_route', '/pixflow-design/v1/skill-library');
+  const postHeaders = new Headers(headers);
+  postHeaders.set('Content-Type', 'application/json');
+  postHeaders.set('Origin', endpoint.origin);
   if (action === 'preview') {
     if (!body.id || !body.digest) throw new Error('Preview requires --id and --digest from the catalogue.');
     endpoint.searchParams.set('action', 'preview');
@@ -46,7 +49,7 @@ export async function runSkillLibraryCli(args: string[]): Promise<void> {
     const results: Array<{ id: string; ok: boolean; error?: string }> = [];
     for (const item of data.skills.filter(item => item.installedVersion && item.updateAvailable && item.canInstall && item.digest)) {
       try {
-        const response = await fetch(endpoint, { method: 'POST', redirect: 'error', headers: { ...headers, 'Content-Type': 'application/json' },
+        const response = await fetch(endpoint, { method: 'POST', redirect: 'error', headers: postHeaders,
           body: JSON.stringify({ id: item.id, action: 'install', digest: item.digest }) });
         const result = await response.json() as { error?: string };
         if (!response.ok) throw new Error(result.error || `WordPress returned ${response.status}.`);
@@ -60,7 +63,7 @@ export async function runSkillLibraryCli(args: string[]): Promise<void> {
   }
   const readOnly = action === 'list' || action === 'preview';
   const response = await fetch(endpoint, { method: readOnly ? 'GET' : 'POST', redirect: 'error',
-    headers: { ...headers, 'Content-Type': 'application/json' }, ...(readOnly ? {} : { body: JSON.stringify(body) }) });
+    headers: readOnly ? headers : postHeaders, ...(readOnly ? {} : { body: JSON.stringify(body) }) });
   const payload = await response.json() as { error?: string };
   if (!response.ok) throw new Error(payload.error || `WordPress returned ${response.status}.`);
   process.stdout.write(JSON.stringify(payload, null, values.json ? undefined : 2) + '\n');

@@ -107,7 +107,7 @@ export function createCentralEntitlementGate(dataDir: string, pairingPath: strin
       try {
         const response = await fetch(`${url.href.replace(/\/$/u, '')}/?rest_route=/pixflow-design/v1/license/central-bridge`, {
           method: 'POST', redirect: 'error', signal: AbortSignal.timeout(20000),
-          headers: { Authorization: `Bearer ${pairing.wordpressPairingToken}`, Accept: 'application/json' },
+          headers: { Authorization: `Bearer ${pairing.wordpressPairingToken}`, Accept: 'application/json', Origin: url.origin },
         }).catch(error => { transportFailed = true; throw error; });
         if (state !== before) return;
         if (!response.ok) {

@@ -37,7 +37,8 @@ test('multi-language preparation paginates, reads source once, and never forward
       const id = Number(url.pathname.slice(1)); sources.push(id);
       return new Response(id === 2 ? 'Unavailable' : '<p>Source</p>', { status: id === 2 ? 503 : 200, headers: {'Content-Type':'text/html'} });
     }
-    assert.equal((init?.headers as Record<string,string>).Authorization, 'test-only');
+    assert.equal(new Headers(init?.headers).get('Authorization'), 'test-only');
+    if (init?.method === 'POST') assert.equal(new Headers(init.headers).get('Origin'), url.origin);
     if (init?.body) { captures.push(JSON.parse(String(init.body)).postId); return Response.json({}); }
     if (url.searchParams.has('postId')) return Response.json({revision: 3});
     const id = url.searchParams.has('offset') ? 2 : 1;

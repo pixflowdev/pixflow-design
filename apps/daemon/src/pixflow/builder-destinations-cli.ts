@@ -106,6 +106,7 @@ export async function runBuilderDestinationsCli(args: string[]): Promise<void> {
   if (!object(privateHeaders) || Object.entries(privateHeaders).some(([name, value]) => typeof value !== 'string' || /^(host|content-length)$/i.test(name))) throw new Error('The headers file must contain an object of HTTP header strings without Host or Content-Length.');
   const headers = new Headers(privateHeaders as Record<string, string>);
   headers.set('Content-Type', 'application/json');
+  if (body) headers.set('Origin', endpoint.origin);
   const response = await fetch(endpoint, { method: body ? 'POST' : 'GET', headers, redirect: 'error', ...(body ? { body: JSON.stringify(body) } : {}) });
   const payload: unknown = await response.json();
   if (!response.ok || !object(payload) || payload.error || payload.ok === false) {

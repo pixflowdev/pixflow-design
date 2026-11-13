@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Support resumable translation progress with independent workers, saved page selections and live batch activity.
+
 - Use a compact two-column layout for the editor toolbar’s Design tools.
 - Show files you can open or download as compact attachments at the end of assistant replies across providers.
 - List named models in the chat picker. For the first CLI run, select the newest available model when release dates are known and use Medium reasoning where supported. Remember subsequent CLI and API model choices.

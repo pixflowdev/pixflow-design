@@ -46,6 +46,13 @@ export type SiteTranslationJob = {
   autoPublish?: boolean;
   items: SiteTranslationJobItem[]; model: string; protocol: string;
   busy: boolean; interrupted: boolean;
+  /** Bounded independent language workers; absent on legacy serial jobs. */
+  workers?: number; revision?: number;
+  accepting?: boolean;
+  plannedPostIds?: number[]; locales?: string[];
+  retryAt?: number;
+  active?: Array<{ postId: number; locale: string; segments: number }>;
+  metrics?: { batches: number; segments: number; generationMs: number; saveMs: number };
 };
 export type SiteTranslationProvider = { apiProtocol: string; model: string; baseUrl: string; apiKey: string; apiVersion?: string };
 export type AgentTextRequest = { agentId: 'codex'|'claude'|'grok-build'; model: string; prompt: string; parallel?: boolean; reasoning?: 'low'|'medium'|'high'|'xhigh'|'max' };

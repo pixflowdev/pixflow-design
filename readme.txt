@@ -55,6 +55,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 * Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.
 * Allow slower Claude startup during detection and sign-in verification instead of incorrectly reporting an unavailable or signed-out runtime.
 * Report whether a Workspace builder request was rejected with an HTML response or a known WordPress error code, without exposing server messages or credentials.
+* Use the bundled runtime for Workspace and direct editor helpers in Windows PowerShell, and return command output and exit status to the agent.
 
 * Deselect images after a successful folder move so the next batch leaves previously moved images in place. Let Shift-click ranges expand and shrink from their starting image, or deselect a range with a new Shift gesture.
 * Open SEO Audit and Blog Studio directly from the Bricks toolbar, improve sidebar search and project icon sizing, and let the Media Library use the available width.

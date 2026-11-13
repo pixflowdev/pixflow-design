@@ -1,5 +1,5 @@
 import useEmblaCarousel from 'embla-carousel-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@open-design/components';
 import { ButtonGroup, ButtonGroupSeparator } from '@open-design/components/button-group';
@@ -8,6 +8,8 @@ import { openWordPressMediaLibrary, canOpenWordPressMediaLibrary } from './wordP
 import { pixflowPublicAssetUrl } from '../pixflow/public-assets';
 import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { IconLink, IconUnlink, IconArrowLeft, IconPlus, IconPhoto, IconUpload, IconChevronDown, IconDeviceFloppy, IconDownload, IconX, IconLoader2, IconCheck, IconArrowsHorizontal } from '@tabler/icons-react';
+import { MediaUploadQueue } from './MediaUploads';
+import { useMediaUploads, type UpscaleOperation } from './useMediaUploads';
 import { Badge } from './Badge';
 import { encodeUpscaleAdjustments } from './media-upscale-adjustments';
 import styles from './MediaUpscaler.module.css';
@@ -28,12 +30,48 @@ import { encodeMediaImage, readMediaImage } from './MediaOptimiser';
 import { UPSCALER_MAX_INPUT_BYTES, UPSCALER_MAX_OUTPUT_PIXELS, type UpscalerStatus, type UpscalerResult } from '@open-design/contracts';
 const formats = ['png','webp','jpeg'].map(value => ({value,label:value.toUpperCase()}));
 
+type UpscaleAction='run'|'save'|'crop'|'overwrite';
+type QueuedUpscaleAction = Exclude<UpscaleAction, 'crop'>;
+const upscaleOperations: Record<QueuedUpscaleAction, UpscaleOperation> = {run:'preview', save:'copy', overwrite:'replace'};
+type UpscaleRunner=(action:QueuedUpscaleAction,setPhase:(phase:'rendering'|'saving')=>void)=>Promise<void>;
+type UpscaleSettings = {
+  model: string;
+  noiseEnabled: boolean;
+  noiseStrength?: number;
+  target: {unit: string; value: string};
+  aspectLocked: boolean;
+  freeHeight: string;
+  minify: boolean;
+  format: string;
+  quality: number;
+  sharpen: number;
+  contrast: number;
+  preserve: boolean;
+};
+type SettingsApplication = {sourceId: string; targetIds: string[]; settings: UpscaleSettings};
+
 type UpscaleProps={headerAction?:React.ReactNode;item:PixflowMediaItem;installedModels:string[];onBack:()=>void;onSaved:(copy:PixflowMediaItem)=>void;queue?:PixflowMediaItem[]};
 export function MediaUpscaler(props:UpscaleProps) {
   const t=useT();
+  const headingId=useId();
   const [items,setItems]=useState(()=>props.queue?.length?props.queue:[props.item]);
   const [active,setActive]=useState(props.item.id);
+  const [settingsApplication,setSettingsApplication]=useState<SettingsApplication>();
   const [working,setWorking]=useState('');
+  const runners=useRef(new Map<string,UpscaleRunner>());
+  const operations=useMediaUploads(()=>{});
+  const queued=operations.jobs.some(job=>['queued','rendering','saving'].includes(job.status));
+  const [batchConfirm,setBatchConfirm]=useState(false);
+  function enqueue(entries:PixflowMediaItem[],action:QueuedUpscaleAction){
+    if(queued||working)return;
+    const files=entries.map(entry=>new File([],entry.filename,{type:entry.mimeType}));
+    const tasks=new Map(files.map((file,index)=>[file,runners.current.get(entries[index]!.id)]));
+    operations.add(files,file=>async (_progress,setPhase)=>{
+      const run=tasks.get(file);
+      if(!run)throw new Error(t('media.optimise.failed'));
+      await run(action,setPhase);
+    },upscaleOperations[action]);
+  }
   const [uploading,setUploading]=useState(false);
   const [error,setError]=useState('');
   const [sidebar,setSidebar]=useState<HTMLDivElement|null>(null);
@@ -61,39 +99,62 @@ export function MediaUpscaler(props:UpscaleProps) {
       if(supported.length!==imported.length)setError(t('media.fit.msg789571f356'));
     }catch(err){setError(err instanceof Error?err.message:String(err));}finally{setUploading(false);}
   }
-  const addMenu=(compact=false)=><Menu.Root><Menu.Trigger render={<Button/>} className={compact?styles.thumbnail:styles.add} aria-label={t('media.upscale.add')} disabled={uploading}>
+  const addMenu=(compact=false)=><Menu.Root><Menu.Trigger render={<Button/>} className={compact?styles.thumbnail:undefined} aria-label={t('media.upscale.add')} disabled={uploading||queued||!!working}>
     {uploading?<IconLoader2 size={18} className={styles.spin}/>:<IconPlus size={compact?23:17}/>}{!compact&&<>{t('media.upscale.add')}<IconChevronDown size={14}/></>}
-    </Menu.Trigger><Menu.Portal container={sidebar?.closest<HTMLElement>('.pixflow-design-token-scope')??sidebar?.parentElement}><Menu.Positioner sideOffset={6} align="end" className={styles.menuPositioner}><Menu.Popup className={styles.menu}>
+    </Menu.Trigger><Menu.Portal container={sidebar?.closest<HTMLElement>('.pixflow-design-token-scope')??sidebar?.closest<HTMLElement>('.direct-upscale-view')}><Menu.Positioner sideOffset={6} align="end" className={styles.menuPositioner}><Menu.Popup className={styles.menu}>
       <Menu.Item className={styles.menuItem} disabled={!canOpenWordPressMediaLibrary()} onClick={()=>void addLibrary()}><IconPhoto size={17}/>{t('ui.composerPlusMenu.wpMedia')}</Menu.Item>
       <Menu.Item className={styles.menuItem} onClick={()=>input.current?.click()}><IconUpload size={17}/>{t('ui.mediaView.upload')}</Menu.Item>
     </Menu.Popup></Menu.Positioner></Menu.Portal></Menu.Root>;
   return <section className={styles.studio+' direct-upscale-view'}>
-    <header className={styles.toolbar}>
-      <Button variant="ghost" size="icon" aria-label={t('designFiles.back')} disabled={!!working||uploading} onClick={props.onBack}><IconArrowLeft size={18}/></Button>
-      <h2>{t('media.upscale.settingsTitle')}</h2>
-      {addMenu()}
-      {props.headerAction}
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{void add(Array.from(event.target.files??[]));event.target.value='';}}/>
-    </header>
-    {error&&<p role="alert" className={styles.error}>{error}</p>}
     <div className={styles.layout}>
-      <div ref={setSidebar} className={styles.sidebar}/>
-      <div className={styles.gallery}>{items.map(item=><div key={item.id} ref={node=>{if(node)cards.current.set(item.id,node);else cards.current.delete(item.id);}}>
-        <UpscaleEditor {...props} item={item} selected={active===item.id} sidebar={sidebar}
-          locked={!!working&&working!==item.id} onSelect={()=>setActive(item.id)}
-          onBusy={busy=>setWorking(previous=>busy?item.id:previous===item.id?'':previous)}
-          onSaved={()=>{}} onRemove={()=>{setItems(previous=>previous.filter(entry=>entry.id!==item.id));if(active===item.id)setActive(items.find(entry=>entry.id!==item.id)?.id??'');}}
-          removable={items.length>1}/>
-      </div>)}</div>
-      <nav className={styles.rail} aria-label={t('media.bulk.select')}>
-        {items.map(item=><Button key={item.id} className={styles.thumbnail} aria-label={item.filename} aria-pressed={active===item.id} onClick={()=>select(item.id)}><img src={item.thumbnailUrl||item.url} alt="" loading="lazy"/></Button>)}
-        {addMenu(true)}
-      </nav>
+      <section className={styles.settingsPanel} aria-labelledby={headingId}>
+        <header className={styles.toolbar+' '+styles.settingsHeader}>
+          <Button variant="ghost" size="icon" aria-label={t('designFiles.back')} disabled={!!working||queued||uploading} onClick={props.onBack}><IconArrowLeft size={18}/></Button>
+          <h2 id={headingId}>{t('media.upscale.settingsTitle')}</h2>
+        </header>
+        <div ref={setSidebar} className={styles.sidebar} tabIndex={0} role="region" aria-labelledby={headingId}/>
+      </section>
+      <div className={styles.workspacePanel}>
+        <header className={styles.toolbar+' '+styles.workspaceHeader}>
+          {addMenu()}
+          {items.length>1&&<Menu.Root><Menu.Trigger render={<Button/>} disabled={queued||!!working||uploading}>{t('media.upscale.batch')}<IconChevronDown size={14}/></Menu.Trigger><Menu.Portal container={sidebar?.closest<HTMLElement>('.direct-upscale-view')}><Menu.Positioner className={styles.menuPositioner} sideOffset={6}><Menu.Popup className={styles.menu}>
+            <Menu.Item className={styles.menuItem} onClick={()=>enqueue(items,'save')}>{t('media.upscale.batchCopies')}</Menu.Item>
+            <Menu.Item className={styles.menuItem} disabled={items.some(entry=>!entry.attachmentId)} onClick={()=>setBatchConfirm(true)}>{t('media.upscale.batchOverwrite')}</Menu.Item>
+          </Menu.Popup></Menu.Positioner></Menu.Portal></Menu.Root>}
+          {props.headerAction}
+          <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{void add(Array.from(event.target.files??[]));event.target.value='';}}/>
+        </header>
+        <div className={styles.workspaceBody} tabIndex={0} role="region" aria-label={t('common.preview')}>
+          {error&&<p role="alert" className={styles.error}>{error}</p>}
+          <div className={styles.gallery}>{items.map(item=><div key={item.id} ref={node=>{if(node)cards.current.set(item.id,node);else cards.current.delete(item.id);}}>
+            <UpscaleEditor {...props} item={item} selected={active===item.id} sidebar={sidebar}
+              settingsApplication={settingsApplication}
+              onApplyToAll={items.length>1?settings=>setSettingsApplication({sourceId:item.id,targetIds:items.filter(entry=>entry.id!==item.id).map(entry=>entry.id),settings}):undefined}
+              register={runner=>{if(runner)runners.current.set(item.id,runner);else runners.current.delete(item.id);}}
+              enqueue={action=>enqueue([item],action)} locked={queued||!!working&&working!==item.id} onSelect={()=>setActive(item.id)}
+              onBusy={busy=>setWorking(previous=>busy?item.id:previous===item.id?'':previous)}
+              onSaved={()=>{}} onRemove={()=>{setItems(previous=>previous.filter(entry=>entry.id!==item.id));if(active===item.id)setActive(items.find(entry=>entry.id!==item.id)?.id??'');}}
+              removable={items.length>1&&!queued&&!working}/>
+          </div>)}</div>
+          <nav className={styles.rail} aria-label={t('media.bulk.select')}>
+            {items.map(item=><Button key={item.id} className={styles.thumbnail} aria-label={item.filename} aria-pressed={active===item.id} onClick={()=>select(item.id)}><img src={item.thumbnailUrl||item.url} alt="" loading="lazy"/></Button>)}
+            {addMenu(true)}
+          </nav>
+        </div>
+      </div>
     </div>
+    <div className={styles.progressQueue}><MediaUploadQueue jobs={operations.jobs} onRetry={operations.retry} onClear={operations.clear} operationLabel={t('media.upscale.progress')}/></div>
+    <AlertDialog.Root open={batchConfirm} onOpenChange={setBatchConfirm}><AlertDialog.Portal container={sidebar?.closest<HTMLElement>('.pixflow-design-token-scope')??sidebar?.closest<HTMLElement>('.direct-upscale-view')}>
+      <AlertDialog.Backdrop className={styles.backdrop}/><AlertDialog.Popup className={styles.dialog}>
+        <AlertDialog.Title className={styles.dialogTitle}>{t('media.upscale.batchOverwrite')}?</AlertDialog.Title>
+        <AlertDialog.Description className={styles.dialogDescription}>{t('media.upscale.batchWarning',{count:String(items.length)})}</AlertDialog.Description>
+        <div className={styles.dialogActions}><AlertDialog.Close render={<Button variant="ghost"/>}>{t('common.cancel')}</AlertDialog.Close><Button className={styles.destructive} onClick={()=>{setBatchConfirm(false);enqueue(items,'overwrite');}}>{t('media.upscale.batchOverwrite')}</Button></div>
+      </AlertDialog.Popup></AlertDialog.Portal></AlertDialog.Root>
   </section>;
 }
-function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onSelect,onBusy,onRemove,removable}:UpscaleProps & {
- selected:boolean;sidebar:HTMLElement|null;locked:boolean;onSelect:()=>void;onBusy:(busy:boolean)=>void;onRemove:()=>void;removable:boolean}) {
+function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onSelect,onBusy,onRemove,removable,register,enqueue,settingsApplication,onApplyToAll}:UpscaleProps & {
+ settingsApplication?:SettingsApplication;onApplyToAll?:(settings:UpscaleSettings)=>void;
+ register:(runner:UpscaleRunner|null)=>void;enqueue:(action:QueuedUpscaleAction)=>void;selected:boolean;sidebar:HTMLElement|null;locked:boolean;onSelect:()=>void;onBusy:(busy:boolean)=>void;onRemove:()=>void;removable:boolean}) {
   const t=useT();
   const [chosenModel,setChosenModel]=useState(installedModels.includes('photo2')?'photo2':installedModels[0]??'photo4');
   const [noiseEnabled,setNoiseEnabled]=useState(false);
@@ -102,6 +163,20 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
   const [aspectLocked,setAspectLocked]=useState(true);
   const [freeHeight,setFreeHeight]=useState('');
   const [modelViewport,modelCarousel]=useEmblaCarousel({align:'start',containScroll:'trimSnaps',dragFree:true,skipSnaps:true,slides:'[role=radio]'});
+  const [modelEdges,setModelEdges]=useState({left:false,right:false});
+  useEffect(()=>{
+    if(!modelCarousel)return;
+    const updateEdges=()=>{
+      const progress=modelCarousel.scrollProgress();
+      const overflows=modelCarousel.scrollSnapList().length>1;
+      const left=overflows&&progress>0.001;
+      const right=overflows&&progress<0.999;
+      setModelEdges(previous=>previous.left===left&&previous.right===right?previous:{left,right});
+    };
+    updateEdges();
+    modelCarousel.on('scroll',updateEdges).on('select',updateEdges).on('reInit',updateEdges);
+    return ()=>{modelCarousel.off('scroll',updateEdges).off('select',updateEdges).off('reInit',updateEdges);};
+  },[modelCarousel]);
   const [minify,setMinify]=useState(false);
   const [chosenFormat,setFormat]=useState(item.mimeType==='image/png'?'webp':item.mimeType.slice(6));
   const [quality,setQuality]=useState(85);
@@ -109,6 +184,22 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
   const [contrast,setContrast]=useState(0);
   const [preserve,setPreserve]=useState(true);
   const [saved,setSaved]=useState('');
+  useEffect(()=>{
+    if(!settingsApplication||!settingsApplication.targetIds.includes(item.id))return;
+    const {settings}=settingsApplication;
+    setChosenModel(settings.model);
+    setNoiseEnabled(settings.noiseEnabled);
+    setManualStrength(settings.noiseStrength);
+    setTarget(settings.target);
+    setAspectLocked(settings.aspectLocked);
+    setFreeHeight(settings.freeHeight);
+    setMinify(settings.minify);
+    setFormat(settings.format);
+    setQuality(settings.quality);
+    setSharpen(settings.sharpen);
+    setContrast(settings.contrast);
+    setPreserve(settings.preserve);
+  },[item.id,settingsApplication]);
   const [confirmation,setConfirmation]=useState(false);
   const [saveAction,setSaveAction]=useState<'save'|'overwrite'>('save');
   const [analysis,setAnalysis]=useState<ReturnType<typeof analyseUpscaleImage>>();
@@ -132,6 +223,7 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
   const [divider,setDivider] = useState(50);
   const [exported,setExported] = useState<{url:string;blob:Blob;key:string}>();
   const controller = useRef<AbortController|null>(null);
+  const mounted=useRef(true);
 
   const w=item.width||0,h=item.height||0;
   const widthFactor=target.unit==='scale'?Number(target.value):Number(target.value)/w;
@@ -168,7 +260,8 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
 
   useEffect(()=>{
 
-    return ()=>controller.current?.abort();
+    mounted.current=true;
+    return ()=>{mounted.current=false;controller.current?.abort();};
   },[]);
   useEffect(()=>{
     const abort=new AbortController();
@@ -237,10 +330,22 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
         return resultImage;
   }
 
-  async function act(action:'run'|'save'|'crop'|'overwrite', point={x:0.5,y:0.5}){
-    if(controller.current||locked)return;
+  useEffect(()=>{register((action,setPhase)=>act(action,{x:0.5,y:0.5},setPhase));return ()=>register(null);});
+  async function act(action:UpscaleAction, point={x:0.5,y:0.5},setPhase?:(phase:'rendering'|'saving')=>void){
+    if(!mounted.current)throw new Error('Upscaler closed');
+    if(controller.current||locked&&!setPhase)throw new Error(t('common.loading'));
+    if(!valid||(tooLarge&&action!=='crop'))throw new Error(t('media.optimise.failed'));
     const task=new AbortController();controller.current=task;setBusy(true);onBusy(true);setError('');setSaved('');
     try {
+      if(action==='overwrite'){
+        if(!item.attachmentId||format!==sourceFormat)throw new Error(t('media.upscale.sameFormat'));
+        if(!originalHash.current){
+          const original=await readMediaImage(item,task.signal);
+          source.current=original.image;
+          originalHash.current=original.blob.arrayBuffer().then(bytes=>crypto.subtle.digest('SHA-256',bytes)).then(hash=>Array.from(new Uint8Array(hash),byte=>byte.toString(16).padStart(2,'0')).join(''));
+        }
+        if(!await originalHash.current)throw new Error(t('media.optimise.failed'));
+      }
       if(action==='run'||action==='crop'){
         if(action==='crop'||native?.model!==treatment)await processImage(task,action==='crop',point);
       }else{
@@ -253,6 +358,7 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
         const ext=format==='jpeg'?'jpg':format;
         const filename=item.filename.replace(/\.[^.]+$/,'')+'-'+Number(factor.toFixed(3))+'x.'+ext;
         const file=new File([output],filename,{type:output.type});
+        setPhase?.('saving');
         if(action==='overwrite'){
           const form=new FormData();form.append('file',file);form.append('originalHash',await originalHash.current||'');
           const response=await pixflowWordPressRestFetch('/media/attachments/'+item.attachmentId+'/overwrite',{method:'POST',body:form,signal:task.signal});
@@ -264,7 +370,8 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
           if(!task.signal.aborted){setSaved(key);onSaved(copy);}
         }
       }
-    }catch(err){if(!task.signal.aborted){const reason=err instanceof Error?err.message:String(err);setError(reason);}}
+      task.signal.throwIfAborted();
+    }catch(err){if(!task.signal.aborted){const reason=err instanceof Error?err.message:String(err);setError(reason);}if(setPhase)throw err;}
     finally{controller.current=null;setBusy(false);onBusy(false);setCropPending(false);setPendingOriginal(undefined);}
   }
 
@@ -315,7 +422,7 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
       </div>
       {selected&&sidebar&&createPortal(<aside className={styles.settings}>
         <section className={styles.group+' '+styles.modelGroup}><h3>{t('settings.model')}</h3>
-          <div ref={modelViewport} className={styles.modelViewport}><RadioGroup className={styles.models} aria-label={t('settings.model')} value={chosenModel} disabled={disabled} onValueChange={value=>{setChosenModel(String(value));if(value==='photo2'&&factor>2){setTarget({unit:'scale',value:'2'});setFreeHeight(String(h*2));}setCrop(undefined);}}>
+          <div ref={modelViewport} className={styles.modelViewport} data-fade-left={modelEdges.left} data-fade-right={modelEdges.right}><RadioGroup className={styles.models} aria-label={t('settings.model')} value={chosenModel} disabled={disabled} onValueChange={value=>{setChosenModel(String(value));if(value==='photo2'&&factor>2){setTarget({unit:'scale',value:'2'});setFreeHeight(String(h*2));}setCrop(undefined);}}>
             {installedModels.filter(id=>['photo2','photo4','art4'].includes(id)).map(id=><Radio.Root key={id} value={id} className={styles.model} onFocus={event=>{if(event.currentTarget.matches(':focus-visible'))modelCarousel?.scrollTo(installedModels.filter(id=>['photo2','photo4','art4'].includes(id)).indexOf(id));}}>
               <img src={pixflowPublicAssetUrl('upscaler-models/'+id+'.png')} alt=""/>
               <strong>{t(id==='art4'?'ui.finalBrowser.c659a0d0ed':'media.upscale.photo')} {id==='photo2'?'2×':'4×'}</strong>
@@ -345,10 +452,18 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
           {format==='jpeg'&&<small>{t('media.upscale.white')}</small>}
         </section>
         <footer className={styles.actions}>
-          <Button className={styles.render} disabled={disabled||!ready||!valid||tooLarge} onClick={()=>void act('run')}>{t('media.upscale.render')}</Button>
+          {onApplyToAll&&<Button className={styles.applyAll} variant="ghost" disabled={disabled||!valid}
+            onClick={()=>onApplyToAll({
+              model:chosenModel, noiseEnabled, noiseStrength:noiseEnabled?strength:manualStrength,
+              target, aspectLocked, freeHeight, minify, format:chosenFormat, quality, sharpen, contrast, preserve,
+            })}>{t('media.upscale.applyAll')}</Button>}
+          {onApplyToAll&&<span role="status" className={styles.applyStatus}>
+            {settingsApplication?.sourceId===item.id?t('media.upscale.appliedAll'):''}
+          </span>}
+          <Button className={styles.render} disabled={disabled||!ready||!valid||tooLarge} onClick={()=>enqueue('run')}>{t('media.upscale.render')}</Button>
           {busy&&<Button variant="ghost" onClick={()=>controller.current?.abort()}>{t('chat.stop')}</Button>}
-          <ButtonGroup className={styles.saveActions} aria-label={t('media.upscale.save')}><Button className={styles.save} disabled={disabled||!ready||!valid||tooLarge||(saveAction==='overwrite'&&(format!==sourceFormat||!originalHash.current))} onClick={()=>saveAction==='overwrite'?setConfirmation(true):void act('save')}><IconDeviceFloppy size={17}/>{t(saveAction==='overwrite'?'media.upscale.overwrite':'media.upscale.save')}</Button>
-          <ButtonGroupSeparator/><Menu.Root><Menu.Trigger render={<Button size="icon"/>} className={styles.save} aria-label={t('media.upscale.overwrite')} disabled={disabled||!ready||!valid||tooLarge}><IconChevronDown size={16}/></Menu.Trigger><Menu.Portal container={sidebar}><Menu.Positioner side="top" align="end" sideOffset={6} className={styles.menuPositioner}><Menu.Popup className={styles.menu}><Menu.RadioGroup value={saveAction} onValueChange={value=>setSaveAction(value as 'save'|'overwrite')}><Menu.RadioItem closeOnClick value="save" className={styles.menuItem}><IconDeviceFloppy size={17}/>{t('media.upscale.save')}<Menu.RadioItemIndicator><IconCheck size={14}/></Menu.RadioItemIndicator></Menu.RadioItem><Menu.RadioItem closeOnClick value="overwrite" className={styles.menuItem} disabled={format!==sourceFormat||!originalHash.current}><IconDeviceFloppy size={17}/>{t('media.upscale.overwrite')}<Menu.RadioItemIndicator><IconCheck size={14}/></Menu.RadioItemIndicator></Menu.RadioItem></Menu.RadioGroup></Menu.Popup></Menu.Positioner></Menu.Portal></Menu.Root></ButtonGroup>
+          <ButtonGroup className={styles.saveActions} aria-label={t('media.upscale.save')}><Button className={styles.save} disabled={disabled||!ready||!valid||tooLarge||(saveAction==='overwrite'&&(format!==sourceFormat||!originalHash.current))} onClick={()=>saveAction==='overwrite'?setConfirmation(true):enqueue('save')}><IconDeviceFloppy size={17}/>{t(saveAction==='overwrite'?'media.upscale.overwrite':'media.upscale.save')}</Button>
+          <ButtonGroupSeparator/><Menu.Root><Menu.Trigger render={<Button size="icon"/>} className={styles.save} aria-label={t('media.upscale.overwrite')} disabled={disabled||!ready||!valid||tooLarge}><IconChevronDown size={16}/></Menu.Trigger><Menu.Portal container={sidebar?.closest<HTMLElement>('.direct-upscale-view')}><Menu.Positioner side="top" align="end" sideOffset={6} className={styles.menuPositioner}><Menu.Popup className={styles.menu}><Menu.RadioGroup value={saveAction} onValueChange={value=>setSaveAction(value as 'save'|'overwrite')}><Menu.RadioItem closeOnClick value="save" className={styles.menuItem}><IconDeviceFloppy size={17}/>{t('media.upscale.save')}<Menu.RadioItemIndicator><IconCheck size={14}/></Menu.RadioItemIndicator></Menu.RadioItem><Menu.RadioItem closeOnClick value="overwrite" className={styles.menuItem} disabled={format!==sourceFormat||!originalHash.current}><IconDeviceFloppy size={17}/>{t('media.upscale.overwrite')}<Menu.RadioItemIndicator><IconCheck size={14}/></Menu.RadioItemIndicator></Menu.RadioItem></Menu.RadioGroup></Menu.Popup></Menu.Positioner></Menu.Portal></Menu.Root></ButtonGroup>
           {!ready&&<small>{!state&&!error?t('common.loading'):t('media.upscale.requires')}</small>}
           {format!==sourceFormat&&<small>{t('media.upscale.sameFormat')} ({sourceFormat.toUpperCase()})</small>}
         </footer>
@@ -359,10 +474,10 @@ function UpscaleEditor({item,installedModels,onSaved,selected,sidebar,locked,onS
         {!selected&&<Button disabled={disabled||!valid||tooLarge} onClick={onSelect}>{t('common.edit')}</Button>}
         {error&&<p role="alert" className={styles.error}>{error}</p>}
       </div>
-      <AlertDialog.Root open={confirmation} onOpenChange={setConfirmation}><AlertDialog.Portal container={sidebar?.closest<HTMLElement>('.pixflow-design-token-scope')??sidebar?.parentElement}>
+      <AlertDialog.Root open={confirmation} onOpenChange={setConfirmation}><AlertDialog.Portal container={sidebar?.closest<HTMLElement>('.pixflow-design-token-scope')??sidebar?.closest<HTMLElement>('.direct-upscale-view')}>
         <AlertDialog.Backdrop className={styles.backdrop}/><AlertDialog.Popup className={styles.dialog}>
-          <AlertDialog.Title>{t('media.upscale.overwrite')}?</AlertDialog.Title><AlertDialog.Description>{item.filename} · {width} × {height} px</AlertDialog.Description>
-          <div className={styles.dialogActions}><AlertDialog.Close render={<Button variant="ghost"/>}>{t('common.cancel')}</AlertDialog.Close><Button onClick={()=>{setConfirmation(false);void act('overwrite');}}>{t('media.upscale.overwrite')}</Button></div>
+          <AlertDialog.Title className={styles.dialogTitle}>{t('media.upscale.overwrite')}?</AlertDialog.Title><AlertDialog.Description className={styles.dialogDescription}>{item.filename} · {width} × {height} px<br/><br/>{t('media.upscale.batchWarning',{count:'1'})}</AlertDialog.Description>
+          <div className={styles.dialogActions}><AlertDialog.Close render={<Button variant="ghost"/>}>{t('common.cancel')}</AlertDialog.Close><Button className={styles.destructive} onClick={()=>{setConfirmation(false);enqueue('overwrite');}}>{t('media.upscale.overwrite')}</Button></div>
         </AlertDialog.Popup>
       </AlertDialog.Portal></AlertDialog.Root>
     </article>;

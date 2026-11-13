@@ -1,6 +1,16 @@
 import type { Dict } from '../types';
 
 export const en: Dict = {
+  "media.upscale.previewRendered": "Preview rendered (not saved)",
+  "media.upscale.copySaved": "Copy saved",
+  "media.upscale.originalReplaced": "Original replaced",
+  "media.upscale.renderingPreview": "Rendering preview…",
+  "media.upscale.savingCopy": "Saving copy…",
+  "media.upscale.replacingOriginal": "Replacing original…",
+  "media.upscale.applyAll": "Apply settings to all",
+  "media.upscale.appliedAll": "Settings applied to all images.",
+  "media.upscale.completed": "Completed",
+  "media.upscale.count": "{done} of {total} completed",
   "media.upscale.lockAspect": "Lock aspect ratio",
   "media.upscale.add": "Add images",
   "media.upscale.sharpen": "Sharpen",
@@ -4956,6 +4966,11 @@ export const en: Dict = {
   "media.upscale.action": "Upscale image",
   "media.upscale.install": "Install upscaler",
   "media.upscale.remove": "Remove upscaler",
+  "media.upscale.batch": "Upscale all",
+  "media.upscale.batchCopies": "Upscale all as copies",
+  "media.upscale.batchOverwrite": "Upscale and overwrite all",
+  "media.upscale.batchWarning": "Replace {count} original images using each image’s current settings. Existing references will use the new images. This cannot be undone here. Images that fail will remain unchanged.",
+  "media.upscale.progress": "Image upscaling",
   "media.upscale.save": "Save upscaled copy",
   "media.upscale.requires": "Requires Windows x64 / macOS and a Vulkan GPU.",
   "media.bulk.action": "Bulk optimise",

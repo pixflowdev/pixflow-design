@@ -7,7 +7,9 @@ import type { AppConfig } from '../../src/types';
 
 it.each(['codex', 'claude'])('labels the actual %s desktop runtime without changing provider selection', async (id) => {
  const persist=vi.fn();
- const agent = { id, name: id, bin: id, available: true, authStatus: 'ok' as const, modelsSource: 'live' as const, runtimeSource: 'desktop' as const, models: [{ id: 'default', label: 'Default' }] };
+ // The catalogue badge is shown with named live models; the default-only
+ // placeholder deliberately has no model picker or source badge.
+ const agent = { id, name: id, bin: id, available: true, authStatus: 'ok' as const, modelsSource: 'live' as const, runtimeSource: 'desktop' as const, models: [{ id: 'runtime-model', label: 'Runtime model' }] };
  const props = { initial: {...initial, agentId: id}, daemonLive: true, appVersionInfo: null, initialSection: 'execution' as const, onPersist: persist, onPersistComposioKey: vi.fn(), onClose: vi.fn(), onRefreshAgents: vi.fn() };
  const view=render(<SettingsDialog {...props} agents={[agent]} />);
  expect(screen.getAllByText('Live from Desktop app').length).toBeGreaterThan(0);

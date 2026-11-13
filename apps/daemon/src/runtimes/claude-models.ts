@@ -100,11 +100,8 @@ export async function discoverClaudeModels(executable: string, env: RuntimeEnv, 
   } finally { await rm(cwd, { recursive: true, force: true }); }
 }
 
-export async function discoverClaudeCatalogue(primary: string, fallback: string | null, env: RuntimeEnv,
-  discover = discoverClaudeModels): Promise<{ models: RuntimeModelOption[]; source: 'live' | 'cli-fallback' } | null> {
-  const models = await discover(primary, env).catch(() => null);
-  if (models?.length) return { models, source: 'live' };
-  if (!fallback || fallback === primary) return null;
-  const cliModels = await discover(fallback, env).catch(() => null);
-  return cliModels?.length ? { models: cliModels, source: 'cli-fallback' } : null;
+export async function discoverClaudeCatalogue(executable: string, env: RuntimeEnv,
+  discover = discoverClaudeModels): Promise<{ models: RuntimeModelOption[]; source: 'live' } | null> {
+  const models = await discover(executable, env).catch(() => null);
+  return models?.length ? { models, source: 'live' } : null;
 }

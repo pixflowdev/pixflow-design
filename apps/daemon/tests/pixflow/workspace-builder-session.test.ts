@@ -34,10 +34,23 @@ describe('Workspace CLI builder connection', () => {
     const root = await mkdtemp(path.join(tmpdir(), 'pixflow-workspace-helper-'));
     const calls: unknown[] = [];
     let responseStatus = 200;
+    let rejection: { contentType: string; body: string } | undefined;
     const server = createServer(async (request, response) => {
       let body = ''; for await (const chunk of request) body += chunk;
       calls.push({ method: request.method, authorization: request.headers.authorization, body: body && JSON.parse(body) });
+      // Some hosts reject tool POSTs before WordPress unless their bound site
+      // origin is supplied. Authorization is still required independently.
+      if (request.method === 'POST' && request.headers.origin !== `http://${request.headers.host}`) {
+        response.writeHead(403, { 'Content-Type': 'text/html' });
+        response.end('<html>Forbidden</html>');
+        return;
+      }
       response.statusCode = responseStatus;
+      if (rejection) {
+        response.setHeader('Content-Type', rejection.contentType);
+        response.end(rejection.body);
+        return;
+      }
       response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({ ok: true, handoff: { id: 'receipt-1' } }));
     });
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -66,7 +79,17 @@ describe('Workspace CLI builder connection', () => {
       const denied = await promisify(execFile)(process.execPath, [helper, 'builder.destinations']).catch(error => error);
       expect(JSON.parse(denied.stdout)).toMatchObject({ code: 'HTTP_REJECTED', status: 403 });
       expect(denied.stdout).not.toContain(session.token);
-      calls.pop(); responseStatus = 200;
+      rejection = { contentType: 'application/json', body: JSON.stringify({ code: 'pixflow_builder_handoff', message: session.token, data: { status: 403 } }) };
+      const wordpressDenied = await promisify(execFile)(process.execPath, [helper, 'builder.destinations']).catch(error => error);
+      expect(JSON.parse(wordpressDenied.stdout)).toMatchObject({ code: 'HTTP_REJECTED', status: 403, wordpressCode: 'pixflow_builder_handoff' });
+      expect(wordpressDenied.stdout).not.toContain(session.token);
+      rejection = { contentType: 'text/html; charset=utf-8', body: '<html>' + session.token + '</html>' };
+      const htmlDenied = await promisify(execFile)(process.execPath, [helper, 'builder.destinations']).catch(error => error);
+      expect(JSON.parse(htmlDenied.stdout)).toMatchObject({ code: 'HTTP_REJECTED', status: 403, responseFormat: 'html' });
+      expect(htmlDenied.stdout).not.toContain(session.token);
+      calls.length = 0;
+      responseStatus = 200;
+      rejection = undefined;
       expect(await readFile(helper, 'utf8')).not.toContain(session.token);
       const result = await promisify(execFile)(process.execPath, [helper, 'builder.handoff', JSON.stringify({ action: 'open', builder: 'gutenberg', postId: 44, brief: 'Preserve content' })]);
       expect(JSON.parse(result.stdout)).toEqual({ ok: true, handoff: { id: 'receipt-1' } });

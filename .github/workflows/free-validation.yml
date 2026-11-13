@@ -45,6 +45,8 @@ jobs:
           pnpm --filter @open-design/daemon test tests/runtimes/executables.test.ts tests/runtimes/env-and-detection.test.ts tests/runtimes/detection-diagnostics.test.ts
           pnpm --filter @open-design/daemon test discovery-health
           pnpm --filter @open-design/packaged test pixflow-bridge-http
+      - name: Claude runtime selection and Workspace diagnostics
+        run: pnpm --filter @open-design/daemon test tests/runtimes/claude-desktop.test.ts tests/runtimes/claude-models.test.ts tests/runtimes/claude-sign-in.test.ts tests/pixflow/workspace-builder-session.test.ts
       - name: Provider usage regression
         run: |
           pnpm --filter @open-design/daemon exec vitest run tests/runtimes/codex-usage.test.ts tests/runtimes/claude-usage.test.ts tests/runtimes/claude-usage-protocol.test.ts tests/routes/codex-usage.test.ts tests/routes/claude-usage.test.ts

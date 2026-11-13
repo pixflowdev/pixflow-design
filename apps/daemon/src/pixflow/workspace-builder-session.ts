@@ -28,6 +28,8 @@ const allowed = new Set(${JSON.stringify(workspaceTools)});
 let dispatchedHandoff = false;
 let failureCode = 'INVALID_ARGUMENTS';
 let status;
+let responseFormat;
+let wordpressCode;
 try {
   const [tool, input, ...extra] = process.argv.slice(2);
   if (!allowed.has(tool)) throw new Error();
@@ -43,15 +45,27 @@ try {
   const connection = JSON.parse(await fs.readFile(new URL('./connection.json', import.meta.url), 'utf8'));
   dispatchedHandoff = tool === 'builder.handoff';
   failureCode = 'REQUEST_FAILED';
-  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
+  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Origin:new URL(connection.endpoint).origin,Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
   status = response.status;
   failureCode = response.ok ? 'INVALID_RESPONSE' : 'HTTP_REJECTED';
-  const value = await response.json();
-  if (!response.ok) throw new Error(value.message || 'The builder request was rejected.');
-  console.log(JSON.stringify(value));
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
+    responseFormat = contentType === 'text/html' ? 'html' : 'other';
+    if (contentType === 'application/json' || contentType?.endsWith('+json')) {
+      const value = await response.json().catch(() => null);
+      responseFormat = value === null ? 'other' : 'json';
+      const knownCodes = ['pixflow_builder_handoff', 'pixflow_builder_destination', 'pixflow_pro_required', 'rest_forbidden', 'rest_not_logged_in', 'rest_cookie_invalid_nonce', 'site_tool_error', 'unauthorized'];
+      if (knownCodes.includes(value?.code)) wordpressCode = value.code;
+    }
+    throw new Error();
+  }
+  console.log(JSON.stringify(await response.json()));
 } catch {
   const messages = { INVALID_ARGUMENTS: 'Invalid arguments. Run help. For discovery use builder.destinations --builder bricks. For other arguments use a quoted @arguments.json file.', CONNECTION_UNAVAILABLE: 'The local builder session is unavailable. Reconnect the Workspace.', REQUEST_FAILED: 'The WordPress request could not be completed. Check connectivity and Bridge diagnostics.', HTTP_REJECTED: 'WordPress rejected the request. Check the HTTP status and reconnect if authorization expired.', INVALID_RESPONSE: 'WordPress returned an unexpected response. Check the site and Bridge diagnostics.' };
-  console.log(JSON.stringify({ok:false,code:failureCode,...(status ? {status} : {}),error:messages[failureCode] + (dispatchedHandoff ? ' Read builder.handoff.status before retrying; do not create a second request.' : ' No handoff was dispatched.')})); process.exitCode=1;
+  const message = responseFormat === 'html'
+    ? 'The site returned an HTML denial. Check the site security or hosting logs for this request.'
+    : messages[failureCode];
+  console.log(JSON.stringify({ok:false,code:failureCode,status,responseFormat,wordpressCode,error:message + (dispatchedHandoff ? ' Read builder.handoff.status before retrying; do not create a second request.' : ' No handoff was dispatched.')})); process.exitCode=1;
 }
 `;
 

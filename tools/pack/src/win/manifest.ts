@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 
 import type { ToolPackConfig } from "../config.js";
 import { readRuntimeAppVersion } from "../versions.js";
+import { PRODUCT_BRIDGE_TRAY_MODE } from "./constants.js";
 import { pathExists } from "./fs.js";
 import type { WinBuiltAppManifest, WinPaths } from "./types.js";
 
@@ -21,12 +22,10 @@ function createPackagedConfig(
   packagedVersion: string,
   entrypoints: PackagedConfigEntrypoints = {},
 ): Record<string, unknown> {
-  const bridgeTrayMode = process.env.PIXFLOW_DESIGN_PACK_BRIDGE_TRAY_MODE?.trim() === "1";
-
   return {
     ...(config.amrProfile == null ? {} : { amrProfile: config.amrProfile }),
     appVersion: packagedVersion,
-    ...(bridgeTrayMode ? { bridgeTrayMode: true } : {}),
+    ...(PRODUCT_BRIDGE_TRAY_MODE ? { bridgeTrayMode: true, nodeCommandRelative: "open-design/bin/node.exe" } : {}),
     ...entrypoints,
     namespace: config.namespace,
     ...(config.telemetryRelayUrl == null ? {} : { telemetryRelayUrl: config.telemetryRelayUrl }),
@@ -34,7 +33,7 @@ function createPackagedConfig(
     ...(config.posthogKey == null ? {} : { posthogKey: config.posthogKey }),
     ...(config.posthogHost == null ? {} : { posthogHost: config.posthogHost }),
     webOutputMode: config.webOutputMode,
-    ...(config.portable || bridgeTrayMode ? {} : { namespaceBaseRoot: config.roots.runtime.namespaceBaseRoot }),
+    ...(config.portable || PRODUCT_BRIDGE_TRAY_MODE ? {} : { namespaceBaseRoot: config.roots.runtime.namespaceBaseRoot }),
   };
 }
 

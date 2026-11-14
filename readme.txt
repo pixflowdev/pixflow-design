@@ -40,6 +40,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 **Fixed**
 
 * Give agents readable local builder guidance and precise tool help, avoiding unnecessary parsing and repeated discovery.
+* Require rendered query and pagination checks after builder edits instead of relying only on saved settings.
 * Improve Windows agent reliability with shorter working paths and reliable helper output files.
 * Inspect safe previews of large Media Library images and run image-generation batches sequentially.
 * Keep the Image Upscaler headers in view while the settings and preview columns scroll independently.

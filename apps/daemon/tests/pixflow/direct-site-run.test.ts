@@ -23,6 +23,7 @@ vi.mock('../../src/agents.js', () => ({
 }));
 vi.mock('../../src/app-config.js', () => ({ readAppConfig: async () => ({}), agentCliEnvForAgent: () => ({ PIXFLOW_TEST_STALE_CREDENTIAL: 'must-stay-removed' }) }));
 import { DIRECT_SITE_TOOL_SOURCE, directSitePrompt, directSkillContext, registerDirectSiteRunRoutes } from '../../src/pixflow/direct-site-run.js';
+import { directWorkspaceRoot } from '../../src/pixflow/direct-workspace-path.js';
 import { windowsHelperLauncher } from '../../src/pixflow/windows-helper-launcher.js';
 
 import { closeDatabase } from '../../src/db.js';
@@ -49,10 +50,34 @@ afterEach(async () => {
   runner.parser='codex';runner.streamInput=false;runner.filePrompt=false;runner.failArgs=false;
   await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); })));
   closeDatabase();
-  await Promise.all(dirs.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
+  await Promise.all(dirs.splice(0).map(async dir => {
+    const runsRoot = directWorkspaceRoot(dir);
+    // The random test data directory owns this exact short-path namespace.
+    if (process.platform === 'win32') await fs.rm(runsRoot, { recursive: true, force: true });
+    await fs.rm(dir, { recursive: true, force: true });
+  }));
 });
 
 describe('direct site agent connection', () => {
+  it.each([false, true])('serializes generated images in parallel batches (nested: %s)', async nested => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-image-batch-')); dirs.push(dir);
+    const app = express(); app.use(express.json()); let active = 0; let peak = 0;
+    app.post('/images', async (req,res) => {
+      active++; peak=Math.max(peak,active);
+      await new Promise(resolve => setTimeout(resolve,40));
+      active--; res.json({ok:true,prompt:req.body.prompt});
+    });
+    const url=await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',imageEndpoint:url+'/images',token:'fixture'}));
+    const calls=['first','second'].map(prompt=>({tool:'media.generate',arguments:{prompt}}));
+    await fs.writeFile(path.join(dir,'args.json'),JSON.stringify({parallel:true,calls:nested ? calls.map(call=>({tool:'batch',arguments:{parallel:true,calls:[call]}})) : calls}));
+    const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','batch','@args.json'],{cwd:dir});
+    expect(peak).toBe(1);
+    const results=JSON.parse(stdout).results;
+    expect(results.map((item: {result:{prompt:string;results:Array<{result:{prompt:string}}>}})=>nested ? item.result.results[0]!.result.prompt : item.result.prompt)).toEqual(['first','second']);
+  });
   it('refreshes fixed style files from the current native editor receipt', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-styles-')); dirs.push(dir);
     const app = express(); app.use(express.json()); let revision = 'first';
@@ -721,7 +746,7 @@ describe('direct site agent connection', () => {
     const output = await resumed.text();
     expect(output).toContain('Before reload.'); expect(output).toContain('After reload.');
     expect(output.match(/After reload\./g)).toHaveLength(1);
-    expect(await fs.readdir(path.join(dir,'direct-site-runs'))).toHaveLength(1);
+    expect(await fs.readdir(directWorkspaceRoot(dir))).toHaveLength(1);
     const denied = await fetch(url + '/api/pixflow/direct-site/resume-stream', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...continuation,token:'c'.repeat(64)})});
     expect(denied.status).toBe(404);
   });
@@ -905,8 +930,8 @@ describe('direct site agent connection', () => {
     expect(output).toContain('"ok":true');
     expect(output).not.toContain('pfdirect_');
     expect(calls).toEqual([{ tool: 'files.write', arguments: { path: 'wp-content/test.css', content: 'updated' } }]);
-    const runs = await fs.readdir(path.join(dir, 'direct-site-runs'));
-    await expect(fs.access(path.join(dir, 'direct-site-runs', runs[0]!, 'site-connection.json'))).rejects.toThrow();
+    const runs = await fs.readdir(directWorkspaceRoot(dir));
+    await expect(fs.access(path.join(directWorkspaceRoot(dir), runs[0]!, 'site-connection.json'))).rejects.toThrow();
   });
 
   it('keeps skills as knowledge and makes editing/read-only sessions explicit', () => {
@@ -931,8 +956,8 @@ describe('direct site agent connection', () => {
     }) });
     let runDir = '';
     await vi.waitFor(async () => {
-      const runs = await fs.readdir(path.join(dir, 'direct-site-runs'));
-      runDir = path.join(dir, 'direct-site-runs', runs[0]!);
+      const runs = await fs.readdir(directWorkspaceRoot(dir));
+      runDir = path.join(directWorkspaceRoot(dir), runs[0]!);
       await fs.access(path.join(runDir, 'started'));
     });
     const pid = Number(await fs.readFile(path.join(runDir, 'started'), 'utf8'));
@@ -955,7 +980,7 @@ describe('direct site agent connection', () => {
       session:{endpoint:url+'/tools',token:'pfdirect_'+'a'.repeat(64),writable:true,expiresAt:Date.now()/1000+300},
     })});
     let runDir='';
-    await vi.waitFor(async()=>{const dirs=await fs.readdir(path.join(dir,'direct-site-runs'));runDir=path.join(dir,'direct-site-runs',dirs[0]!);await fs.access(path.join(runDir,'started'));});
+    await vi.waitFor(async()=>{const dirs=await fs.readdir(directWorkspaceRoot(dir));runDir=path.join(directWorkspaceRoot(dir),dirs[0]!);await fs.access(path.join(runDir,'started'));});
     const pid=Number(await fs.readFile(path.join(runDir,'started'),'utf8'));
     await response.body!.cancel();
     expect(()=>process.kill(pid,0)).not.toThrow();

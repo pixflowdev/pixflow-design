@@ -6,6 +6,7 @@ export function windowsHelperLauncher(script: 'site-tool.mjs' | 'builder-tool.mj
     `$start.FileName = '${runtime.replaceAll("'", "''")}'`,
     '$start.UseShellExecute = $false',
     '$start.CreateNoWindow = $true',
+    '$start.WorkingDirectory = (Get-Location).ProviderPath',
     '$start.RedirectStandardOutput = $true',
     '$start.RedirectStandardError = $true',
     '$start.StandardOutputEncoding = [System.Text.Encoding]::UTF8',

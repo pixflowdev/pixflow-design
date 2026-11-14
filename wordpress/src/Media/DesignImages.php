@@ -26,9 +26,26 @@ final class DesignImages
         if (!$root || !$file || !is_file($file) || !is_readable($file) || !str_starts_with(wp_normalize_path($file), rtrim(wp_normalize_path($root), '/').'/')) return new \WP_Error('media_unavailable', 'No local image is available for inspection. Use a placeholder if it cannot be visually inspected.', ['status'=>422]);
         $size = wp_getimagesize($file);
         $mime = wp_get_image_mime($file);
+        $preview = false;
+        // Inspect an existing uncropped derivative when the original exceeds the transfer budget.
+        // Metadata never grants filesystem access: resolve and validate every candidate again.
+        if ($size && in_array($mime, ['image/jpeg','image/png','image/webp','image/gif'], true) && ($size[0]*$size[1]>32000000 || filesize($file)>8000000)) {
+            $metadata = wp_get_attachment_metadata($id);
+            foreach (['large', 'medium_large', '1536x1536', 'medium'] as $name) {
+                $filename = $metadata['sizes'][$name]['file'] ?? null;
+                if (!is_string($filename) || basename($filename) !== $filename || str_contains($filename, '\\')) continue;
+                $candidate = realpath(dirname($file).'/'.$filename);
+                if (!$candidate || !is_file($candidate) || !is_readable($candidate) || !str_starts_with(wp_normalize_path($candidate), rtrim(wp_normalize_path($root), '/').'/') || filesize($candidate)>8000000) continue;
+                $dimensions = wp_getimagesize($candidate);
+                $type = wp_get_image_mime($candidate);
+                if (!$dimensions || !in_array($type, ['image/jpeg','image/png','image/webp','image/gif'], true) || $dimensions[0]*$dimensions[1]>32000000 || abs(($dimensions[0]/$dimensions[1])/($size[0]/$size[1])-1)>0.02) continue;
+                $file=$candidate; $size=$dimensions; $mime=$type; $preview=true;
+                break;
+            }
+        }
         if (!$size || !in_array($mime, ['image/jpeg','image/png','image/webp','image/gif'], true) || $size[0]*$size[1]>32000000 || filesize($file)>8000000) return new \WP_Error('media_inspection_limit', 'This image exceeds the inspection limits or has an unsupported format. Use a smaller library image or a placeholder.', ['status'=>422]);
         $bytes = file_get_contents($file, false, null, 0, 8000001);
         if ($bytes === false || $bytes === '' || strlen($bytes)>8000000) return new \WP_Error('media_unavailable', 'The image could not be read within the inspection limit.', ['status'=>422]);
-        return ['attachmentId'=>$id, 'url'=>wp_get_attachment_url($id), 'width'=>$size[0], 'height'=>$size[1], 'mimeType'=>$mime, 'content'=>base64_encode($bytes)];
+        return ['attachmentId'=>$id, 'url'=>wp_get_attachment_url($id), 'width'=>$size[0], 'height'=>$size[1], 'mimeType'=>$mime, 'preview'=>$preview, 'content'=>base64_encode($bytes)];
     }
 }

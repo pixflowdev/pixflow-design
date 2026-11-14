@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep the Image Upscaler headers in view while the settings and preview columns scroll independently.
 - Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
 - Open a single assistant panel from Sitemap without a second blank panel.
 

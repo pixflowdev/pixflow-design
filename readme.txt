@@ -39,6 +39,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
+* Keep the Image Upscaler headers in view while the settings and preview columns scroll independently.
 * Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
 * Open a single assistant panel from Sitemap without a second blank panel.
 

@@ -39,6 +39,8 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
+* Improve Windows agent reliability with shorter working paths and reliable helper output files.
+* Inspect safe previews of large Media Library images and run image-generation batches sequentially.
 * Keep the Image Upscaler headers in view while the settings and preview columns scroll independently.
 * Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
 * Open a single assistant panel from Sitemap without a second blank panel.

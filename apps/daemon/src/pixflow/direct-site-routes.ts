@@ -2,6 +2,7 @@ import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 
 import type { CodexPromptParts } from './direct-site-run.js';
 import { windowsHelperLauncher } from './windows-helper-launcher.js';
+import { directWorkspaceRoot, isManagedDirectWorkspace } from './direct-workspace-path.js';
 import type { DirectCodexWorker } from './direct-codex-worker.js';
 import { watchExternalMcpAccess, authorizeExternalMcp, hasMcpMentions } from './external-mcp-authorization.js';
 import { audioSession, authorizeAudio, watchAudioAccess } from './audio-authorization.js';
@@ -67,8 +68,8 @@ const validToken = (token: unknown): token is string => typeof token === 'string
 /** Durable records own output; in-memory state owns only the currently running process. */
 export function registerDirectSiteRoutes(app: Express, dataDir: string, permission: RequestHandler, resources: DirectResources, database?: Database.Database, mediaRoot = dataDir, warmWorker?: DirectCodexWorker): () => void {
   const store = new DirectSiteStore(database ?? openDatabase(dataDir,{dataDir}));
-  const parent = path.join(dataDir,'direct-site-runs');
-  const managedWorkspace = (workspace: string) => path.dirname(path.resolve(workspace)) === path.resolve(parent) && path.basename(workspace).startsWith('run-');
+  const parent = directWorkspaceRoot(dataDir);
+  const managedWorkspace = (workspace: string) => isManagedDirectWorkspace(workspace, [parent, path.join(dataDir, 'direct-site-runs')]);
   const runs = new Map<string,LiveRun>();
   // Keep only the last completed Claude turn's hashes. Interleaved sites or a
   // Bridge restart fall back to the full prompt on their next resume.
@@ -351,9 +352,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         // A page-pinned canvas is a replaceable transport, not conversation identity.
         // The real mailbox and renewed credentials are still refreshed for each turn.
         instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders)});
-      const compatible=previousConversation?.compatibility===compatibility && previousConversation.lineage===lineage(input.history);
+      // A legacy long Windows path starts a fresh native session with the supplied chat history.
+      const compatible=previousConversation?.compatibility===compatibility && previousConversation.lineage===lineage(input.history) && isManagedDirectWorkspace(previousConversation.workspace, [parent]);
       let resumeSessionId=compatible && def.resumesSessionViaCli ? previousConversation.nativeSessionId : null;
-      await fs.mkdir(parent,{recursive:true});
+      await fs.mkdir(parent,{recursive:true,mode:0o700});
       workspace=compatible && previousConversation && managedWorkspace(previousConversation.workspace) ? previousConversation.workspace : await fs.mkdtemp(path.join(parent,'run-'));
       await fs.mkdir(workspace,{recursive:true});
       // Preparation can await I/O. Recheck admission immediately before the atomic insert.

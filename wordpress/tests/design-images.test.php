@@ -5,7 +5,8 @@ class WP_Error { public function __construct(public string $code, public string 
 function plugins_url($path, $file) { return 'https://local.test/wp-content/plugins/pixflow-ai/'.$path; }
 function current_user_can($cap, ...$args) { return $GLOBALS['permitted']; }
 function get_post_type($id) { return $id===1 ? 'attachment' : 'post'; }
-function wp_get_upload_dir() { return ['basedir'=>dirname(__DIR__).'/assets/design-placeholders']; }
+function wp_get_upload_dir() { return ['basedir'=>$GLOBALS['uploadRoot'] ?? dirname(__DIR__).'/assets/design-placeholders']; }
+function wp_get_attachment_metadata($id) { return $GLOBALS['metadata'] ?? []; }
 function get_attached_file($id) { return $GLOBALS['file']; }
 function wp_normalize_path($path) { return str_replace('\\','/',$path); }
 function wp_getimagesize($file) { return getimagesize($file); }
@@ -34,4 +35,24 @@ $GLOBALS['file']=__FILE__;
 check(DesignImages::inspect(1)->code==='media_unavailable', 'Reject paths outside uploads');
 $GLOBALS['file']=__DIR__.'/missing.webp';
 check(DesignImages::inspect(1)->code==='media_unavailable', 'Missing file is unavailable, not inspected');
+$temp=sys_get_temp_dir().'/pixflow-inspect-'.bin2hex(random_bytes(8));
+mkdir($temp);
+try {
+    $GLOBALS['uploadRoot']=$temp;
+    $GLOBALS['file']=$temp.'/original.webp';
+    $source=dirname(__DIR__).'/assets/design-placeholders/placeholder-1-1.webp';
+    file_put_contents($GLOBALS['file'],file_get_contents($source).str_repeat('x',8000001));
+    copy($source,$temp.'/preview.webp');
+    $GLOBALS['metadata']=['sizes'=>['large'=>['file'=>'preview.webp']]];
+    $preview=DesignImages::inspect(1);
+    check(is_array($preview) && $preview['preview']===true && $preview['attachmentId']===1, 'Oversized original must use its safe local preview');
+    check(base64_decode($preview['content'],true)===file_get_contents($source), 'Preview bytes must match the derivative');
+    $GLOBALS['metadata']=['sizes'=>['large'=>['file'=>'../preview.webp']]];
+    check(DesignImages::inspect(1)->code==='media_inspection_limit', 'Reject traversal in derivative metadata');
+    copy(dirname(__DIR__).'/assets/design-placeholders/placeholder-16-9.webp',$temp.'/crop.webp');
+    $GLOBALS['metadata']=['sizes'=>['large'=>['file'=>'crop.webp']]];
+    check(DesignImages::inspect(1)->code==='media_inspection_limit', 'A different crop must not stand in for the whole image');
+    $GLOBALS['metadata']=[];
+    check(DesignImages::inspect(1)->code==='media_inspection_limit', 'Keep byte limit without a safe preview');
+} finally { unlink($temp.'/original.webp'); unlink($temp.'/preview.webp'); if (is_file($temp.'/crop.webp')) unlink($temp.'/crop.webp'); rmdir($temp); }
 echo "Design placeholders and bounded media inspection passed.\n";

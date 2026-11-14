@@ -11,6 +11,8 @@ Publication is on hold. Build and validate Apple Silicon and Intel DMGs; do not 
 
 Read both repositories' AGENTS.md, Core tools/AGENTS.md and tools/pack/AGENTS.md. Use isolated, short-path worktrees with Node 24 and pnpm 10.33.2. Install frozen dependencies separately in both checkouts. Set PIXFLOW_DESIGN_CORE_ROOT for Pro and PIXFLOW_DESIGN_PRO_ROOT for Core explicitly. Install Pro's locked Composer dependencies with no development dependencies. Do not update dependencies during release packaging.
 
+If building WordPress ZIPs, prepare the Pro detector using `pnpm exec tsx scripts/adapt-impeccable-detector.ts <upstream-checkout>` at Impeccable revision `374a0e179bb36725283a612462131705ba4780ae`, as documented in Pro's docs/design-engine-boundary.md. Retain its licence and hash receipt. This is a required generated packaging input, not a reason to alter source or skip packaging checks.
+
 ## Build both architectures
 
 Use a separate architecture-matched environment for each build. On Apple Silicon, use native arm64 Node for arm64, and x64 Node under Rosetta for x64. Confirm process.arch before installing native dependencies. Do not reuse native node_modules between architectures.

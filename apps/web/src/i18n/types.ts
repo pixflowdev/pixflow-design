@@ -1343,6 +1343,10 @@ export interface Dict {
   "wp.message.ca7714cffbcc": string;
   "wp.message.197c83a2f752": string;
   "wp.message.2ffdcbc380ea": string;
+  "wp.proRepair.title": string;
+  "wp.proRepair.incomplete": string;
+  "wp.proRepair.incompatible": string;
+  "wp.proRepair.checkPlugins": string;
   "wp.message.40ed1102964b": string;
   "wp.message.e9cccd3ef5fc": string;
   "wp.message.1372089fb797": string;

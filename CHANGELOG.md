@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Protect Free and Pro Bridge pairing against accidentally sending browser-only headers that WordPress rejects.
 - Show readable filenames and terminal steps for AntiGravity activity in the assistant panel.
 - Prevent avoidable assistant command errors when looking up tools by name, while rejecting missing or conflicting arguments before contacting the site.
 - Keep builder follow-ups pointed at the current page after navigating.

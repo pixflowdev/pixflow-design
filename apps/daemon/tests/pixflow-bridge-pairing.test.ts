@@ -60,6 +60,27 @@ it('denies unrelated origins and never returns pairing material', async () => {
   const qa = await setup(); const response = await qa.post('start', {}, 'https://unrelated.test');
   expect(response.status).toBe(403); expect(response.headers.get('access-control-allow-origin')).toBeNull(); expect(qa.transport).not.toHaveBeenCalled();
 });
+it.each([false, true])('keeps the credential exchange server-to-server (Free: %s)', async free => {
+  const qa = await setup({ free });
+  const original = qa.transport.getMockImplementation()!;
+  qa.transport.mockImplementation(async (url, init) => {
+    if (String(url).includes('pairing/exchange')) {
+      // Match BridgePairing::server_exchange rather than treating it as a browser REST request.
+      const headers = new Headers(init?.headers);
+      if (headers.has('Origin') || headers.has('Sec-Fetch-Site')) {
+        return new Response('Forbidden', { status: 403 });
+      }
+      expect(init?.redirect).toBe('manual');
+    } else {
+      expect(new Headers(init?.headers).has('Origin')).toBe(false);
+    }
+    return original(url, init);
+  });
+  const started = await qa.start();
+  expect((await qa.complete(started.requestId)).status).toBe(200);
+  expect(qa.installed).toHaveBeenCalledOnce();
+  expect((await qa.complete(started.requestId)).status).toBe(403);
+});
 it.each(['expiry', 'site-switch'] as const)('rejects %s before contacting WordPress', async mode => {
   const qa = await setup(); const started = await qa.start();
   if (mode === 'expiry') qa.expire(); else qa.switchSite();

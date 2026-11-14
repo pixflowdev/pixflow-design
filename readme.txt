@@ -35,6 +35,12 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = Unreleased =
 
+= 2.3.2 =
+
+**Fixed**
+
+* Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
+
 = 2.3.1 =
 
 **Added**

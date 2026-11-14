@@ -28,8 +28,18 @@ final class ProUpgradeNotice
         $status = (new LicenseService())->status();
         if (!empty($status['license']['present']) && ($status['central_entitlement']['code'] ?? '') === 'invalid_central_entitlement') return null;
         $pro = $status['pro'] ?? null;
-        // Installation diagnostics belong in settings, not in the upgrade offer.
-        if (!is_array($pro) || !empty($pro['eligible'])) return null;
+        if (!is_array($pro)) return null;
+        if (in_array($pro['installation'] ?? '', ['incomplete', 'incompatible'], true)) {
+            return [
+                'title' => __('Pixflow Design Pro needs attention', 'pixflow-design'),
+                'description' => ($pro['installation'] === 'incomplete')
+                    ? __('Some Pro files are missing or changed. Reinstall the latest Pro ZIP from your Pixflow account. Your saved licence, content and settings are kept.', 'pixflow-design')
+                    : __('The installed Pro add-on could not load with this version of Pixflow. Check the plugin notices and update Free and Pro to compatible versions. Your saved licence, content and settings are kept.', 'pixflow-design'),
+                'label' => __('Check installed plugins', 'pixflow-design'),
+                'url' => $pro['plugins_url'],
+            ];
+        }
+        if (!empty($pro['eligible'])) return null;
         $trial_status = $pro['trial_status'] ?? 'unknown';
         $trial = !empty($pro['trial_url']) && $trial_status === 'eligible';
         $check_trial = !empty($pro['trial_url']) && $trial_status === 'unknown';

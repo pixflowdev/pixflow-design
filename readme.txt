@@ -35,6 +35,12 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = Unreleased =
 
+= 2.3.2 =
+
+**Fixed**
+
+* Open a single assistant panel from Sitemap without a second blank panel.
+
 = 2.3.1 =
 
 **Added**

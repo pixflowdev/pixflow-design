@@ -10,7 +10,7 @@
 #pixflow-admin-workspace > #pixflow-design-root { height: 100%; width: 100%; }
 body.pixflow-admin-workspace-open { overflow: hidden; }
 body.pixflow-admin-workspace-open #pixflow-wp-admin-agent-shell { visibility: hidden; }
-body.pixflow-admin-workspace-open.pixflow-sitemap-panel-open #pixflow-wp-admin-agent-shell.is-open,
+/* Sitemap moves the conversation into its own panel; keep the empty host hidden. */
 body.pixflow-admin-workspace-open.pixflow-audit-panel-open #pixflow-wp-admin-agent-shell.is-open,
 body.pixflow-admin-workspace-open.pixflow-blog-panel-open #pixflow-wp-admin-agent-shell.is-open {
   visibility: visible;

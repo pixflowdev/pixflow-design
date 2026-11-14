@@ -80,6 +80,14 @@ Do not mark acceptance passed with unresolved recurring errors or unexplained st
 
 ## Return and release hold
 
+### Mac progress — expanded gate in progress, 14 November
+
+Acceptance is not complete. An uncoached GPT-6.1 Sol run reproduced two avoidable helper failures: named media-search arguments and a numeric post lookup were rejected locally. Review candidates are [Core #148](https://github.com/pixflowdev/pixflow-design/pull/148) (`edc189d7b144ab471e1f9af7bcb124955e680c49`) and [Pro #82](https://github.com/pixflowdev/pixflow-design-pro/pull/82) (`a91425f2c341c3e099f6e8f1aa2cc8b9f5c5b8fc`). Both are drafts; no merge or publication is authorized by this progress note. The helper regression was red before the change; all 105 direct-site tests, Core guard and daemon typecheck pass afterward. A separate test app is being built for the required uncoached reruns. These are proposed pins only; coordinator confirmation is still required before final DMG rebuilding.
+
+Both originally pinned DMGs were built and passed package verification, with ad hoc signatures and Gatekeeper rejection. They remain local and **predate the runtime fix**: do not promote them as the final release. No v2.3.2 draft release was assigned or uploaded by this work.
+
+The owner selected GPT-6.1 Sol for Codex tests and explicitly authorized the signed-in Claude CLI for the expanded suite. Bricksforge 4.1.0 is now installed on local QA with public MCP disabled; native role reads, read-only write rejection and disabled-submission enforcement passed against its installed handlers. Full-page, follow-up, form/animation and efficiency evidence is still being collected. This progress note does not waive any remaining gate.
+
 Return `pixflow-design-bridge-2.3.2-mac-arm64.dmg`, `pixflow-design-bridge-2.3.2-mac-x64.dmg`, `SHA256SUMS-mac.txt` and `validation-receipt-mac.md`. Include exact pins, architecture, macOS version, signing status, checks, live results, known limitations and any packaging-only patch.
 
 Stage locally or upload only to a coordinator-confirmed unpublished v2.3.2 GitHub draft. Do not reuse v2.3.1 releases or replace their assets. No draft ID is assigned in this handoff. Report artifact location and hashes to the coordinator; publication remains on hold.

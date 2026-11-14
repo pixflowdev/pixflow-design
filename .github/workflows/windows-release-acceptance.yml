@@ -4,7 +4,7 @@ on:
     branches: [codex/windows-2.3.2-acceptance]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write # GitHub requires write permission to read unpublished release assets.
 jobs:
   installer:
     runs-on: windows-2025
@@ -23,4 +23,5 @@ jobs:
           name: windows-2.3.2-acceptance
           path: ${{ runner.temp }}/pixflow-232-qa/receipt.json
           if-no-files-found: error
+
 

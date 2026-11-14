@@ -433,6 +433,8 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       // No legacy Bridge connector grant or project credential is issued to the child.
       await fs.writeFile(path.join(workspace,'site-connection.json'),JSON.stringify({...input.session,canvasId:input.canvasId,canvasPostId:input.canvasPostId,runId:id,imageEndpoint:imageRun.generateImage ? `http://127.0.0.1:${req.socket.localPort}/api/pixflow/direct-site/image/${id}` : undefined,captureEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/pixflow/visual-capture`,stockEndpoint:`http://127.0.0.1:${req.socket.localPort}/api/media/stock`}),{mode:0o600});
       await fs.writeFile(path.join(workspace,'site-tool.mjs'),resources.helper);
+      // The advertised journal is readable from the first prompt; never truncate recovery evidence.
+      await fs.appendFile(path.join(workspace,'site-tool-journal.jsonl'),'',{mode:0o600});
       if (process.platform === 'win32') await fs.writeFile(path.join(workspace, 'site-tool.ps1'), windowsHelperLauncher('site-tool.mjs'));
       await fs.writeFile(path.join(workspace,'visual-capture.mjs'),AGENT_VISUAL_CAPTURE_SOURCE);
       if(input.canvasId)stopMirror=await startBricksContextMirror(workspace,input.session,input.canvasId,(input.context as {liveBuilderContext?:unknown}|undefined)?.liveBuilderContext);

@@ -115,6 +115,7 @@ export function registerBridgePairing(app: Express, options: {
     try {
       if (record.expires <= clock()) return deny(res, 'pairing_expired', stage);
       if (record.site !== normalize(options.site()) || record.issuer !== options.issuer()) return deny(res, 'pairing_site_changed', stage);
+      // WordPress's server_exchange rejects browser headers; this PKCE exchange must stay server-to-server.
       const response = await transport(`${record.site}/?rest_route=/pixflow-design/v1/license/pairing/exchange`, {
         method:'POST',redirect:'manual',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json'},
         body:JSON.stringify({code:body.code,verifier:record.verifier}),

@@ -185,10 +185,11 @@ async function execute() {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Arguments must be a JSON object. No site operation was dispatched.');
   // Every supplied flag is either transmitted or rejected; never silently drop
   // an agent's arguments and issue a different operation to the site.
+  const readFlags = tool === 'wordpress.media.list' ? ['search', 'mimeType', 'perPage'] : tool === 'wordpress.posts.get' ? ['postId'] : [];
   for (let index = 0; index < flags.length; index++) {
     const flag = flags[index];
     const key = flag.slice(2);
-    if (!flag.startsWith('--') || !['topic', 'response', 'detail', 'query', 'name', 'code', 'path', 'paths', 'ids', 'output', 'code-file'].includes(key)) {
+    if (!flag.startsWith('--') || !['topic', 'response', 'detail', 'query', 'name', 'code', 'path', 'paths', 'ids', 'output', 'code-file', ...readFlags].includes(key)) {
       throw new Error('Unsupported argument ' + flag + '. No site operation was dispatched. Quote multiword flag values, for example --query "date query", or use @arguments.json for tool arguments.');
     }
     const values = [];
@@ -197,7 +198,11 @@ async function execute() {
     } else if (flags[index + 1] && !flags[index + 1].startsWith('--')) values.push(flags[++index]);
     if (!values.length) throw new Error(flag + ' requires a value.');
     if (key === 'output' || key === 'code-file') continue;
-    const value = key === 'paths' || key === 'ids' ? values : values[0];
+    let value = key === 'paths' || key === 'ids' ? values : values[0];
+    if (key === 'postId' || key === 'perPage') {
+      if (!/^[0-9]+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) throw new Error(flag + ' requires a positive safe integer. No site operation was dispatched.');
+      value = Number(value);
+    }
     if (args[key] !== undefined && JSON.stringify(args[key]) !== JSON.stringify(value)) throw new Error('Conflicting ' + key + ' values in JSON and ' + flag + '.');
     args[key] = value;
   }

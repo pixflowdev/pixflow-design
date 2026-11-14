@@ -41,11 +41,25 @@ namespace {
     }
     $GLOBALS['pro']+=['plugins_url'=>'https://site.test/wp-admin/plugins.php','account_url'=>'https://pixflow.dev/account#pro-download'];
     $GLOBALS['pro']['eligible']=true;
-    foreach (['missing','inactive','incomplete','incompatible','active'] as $installation) {
+    foreach (['missing','inactive','active'] as $installation) {
         $GLOBALS['pro']['installation']=$installation;
         check($notice->offer()===null, 'Paid licence must suppress the banner: '.$installation);
         check($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')===[], 'Paid licence must suppress the upgrade link');
     }
+    foreach ([true, false] as $eligible) {
+        $GLOBALS['pro']['eligible']=$eligible;
+        foreach (['incomplete', 'incompatible'] as $installation) {
+            $GLOBALS['pro']['installation']=$installation;
+            $offer=$notice->offer();
+            check(($offer['title'] ?? '')==='Pixflow Design Pro needs attention', 'Show recovery for a broken installation');
+            check(($offer['url'] ?? '')===$GLOBALS['pro']['plugins_url'], 'Direct recovery to installed plugins');
+            $expectedCopy=$installation==='incomplete' ? 'Reinstall' : 'compatible versions';
+            check(str_contains($offer['description'], $expectedCopy), 'Explain the specific recovery path');
+            $links=$notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php');
+            check(count($links)===1 && str_contains($links[0], 'Check installed plugins'), 'Plugin row offers repair');
+        }
+    }
+    $GLOBALS['pro']['installation']='missing';
     $GLOBALS['pro']['eligible']=false;
     $GLOBALS['dismissed']=true;
     check($notice->offer()===null,'Dismissal respected');
@@ -74,8 +88,8 @@ namespace {
     check($notice->plugin_meta(['View details'], 'other/plugin.php')===['View details'],'Other plugin links unchanged');
     $GLOBALS['pro']['trial_status']='eligible';
     check(str_contains($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')[0],'Start your 7-day Pro trial'),'Eligible plugin-row trial link');
-    $GLOBALS['translations']=['Try Pro for 7 days'=>'Pro 7 Tage testen', 'Start your 7-day Pro trial'=>'7-tägige Pro-Testphase starten'];
-    check(str_contains($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')[0],'7-tägige Pro-Testphase starten'),'Trial link uses stable state instead of comparing translated copy');
+    $GLOBALS['translations']=['Try Pro for 7 days'=>'Pro 7 Tage testen', 'Start your 7-day Pro trial'=>'7-tÃ¤gige Pro-Testphase starten'];
+    check(str_contains($notice->plugin_meta([], 'pixflow-ai/pixflow-ai.php')[0],'7-tÃ¤gige Pro-Testphase starten'),'Trial link uses stable state instead of comparing translated copy');
     $GLOBALS['allowed']=false;
     $GLOBALS['translations']=['You cannot dismiss this notice.'=>'<img src=x onerror=alert(1)>'];
     try { $notice->dismiss(); throw new RuntimeException('Expected forbidden dismissal'); }

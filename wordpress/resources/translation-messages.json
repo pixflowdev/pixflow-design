@@ -2798,5 +2798,37 @@
       "wordpress/src/Media/FitMedia.php"
     ],
     "key": "media.fit.msg44ce6e4a2f"
+  },
+  {
+    "message": "Pixflow Design Pro needs attention",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php"
+    ],
+    "key": "wp.proRepair.title"
+  },
+  {
+    "message": "Some Pro files are missing or changed. Reinstall the latest Pro ZIP from your Pixflow account. Your saved licence, content and settings are kept.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php"
+    ],
+    "key": "wp.proRepair.incomplete"
+  },
+  {
+    "message": "The installed Pro add-on could not load with this version of Pixflow. Check the plugin notices and update Free and Pro to compatible versions. Your saved licence, content and settings are kept.",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php"
+    ],
+    "key": "wp.proRepair.incompatible"
+  },
+  {
+    "message": "Check installed plugins",
+    "domain": "pixflow-design",
+    "references": [
+      "wordpress/src/License/ProUpgradeNotice.php"
+    ],
+    "key": "wp.proRepair.checkPlugins"
   }
 ]

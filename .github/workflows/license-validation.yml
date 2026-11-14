@@ -7,6 +7,7 @@ on:
       - 'wordpress/src/License/**'
       - 'wordpress/tests/central-*.test.php'
       - 'wordpress/tests/licensing-staging-origin.test.php'
+      - 'wordpress/tests/pro-upgrade-notice.test.php'
       - '.github/workflows/license-validation.yml'
   workflow_dispatch:
 
@@ -34,6 +35,7 @@ jobs:
           php wordpress/tests/licensing-staging-origin.test.php
       - name: Saved licence renewal and reset regression
         run: |
+          php wordpress/tests/pro-upgrade-notice.test.php
           php wordpress/tests/license-retention.test.php
           php wordpress/tests/central-entitlements-lifecycle.test.php
           php wordpress/tests/installation-recovery.test.php

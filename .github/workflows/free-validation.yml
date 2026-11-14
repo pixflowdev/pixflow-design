@@ -83,6 +83,7 @@ jobs:
           php wordpress/tests/directory-license-http.test.php
       - name: Live canvas mailbox and handoff regression
         run: |
+          php wordpress/tests/site-help-topics.test.php
           php wordpress/tests/direct-canvas-mailbox-cache.test.php
           php wordpress/tests/direct-canvas-navigation.test.php
           php wordpress/tests/direct-canvas-reconnect.test.php

@@ -68,13 +68,13 @@ export function ToolCard({
   }
   const ctx: FileToolCtx = { projectFileNames, onRequestOpenFile };
   if (isTodoWriteToolName(name)) return <TodoCard input={use.input} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
-  if (name === 'Write' || name === 'write' || name === 'create_file')
+  if (name === 'Write' || name === 'write' || name === 'create_file' || name === 'write_file')
     return <FileWriteCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
-  if (name === 'Edit' || name === 'str_replace_edit')
+  if (name === 'Edit' || name === 'str_replace_edit' || name === 'edit_file')
     return <FileEditCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
   if (name === 'Read' || name === 'read_file')
     return <FileReadCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
-  if (name === 'Bash') return <BashCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
+  if (name === 'Bash' || name === 'run_command') return <BashCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'Glob' || name === 'list_files') return <GlobCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'Grep') return <GrepCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'WebFetch' || name === 'web_fetch' || name === 'webfetch') return <WebFetchCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
@@ -288,8 +288,8 @@ function FileWriteCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; content?: string };
-  const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
+  const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; Path?: string; content?: string };
+  const file = obj.file_path ?? obj.filePath ?? obj.path ?? obj.Path ?? '(unnamed)';
   const baseName = file.split(/[\\/]/).pop() ?? file;
   const lines = typeof obj.content === 'string' ? obj.content.split('\n').length : null;
   return <ToolTrace title={t('tool.write')} description={<>{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</>} result={result}
@@ -314,6 +314,7 @@ function FileEditCard({
     file_path?: string;
     filePath?: string;
     path?: string;
+    Path?: string;
     old_string?: string;
     new_string?: string;
     edits?: { old_string?: string; new_string?: string }[];
@@ -324,7 +325,7 @@ function FileEditCard({
     try { return fileChanges(JSON.parse(content)); } catch { return []; }
   }, [result]);
   const changes = parsed.length ? parsed : fileChanges((input as { changes?: unknown } | null)?.changes);
-  const first = changes[0]?.path ?? [obj.file_path, obj.filePath, obj.path].find(path => typeof path === 'string' && path.trim());
+  const first = changes[0]?.path ?? [obj.file_path, obj.filePath, obj.path, obj.Path].find(path => typeof path === 'string' && path.trim());
   const count = changes.length || obj.edits?.length || (first ? 1 : 0);
   return <ToolTrace title={t('tool.edit')} description={first ? <>{first.split(/[\\/]/).pop()} · {count} {t(count === 1 ? 'tool.changeSingular' : 'tool.changePlural')}</> : null}
     result={result} hideOutput={parsed.length > 0} runStreaming={runStreaming} runSucceeded={runSucceeded}
@@ -354,8 +355,8 @@ function FileReadCard({
   ctx: FileToolCtx;
 }) {
   const t = useT();
-  const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string };
-  const file = obj.file_path ?? obj.filePath ?? obj.path ?? '(unnamed)';
+  const obj = (input ?? {}) as { file_path?: string; filePath?: string; path?: string; Path?: string };
+  const file = obj.file_path ?? obj.filePath ?? obj.path ?? obj.Path ?? '(unnamed)';
   const baseName = file.split(/[\\/]/).pop() ?? file;
   return <ToolTrace title={t('tool.read')} description={baseName} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
@@ -363,8 +364,8 @@ function FileReadCard({
 
 function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
-  const obj = (input ?? {}) as { command?: string; description?: string };
-  const command = obj.command ?? '';
+  const obj = (input ?? {}) as { command?: string; CommandLine?: string; description?: string };
+  const command = obj.command ?? obj.CommandLine ?? '';
   const desc = obj.description;
   return <ToolTrace title={desc || t('chat.designToolbox.context.terminal')} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<CodeBlock><CodeBlockContent><pre className="op-command"><code>{truncate(command, 400)}</code></pre></CodeBlockContent></CodeBlock>)} />;

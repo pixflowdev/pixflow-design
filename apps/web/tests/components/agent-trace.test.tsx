@@ -167,6 +167,18 @@ it('shows the Codex edit filename and actual diff from a saved result', () => {
   expect(view.container.textContent).not.toContain('(unnamed)');
 });
 
+it.each(['read_file', 'write_file', 'edit_file'])('shows AntiGravity %s paths using the shared file card', name => {
+  const view = render(<ToolCard use={{ kind: 'tool_use', id: 'file', name, input: { Path: 'C:\\run\\roles.json' } }} />);
+  expect(view.getByRole('button').textContent).toContain('roles.json');
+  expect(view.container.textContent).not.toContain('(unnamed)');
+});
+
+it('shows AntiGravity commands in the shared terminal card', () => {
+  const view = render(<ToolCard use={{ kind: 'tool_use', id: 'cmd', name: 'run_command', input: { CommandLine: 'node site-tool.mjs help' } }} />);
+  fireEvent.click(view.getByRole('button', { name: /Terminal/ }));
+  expect(view.getByText('node site-tool.mjs help')).toBeTruthy();
+});
+
 it('folds consecutive successful commands while leaving the failed command visible', () => {
   const events: AgentEvent[] = ['first','second','failed'].flatMap((id): AgentEvent[] => [
     {kind:'tool_use',id,name:'Bash',input:{command:id}},

@@ -8,6 +8,8 @@ it.each(['Bash', 'bash', 'run_shell_command', 'exec_command', 'execute', 'run_co
   expect(completedActivityLabel([name], t)).toBe('Ran commands');
 });
 it('uses file targets and deduplicates completed action types', () => {
+  expect(liveActivityLabel('read_file', { Path: 'C:\\site\\roles.json' }, t)).toBe('Reading roles.json');
+  expect(liveActivityLabel('run_command', { CommandLine: 'Get-Content roles.json' }, t)).toBe('Reading roles.json');
   expect(liveActivityLabel('read_file', { path: 'C:\\site\\style.css' }, t)).toBe('Reading style.css');
   expect(completedActivityLabel(['mcp__browser__click','Edit','write','Bash','Bash'], t))
     .toBe('Used the browser, Edited files, Ran commands');

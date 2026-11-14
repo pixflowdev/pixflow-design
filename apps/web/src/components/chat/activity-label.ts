@@ -6,7 +6,7 @@ type Action = ActivityAction;
 const aliases: Record<string, Action> = {
   bash: 'command', shell: 'command', run_shell_command: 'command', exec_command: 'command', shell_command: 'command', execute_command: 'command', run_terminal_cmd: 'command',
   execute: 'command', run_command: 'command', run_in_terminal: 'command', terminal: 'command',
-  write_to_file: 'edit', replace_file_content: 'edit', edit: 'edit', write: 'edit', write_file: 'edit', create_file: 'edit', apply_patch: 'edit',
+  write_to_file: 'edit', replace_file_content: 'edit', edit: 'edit', edit_file: 'edit', write: 'edit', write_file: 'edit', create_file: 'edit', apply_patch: 'edit',
   str_replace_edit: 'edit', str_replace: 'edit', search_replace: 'edit', replace: 'edit', multiedit: 'edit',
   read: 'read', read_file: 'read', read_many_files: 'read', view_file: 'read',
   glob: 'search', grep: 'search', search: 'search', list_files: 'search',
@@ -30,15 +30,16 @@ export function liveActivityLabel(name: string, input: unknown, t: Translate): s
   const description = short(data.description) || short(data.title);
   if (description) return description;
   const action = activityAction(name);
-  if (action === 'command' && typeof data.command === 'string') {
+  const rawCommand = data.command ?? data.CommandLine;
+  if (action === 'command' && typeof rawCommand === 'string') {
     // Codex CLI supplies a command but no desktop-style parsed command metadata.
     // Recognize literal read targets only; dynamic expressions remain generic.
-    const command = data.command.trim();
+    const command = rawCommand.trim();
     const shellBody = /\s-(?:Command|c)\s+['"]([\s\S]*)['"]$/i.exec(command)?.[1] ?? command;
     const read = /^(?:\$[\w]+\s*=\s*)?(?:Get-Content|cat|type)(?:\s+-(?:Raw|LiteralPath|Path))*\s+([\w./\\:-]+)(?=\s|['";|&]|$)/i.exec(shellBody);
     if (read) return `${t('assistant.verbReading')} ${read[1]!.split(/[\\/]/).at(-1)}`;
   }
-  const path = short(data.file_path ?? data.filePath ?? data.path ?? data.AbsolutePath ?? data.TargetFile);
+  const path = short(data.file_path ?? data.filePath ?? data.path ?? data.Path ?? data.AbsolutePath ?? data.TargetFile);
   const target = path.split(/[\\/]/).at(-1);
   if (target && (action === 'edit' || action === 'read')) {
     return `${t(action === 'edit' ? 'assistant.verbEditing' : 'assistant.verbReading')} ${target}`;

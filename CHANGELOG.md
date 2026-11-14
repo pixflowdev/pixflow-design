@@ -11,12 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Clarify tool discovery for all assistants so they can reuse available tool details with fewer exploratory commands.
 - Give the assistant more direct access to the active Bricks page and focused tool guidance, so builder edits take fewer discovery steps.
 - Check rendered query results and pagination after builder edits.
 - Let the assistant review smaller copies of large Media Library images and generate batches one image at a time.
 
 ### Fixed
 
+- Show readable filenames and terminal steps for AntiGravity activity in the assistant panel.
+- Prevent avoidable assistant command errors when looking up tools by name, while rejecting missing or conflicting arguments before contacting the site.
 - Keep builder follow-ups pointed at the current page after navigating.
 - Prevent avoidable Windows builder failures caused by long paths, unreadable helper output or misplaced command options.
 - Use placeholders when requested instead of generating replacement images.

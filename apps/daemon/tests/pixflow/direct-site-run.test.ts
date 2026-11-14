@@ -666,6 +666,23 @@ describe('direct site agent connection', () => {
       .rejects.toMatchObject({ stdout: expect.stringContaining('Quote multiword flag values') });
     expect(calls).toBe(0);
   });
+  it('forwards named-tool discovery flags and rejects conflicting or missing names before dispatch', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-tool-name-')); dirs.push(dir);
+    const app = express(); app.use(express.json()); const calls: unknown[] = [];
+    app.post('/tools', (req, res) => { calls.push(req.body); res.json({ ok: true }); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'test-only' }));
+    await promisify(execFile)(process.execPath, ['site-tool.mjs', 'plugin.tools', '--name', 'native-read'], { cwd: dir });
+    expect(calls).toEqual([expect.objectContaining({ tool: 'plugin.tools', arguments: { name: 'native-read' } })]);
+    await fs.writeFile(path.join(dir, 'args.json'), JSON.stringify({ name: 'other' }));
+    await expect(promisify(execFile)(process.execPath, ['site-tool.mjs', 'plugin.call', '@args.json', '--name', 'native-read'], { cwd: dir }))
+      .rejects.toMatchObject({ stdout: expect.stringContaining('Conflicting name') });
+    await expect(promisify(execFile)(process.execPath, ['site-tool.mjs', 'plugin.tools', '--name'], { cwd: dir }))
+      .rejects.toMatchObject({ stdout: expect.stringContaining('--name requires a value') });
+    expect(calls).toHaveLength(1);
+  });
   it('waits only for explicitly unaccepted busy commands, never resubmitting accepted work', async () => {
     const dir=await fs.mkdtemp(path.join(os.tmpdir(),'direct-busy-'));dirs.push(dir);
     const app=express();app.use(express.json());let submissions=0;let results=0;

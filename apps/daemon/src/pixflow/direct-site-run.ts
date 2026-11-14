@@ -185,7 +185,11 @@ async function execute() {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Arguments must be a JSON object. No site operation was dispatched.');
   // Every supplied flag is either transmitted or rejected; never silently drop
   // an agent's arguments and issue a different operation to the site.
-  const readFlags = tool === 'wordpress.media.list' ? ['search', 'mimeType', 'perPage'] : tool === 'wordpress.posts.get' ? ['postId'] : [];
+  const readFlags = ({
+    'wordpress.media.list': ['search', 'mimeType', 'perPage'],
+    'wordpress.posts.get': ['postId'],
+    'wordpress.media.inspect': ['attachmentId'],
+  })[tool] || [];
   for (let index = 0; index < flags.length; index++) {
     const flag = flags[index];
     const key = flag.slice(2);
@@ -199,7 +203,7 @@ async function execute() {
     if (!values.length) throw new Error(flag + ' requires a value.');
     if (key === 'output' || key === 'code-file') continue;
     let value = key === 'paths' || key === 'ids' ? values : values[0];
-    if (key === 'postId' || key === 'perPage') {
+    if (key === 'postId' || key === 'perPage' || key === 'attachmentId') {
       if (!/^[0-9]+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) throw new Error(flag + ' requires a positive safe integer. No site operation was dispatched.');
       value = Number(value);
     }
@@ -256,6 +260,7 @@ export function directSitePrompt(input: PixflowDirectSiteRunRequest, codexImageg
     'For script files, node site-tool.mjs TOOL --code-file build.js --output result.json sends source without local execution or JSON wrapping. Use only an available tool: bricks.run, etch.run and elementor.run accept JavaScript; wordpress.run accepts PHP. Optional @arguments.json can supply args alongside --code-file. Write multiline JSON or code using your file-editing tool, not nested shell commands containing quoted source. Keep scratch files in the current run directory and pass the exact path used by your file-writing tool to --code-file or @arguments; do not drop the run directory when constructing absolute paths. If writing or a tool call fails, stop that command chain instead of reading an output file that was never created. This also avoids apostrophes and newlines breaking PowerShell parsing. Local helper scripts that themselves use require belong in .cjs; .mjs uses import. Gutenberg native operations use argument files, not these builder script tools.',
     'Quote every CLI flag value containing spaces, including skills.list --query "date query". For complex values use an argument file. Do not split a search phrase into separate shell arguments.',
     'For simple discovery use supported flags directly: help --topic TOPIC, skills.list --query "search phrase", and skills.read --paths PATH. Choose the topic and paths from the active integration catalogue. These do not need an arguments file. Help tools and localTools are objects keyed by tool name, not arrays of name/description records; use an exact key or TOOL --help for its schema. Integration catalogues can have their own shapes: inspect their returned keys and titles. Reuse discovered schemas during the task instead of repeating the same discovery. Batch related reference paths in one skills.read call. Use --output for large results you will inspect selectively, not for small receipts that you immediately print with another command.',
+    'WordPress read shortcuts: wordpress.media.list accepts --search "search phrase", --mimeType image and --perPage 12; wordpress.posts.get accepts --postId 10; wordpress.media.inspect accepts --attachmentId 10. These IDs and counts are positive integers. Other tool-specific arguments require a JSON argument file; do not assume every schema property is a command-line flag. Create the file before using @file and use its exact path in the current run workspace.',
     'The adjacent site-tool helper is a prepared transport, not project source to explore before using it. Its help and tool receipts describe the supported arguments. Inspect helper implementation only to diagnose an actual helper failure, not to rediscover canvas binding or command dispatch. Keep configuration and credentials private.',
     bricksContext ? 'For this Bricks session, focused examples are help --topic bricks and skills.read --paths bricks/operations/live-builder.md.' : '',
     'WordPress file paths belong to the connected server, not the local agent computer. Read server files through the advertised files tools; do not open them with local Read, grep, shell or filesystem tools even if a local test installation happens to share that path. Local reading is for the run workspace, downloaded reference files and helper-produced local assets. Prefer supplied builder context and focused schemas before requesting server source.',

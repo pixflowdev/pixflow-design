@@ -666,9 +666,11 @@ describe('direct site agent connection', () => {
     const run = (args: string[]) => promisify(execFile)(process.execPath, ['site-tool.mjs', ...args], { cwd: dir });
     await run(['wordpress.media.list', '--search', 'pottery café', '--mimeType', 'image', '--perPage', '12']);
     await run(['wordpress.posts.get', '--postId', '388']);
+    await run(['wordpress.media.inspect', '--attachmentId', '395']);
     expect(calls).toEqual([
       expect.objectContaining({tool:'wordpress.media.list',arguments:{search:'pottery café',mimeType:'image',perPage:12}}),
       expect.objectContaining({tool:'wordpress.posts.get',arguments:{postId:388}}),
+      expect.objectContaining({tool:'wordpress.media.inspect',arguments:{attachmentId:395}}),
     ]);
     for (const value of ['NaN','1.5','-1','0','9007199254740992']) {
       await expect(run(['wordpress.posts.get','--postId',value])).rejects.toMatchObject({code:1});
@@ -676,7 +678,7 @@ describe('direct site agent connection', () => {
     await expect(run(['wordpress.posts.get','{"postId":387}','--postId','388'])).rejects.toMatchObject({code:1});
     await expect(run(['wordpress.posts.get','--postId'])).rejects.toMatchObject({code:1});
     await expect(run(['wordpress.posts.update','--postId','388'])).rejects.toMatchObject({code:1});
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
   });
   it('explains unquoted multiword flags without dispatching a partial search', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-quoted-query-')); dirs.push(dir);

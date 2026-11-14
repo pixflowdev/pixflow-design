@@ -50,7 +50,15 @@ final class DirectSiteWorkspace
             if (DirectCodeAccess::is_raw_tool($topic) && !\PixflowDesign\WordPress\Modules\AdvancedSiteAccess::available()) return \PixflowDesign\WordPress\Modules\AdvancedSiteAccess::not_allowed();
             $help = \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($topic, 'help');
             if ($help) return $help();
-            return $this->help();
+            $catalogue = $this->help();
+            if ($topic === '') return $catalogue;
+            // Scope only the already-authorized catalogue; discovery never grants access.
+            $namespaces = array_values(array_unique(array_map(static fn(string $name): string => explode('.', $name)[0], array_keys($catalogue['tools']))));
+            $catalogue['tools'] = array_filter($catalogue['tools'], static fn(string $name): bool => $name === $topic || str_starts_with($name, $topic . '.'), ARRAY_FILTER_USE_KEY);
+            $catalogue['topic'] = $topic;
+            $catalogue['availableTopics'] = $namespaces;
+            if (!$catalogue['tools']) $catalogue['guidance'] = 'No available tools match this topic. Choose an availableTopics namespace or omit topic for the complete authorized catalogue.';
+            return $catalogue;
         }
         if ($tool === 'media.stock.register') {
             return (new \PixflowDesign\WordPress\Media\UnsplashMediaLibrary())->create($args);

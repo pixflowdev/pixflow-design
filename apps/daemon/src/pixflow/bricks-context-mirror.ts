@@ -23,9 +23,14 @@ export async function startBricksContextMirror(workspace: string, session: Pixfl
     const signature = `${knownRevision}:${connection}`;
     if (signature === lastState) return;
     const metadata = { canvasId, connection, mirroredAt: new Date().toISOString(), context: snapshot || null };
-    const markdown = `Mirror connection: ${connection}. Canvas: ${canvasId}.\n\n${snapshot?.markdown || '# Live Bricks context\n\nNo compiled snapshot has reached the bridge yet.'}`;
+    const markdown = `Mirror connection: ${connection}. Canvas: ${canvasId}.\n\nNative record lookup: BRICKS-ELEMENTS.jsonl and BRICKS-CLASSES.jsonl have one complete native record per line, searchable by text, ID or class name without a parsing script. The first line is _mirror metadata; subsequent lines are raw records with id/name/settings. Element class IDs are in settings._cssGlobalClasses. The full JSON paths are context.sections.elements and context.sections.classes (arrays, not wrappers). Check the documentId/revision in each file before combining records after a change.\n\n${snapshot?.markdown || '# Live Bricks context\n\nNo compiled snapshot has reached the bridge yet.'}`;
+    const records = (key: 'elements' | 'classes') => {
+      const values = snapshot?.sections[key];
+      return [JSON.stringify({_mirror:{canvasId,connection,documentId:snapshot?.documentId ?? null,revision:snapshot?.revision ?? null,postId:snapshot?.postId ?? null}}),
+        ...(Array.isArray(values) ? values.map(value => JSON.stringify(value)) : [])].join('\n') + '\n';
+    };
     // Each file is atomically replaced. Revision headers identify the pair during a read.
-    for (const [name, content] of [['BRICKS-CONTEXT.json', JSON.stringify(metadata, null, 2)], ['BRICKS-CONTEXT.md', markdown]] as const) {
+    for (const [name, content] of [['BRICKS-CONTEXT.json', JSON.stringify(metadata, null, 2)], ['BRICKS-ELEMENTS.jsonl',records('elements')], ['BRICKS-CLASSES.jsonl',records('classes')], ['BRICKS-CONTEXT.md', markdown]] as const) {
       const target = path.join(workspace, name);
       await fs.writeFile(`${target}.tmp`, content, 'utf8');
       await fs.rename(`${target}.tmp`, target);

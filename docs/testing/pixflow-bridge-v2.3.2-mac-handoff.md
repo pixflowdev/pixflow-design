@@ -52,6 +52,32 @@ Use a disposable local WordPress site and the matching v2.3.2 Core/Pro plugins. 
 - Run PHP bridge-pairing tests and daemon pairing/central-entitlement tests. Origin must remain absent on the exchange; PKCE, expiry, replay, site identity and entitlement checks must pass.
 - Record Intel native hardware coverage separately from Rosetta. If no Intel Mac is available, state that limitation explicitly; do not mark native Intel acceptance passed.
 
+## macOS agent efficiency: investigate, fix and retest
+
+This is a required acceptance gate, not just a log collection exercise. Inspect the complete Codex and Claude runs for failed commands, repeated discovery, unnecessary file/database searches, retries, stalls and time spent finding the correct tool, even when the final page looks correct. Fix reproducible product defects and retest locally. Keep live packages, customer sites and public updater feeds unchanged.
+
+Exercise at least two distinct full-page briefs per provider, plus targeted section changes, tagged and untagged follow-ups, queries, dynamic data, conditions, draft preview verification and the Bricksforge workflows above. Use natural customer prompts and the real floating panel. Do not coach command syntax or tool selection to manufacture a passing run. Record settings separately. Preserve the test site's existing content and clean up only owned fixtures.
+
+Investigate Mac-specific failure modes, including:
+
+- Finder/Dock launch versus Terminal launch: inherited PATH, login-shell configuration and executable selection. Homebrew arm64 `/opt/homebrew/bin`, Intel `/usr/local/bin`, standalone CLI and Desktop-bundled CLI discovery must not drift between authentication, models, usage and execution.
+- zsh/bash command quoting, spaces and Unicode in paths, argument files, UTF-8 output and helper exit codes. Agents must use the supplied helpers rather than searching for Python/Node or repeatedly parsing truncated tool output.
+- Native arm64 versus x64/Rosetta executables and dependencies; executable permissions, quarantine, app relocation and native-host paths. Do not globally disable Gatekeeper or other security controls to obtain a passing result.
+- GUI-launched Bridge credential/keychain access, browser/native transport reconnects, provider switching, CLI update/rescan, Stop, reload and follow-up context after changing builder pages. Do not expose credentials in logs or prompts.
+- Slow tool replies and temporarily busy builders: bounded recovery, useful progress and no duplicate mutations. Distinguish a deliberate permission denial or missing credential from a retryable transport failure; do not retry denied writes or weaken authorization.
+
+For each run retain a redacted trace, prompt, provider/model/reasoning, architecture, cold/warm state, time to first visible text, total duration, failed-command count, repeated discovery calls, retries and outcome. Explain legitimate repeated calls separately from avoidable ones. Compare equivalent prompts/settings; a successful page is not sufficient evidence of an efficient run.
+
+For every reproducible defect:
+
+1. Capture the smallest failing case and add a regression test at the cheapest appropriate layer.
+2. Fix the responsible shared helper, transport, runtime or guidance. Use a Mac-only branch only when the cause is genuinely platform-specific; provider-neutral defects must be fixed for all affected providers. Never hide errors from the trace to improve the count.
+3. Repeat the original uncoached prompt from a clean fixture and run at least one fresh equivalent prompt. Recheck both Codex and Claude when the path is shared; verify saved content and frontend, not just tool success.
+4. Run applicable guard, typecheck and targeted tests. Create focused Core/Pro PRs with user-facing v2.3.2 changelog entries, before/after evidence and CI results. Do not merge or publish these new fixes automatically; send PR links to the release coordinator for review.
+5. Any runtime fix invalidates the affected candidate artifacts. Return the new commit pair and required Pro pin update; wait for coordinator confirmation of replacement release pins before building final DMGs. Windows/shared regression checks and affected ZIP/Bridge rebuilds must use the same reviewed source. Never put uncommitted fixes into production DMGs or silently reuse the old hashes.
+
+Do not mark acceptance passed with unresolved recurring errors or unexplained stalls. If blocked by credentials, hardware or the authorised ad hoc signing limitation, report the exact blocker and incomplete coverage instead of claiming a pass. Restore the original Bridge routing and stop only test-owned dev services at the end.
+
 ## Return and release hold
 
 Return `pixflow-design-bridge-2.3.2-mac-arm64.dmg`, `pixflow-design-bridge-2.3.2-mac-x64.dmg`, `SHA256SUMS-mac.txt` and `validation-receipt-mac.md`. Include exact pins, architecture, macOS version, signing status, checks, live results, known limitations and any packaging-only patch.

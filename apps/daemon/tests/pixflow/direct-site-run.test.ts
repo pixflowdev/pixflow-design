@@ -160,13 +160,16 @@ describe('direct site agent connection', () => {
     expect(result.content).toBeUndefined();
     expect(await fs.readFile(path.join(dir,result.localImage))).toEqual(bytes);
   });
-  it.each(['codex','claude','grok','cursor'])('keeps image fallback available for %s across native builders', agentId => {
+  it.each(['codex','claude','grok','cursor','antigravity'])('keeps image fallback available for %s across native builders', agentId => {
     for (const builder of ['bricks','gutenberg','elementor','etch']) {
       const prompt=directSitePrompt({agentId,prompt:'Build a garden page',history:[],context:{editor:builder},session:{endpoint:'http://127.0.0.1/tools',token:'fixture',writable:true,expiresAt:0}});
       expect(prompt).toContain('wordpress.media.inspect');
       expect(prompt).toContain('Without vision, skip autonomous library selection');
       expect(prompt).toContain('wordpress.media.placeholders');
       expect(prompt).toContain('must not remove imagery');
+      expect(prompt).toContain('Explicit placeholder requests override generation');
+      expect(prompt).toContain('WordPress file paths belong to the connected server, not the local agent computer');
+      if (process.platform === 'win32') expect(prompt).toContain('Do not switch to Bash or Python for JSON/reference discovery');
     }
   });
   it('treats CLI help as discovery without executing the named operation', async () => {
@@ -210,7 +213,11 @@ describe('direct site agent connection', () => {
     const { stdout } = await promisify(execFile)(process.execPath, ['site-tool.mjs', 'bricks.read', '--output', 'result.json'], { cwd: dir });
     expect(JSON.parse(stdout)).toMatchObject({ keys: Object.keys(result), ...(wrapped ? { valuePath: 'result.value' } : {}) });
     if (!wrapped) expect(JSON.parse(stdout)).not.toHaveProperty('valuePath');
-    expect(JSON.parse(await fs.readFile(path.join(dir, 'result.json'), 'utf8'))).toEqual(result);
+    if (wrapped) expect(JSON.parse(stdout)).toMatchObject({resultKeys:['value'],valueKeys:['inspection']});
+    const saved=await fs.readFile(path.join(dir,'result.json'),'utf8');
+    expect(JSON.parse(saved)).toEqual(result);
+    expect(saved.split('\n').length).toBeGreaterThan(3);
+    expect(JSON.parse(stdout).bytes).toBe(Buffer.byteLength(saved));
   });
   it.each(['gutenberg', 'bricks', 'etch', 'elementor'])('provides file-based quoting guidance in %s', (editor) => {
     const prompt = directSitePrompt({ agentId: 'codex', prompt: 'Inspect this page', history: [], context: { editor }, session: { endpoint: 'http://127.0.0.1/tools', token: 'fixture', writable: true, expiresAt: 0 } });
@@ -247,6 +254,21 @@ describe('direct site agent connection', () => {
     return {dir,url,request,post,app};
   }
   const answerScript=`for await(const chunk of process.stdin) {}; console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'First answer'}}));`;
+
+  it('anchors cross-page follow-ups to the current editor after conversation history', async () => {
+    const {request}=await fixture(true);
+    for (const resuming of [false,true]) {
+      const prompt=directSitePrompt({...request,canvasId:'current-tab',canvasPostId:22,
+        history:[{role:'assistant',content:'Edited previous page 11.'}],
+        session:{...request.session,editorTarget:{builder:'bricks',canvasId:'current-tab',postId:22}},
+      },false,true,resuming);
+      expect(prompt).toContain('Current editor target: bricks page 22');
+      expect(prompt.indexOf('Current editor target:')).toBeGreaterThan(prompt.indexOf('Edited previous page 11.'));
+      expect(prompt).toContain('Do not relocate "this page" by searching for a matching page title');
+      expect(prompt).toContain('An empty optional Bricks ability catalogue does not disable');
+      expect(prompt).toContain('Do not end a build after discovery');
+    }
+  });
 
   it('makes the advertised journal readable before the first tool and preserves it on follow-up', async () => {
     runner.script=`import fs from 'node:fs';for await(const chunk of process.stdin){};const before=fs.readFileSync('site-tool-journal.jsonl','utf8');fs.appendFileSync('site-tool-journal.jsonl','retained evidence'+String.fromCharCode(10));console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:before===''?'empty journal ready':'unexpected content'}}));`;
@@ -632,6 +654,18 @@ describe('direct site agent connection', () => {
     expect(JSON.parse(result.stdout)).toEqual({ ok: true, images: [{ id: 'photo' }] });
     expect(calls).toEqual([{ body: { query: 'creative studio' }, authorization: undefined }]);
   });
+  it('explains unquoted multiword flags without dispatching a partial search', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-quoted-query-')); dirs.push(dir);
+    const app = express(); app.use(express.json()); let calls = 0;
+    app.post('/tools', (_req, res) => { calls++; res.json({ ok: true }); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'test-only' }));
+    await expect(promisify(execFile)(process.execPath, ['site-tool.mjs', 'skills.list', '--query', 'date', 'query'], { cwd: dir }))
+      .rejects.toMatchObject({ stdout: expect.stringContaining('Quote multiword flag values') });
+    expect(calls).toBe(0);
+  });
   it('waits only for explicitly unaccepted busy commands, never resubmitting accepted work', async () => {
     const dir=await fs.mkdtemp(path.join(os.tmpdir(),'direct-busy-'));dirs.push(dir);
     const app=express();app.use(express.json());let submissions=0;let results=0;
@@ -705,6 +739,16 @@ describe('direct site agent connection', () => {
     await fs.writeFile(path.join(dir, 'elementor-target.json'), JSON.stringify({ canvasId: 'elementor-canvas', expectedPostId: 56 }));
     await run(process.execPath, ['site-tool.mjs', 'elementor.run', '@elementor-target.json', '--code-file', 'build.js'], { cwd: dir });
     expect(calls.at(-1)).toEqual({ tool: 'elementor.run', arguments: { code, canvasId: 'elementor-canvas', expectedPostId: 56 } });
+    await fs.writeFile(path.join(dir, 'late.json'), JSON.stringify({args:{label:'Late file'},response:'value'}));
+    await run(process.execPath, ['site-tool.mjs', 'bricks.run', '--code-file', 'build.js', '@late.json', '--output', 'late-result.json'], {cwd:dir});
+    expect(calls.at(-1)).toEqual({tool:'bricks.run',arguments:{args:{label:'Late file'},response:'value',code,canvasId:'canvas',expectedPostId:12}});
+    const sent=calls.length;
+    for(const flags of [
+      ['@late.json','--code-file','build.js','@late.json'],
+      ['--code-file','build.js','@late.json','--response','full'],
+      ['--code-file','build.js','--response','full','@late.json'],
+    ]) await expect(run(process.execPath,['site-tool.mjs','bricks.run',...flags],{cwd:dir})).rejects.toMatchObject({code:1});
+    expect(calls).toHaveLength(sent);
   });
   it('preserves skill path flags and reports unsupported flags before sending a request', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-skill-flags-')); dirs.push(dir);

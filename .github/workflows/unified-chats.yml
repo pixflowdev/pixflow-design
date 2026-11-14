@@ -54,8 +54,8 @@ jobs:
           pnpm --filter @open-design/daemon test tests/pixflow/codex-turn.test.ts
       - name: Document attachments and model selection
         run: |
-          pnpm --filter @open-design/web test tests/pixflow/direct-site-byok.test.ts tests/components/agentModelSelection.test.ts
-          pnpm --filter @open-design/daemon test tests/pixflow/direct-site-run.test.ts
+          pnpm --filter @open-design/web test tests/pixflow/direct-site-byok.test.ts tests/components/agentModelSelection.test.ts tests/components/composer-queue.test.tsx
+          pnpm --filter @open-design/daemon test tests/pixflow/direct-site-run.test.ts tests/antigravity-models.test.ts
           php wordpress/tests/project-file-security.test.php
       - run: pnpm --filter @open-design/web test PixflowLicensePanel use-license-refresh tests/pixflow/license.test.ts
       - run: pnpm --filter @open-design/web test EntryShell.onboarding

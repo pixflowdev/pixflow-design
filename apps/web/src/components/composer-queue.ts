@@ -47,7 +47,12 @@ export function useComposerQueue(options: {
   const latest = useRef(options); latest.current = options;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   function update(next: QueueState) {
-    if (options.key) sessionStorage.setItem(options.key, JSON.stringify(next));
+    if (options.key) {
+      // An empty queue has no delivery to recover. Removing its receipt also
+      // lets Stop succeed when unrelated recovery data fills browser storage.
+      if (next.items.length === 0) sessionStorage.removeItem(options.key);
+      else sessionStorage.setItem(options.key, JSON.stringify(next));
+    }
     current.current = next; setState(next);
   }
   function change(fn: (value: QueueState) => QueueState) {

@@ -35,7 +35,13 @@ it('mirrors revisions, marks transport failure stale, and stops on run completio
     expect(JSON.parse(fetcher.mock.calls[1]![1].body).arguments.revision).toBe('doc:1');
     await stop();
     expect(await fs.readFile(path.join(dir, 'BRICKS-CONTEXT.md'), 'utf8')).toContain('mirroring stopped');
-    expect(await fs.readFile(path.join(dir, 'BRICKS-CONTEXT.json'), 'utf8')).not.toContain('private-token');
+    const json = await fs.readFile(path.join(dir, 'BRICKS-CONTEXT.json'), 'utf8');
+    expect(json).not.toContain('private-token');
+    expect(JSON.parse(json).context).toEqual(snapshot);
+    // File search tools must be able to retrieve one field without returning the entire catalogue.
+    const postLines = json.split('\n').filter(line => line.includes('"postId"'));
+    expect(postLines).toHaveLength(1);
+    expect(postLines[0]!.trim()).toBe('"postId": 12,');
     await vi.advanceTimersByTimeAsync(60000);
     expect(fetcher).toHaveBeenCalledTimes(2);
   } finally { await stop(); await fs.rm(dir, { recursive: true, force: true }); }

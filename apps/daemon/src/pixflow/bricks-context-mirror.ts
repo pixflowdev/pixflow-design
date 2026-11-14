@@ -25,7 +25,7 @@ export async function startBricksContextMirror(workspace: string, session: Pixfl
     const metadata = { canvasId, connection, mirroredAt: new Date().toISOString(), context: snapshot || null };
     const markdown = `Mirror connection: ${connection}. Canvas: ${canvasId}.\n\n${snapshot?.markdown || '# Live Bricks context\n\nNo compiled snapshot has reached the bridge yet.'}`;
     // Each file is atomically replaced. Revision headers identify the pair during a read.
-    for (const [name, content] of [['BRICKS-CONTEXT.json', JSON.stringify(metadata)], ['BRICKS-CONTEXT.md', markdown]] as const) {
+    for (const [name, content] of [['BRICKS-CONTEXT.json', JSON.stringify(metadata, null, 2)], ['BRICKS-CONTEXT.md', markdown]] as const) {
       const target = path.join(workspace, name);
       await fs.writeFile(`${target}.tmp`, content, 'utf8');
       await fs.rename(`${target}.tmp`, target);

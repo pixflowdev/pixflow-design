@@ -59,6 +59,29 @@ afterEach(async () => {
 });
 
 describe('direct site agent connection', () => {
+  it.each([false,true])('gives agents readable skill files without parsing JSON or using site paths as filenames (batch: %s)', async batched => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-skills-')); dirs.push(dir);
+    const refs=[{path:'../../outside.md',content:'# Native classes\nUse the existing API.\n'},{path:'bricks/query.md',content:'# Queries\nPreserve the filter.'}];
+    const app=express();app.use(express.json());app.post('/tools',(_req,res)=>res.json({references:refs}));
+    const url=await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
+    await fs.writeFile(path.join(dir,'batch.json'),JSON.stringify({calls:[{tool:'skills.read',arguments:{paths:['bricks/query.md']}}]}));
+    const argv=batched ? ['site-tool.mjs','batch','@batch.json','--output','skills.json'] : ['site-tool.mjs','skills.read','--paths','bricks/query.md','--output','skills.json'];
+    const {stdout}=await promisify(execFile)(process.execPath,argv,{cwd:dir});
+    const receipt=JSON.parse(stdout);
+    expect(receipt.skillFiles).toHaveLength(2);
+    for(const [i,file] of receipt.skillFiles.entries()) {
+      expect(path.dirname(file.localPath)).toBe(dir);
+      expect(path.basename(file.localPath)).toMatch(/^skill-reference-[a-f0-9-]+\.md$/);
+      expect(await fs.readFile(file.localPath,'utf8')).toBe(refs[i]!.content);
+      expect(file.path).toBe(refs[i]!.path);
+    }
+    const saved=JSON.parse(await fs.readFile(path.join(dir,'skills.json'),'utf8'));
+    expect((batched?saved.results[0].result:saved).references).toEqual(refs);
+  });
+
   it.each([false, true])('serializes generated images in parallel batches (nested: %s)', async nested => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-image-batch-')); dirs.push(dir);
     const app = express(); app.use(express.json()); let active = 0; let peak = 0;
@@ -117,8 +140,9 @@ describe('direct site agent connection', () => {
     await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',imageEndpoint:url+'/images',token:'fixture'}));
     const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','media.generate','--help'],{cwd:dir});
     const result=JSON.parse(stdout);
-    expect(result.localTools['media.generate'].description).toContain('Codex');
-    expect(result.tools).toEqual(['wordpress.media.list']);
+    expect(result.arguments.description).toContain('Codex');
+    expect(result.tool).toBe('media.generate');
+    expect(result.tools).toBeUndefined();
     expect(calls).toEqual(['help']);
   });
   it('materializes inspected library bytes for native vision without dumping base64 into the transcript', async () => {
@@ -157,7 +181,22 @@ describe('direct site agent connection', () => {
     for (const args of [['--help'], ['elementor.run', '--help'], ['bricks.run', '--help', '--code-file', 'absent.js']]) {
       await promisify(execFile)(process.execPath, ['site-tool.mjs', ...args], { cwd: dir });
     }
-    expect(calls).toEqual([{ tool: 'help', arguments: {} }, { tool: 'help', arguments: { topic: 'elementor' } }, { tool: 'help', arguments: { topic: 'bricks' } }]);
+    expect(calls).toEqual([{ tool: 'help', arguments: {} }, { tool: 'help', arguments: {} }, { tool: 'help', arguments: {} }]);
+  });
+  it('returns the exact named tool schema in one help request instead of builder references', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-focused-help-')); dirs.push(dir);
+    const app = express(); app.use(express.json());
+    const calls: unknown[] = [];
+    app.post('/tools', (req,res) => { calls.push(req.body); res.json(req.body.arguments.topic
+      ? {references:[{path:'bricks/operations/live-builder.md',content:'General guidance'}]}
+      : {tools:{'bricks.mutate':{operations:'Array of {type:patch,id,settings}'},'bricks.save':{description:'Save'}}}); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
+    const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','bricks.mutate','--help'],{cwd:dir});
+    expect(JSON.parse(stdout)).toEqual({ok:true,tool:'bricks.mutate',arguments:{operations:'Array of {type:patch,id,settings}'}});
+    expect(calls).toEqual([{tool:'help',arguments:{}}]);
   });
   it.each([false, true])('describes saved result envelopes without flattening data (wrapped=%s)', async wrapped => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-envelope-')); dirs.push(dir);
@@ -208,6 +247,16 @@ describe('direct site agent connection', () => {
     return {dir,url,request,post,app};
   }
   const answerScript=`for await(const chunk of process.stdin) {}; console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'First answer'}}));`;
+
+  it('makes the advertised journal readable before the first tool and preserves it on follow-up', async () => {
+    runner.script=`import fs from 'node:fs';for await(const chunk of process.stdin){};const before=fs.readFileSync('site-tool-journal.jsonl','utf8');fs.appendFileSync('site-tool-journal.jsonl','retained evidence'+String.fromCharCode(10));console.log(JSON.stringify({type:'thread.started',thread_id:'saved-native'}));console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:before===''?'empty journal ready':'unexpected content'}}));`;
+    const {request,post}=await fixture();
+    const first=await(await post('run-stream',request)).text();
+    expect(first).toContain('empty journal ready');
+    runner.script=`import fs from 'node:fs';for await(const chunk of process.stdin){};console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:fs.readFileSync('site-tool-journal.jsonl','utf8')}}));`;
+    const next=await(await post('run-stream',{...request,prompt:'Follow up',history:[{role:'user',content:'First request'},{role:'assistant',content:'empty journal ready'}],continuation:{id:'3'.repeat(32),token:'4'.repeat(64)}})).text();
+    expect(next).toContain('retained evidence');
+  });
 
   it('admits Grok file prompts, streams real tool shapes, and resumes the captured session', async () => {
     runner.parser='grok-build';runner.filePrompt=true;

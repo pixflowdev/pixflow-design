@@ -6,6 +6,17 @@ import { I18nProvider } from '../../src/i18n';
 import type { ReactNode } from 'react';
 import { fr } from '../../src/i18n/locales/fr';
 beforeEach(() => sessionStorage.clear());
+it('stops an empty queue without reporting a lost message when storage is full', () => {
+  const { result, rerender } = renderHook(({ streaming, outcome }) => useComposerQueue({ key: 'empty-stop', streaming, outcome, disabled: false, send: vi.fn() }), { initialProps: { streaming: true, outcome: 'running' } });
+  const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('Full', 'QuotaExceededError'); });
+  try {
+    rerender({ streaming: false, outcome: 'cancelled' });
+    expect(result.current.error).toBe('');
+    expect(result.current.items).toEqual([]);
+    expect(result.current.paused).toBe(true);
+    expect(write).not.toHaveBeenCalled();
+  } finally { write.mockRestore(); }
+});
 it('reconciles restored uncertain guidance with durable steering receipts without resending or removing other messages', () => {
   sessionStorage.setItem('recovered-steer', JSON.stringify({ paused: false, items: [
     { id: 'accepted-one', prompt: 'Accepted guidance', attachments: [], comments: [], state: 'sending' },

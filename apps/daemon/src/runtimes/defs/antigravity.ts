@@ -37,13 +37,16 @@ function modelOptionsFromOutput(stdout: string): RuntimeModelOption[] | null {
   const models = String(stdout)
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => /^[a-z0-9][a-z0-9._-]+$/i.test(line))
-    .filter((id) => {
+    .map((line) => {
+      const [id = '', ...label] = line.split('\t');
+      return { id: id.trim(), label: label.join(' ').trim() || id.trim() };
+    })
+    .filter(({ id }) => /^[a-z0-9][a-z0-9._-]+$/i.test(id))
+    .filter(({ id }) => {
       if (seen.has(id)) return false;
       seen.add(id);
       return true;
-    })
-    .map((id) => ({ id, label: id }));
+    });
   return models.length > 0 ? [DEFAULT_MODEL_OPTION, ...models] : null;
 }
 

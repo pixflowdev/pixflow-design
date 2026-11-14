@@ -40,6 +40,7 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 **Fixed**
 
 * Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
+* Open a single assistant panel from Sitemap without a second blank panel.
 
 = 2.3.1 =
 

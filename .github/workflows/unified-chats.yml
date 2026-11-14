@@ -14,6 +14,7 @@ on:
       - 'wordpress/src/Http/Routes/ChatHistoryRoutes.php'
       - 'wordpress/tests/direct-session-features.test.php'
       - 'wordpress/tests/chat-history-sqlite.test.php'
+      - 'wordpress/assets/admin/wp-admin-floating-panel.css'
       - 'wordpress/assets/admin/wp-admin-floating-panel.js'
       - '.github/workflows/unified-chats.yml'
   workflow_dispatch:

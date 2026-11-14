@@ -9,17 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.2]
 
+### Changed
+
+- Give the assistant more direct access to the active Bricks page and focused tool guidance, so builder edits take fewer discovery steps.
+- Check rendered query results and pagination after builder edits.
+- Let the assistant review smaller copies of large Media Library images and generate batches one image at a time.
+
 ### Fixed
 
-- Give agents readable local builder guidance and precise tool help, avoiding unnecessary parsing and repeated discovery.
-- Require rendered query and pagination checks after builder edits instead of relying only on saved settings.
-- Improve Windows agent reliability with shorter working paths and reliable helper output files.
-- Inspect safe previews of large Media Library images and run image-generation batches sequentially.
-- Keep the Image Upscaler headers in view while the settings and preview columns scroll independently.
-- Show WordPress administrators how to repair an incomplete or incompatible Pro installation.
-- Open a single assistant panel from Sitemap without a second blank panel.
+- Keep builder follow-ups pointed at the current page after navigating.
+- Prevent avoidable Windows builder failures caused by long paths, unreadable helper output or misplaced command options.
+- Use placeholders when requested instead of generating replacement images.
+- Show available Antigravity models when the CLI includes display names.
+- Stop an empty chat queue without showing a storage warning.
+- Keep Image Upscaler headers visible while the settings and preview columns scroll independently.
+- Explain how to repair an incomplete or incompatible Pro installation in WordPress, in the selected language.
+- Open a single assistant panel from Sitemap.
 
-## [2.3.1] - Release candidate
+## [2.3.1] - 2026-11-13
 
 ### Added
 
@@ -34,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reconnect Workspace to the Bridge before syncing protected project files.
 - Send the connected site origin with authenticated Workspace, editor, and site-tool POSTs so hosts that require it can pass the requests to WordPress for authorization.
 
 - Prefer the configured Claude CLI or a standalone installation when available, and discover models only from the selected runtime.

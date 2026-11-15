@@ -9,6 +9,13 @@ import { TooltipLayer } from '../../src/components/TooltipLayer';
 afterEach(() => cleanup());
 
 describe('TooltipLayer', () => {
+  it('shows only one floating tooltip when multiple panel roots are mounted', async () => {
+    render(<div className="pixflow-bricks-agent-shell"><button title="Dictation">Dictation</button><TooltipLayer /><TooltipLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Dictation' }));
+    await waitFor(() => expect(screen.getAllByRole('tooltip')).toHaveLength(1));
+  });
+
   it('uses the shared shadcn tooltip outside contained floating editors', async () => {
     const editor = document.createElement('div');
     editor.className = 'workspace-shell pixflow-bricks-agent-shell';

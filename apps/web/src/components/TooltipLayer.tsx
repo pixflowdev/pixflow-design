@@ -20,6 +20,9 @@ interface TooltipState {
 
 const TOOLTIP_MARGIN = 8;
 const TOOLTIP_GAP = 7;
+// Several floating roots can share a document. Only one delegated layer owns
+// each opening event; all layers still receive dismissal and cleanup events.
+const handledFloatingTooltipEvents = new WeakSet<Event>();
 
 const FLOATING_TOOLTIP_SCOPE = '.pixflow-bricks-agent-shell, .pixflow-bricks-agent-portal-root, .pixflow-agent-surface-shell, .pixflow-bricks-agent-frame-app';
 function isFloatingTarget(target: HTMLElement): boolean {
@@ -245,6 +248,10 @@ export function TooltipLayer() {
     const onPointerOver = (event: PointerEvent) => {
       lastInputRef.current = 'pointer';
       const target = readTooltipTarget(event.target);
+      if (target && isFloatingTarget(target)) {
+        if (handledFloatingTooltipEvents.has(event)) return;
+        handledFloatingTooltipEvents.add(event);
+      }
       if (delayRef.current !== null) clearTimeout(delayRef.current);
       if (target && isFloatingTarget(target)) {
         suppressNativeTitle(target);
@@ -272,6 +279,10 @@ export function TooltipLayer() {
     const onFocusIn = (event: FocusEvent) => {
       const target = readTooltipTarget(event.target);
       if (!target) return;
+      if (isFloatingTarget(target)) {
+        if (handledFloatingTooltipEvents.has(event)) return;
+        handledFloatingTooltipEvents.add(event);
+      }
       if (shouldShowForFocus(target)) {
         showTooltip(target);
         return;

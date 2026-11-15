@@ -37,15 +37,18 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = 2.3.2 =
 
-**Changed**
+**Changed**
 
 * Clarify tool discovery for all assistants so they can reuse available tool details with fewer exploratory commands.
 * Give the assistant more direct access to the active Bricks page and focused tool guidance, so builder edits take fewer discovery steps.
 * Check rendered query results and pagination after builder edits.
 * Let the assistant review smaller copies of large Media Library images and generate batches one image at a time.
 
-**Fixed**
+**Fixed**
 
+* Keep pending questions visible above the composer in floating chat panels with long conversations.
+* Use the shared Workspace tooltip for floating-panel header and composer controls, keeping hints compact, correctly positioned and keyboard accessible.
+* Avoid unnecessary assistant retries when searching media or reading a post using named command arguments.
 * Protect Free and Pro Bridge pairing against accidentally sending browser-only headers that WordPress rejects.
 * Show readable filenames and terminal steps for AntiGravity activity in the assistant panel.
 * Prevent avoidable assistant command errors when looking up tools by name, while rejecting missing or conflicting arguments before contacting the site.
@@ -833,8 +836,3 @@ Fixed
 * Added the optional Pixflow Design Bridge with packaged installers, system-tray runtime, health/update handling, rich Bricks/Pixflow MCP skills, and multi-agent Local CLI support.
 * Added native WordPress plugin updates and backward-compatible migration from existing Pixflow AI installations.
 * Fixed bridge startup and reconnection, Bricks 2.4 toolbar compatibility, duplicate or truncated agent replies, provider error messaging, custom token mapping, template image delivery, Code element normalization, and release-build preflight.
-
-
-
-
-

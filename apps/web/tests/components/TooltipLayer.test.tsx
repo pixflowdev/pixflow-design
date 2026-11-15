@@ -2,14 +2,37 @@
 
 import { useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TooltipLayer } from '../../src/components/TooltipLayer';
 
 afterEach(() => cleanup());
 
 describe('TooltipLayer', () => {
-  it('portals viewport-positioned tooltips into an isolated themed layer outside contained editors', () => {
+  it('shares event ownership between independently bundled layers', async () => {
+    vi.resetModules();
+    const { TooltipLayer: OtherBundleLayer } = await import('../../src/components/TooltipLayer');
+    render(<div className="pixflow-bricks-agent-shell"><button title="Dictation">Dictation</button><TooltipLayer /><OtherBundleLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Dictation' }));
+    await waitFor(() => expect(screen.getAllByRole('tooltip')).toHaveLength(1));
+  });
+
+  it('keeps the expanded panel collapse control discoverable', async () => {
+    render(<div className="pixflow-bricks-agent-shell"><button className="pixflow-bricks-agent-panel__icon-button" aria-expanded="true" title="Collapse panel">Collapse panel</button><TooltipLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Collapse panel' }));
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Collapse panel');
+  });
+
+  it('shows only one floating tooltip when multiple panel roots are mounted', async () => {
+    render(<div className="pixflow-bricks-agent-shell"><button title="Dictation">Dictation</button><TooltipLayer /><TooltipLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Dictation' }));
+    await waitFor(() => expect(screen.getAllByRole('tooltip')).toHaveLength(1));
+  });
+
+  it('uses the shared shadcn tooltip outside contained floating editors', async () => {
     const editor = document.createElement('div');
     editor.className = 'workspace-shell pixflow-bricks-agent-shell';
     editor.style.contain = 'layout paint';
@@ -20,15 +43,29 @@ describe('TooltipLayer', () => {
     try {
       render(<><button className="od-tooltip" data-tooltip="Add context">Add context</button><TooltipLayer /></>, { container: editor });
       fireEvent.pointerOver(screen.getByRole('button', { name: 'Add context' }));
-      const tooltip = screen.getByRole('tooltip');
-      const layer = tooltip.parentElement!;
+      const tooltip = await screen.findByRole('tooltip');
+      const layer = tooltip.closest('.pixflow-bricks-agent-portal-root')!;
       expect(layer.parentElement).toBe(document.body);
-      expect(layer.classList.contains('pixflow-design-portal-scope')).toBe(true);
-      expect(layer.style.position).toBe('fixed');
-      expect(layer.style.contain).toContain('paint');
-      expect(Number(layer.style.zIndex)).toBeGreaterThan(100090);
-      expect(tooltip.style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+      expect(editor.contains(tooltip)).toBe(false);
+      expect(tooltip.getAttribute('data-slot')).toBe('tooltip-content');
+      expect((layer as HTMLElement).style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+      expect(screen.getByRole('button', { name: 'Add context' }).getAttribute('aria-describedby')).toContain(tooltip.id);
     } finally { editor.remove(); }
+  });
+
+  it.each(['Design styling', 'Start Codex voice', 'Dictation', 'Annotate page', 'Set panel size SM'])('uses one tooltip for native floating control %s and restores its title', async label => {
+    render(<div className="pixflow-bricks-agent-shell"><button title={label}>{label}</button><TooltipLayer /></div>);
+    const button = screen.getByRole('button', { name: label });
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(button);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.getAttribute('data-slot')).toBe('tooltip-content');
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+    expect(button.hasAttribute('title')).toBe(false);
+    fireEvent.keyDown(button, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+    expect(button.getAttribute('title')).toBe(label);
+    expect(button.hasAttribute('aria-describedby')).toBe(false);
   });
 
   it('dismisses a hovered icon tooltip when the icon is activated', () => {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { workspacePortalThemeStyle } from './workspacePortalTarget';
+import { AnchoredNavigationTooltip } from './NavigationTooltip';
 
 type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right';
 type InputModality = 'keyboard' | 'pointer';
@@ -19,17 +20,38 @@ interface TooltipState {
 
 const TOOLTIP_MARGIN = 8;
 const TOOLTIP_GAP = 7;
+// Several floating roots can share a document. Only one delegated layer owns
+// each opening event; all layers still receive dismissal and cleanup events.
+const floatingTooltipEventHandled = Symbol.for('pixflow:floating-tooltip-event-handled');
+function claimFloatingTooltipEvent(event: Event): boolean {
+  // Core and Pro may each bundle this module, so module-local state is not
+  // enough. The native event is shared by every listener in this document.
+  if (Reflect.get(event, floatingTooltipEventHandled)) return false;
+  Reflect.set(event, floatingTooltipEventHandled, true);
+  return true;
+}
+
+const FLOATING_TOOLTIP_SCOPE = '.pixflow-bricks-agent-shell, .pixflow-bricks-agent-portal-root, .pixflow-agent-surface-shell, .pixflow-bricks-agent-frame-app';
+function isFloatingTarget(target: HTMLElement): boolean {
+  return Boolean(target.closest(FLOATING_TOOLTIP_SCOPE));
+}
+function tooltipText(target: HTMLElement): string {
+  return (target.dataset.tooltip || target.dataset.odTooltipNativeTitle || target.getAttribute('title') || '').trim();
+}
 
 function isTooltipTarget(el: Element | null): el is HTMLElement {
   return el instanceof HTMLElement
-    && el.classList.contains('od-tooltip')
-    && Boolean(el.dataset.tooltip?.trim())
-    && el.getAttribute('aria-expanded') !== 'true';
+    && (el.classList.contains('od-tooltip') || isFloatingTarget(el))
+    && Boolean(tooltipText(el))
+    && (el.getAttribute('aria-expanded') !== 'true'
+      || el.classList.contains('pixflow-bricks-agent-panel__icon-button'));
 }
 
 function readTooltipTarget(start: EventTarget | null): HTMLElement | null {
   if (!(start instanceof Element)) return null;
-  const candidate = start.closest('.od-tooltip[data-tooltip]');
+  const candidate = start.closest('.od-tooltip[data-tooltip], [data-tooltip], [title], [data-od-tooltip-native-title]');
+  // Editable placeholders are not action tooltips.
+  if (candidate?.matches('input, textarea, [contenteditable="true"]')) return null;
   return isTooltipTarget(candidate) ? candidate : null;
 }
 
@@ -93,6 +115,7 @@ function sameStyle(
 export function TooltipLayer() {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastInputRef = useRef<InputModality>('pointer');
   const suppressedTitleRef = useRef<{ target: HTMLElement; title: string } | null>(null);
   const [state, setState] = useState<TooltipState | null>(null);
@@ -120,6 +143,7 @@ export function TooltipLayer() {
   }, [restoreNativeTitle]);
 
   const hideTooltip = useCallback((options: { restoreTitle?: boolean } = {}) => {
+    if (delayRef.current !== null) { clearTimeout(delayRef.current); delayRef.current = null; }
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -138,7 +162,7 @@ export function TooltipLayer() {
   }, [hideTooltip, suppressNativeTitle]);
 
   const showTooltip = useCallback((target: HTMLElement) => {
-    const text = target.dataset.tooltip?.trim();
+    const text = tooltipText(target);
     if (!text) return;
     suppressNativeTitle(target);
     const placement = tooltipPlacement(target);
@@ -160,7 +184,9 @@ export function TooltipLayer() {
     setState((current) => {
       if (!current) return null;
       if (!document.contains(current.target)) return null;
-      if (current.target.getAttribute('aria-expanded') === 'true') return null;
+      if (!isTooltipTarget(current.target)) return null;
+      // Base UI owns collision handling and anchor updates for floating panels.
+      if (isFloatingTarget(current.target)) return current;
       const node = tooltipRef.current;
       if (!node) return current;
       const placement = tooltipPlacement(current.target);
@@ -197,6 +223,7 @@ export function TooltipLayer() {
 
   useEffect(() => {
     return () => {
+      if (delayRef.current !== null) clearTimeout(delayRef.current);
       if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current);
       restoreNativeTitle();
     };
@@ -229,7 +256,14 @@ export function TooltipLayer() {
     const onPointerOver = (event: PointerEvent) => {
       lastInputRef.current = 'pointer';
       const target = readTooltipTarget(event.target);
-      if (target) showTooltip(target);
+      if (target && isFloatingTarget(target)) {
+        if (!claimFloatingTooltipEvent(event)) return;
+      }
+      if (delayRef.current !== null) clearTimeout(delayRef.current);
+      if (target && isFloatingTarget(target)) {
+        suppressNativeTitle(target);
+        delayRef.current = setTimeout(() => { delayRef.current = null; if (document.contains(target) && isTooltipTarget(target)) showTooltip(target); }, 250);
+      } else if (target) showTooltip(target);
     };
     const onPointerOut = (event: PointerEvent) => {
       const target = readTooltipTarget(event.target);
@@ -252,6 +286,9 @@ export function TooltipLayer() {
     const onFocusIn = (event: FocusEvent) => {
       const target = readTooltipTarget(event.target);
       if (!target) return;
+      if (isFloatingTarget(target)) {
+        if (!claimFloatingTooltipEvent(event)) return;
+      }
       if (shouldShowForFocus(target)) {
         showTooltip(target);
         return;
@@ -298,6 +335,10 @@ export function TooltipLayer() {
   }, [hideTooltip, hideTooltipForActivation, scheduleUpdatePosition, showTooltip, suppressNativeTitle]);
 
   if (!state || typeof document === 'undefined') return null;
+
+  if (isFloatingTarget(state.target)) return <AnchoredNavigationTooltip
+    anchor={state.target} label={state.text} side={state.placement}
+  />;
 
   return createPortal(
     // The scope enables WordPress's tooltip CSS. A viewport-sized paint boundary

@@ -1171,7 +1171,10 @@ main.app.pixflow-bricks-agent-frame-app,
 }
 
 .pixflow-bricks-agent-react .chat-log-wrap {
-  flex: 1 1 auto;
+  /* Allocate the transcript the space left by questions and the composer.
+     An intrinsic basis lets a long history shrink a pending question to a
+     clipped header even though that history can scroll. */
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   position: relative;

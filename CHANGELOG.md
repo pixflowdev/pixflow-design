@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep pending questions visible above the composer in floating chat panels with long conversations.
+- Use the shared Workspace tooltip for floating-panel header and composer controls, keeping hints compact, correctly positioned and keyboard accessible.
+- Avoid unnecessary assistant retries when searching media or reading a post using named command arguments.
 - Protect Free and Pro Bridge pairing against accidentally sending browser-only headers that WordPress rejects.
 - Show readable filenames and terminal steps for AntiGravity activity in the assistant panel.
 - Prevent avoidable assistant command errors when looking up tools by name, while rejecting missing or conflicting arguments before contacting the site.

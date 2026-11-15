@@ -1,6 +1,7 @@
 'use client';
 
 import { InputGroup, InputGroupAddon, InputGroupButton } from './chat/InputGroup';
+import { NavigationTooltip } from './NavigationTooltip';
 import { designCommandDescriptions, designCommandDisplayLabel } from '../pixflow/design-command-descriptions';
 import { pixflowFeatureConfiguration, usePixflowFeatureRuntime } from '../pixflow/feature-runtime';
 
@@ -2800,10 +2801,11 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                 }}
               />
             )}
+              <NavigationTooltip label={primaryActionLabel} disabled={primaryActionDisabled} side="top">
               <InputGroupButton
                 variant="ghost"
                 type="button"
-                className={`composer-send od-tooltip${showStopButton ? ' stop' : ''}`}
+                className={`composer-send${showStopButton ? ' stop' : ''}`}
                 data-testid={showStopButton ? 'chat-stop' : 'chat-send'}
                 onClick={() => {
                   if (showStopButton) { messageQueue.pause(); onStop(); return; }
@@ -2816,11 +2818,11 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                 }}
                 disabled={primaryActionDisabled}
                 aria-label={primaryActionLabel}
-                data-tooltip={primaryActionDisabled ? undefined : primaryActionLabel}
               >
                 {showStopButton ? <Icon name="stop" size={13} /> : compactAppearance ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : <Icon name="send" size={13} />}
                 <span>{primaryActionLabel}</span>
               </InputGroupButton>
+              </NavigationTooltip>
           </InputGroupAddon>
         </InputGroup>
         {uploadError ? <span className="composer-hint">{uploadError}</span> : null}

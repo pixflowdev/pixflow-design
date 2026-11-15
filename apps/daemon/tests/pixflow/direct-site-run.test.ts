@@ -102,6 +102,7 @@ describe('direct site agent connection', () => {
     const results=JSON.parse(stdout).results;
     expect(results.map((item: {result:{prompt:string;results:Array<{result:{prompt:string}}>}})=>nested ? item.result.results[0]!.result.prompt : item.result.prompt)).toEqual(['first','second']);
   });
+
   it('refreshes fixed style files from the current native editor receipt', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-styles-')); dirs.push(dir);
     const app = express(); app.use(express.json()); let revision = 'first';
@@ -117,8 +118,8 @@ describe('direct site agent connection', () => {
     await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
     await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture'}));
     if (process.platform === 'win32') {
-      await fs.writeFile(path.join(dir,'site-tool.ps1'),windowsHelperLauncher('site-tool.mjs'));
-      await promisify(execFile)(path.join(process.env.SystemRoot!, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-File', 'site-tool.ps1', 'gutenberg.read'], {
+      await fs.writeFile(path.join(dir,'site-tool.cmd'),windowsHelperLauncher('site-tool.mjs'));
+      await promisify(execFile)(path.join(process.env.SystemRoot!, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Restricted', '-Command', '& ./site-tool.cmd gutenberg.read; exit $LASTEXITCODE'], {
         cwd: dir, env: { ...process.env, PATH: path.join(process.env.SystemRoot!, 'System32') },
       });
     } else {
@@ -170,7 +171,7 @@ describe('direct site agent connection', () => {
       expect(prompt).toContain('must not remove imagery');
       expect(prompt).toContain('Explicit placeholder requests override generation');
       expect(prompt).toContain('WordPress file paths belong to the connected server, not the local agent computer');
-      if (process.platform === 'win32') expect(prompt).toContain('Do not switch to Bash or Python for JSON/reference discovery');
+      if (process.platform === 'win32') expect(prompt).toContain('Do not switch shells or use Python for JSON/reference discovery');
     }
   });
   it('treats CLI help as discovery without executing the named operation', async () => {
@@ -390,6 +391,31 @@ describe('direct site agent connection', () => {
     const file=String(runner.contexts[0]?.promptFilePath);
     expect(path.isAbsolute(file)).toBe(true);
     await expect.poll(()=>fs.access(path.dirname(file)).then(()=>true,()=>false)).toBe(false);
+  });
+
+  it.each([true, false])('keeps copy review next to the brief for writable requests (%s)', async writable => {
+    const {request,post}=await fixture(writable);
+    runner.script=answerScript;
+    const brief='Build a page with a clear next step';
+    await (await post('run-stream',{...request,mode:undefined,prompt:brief})).text();
+    const prompt=runner.prompts[0] ?? '';
+    if (writable) {
+      expect(prompt).toContain(brief+'\n\nBefore building a page, identify the business facts');
+      expect(prompt).toContain('label it with what readers can actually do there');
+      expect(prompt).not.toContain('This brief explicitly limits invented or unsupported claims.');
+    } else {
+      expect(prompt).not.toContain('Before building a page, identify the business facts');
+    }
+  });
+
+  it('includes the stricter copy review when a design brief rules out invented claims', async () => {
+    const {request,post}=await fixture(true);
+    runner.script=answerScript;
+    await (await post('run-stream',{...request,prompt:'Build a useful service page. Avoid invented prices, claims or testimonials.'})).text();
+    const prompt=runner.prompts[0] ?? '';
+    expect(prompt).toContain('This brief explicitly limits invented or unsupported claims.');
+    expect(prompt).toContain('This also applies to generic technical advice and FAQ answers.');
+    expect(prompt).toContain('In the saved preview confirm the revised copy and the real destination of each call to action.');
   });
 
   it('keeps the prompt file available during a run and removes it after Stop', async () => {
@@ -630,6 +656,8 @@ describe('direct site agent connection', () => {
 
   it.each([
     { name: 'pending native edit', entries: [{tool:'bricks.mutate',phase:'received',ok:true,pending:true,commandId:'cmd'}], outcome:'interrupted' },
+    { name: 'pending Bricks changeset', entries: [{tool:'bricks.native.changeset',phase:'received',ok:true,pending:true,commandId:'cmd'}], outcome:'interrupted' },
+    { name: 'acknowledged Bricks changeset', entries: [{tool:'bricks.native.changeset',phase:'received',ok:true,pending:true,commandId:'cmd'},{tool:'bricks.result',phase:'received',ok:true,pending:false,commandId:'cmd'}], outcome:'completed' },
     { name: 'unrecovered native rejection', entries: [{tool:'bricks.mutate',phase:'received',ok:false,pending:false}], outcome:'failed' },
     { name: 'acknowledged native edit', entries: [{tool:'bricks.mutate',phase:'received',ok:true,pending:true,commandId:'cmd'},{tool:'bricks.result',phase:'received',ok:true,pending:false,commandId:'cmd'}], outcome:'completed' },
     { name: 'repaired tool rejection', entries: [{tool:'bricks.mutate',phase:'received',ok:false},{tool:'bricks.mutate',phase:'received',ok:true,pending:false}], outcome:'completed' },
@@ -918,7 +946,7 @@ describe('direct site agent connection', () => {
       expect(prompt).not.toContain('Image generation preference:');
       expect(prompt).not.toContain('Use the configured Pixflow media providers');
     }
-    expect(directSitePrompt(input, true, true, false, true)).toContain(process.platform === 'win32' ? 'site-tool.ps1 media.generate' : 'site-tool.mjs media.generate');
+    expect(directSitePrompt(input, true, true, false, true)).toContain(process.platform === 'win32' ? 'site-tool.cmd media.generate' : 'site-tool.mjs media.generate');
   });
   it('keeps classes in both styling modes and applies explicit choices over saved defaults', () => {
     const input = { agentId: 'codex', canvasId: 'canvas', prompt: 'Build a section', history: [], session: { endpoint: 'https://example.test', token: 'test', expiresAt: 9999999999, writable: true } };
@@ -979,7 +1007,7 @@ describe('direct site agent connection', () => {
     const input = {agentId,prompt:'Build an image-led page',history:[],session:{endpoint:'https://site.example/tools',token:'',writable:true,expiresAt:0}};
     for (const resumed of [false,true]) {
       const prompt=directSitePrompt(input,false,true,resumed,true,false,[]);
-      expect(prompt).toContain(process.platform === 'win32' ? 'site-tool.ps1 media.generate' : 'site-tool.mjs media.generate');
+      expect(prompt).toContain(process.platform === 'win32' ? 'site-tool.cmd media.generate' : 'site-tool.mjs media.generate');
       expect(prompt).toContain('otherwise Codex native imagegen');
       expect(prompt).toContain('status:unavailable');
       expect(prompt).not.toContain('invoke native imagegen immediately');

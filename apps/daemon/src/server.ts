@@ -1,4 +1,7 @@
 // @ts-nocheck
+import { PIXFLOW_MCP_NAME, stagePixflowMcp, supportsPixflowMcp, pixflowMcpInstructions } from './pixflow/structured-tools.js';
+import { directMcpConfiguration, configureDirectMcpProcess, withPixflowTools } from './pixflow/direct-site-mcp.js';
+import { createAgentInvocation } from './runtimes/invocation.js';
 import { resolveRuntimeReasoning } from './runtimes/claude-models.js';
 import type { DesktopExportPdfInput, DesktopExportPdfResult } from '@open-design/sidecar-proto';
 import express from 'express';
@@ -7,7 +10,7 @@ import { authorizeExternalMcpRequest, authorizeExternalMcp, watchExternalMcpAcce
 import { authorizeWorkspaceBuilderSession, stageWorkspaceBuilderHelper } from './pixflow/workspace-builder-session.js';
 import { startWorkspaceCodex, codexAppServerConfigArgs } from './pixflow/workspace-codex.js';
 import { registerRunSteering } from './routes/run-steering.js';
-import { revokeDirectSession, redactDirectEvent } from './pixflow/direct-site-session.js';
+import { revokeDirectSession, redactDirectEvent, DirectSessionAuthorizationError } from './pixflow/direct-site-session.js';
 import { configurePixflowSystemCertificateTrust } from './pixflow-system-certificates.js';
 import multer from 'multer';
 import JSZip from 'jszip';
@@ -78,7 +81,7 @@ import { materializePixflowBricksPromptAttachments } from './pixflow-bricks-atta
 import { sanitizePixflowBricksIntentContract } from './pixflow/bricks-intent-contract.js';
 
 export { resolveProjectRoot };
-import { createCommandInvocation } from '@open-design/platform';
+
 import { DirectCodexWorker } from './pixflow/direct-codex-worker.js';
 import { registerDirectSiteRunRoutes } from './pixflow/direct-site-run.js';
 import { registerUpscalerRoutes } from './pixflow/upscaler.js';
@@ -16479,6 +16482,8 @@ export async function startServer({
       : '';
     let workspaceBuilderPrompt = '';
     let workspaceDiscovery = '';
+    let workspaceStructuredTools;
+    let workspaceToolsDirectory;
     if (run.workspaceBuilderSession) {
       const staged = await stageWorkspaceBuilderHelper(RUNTIME_DATA_DIR, run.workspaceBuilderSession);
       if (run.cancelRequested || ['succeeded', 'failed', 'canceled'].includes(run.status)) { await staged.cleanup(); throw new Error('Workspace run was cancelled before handoff tools were ready.'); }
@@ -16486,6 +16491,13 @@ export async function startServer({
       run.onFinalize = () => { previousFinalize?.(); void staged.cleanup().catch(() => undefined); };
       workspaceBuilderPrompt = staged.prompt;
       workspaceDiscovery = staged.discovery;
+      if (supportsPixflowMcp(def.id, def.streamFormat)) {
+        const helper = JSON.parse(staged.discovery).helper.replace(/\.cmd$/, '.mjs');
+        workspaceStructuredTools = await stagePixflowMcp(helper,'workspace');
+        workspaceToolsDirectory = path.dirname(helper);
+        workspaceBuilderPrompt += '\n\n' + pixflowMcpInstructions;
+      }
+
     }
     const runtimeToolPrompt = [createAgentRuntimeToolPrompt(daemonUrl, toolTokenGrant, runtimeToolPolicy || null), composioSkillPrompt(), workspaceBuilderPrompt].filter(Boolean).join('\n\n');
     const commentHint = renderCommentAttachmentHint(safeCommentAttachments);
@@ -17275,6 +17287,10 @@ export async function startServer({
         }
       }
     }
+    const workspaceAcpArgs = workspaceStructuredTools && def.pixflowAcpArgs?.({ model: safeModel, reasoning: safeReasoning });
+    if (workspaceStructuredTools && (workspaceAcpArgs || def.streamFormat === 'acp-json-rpc')) {
+      mcpServers.push({ name: PIXFLOW_MCP_NAME, ...workspaceStructuredTools.server, env: [] });
+    }
     if (
       enabledExternalMcp.length > 0 &&
       def.externalMcpInjection === 'acp-merge'
@@ -17927,7 +17943,7 @@ export async function startServer({
       // Prompt delivery via stdin is now the universal default. This bypasses
       // both the cmd.exe 8KB limit and the CreateProcess 32KB limit.
       const stdinMode =
-        def.promptViaStdin || def.streamFormat === 'acp-json-rpc'
+        def.promptViaStdin || def.streamFormat === 'acp-json-rpc' || workspaceAcpArgs
           ? 'pipe'
           : 'ignore';
       const env = applyAgentLaunchEnv({
@@ -17955,9 +17971,19 @@ export async function startServer({
           : {}),
       }, agentLaunch);
       spawnedAgentEnv = env;
-      const invocation = createCommandInvocation({
+      const workspaceMcp = workspaceStructuredTools
+        ? withPixflowTools(directMcpConfiguration(def.id, enabledExternalMcp, oauthTokensForSpawn), workspaceStructuredTools.server) : undefined;
+      if (workspaceMcp) {
+        const cleanup = await configureDirectMcpProcess(workspaceMcp, def.id, workspaceToolsDirectory, env, args, effectiveCwd);
+        if (cleanup) {
+          const previousFinalize = run.onFinalize;
+          run.onFinalize = () => { previousFinalize?.(); void cleanup().catch(() => undefined); };
+        }
+      }
+
+      const invocation = createAgentInvocation({
         command: agentLaunch.launchPath,
-        args,
+        args: workspaceAcpArgs || args,
         env,
       });
       run.analyticsTelemetry = {
@@ -17968,6 +17994,7 @@ export async function startServer({
         const nativeController = new AbortController();
         nativeWorkspaceRun = startWorkspaceCodex({
           executable: agentLaunch.launchPath, env, cwd: effectiveCwd, prompt: composed, images: agentImagePaths,
+          ...(workspaceMcp ? {mcpServers:workspaceMcp.codex} : {}),
           configArgs: codexAppServerConfigArgs(args), model: safeModel ?? undefined, reasoning: safeReasoning ?? undefined,
           runtimeWorkspaceRoots: [effectiveCwd, ...extraAllowedDirs],
           fastMode: agentOptions.fastMode === true, resumeSessionId: agentResumeCtx.resumeSessionId,
@@ -18630,13 +18657,13 @@ export async function startServer({
         imagePaths: def.supportsImagePaths ? amrStagedImages : [],
         uploadRoot: UPLOAD_DIR,
       });
-    } else if (def.streamFormat === 'acp-json-rpc') {
+    } else if (workspaceAcpArgs || def.streamFormat === 'acp-json-rpc') {
       const acpStageTimeoutMs = resolveAcpStageTimeoutMs();
       acpSession = attachAcpSession({
         child,
         prompt: composed,
         cwd: effectiveCwd,
-        model: safeModel,
+        model: workspaceAcpArgs ? undefined : safeModel,
         imagePaths: def.supportsImagePaths ? amrStagedImages : [],
         mcpServers,
         ...(def.id === 'amr' ? { modelUnavailableErrorCode: 'AMR_MODEL_UNAVAILABLE' } : {}),
@@ -19427,7 +19454,10 @@ export async function startServer({
     let workspaceSessionTransferred = false;
     try {
       workspaceBuilderSession = await authorizeWorkspaceBuilderSession(req.get('X-Pixflow-Workspace-Session'), { projectId: requestBody.projectId, conversationId: requestBody.conversationId }, pixflowBridgeSiteInfo()?.url || '');
-    } catch { return sendApiError(res, 403, 'FORBIDDEN', 'Could not authorize the Workspace builder connection. Reconnect and try again.'); }
+    } catch (error) {
+      if (error instanceof DirectSessionAuthorizationError) return sendApiError(res, error.status, 'UPSTREAM_UNAVAILABLE', error.message, { details: error.diagnostics });
+      return sendApiError(res, 403, 'FORBIDDEN', 'Could not authorize the Workspace builder connection. Reconnect and try again.');
+    }
     res.once('finish', () => { if (workspaceBuilderSession && !workspaceSessionTransferred) void revokeDirectSession(workspaceBuilderSession); });
     const requestedProjectMetadata = requestBody.projectMetadata && typeof requestBody.projectMetadata === 'object' && !Array.isArray(requestBody.projectMetadata)
       ? requestBody.projectMetadata

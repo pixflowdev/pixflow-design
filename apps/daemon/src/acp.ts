@@ -1010,6 +1010,7 @@ export function attachAcpSession({
     }
     const update = asObject(params?.update);
     if (obj.method === 'session/update' && update) {
+      if (update.sessionUpdate === 'available_commands_update') return;
       if (update.sessionUpdate !== 'agent_message_chunk' && update.sessionUpdate !== 'agent_thought_chunk') {
         send('agent', {
           type: 'status',

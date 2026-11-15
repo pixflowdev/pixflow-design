@@ -397,9 +397,27 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     presentation.flush();
     presentation.dispose();
     saveCheckpoint();
-    if (continuation) void pixflowRuntimeFetch('/api/pixflow/direct-site/cancel', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({...continuation,session}), keepalive: true,
-    }).catch(() => undefined);
+    const connection = continuation;
+    if (!connection) return;
+    const cancel = (credential: PixflowDirectSiteSession | undefined) => pixflowRuntimeFetch('/api/pixflow/direct-site/cancel', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...connection, session: credential }), keepalive: true,
+    });
+    void (async () => {
+      // A reload credential is consumed by the Bridge when it attaches the stream.
+      // Stop authenticates independently, including when the original stream has gone.
+      if (!input.resume) {
+        const response = await cancel(session);
+        if (![401, 403].includes(response.status)) return;
+      }
+      const authorization = await pixflowWordPressRestFetch('/wp-admin/direct/sessions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'design' }),
+      });
+      if (!authorization.ok) return;
+      const credential = await authorization.json() as PixflowDirectSiteSession;
+      try { await cancel(credential); }
+      finally { await closeUnusedSession(credential); }
+    })().catch(() => undefined);
   };
   input.signal.addEventListener('abort', stop, { once: true });
   const checkpointOnHide = () => { presentation.flush(); saveCheckpoint(); };

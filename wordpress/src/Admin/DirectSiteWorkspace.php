@@ -89,6 +89,11 @@ final class DirectSiteWorkspace
         }
         if ($tool === 'ability.call') {
             if (!$ability) throw new \RuntimeException('Native WordPress ability not found.');
+            if (str_starts_with((string) ($args['name'] ?? ''), 'bricks/')) {
+                $adapted = (\PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'nativeAdapter'))($args, $writable);
+                if (!array_key_exists('result', $adapted)) throw new \RuntimeException('Native edits require the live canvas route. No saved document was changed.');
+                return $adapted['result'];
+            }
             return $ability->execute($args['input'] ?? []);
         }
         throw new \RuntimeException('Unknown site tool. Call help for the available operations.');

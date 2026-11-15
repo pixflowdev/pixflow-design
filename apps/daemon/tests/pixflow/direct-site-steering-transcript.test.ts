@@ -31,7 +31,8 @@ it('keeps steering queued when its run finishes while references are being prepa
   directory = await fs.mkdtemp(path.join(os.tmpdir(), 'pixflow-steering-race-'));
   const app = express(); app.use(express.json());
   let authStatus = 200, authUser = 1;
-  app.get('/session', (_req, res) => authStatus === 200
+  let malformed = false;
+  app.get('/session', (_req, res) => malformed ? res.type('html').send('<html>private-upstream-diagnostic</html>') : authStatus === 200
     ? res.json({ identity: { siteId: 'race-site', userId: authUser, blogId: 1 }, writable: true })
     : res.status(authStatus).json({ message: 'private-upstream-diagnostic' }));
   app.delete('/session', (_req, res) => res.json({ ok: true }));
@@ -74,6 +75,13 @@ it('keeps steering queued when its run finishes while references are being prepa
   const unavailable = await post('resume-stream', { ...continuation, session });
   expect(unavailable.status).toBe(503);
   expect(await unavailable.json()).toMatchObject({ code: 'DIRECT_AUTH_UNAVAILABLE', state: 'rejected' });
+  malformed = true;
+  const malformedRecovery = await post('resume-stream', { ...continuation, session });
+  expect(malformedRecovery.status).toBe(503);
+  const diagnostic = await malformedRecovery.json();
+  expect(diagnostic).toMatchObject({code:'DIRECT_AUTH_UNAVAILABLE',diagnostics:{httpStatus:200,format:'html'}});
+  expect(JSON.stringify(diagnostic)).not.toContain('private-upstream-diagnostic');
+  malformed = false;
   authStatus = 403;
   const revoked = await post('resume-stream', { ...continuation, session });
   expect(revoked.status).toBe(403);

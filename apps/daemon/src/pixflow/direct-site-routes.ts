@@ -1,3 +1,6 @@
+import { attachAcpSession } from '../acp.js';
+import { PIXFLOW_MCP_NAME, stagePixflowMcp, supportsPixflowMcp, pixflowMcpInstructions } from './structured-tools.js';
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 
 import type { CodexPromptParts } from './direct-site-run.js';
@@ -13,7 +16,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
 import type { Express, RequestHandler, Response } from 'express';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import type { PixflowDirectSiteAttachment, PixflowDirectSiteContinuationRequest, PixflowDirectSiteRunRequest, PixflowDirectSiteOutcome, PixflowDirectSiteTimings, PixflowDirectSiteVoiceSdpEvent } from '@open-design/contracts';
 import { getAgentDef, resolveAgentLaunch, applyAgentLaunchEnv, spawnEnvForAgent } from '../agents.js';
 import { getRememberedLiveModels } from '../runtimes/models.js';
@@ -45,7 +48,7 @@ import { cachedVoiceSample } from './voice-preview-cache.js';
 import { PIXFLOW_CODEX_VOICES, preferredNamedModel } from '@open-design/contracts';
 import { pixflowDocumentInstructions } from '@open-design/contracts';
 import { registerPixflowRuntimeWork } from './runtime-idle.js';
-import { readDirectMcpConfiguration, configureDirectMcpProcess } from './direct-site-mcp.js';
+import { readDirectMcpConfiguration, configureDirectMcpProcess, withPixflowTools } from './direct-site-mcp.js';
 import type { PixflowDirectToolHistoryRequest, PixflowDirectToolHistoryResponse } from '@open-design/contracts';
 
 interface DirectResources {
@@ -194,7 +197,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           attach(run.id,res,cursor);
         }
       } catch (error) {
-        if (error instanceof DirectSessionAuthorizationError) res.status(error.status).json({code:error.code,message:error.message,state:'rejected'});
+        if (error instanceof DirectSessionAuthorizationError) res.status(error.status).json({code:error.code,message:error.message,diagnostics:error.diagnostics,state:'rejected'});
         else if (phase === 'authorization') res.status(403).json({code:'DIRECT_SESSION_REJECTED',message:'WordPress did not authorize conversation recovery.',state:'rejected'});
         else res.status(503).json({code:phase==='delivery'?'DIRECT_DELIVERY_UNCONFIRMED':'DIRECT_PREPARATION_FAILED',state:phase==='delivery'?'unconfirmed':'rejected',message:phase==='delivery'?'Delivery could not be confirmed. Check the conversation before retrying.':'The request could not be prepared. Nothing was sent; keep your message queued and retry.'});
       }
@@ -214,12 +217,15 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
     const input = (req.body ?? {}) as PixflowDirectSiteRunRequest;
     const preparation = new AbortController();
     let child: ReturnType<typeof spawn> | undefined;
+    let acpTurn: ReturnType<typeof attachAcpSession> | undefined;
     let stopMcpAccess: (() => void) | undefined;
     let stopAudioAccess: (() => void) | undefined;
 
     let canceled = false;
     let record: DirectRunRecord | undefined;
     let workspace: string | undefined;
+    let stopStructuredTools: (()=>Promise<void>) | undefined;
+    let structuredTools = false;
     let stopMirror: (()=>Promise<void>) | undefined;
     let assistant = '';
     let capturedSessionId: string | null = null;
@@ -230,6 +236,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
     const cancel = () => {
       if(canceled)return;
       canceled=true;preparation.abort();
+      acpTurn?.abort();
 
       if(child)void stopChildProcessTree(child).catch(()=>child?.kill());
     };
@@ -340,7 +347,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           return provider.id === 'custom-image' ? Boolean(setting?.baseUrl && setting.model) : setting?.configured === true;
         }).map(provider => provider.id)
       ).catch(() => undefined) : undefined;
-      const externalMcp=await readDirectMcpConfiguration(dataDir,def.id,externalMcpAllowed);
+      let externalMcp=await readDirectMcpConfiguration(dataDir,def.id,externalMcpAllowed);
       if (input.enhancedDesignGuidance !== undefined && typeof input.enhancedDesignGuidance !== 'boolean') throw new Error('Enhanced design guidance must be a boolean.');
       input.enhancedDesignGuidance ??= config.enhancedDesignGuidance !== false;
       const configuredEnv=agentCliEnvForAgent(config.agentCliEnv,def.id);
@@ -354,7 +361,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         instructions:resources.prompt({...input,...(input.canvasId && input.canvasPostId ? {canvasId:'page-pinned-builder'} : {}),prompt:'',history:[],context:undefined},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders)});
       // A legacy long Windows path starts a fresh native session with the supplied chat history.
       const compatible=previousConversation?.compatibility===compatibility && previousConversation.lineage===lineage(input.history) && isManagedDirectWorkspace(previousConversation.workspace, [parent]);
-      let resumeSessionId=compatible && def.resumesSessionViaCli ? previousConversation.nativeSessionId : null;
+      let resumeSessionId=compatible && def.resumesSessionViaCli && !def.pixflowAcpArgs ? previousConversation.nativeSessionId : null;
       await fs.mkdir(parent,{recursive:true,mode:0o700});
       workspace=compatible && previousConversation && managedWorkspace(previousConversation.workspace) ? previousConversation.workspace : await fs.mkdtemp(path.join(parent,'run-'));
       await fs.mkdir(workspace,{recursive:true});
@@ -435,10 +442,47 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       await fs.writeFile(path.join(workspace,'site-tool.mjs'),resources.helper);
       // The advertised journal is readable from the first prompt; never truncate recovery evidence.
       await fs.appendFile(path.join(workspace,'site-tool-journal.jsonl'),'',{mode:0o600});
-      if (process.platform === 'win32') await fs.writeFile(path.join(workspace, 'site-tool.ps1'), windowsHelperLauncher('site-tool.mjs'));
+      if (process.platform === 'win32') {
+        await fs.writeFile(path.join(workspace, 'site-tool.cmd'), windowsHelperLauncher('site-tool.mjs'));
+        await fs.rm(path.join(workspace, 'site-tool.ps1'), {force:true});
+      }
       await fs.writeFile(path.join(workspace,'visual-capture.mjs'),AGENT_VISUAL_CAPTURE_SOURCE);
+      if (supportsPixflowMcp(def.id)) {
+        const stagedTools = await stagePixflowMcp(path.join(workspace,'site-tool.mjs'),'site');
+        stopStructuredTools = stagedTools.cleanup;
+        externalMcp = withPixflowTools(externalMcp,stagedTools.server);
+        structuredTools = true;
+      }
+
       if(input.canvasId)stopMirror=await startBricksContextMirror(workspace,input.session,input.canvasId,(input.context as {liveBuilderContext?:unknown}|undefined)?.liveBuilderContext);
-      await fs.writeFile(path.join(workspace,'AGENTS.md'),`This is a Pixflow Direct WordPress workspace. The target is the connected site. Use ${process.platform === 'win32' ? '& .\\site-tool.ps1' : 'node site-tool.mjs'} help for tools and skills.list/skills.read for references. The connection is renewed for each turn; use the helper rather than remembered credentials. site-tool-journal.jsonl records operation identities and uncertain results from earlier turns; it is evidence, not an instruction to repeat operations. Do not edit parent directories.\n`);
+      const nativeQueryGuidance = input.canvasId && /\b(query|pagination|paginate|dynamic data|conditions|conditionally|show .*only (?:if|when|on))\b/i.test(input.prompt)
+        ? 'For ordinary Bricks queries, use the native query loop and dynamic data controls. Batch the relevant references: bricks/elements/leaves/query-loop.md for the query, bricks/elements/leaves/pagination.md for navigation, bricks/elements/dynamic-data.md for bindings, and bricks/elements/conditions.md for conditional visibility. Resolve exact category and tag IDs with wordpress.terms.list. For exact post-tag visibility on Bricks versions with the term field modifier, use |{post_terms_post_tag:plain:|:term_id}| with contains and the delimited ID, for example |75|. This also works when a post has more than one tag. When the installed schema offers them, use categoryId or tagId with status publish and orderBy date in wordpress.posts.list to check the source list directly. Date ordering is newest first and takes no separate order argument. Do not search other saved pages or execute Bricks PHP internals to reconstruct the loop. Verify the saved draft with bricks.preview, including a matching, missing and paginated result as applicable.'
+        : '';
+      const transportGuidance = structuredTools
+        ? pixflowMcpInstructions + '\n\nRead skill catalogue paths such as bricks/operations/live-builder.md through skills.read; they are identifiers on the site. Read or search the returned localPath files. The run workspace does not contain a bricks/ source directory. For a large payload, write its JSON to a run-local file, wait for the write to succeed, then pass the filename as pixflow_call.argumentFile. Put short inspection scripts inline in pixflow_call arguments.code with response set to value. For a long script, write it first, then pass the completed file in pixflow_call.codeFile. Keep dispatch on MCP when these inputs are available. The shell examples below are fallback instructions.'
+        : '';
+      const authoring = (input.mode ?? (input.session.writable ? 'design' : 'ask')) === 'design';
+      const contactGuidance = authoring && /\b(book|contact|quote|enquir|next step)/i.test(input.prompt)
+        ? 'For a call to action, use a verified existing destination when available. If the destination is an in-page information section, label it with what readers can actually do there, such as reading how to prepare. Create a form or configure delivery only when requested. Never invent an email address, endpoint, or submission confirmation.'
+        : '';
+      const factualCopyGuidance = authoring
+        ? 'Before building a page, identify the business facts the brief or verified site sources actually establish. Write the copy from that list. For a missing fact, phrase the passage as a question to discuss, an item to prepare, or a decision for the survey. An installation brief alone does not establish an appointment duration, installation duration, certification, written report, price or guarantee. Inspect the actual proposed text, including the FAQ and calls to action, before dispatching the build and again before saving. Keep quantities, prices, durations, performance claims, certifications, guarantees and promises about how this business works only when the brief or verified evidence for this business supports them. If the evidence is missing, write what the reader can ask or confirm. Generic industry estimates and earlier test drafts do not establish facts about the business.'
+        : '';
+      const restrictedClaimsGuidance = authoring && /\b(?:avoid|do not|don['’]t|never|no)\s+(?:any\s+)?(?:invent(?:ed|ing)?|unsourced|unsupported|unverified|fabricat(?:e|ed|ing))\b/i.test(input.prompt)
+        ? 'This brief explicitly limits invented or unsupported claims. When writing customer-facing copy, use concrete questions, examples of what to prepare, and choices the reader can discuss. Omit numeric values or ranges, technical settings, exact equipment specifications, efficiency advice, promises of reports or quotes, and claims about credentials or outcomes unless the brief or a verified source explicitly supports that exact statement. This also applies to generic technical advice and FAQ answers. Keep ordinary list numbering. Before the canvas write, proofread the actual headings, body copy, FAQs and calls to action in the authored payload. Remove unsupported specifics and change promised services to questions to ask. In the saved preview confirm the revised copy and the real destination of each call to action.'
+        : '';
+      const isBricksCanvas = input.canvasId && (input.surface === 'bricks' || (input.context as {editor?: string} | undefined)?.editor === 'bricks');
+      const nativeDataGuidance = isBricksCanvas
+        ? 'Use the wordpress.posts, terms and media tools for site data. Do not fetch a hard-coded /wp-json path from builder scripts. Read colors and themeStyles in BRICKS-CONTEXT.md and use context.sections in BRICKS-CONTEXT.json for the complete native records. Theme styles are keyed by ID. For informative native image elements use settings.altText from the visible image, and verify the rendered img alt. The nested image object does not override attachment alt text. Write a full-page mutation to a JSON argument file and dispatch that complete payload once. Do not send placeholder inserts to probe the tool. When a script changes shared classes, return only the IDs needed for the next step.'
+        : '';
+      const nativeBricksGuidance = isBricksCanvas
+        ? 'For structural authoring, when bricks.native.catalogue is listed, request only the needed names (for example bricks/add-element and bricks/set-page-elements). Use pixflow_call with tool bricks.native and arguments containing name and input for a single ability. Slash-delimited Bricks names go in arguments.name. For a compatible structural edit, apply the registered live-canvas route through bricks.native or group related edits in one bricks.native.changeset with the current bricks.read revision. Before an adapter write, take expectedRevision from bricks.read detail summary. The compiled BRICKS-CONTEXT revision is for context refresh and cannot be used for a write. Existing classes and CSS variables can be referenced in those edits without a script. A changeset should use a stable request ID; after an uncertain result, use bricks.native.status with that ID. If native schema discovery or the corresponding write ability is unavailable, use bricks.mutate with an atomic insert of the native element tree. Use a JSON argument file for a full-page tree. Do not switch to per-element JavaScript or probe private builder internals to rediscover supported structure. Use bricks.save to save and bricks.preview or bricks.layout to verify. The Bricks theme wraps page content in its main landmark; use sections and containers inside it. Start with the current canvas snapshot and the relevant native schemas. When it needs refreshing, use bricks.context or bricks.read with detail summary and request full native records only for a specific gap. Do not inspect Vue methods, function source, Bricks PHP or WordPress database internals to rediscover these operations. For normal content edits, call the native mutation tool as soon as the required settings and design are clear. Use bricks.run only for small operations the typed tools cannot perform or targeted rendered inspection. Keep shared style work separate from the page tree and reuse the compiled site styles. Never loop over Bricks element insertion APIs to build a full page: each native insertion can trigger a separate render. Batch saved-preview checks for the requested changes. Once they pass and the save is confirmed, finish the turn; repeat a check only if the relevant content changed or the earlier result left a specific gap. For a pending result, check its receipt and report any remaining verification; do not rewrite correct saved content to compensate for an unavailable preview.'
+        : '';
+      const turnToolGuidance = [transportGuidance, nativeBricksGuidance, nativeDataGuidance, nativeQueryGuidance].filter(Boolean).join('\n\n');
+      const copyGuidance = [factualCopyGuidance, contactGuidance, restrictedClaimsGuidance].filter(Boolean).join('\n\n');
+      const helperGuidance = `Use ${process.platform === 'win32' ? './site-tool.cmd (prefix with & in PowerShell, omit & in Bash)' : 'node site-tool.mjs'} help for tools and skills.list/skills.read for references.`;
+      const toolGuidance = [structuredTools ? pixflowMcpInstructions : helperGuidance, nativeBricksGuidance, nativeDataGuidance, nativeQueryGuidance, factualCopyGuidance].filter(Boolean).join(' ');
+      await fs.writeFile(path.join(workspace,'AGENTS.md'),`This is a Pixflow Direct WordPress workspace. The target is the connected site. ${toolGuidance} The connection is renewed for each turn. Use current tools and keep credentials private. site-tool-journal.jsonl records operation identities and uncertain results from earlier turns; it is evidence, not an instruction to repeat operations. Do not edit parent directories.\n`);
       const attachments=await resources.attachments(input,workspace,preparation.signal);
       input.context=await resources.skills(input,preparation.signal);
       timings.contextReadyMs=elapsed();
@@ -452,7 +496,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           writable: input.session.writable, expiresAt: input.session.expiresAt, signal: preparation.signal,
           voice: input.voice.name,
           mcpServers: externalMcp.codex,
-          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders),
+          instructions: resources.prompt({...input,prompt:'The user is starting a voice conversation about this site.',history:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,false,imageGenerationAllowed,composioConfigured,imageProviders)+(structuredTools ? "\n\n"+pixflowMcpInstructions : ""),
           onChild: value => {child=value;timings.spawnMs=elapsed();},
           onEndReady: end => {const live=runs.get(id);if(live){live.endVoice=end;if(live.endVoiceRequested)end();}},
           onEvent: event => {
@@ -474,8 +518,9 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       let missingSession=false;
       for(let attempt=0;attempt<2;attempt++) {
         let promptParts: CodexPromptParts | undefined;
-        const fullPrompt=resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId && def.id !== 'claude' && !(def.id === 'codex' && warmWorker),imageGenerationAllowed,composioConfigured,imageProviders, parts => { promptParts = parts; })
-          +attachmentGuidance(attachments);
+        const fullPrompt=(turnToolGuidance ? turnToolGuidance + '\n\n' : '') + resources.prompt({...input,history:resumeSessionId?[]:input.history},imageGenerationAllowed && config.codexImagegenOverride===true,config.bricksUseSiteStyles!==false,!!resumeSessionId && def.id !== 'claude' && !(def.id === 'codex' && warmWorker),imageGenerationAllowed,composioConfigured,imageProviders, parts => {
+          promptParts = {...parts,instructions:[turnToolGuidance,parts.instructions,copyGuidance].filter(Boolean).join('\n\n')};
+        }) + (copyGuidance ? '\n\n' + copyGuidance : '') + attachmentGuidance(attachments);
         const snapshot = def.id === 'claude' && promptParts ? snapshotPrompt(promptParts) : undefined;
         const priorKey = resumeSessionId && previousConversation && directDigest([conversationKey, compatibility, resumeSessionId, previousConversation.lineage]);
         const previous = priorKey && lastClaude?.key === priorKey ? lastClaude.snapshot : undefined;
@@ -484,17 +529,20 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
           ? changedPrompt(promptParts, snapshot, previous) : fullPrompt;
         // File-based CLIs need the complete composed request available until the child exits.
         // Each attempt owns its file so retries cannot read an earlier conversation seed.
-        const promptFile=await preparePromptFileForAgent(def,prompt,id);
+        const options = { model: input.model ?? null, reasoning: input.reasoning ?? null, fastMode: input.fastMode ?? null };
+        const acpArgs = structuredTools ? def.pixflowAcpArgs?.(options) : undefined;
+        const promptFile = acpArgs ? undefined : await preparePromptFileForAgent(def,prompt,id);
+        let cleanupProviderMcp: (() => Promise<void>) | undefined;
         try {
-        const args=def.buildArgs(prompt,images,[],{model:input.model ?? null,reasoning:input.reasoning ?? null,fastMode:input.fastMode ?? null},{cwd:workspace,resumeSessionId,newSessionId,...(promptFile?{promptFilePath:promptFile.path}:{})});
+        const args=acpArgs ?? def.buildArgs(prompt,images,[],options,{cwd:workspace,resumeSessionId,newSessionId,...(promptFile?{promptFilePath:promptFile.path}:{})});
         timings.promptBytes=Buffer.byteLength(prompt,'utf8');
         timings.nativeSessionReused=!!resumeSessionId;
         const env=applyAgentLaunchEnv(spawnEnvForAgent(def.id,process.env,configuredEnv),launch);
-        await configureDirectMcpProcess(externalMcp,def.id,workspace,env,args);
-        if(['claude','grok-build'].includes(def.id)&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
+        cleanupProviderMcp = await configureDirectMcpProcess(externalMcp,def.id,workspace,env,args);
+        if(!acpArgs && ['claude','grok-build'].includes(def.id)&&!args.includes('--permission-mode'))args.push('--permission-mode','bypassPermissions');
         if(def.id==='codex')args.push('-c','sandbox_workspace_write.network_access=true','-c','approval_policy="never"');
         if(def.id==='opencode') {const inherited=env.OPENCODE_CONFIG_CONTENT?JSON.parse(env.OPENCODE_CONFIG_CONTENT):{};env.OPENCODE_CONFIG_CONTENT=JSON.stringify({...inherited,permission:'allow'});args.push('--title','Pixflow Direct');}
-        const invocation=createCommandInvocation({command:launch.launchPath,args,env});
+        const invocation=createAgentInvocation({command:launch.launchPath,args,env});
         const onEvent=(event:Record<string,unknown>)=>{
           timings.firstProviderEventMs ??= elapsed();
           if(event.type==='text_delta' && typeof event.delta==='string' && event.delta.length) timings.firstTextMs ??= elapsed();
@@ -558,18 +606,34 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         child=spawn(invocation.command,invocation.args,{cwd:workspace,env,shell:false,windowsHide:true,windowsVerbatimArguments:invocation.windowsVerbatimArguments,stdio:['pipe','pipe','pipe']});
         timings.spawnMs=elapsed();
         send({type:'status',label:'provider_waiting'});
-        child.stdout?.on('data',(chunk:Buffer)=>{buffer+=decoder.write(chunk);const lines=buffer.split('\n');buffer=lines.pop()||'';lines.forEach(accept);});
         child.stderr?.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-4000);});
         child.stdin?.on('error',()=>undefined);
         const completed=new Promise<number|null>((resolve,reject)=>{child!.once('error',reject);child!.once('close',resolve);});
-        // File/argument CLIs receive their input at spawn; stdin CLIs receive it below.
         timings.providerSubmittedMs ??= elapsed();
-        if(def.promptViaStdin) {
-          if(def.promptInputFormat==='stream-json')child.stdin?.write(JSON.stringify({type:'user',message:{role:'user',content:prompt}})+'\n');
-          else child.stdin?.end(prompt);
-        }else child.stdin?.end();
-        code=await completed;
-        buffer+=decoder.end();if(buffer)accept(buffer);parser.flush();
+        if (acpArgs) {
+          const server = externalMcp.claude?.mcpServers[PIXFLOW_MCP_NAME];
+          acpTurn = attachAcpSession({
+            child, cwd: workspace, prompt, imagePaths: images,
+            mcpServers: server ? [{ name: PIXFLOW_MCP_NAME, ...server, env: [] }] : [],
+            send: (channel, data) => {
+              if (data && typeof data === 'object') {
+                onEvent(channel === 'error' ? { ...data, type: 'error' } : data as Record<string, unknown>);
+              }
+            },
+          });
+          code = await completed;
+          turnSucceeded = acpTurn.completedSuccessfully();
+          if (turnSucceeded) code = 0;
+          else if (!canceled) throw new Error(stderr || 'Grok ended before the structured turn finished.');
+        } else {
+          child.stdout?.on('data',(chunk:Buffer)=>{buffer+=decoder.write(chunk);const lines=buffer.split('\n');buffer=lines.pop()||'';lines.forEach(accept);});
+          if(def.promptViaStdin) {
+            if(def.promptInputFormat==='stream-json')child.stdin?.write(JSON.stringify({type:'user',message:{role:'user',content:prompt}})+'\n');
+            else child.stdin?.end(prompt);
+          }else child.stdin?.end();
+          code=await completed;
+          buffer+=decoder.end();if(buffer)accept(buffer);parser.flush();
+        }
         }
         const sessionMissing=missingSession || (def.id==='claude'&&isClaudeResumeFailure(stderr));
         const journal=await fs.readFile(path.join(workspace,'site-tool-journal.jsonl'),'utf8').catch(()=>'');
@@ -591,16 +655,18 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         }
         break;
         } finally {
+          await cleanupProviderMcp?.().catch(() => undefined);
           await promptFile?.cleanup();
         }
       }
       if(canceled)finish('canceled','Stopped. Changes already applied are retained.');
     }catch(error) {
-      if(!res.headersSent)res.status(canceled?200:400).set('Content-Type','application/x-ndjson');
-      if(!canceled)send({type:'error',message:error instanceof Error?error.message:String(error)});
+      if(!res.headersSent)res.status(canceled?200:error instanceof DirectSessionAuthorizationError?error.status:400).set('Content-Type','application/x-ndjson');
+      if(!canceled)send({type:'error',message:error instanceof Error?error.message:String(error),...(error instanceof DirectSessionAuthorizationError?{code:error.code,diagnostics:error.diagnostics}:{})});
       finish(canceled?'canceled':'failed');
     }finally {
 
+      await stopStructuredTools?.().catch(()=>undefined);
       stopAudioAccess?.();
       stopMcpAccess?.();
       try {

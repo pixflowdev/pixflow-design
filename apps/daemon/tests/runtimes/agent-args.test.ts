@@ -573,6 +573,13 @@ test('antigravity reads its prompt file and uses native model/reasoning flags', 
     'medium',
   ]);
 
+  const withSavedConflict = antigravity.buildArgs('hi', [], [], {
+    model: 'gemini-3.8-flash-high',
+    reasoning: 'medium',
+  }, { promptFilePath });
+  assert.equal(withSavedConflict[withSavedConflict.indexOf('--model') + 1], 'gemini-3.8-flash-high');
+  assert.equal(withSavedConflict.includes('--effort'), false);
+
   // Argv must NOT carry `-c` even on follow-up turns. We tested resume
   // mode and found agy's `-c` activates an internal agentic loop (tool
   // calls, retries, fallback-to-cached-response) that overrides OD's
@@ -843,6 +850,13 @@ test('grok-build omits effort for default/build aliases but sends it to supporte
     'grok-4.7',
     '--effort',
     'high',
+  ]);
+});
+
+test('Grok launches an isolated ACP process for structured Pixflow turns', () => {
+  assert.ok(grokBuild.pixflowAcpArgs);
+  assert.deepEqual(grokBuild.pixflowAcpArgs({ model: 'grok-4.7', reasoning: 'medium' }), [
+    'agent', '--no-leader', '--always-approve', '--model', 'grok-4.7', '--effort', 'medium', 'stdio',
   ]);
 });
 

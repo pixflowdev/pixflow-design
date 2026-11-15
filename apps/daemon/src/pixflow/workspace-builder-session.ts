@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { PixflowDirectSiteSession, PixflowDirectSiteAuthorization, PixflowWorkspaceSource } from '@open-design/contracts';
 import { pixflowWorkspaceBuilderHandoffInstructions } from '@open-design/contracts';
-import { directSessionUrl, revokeDirectSession } from './direct-site-session.js';
+import { directSessionUrl, revokeDirectSession, readDirectAuthorizationResponse } from './direct-site-session.js';
 import { windowsHelperLauncher } from './windows-helper-launcher.js';
 
 /** Credentials live only on the active run; WordPress supplies the authoritative source binding. */
@@ -15,7 +15,7 @@ export async function authorizeWorkspaceBuilderSession(raw: string | undefined, 
   if (!['http:', 'https:'].includes(endpoint.protocol) || endpoint.origin !== site.origin || endpoint.username || endpoint.password || !/^pfdirect_[a-f0-9]{64}$/.test(session.token || '')) throw new Error('The Workspace connection does not belong to the active WordPress site.');
   const response = await fetch(directSessionUrl(endpoint.href), { redirect: 'error', signal: AbortSignal.timeout(8000), headers: { Authorization: `Bearer ${session.token}` } });
   if (!response.ok) throw new Error('WordPress did not authorize the Workspace connection.');
-  const value = await response.json() as PixflowDirectSiteAuthorization;
+  const value = await readDirectAuthorizationResponse(response);
   const bound = value.workspaceSource;
   if (!value.identity?.siteId || !Number.isInteger(value.identity.userId) || value.identity.userId! <= 0 || !Number.isInteger(value.identity.blogId) || value.identity.blogId! <= 0 || !bound || bound.projectId !== source.projectId || bound.conversationId !== source.conversationId || !bound.requestId || value.editorTarget) throw new Error('The Workspace connection belongs to a different chat.');
   return { endpoint: endpoint.href, token: session.token, expiresAt: session.expiresAt, writable: value.writable === true, workspaceSource: bound,
@@ -25,6 +25,11 @@ export async function authorizeWorkspaceBuilderSession(raw: string | undefined, 
 /** Generated compatibility helper. Its private neighbour is outside project exports and file synchronization. */
 const workspaceTools = ['builder.destinations', 'builder.handoff', 'builder.handoff.status'];
 export const workspaceBuilderHelperSource = `import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+export async function invokePixflowTool(inputArgv, signal = new AbortController().signal, binding) {
+let output;
+const emit = value => { output = JSON.parse(value); };
 const allowed = new Set(${JSON.stringify(workspaceTools)});
 let dispatchedHandoff = false;
 let failureCode = 'INVALID_ARGUMENTS';
@@ -32,11 +37,21 @@ let status;
 let responseFormat;
 let wordpressCode;
 try {
-  const [tool, input, ...extra] = process.argv.slice(2);
+  signal.throwIfAborted();
+  const [tool, input, ...extra] = inputArgv;
   if (!allowed.has(tool)) throw new Error();
   let args;
-  if (tool === 'builder.destinations' && input === '--builder' && extra.length === 1 && ['bricks', 'gutenberg', 'elementor', 'etch'].includes(extra[0])) {
-    args = { builder: extra[0] };
+  if (tool === 'builder.destinations' && input?.startsWith('--')) {
+    const flags = [input, ...extra];
+    args = {};
+    if (flags.length % 2) throw new Error();
+    for (let i = 0; i < flags.length; i += 2) {
+      const key = flags[i].slice(2), value = flags[i + 1];
+      if (!['--builder', '--search'].includes(flags[i]) || Object.hasOwn(args, key) || !value || value.startsWith('--')) throw new Error();
+      if (key === 'builder' && !['bricks', 'gutenberg', 'elementor', 'etch'].includes(value)) throw new Error();
+      if (key === 'search' && (!value.trim() || value.length > 512)) throw new Error();
+      args[key] = value;
+    }
   } else {
     if (extra.length) throw new Error();
     args = input ? JSON.parse((input.startsWith('@') ? await fs.readFile(input.slice(1), 'utf8') : input).replace(/^\\uFEFF/, '')) : {};
@@ -44,9 +59,10 @@ try {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Tool arguments must be a JSON object.');
   failureCode = 'CONNECTION_UNAVAILABLE';
   const connection = JSON.parse(await fs.readFile(new URL('./connection.json', import.meta.url), 'utf8'));
+  if (binding && createHash('sha256').update(JSON.stringify(connection)).digest('hex') !== binding) throw new Error('Tool session ended.');
   dispatchedHandoff = tool === 'builder.handoff';
   failureCode = 'REQUEST_FAILED';
-  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.timeout(90000),headers:{'Content-Type':'application/json',Origin:new URL(connection.endpoint).origin,Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
+  const response = await fetch(connection.endpoint, {method:'POST',redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(90000)]),headers:{'Content-Type':'application/json',Origin:new URL(connection.endpoint).origin,Authorization:'Bearer '+connection.token},body:JSON.stringify({tool,arguments:args})});
   status = response.status;
   failureCode = response.ok ? 'INVALID_RESPONSE' : 'HTTP_REJECTED';
   if (!response.ok) {
@@ -60,14 +76,22 @@ try {
     }
     throw new Error();
   }
-  console.log(JSON.stringify(await response.json()));
+  emit(JSON.stringify(await response.json()));
 } catch {
   const messages = { INVALID_ARGUMENTS: 'Invalid arguments. Run help. For discovery use builder.destinations --builder bricks. For other arguments use a quoted @arguments.json file.', CONNECTION_UNAVAILABLE: 'The local builder session is unavailable. Reconnect the Workspace.', REQUEST_FAILED: 'The WordPress request could not be completed. Check connectivity and Bridge diagnostics.', HTTP_REJECTED: 'WordPress rejected the request. Check the HTTP status and reconnect if authorization expired.', INVALID_RESPONSE: 'WordPress returned an unexpected response. Check the site and Bridge diagnostics.' };
   const message = responseFormat === 'html'
     ? 'The site returned an HTML denial. Check the site security or hosting logs for this request.'
     : messages[failureCode];
-  console.log(JSON.stringify({ok:false,code:failureCode,status,responseFormat,wordpressCode,error:message + (dispatchedHandoff ? ' Read builder.handoff.status before retrying; do not create a second request.' : ' No handoff was dispatched.')})); process.exitCode=1;
+  emit(JSON.stringify({ok:false,code:failureCode,status,responseFormat,wordpressCode,error:message + (dispatchedHandoff ? ' Read builder.handoff.status before retrying; do not create a second request.' : ' No handoff was dispatched.')}));
 }
+return output;
+}
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const result = await invokePixflowTool(process.argv.slice(2));
+  console.log(JSON.stringify(result));
+  if (result?.ok === false) process.exitCode = 1;
+}
+
 `;
 
 export async function stageWorkspaceBuilderHelper(root: string, session: PixflowDirectSiteSession): Promise<{ prompt: string; discovery: string; cleanup: () => Promise<void> }> {
@@ -76,7 +100,8 @@ export async function stageWorkspaceBuilderHelper(root: string, session: Pixflow
   const runDirectory = await mkdtemp(path.join(directory, 'run-'));
   const helper = path.join(runDirectory, 'builder-tool.mjs');
   const windows = process.platform === 'win32';
-  const launcher = windows ? path.join(runDirectory, 'builder-tool.ps1') : helper;
+  const launcher = windows ? path.join(runDirectory, 'builder-tool.cmd') : helper;
+  const bashCommand = `'${launcher.replaceAll('\\', '/').replaceAll("'", "'\\''")}'`;
   const command = windows ? `& '${launcher.replaceAll("'", "''")}'` : `node ${JSON.stringify(helper)}`;
   // Only public discovery data enters the child environment. Operations still
   // go through the allowlisted helper and WordPress's per-request checks.
@@ -84,9 +109,9 @@ export async function stageWorkspaceBuilderHelper(root: string, session: Pixflow
     siteTitle: session.siteTitle ?? null, helper: launcher, tools: workspaceTools });
   const cleanup = async () => { await rm(runDirectory, { recursive: true, force: true }); await revokeDirectSession(session); };
   try {
-    await writeFile(path.join(runDirectory, 'connection.json'), JSON.stringify({ endpoint: session.endpoint, token: session.token }), { mode: 0o600 });
+    await writeFile(path.join(runDirectory, 'connection.json'), JSON.stringify({ endpoint: session.endpoint, token: session.token, expiresAt: session.expiresAt, writable: session.writable }), { mode: 0o600 });
     await writeFile(helper, `const workspace = ${discovery};\nif (['context','help','--help','-h'].includes(process.argv[2]) && process.argv.length === 3) { console.log(JSON.stringify(workspace)); process.exit(0); }\n` + workspaceBuilderHelperSource, { mode: 0o600 });
     if (windows) await writeFile(launcher, windowsHelperLauncher('builder-tool.mjs'));
   } catch (error) { await cleanup(); throw error; }
-  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\nUse ${command} TOOL '@arguments.json' for this turn. ${windows ? 'This PowerShell launcher uses the Bridge runtime directly; do not call node or set runtime environment variables. ' : ''}For Bricks page discovery run ${command} builder.destinations --builder bricks. For other calls write UTF-8 JSON to an argument file and quote the @file path. Use context for the verified site identity and help for the tool list. builder.destinations also accepts a builder and search string. builder.handoff accepts action create (title) or open (postId), builder, brief, and optional assets. If a handoff result is uncertain, read builder.handoff.status before retrying. WordPress supplies the source chat and request identity. Never read or expose connection.json. Pixflow opens the live editor from the receipt; do not launch a second editor. Current source request: ${session.workspaceSource?.requestId}.` };
+  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\n${windows ? `For a PowerShell terminal use ${command} TOOL '@arguments.json'. For a Bash terminal use ${bashCommand} TOOL '@arguments.json' (no PowerShell & prefix). Use the syntax of your terminal; do not switch shells or copy argument files to a temporary directory.` : `Use ${command} TOOL '@arguments.json' for this turn.`} ${windows ? 'This native command launcher works under restrictive PowerShell settings and uses the Bridge runtime directly; do not call node, change execution policy, or set runtime environment variables. ' : ''}For Bricks page discovery use builder.destinations --builder bricks with that launcher. For other calls write UTF-8 JSON to an argument file and quote the @file path. Use context for the verified site identity and help for the tool list. builder.destinations also accepts --search with a quoted search string, optionally alongside --builder, or the same fields in JSON. builder.handoff accepts action create (title) or open (postId), builder, brief, and optional assets. If a handoff result is uncertain, read builder.handoff.status before retrying. WordPress supplies the source chat and request identity. Never read or expose connection.json. Pixflow opens the live editor from the receipt; do not launch a second editor. Current source request: ${session.workspaceSource?.requestId}.` };
 }

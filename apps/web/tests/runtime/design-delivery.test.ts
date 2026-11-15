@@ -157,3 +157,38 @@ describe('design delivery', () => {
     }));
   });
 });
+
+it('reports a blocked builder handoff instead of a missing project file', () => {
+  const result = applyDesignDeliveryOutcome({id:'a',role:'assistant',content:'',runStatus:'succeeded',events:[
+    {kind:'tool_use',id:'h',name:'Bash',input:{command:"powershell.exe -Command builder-tool.ps1 builder.handoff '@arguments.json'"}},
+    {kind:'tool_result',toolUseId:'h',isError:true,content:'PSSecurityException: running scripts is disabled on this system'},
+  ]},'no_result');
+  expect(result.events).toContainEqual(expect.objectContaining({code:'BUILDER_HANDOFF_FAILED'}));
+  expect(result.events).not.toContainEqual(expect.objectContaining({code:'ARTIFACT_NOT_FOUND'}));
+});
+
+it('preserves uncertain handoffs without offering to replay them, and clears a recovered failure', () => {
+  const events = [
+    {kind:'tool_use' as const,id:'h',name:'Bash',input:{command:"./builder-tool.cmd builder.handoff '@arguments.json'"}},
+    {kind:'tool_result' as const,toolUseId:'h',isError:true,content:'Request timed out; inspect handoff status'},
+  ];
+  const outcome = resolveDesignDeliveryOutcome({sessionMode:'design',runStatus:'succeeded',content:'Could not finish.',producedFileCount:0,events});
+  expect(outcome).toBe('handoff_failed');
+  const result = applyDesignDeliveryOutcome({id:'a',role:'assistant',content:'',events}, outcome);
+  expect(isRetryableAssistantTerminalFailure(result)).toBe(false);
+  expect(result.events).toContainEqual(expect.objectContaining({code:'PIXFLOW_SITE_DELIVERY_UNCERTAIN'}));
+  const checked = [...events,{kind:'tool_use' as const,id:'check',name:'builder.handoff.status',input:{}},{kind:'tool_result' as const,toolUseId:'check',isError:false,content:'{"ok":true,"handoff":{"id":"receipt"}}'}];
+  expect(resolveDesignDeliveryOutcome({sessionMode:'design',runStatus:'succeeded',content:'',producedFileCount:0,events:checked})).toBe('report_only');
+  const recovered = [...events,{kind:'tool_use' as const,id:'h2',name:'builder.handoff',input:{}},{kind:'tool_result' as const,toolUseId:'h2',isError:false,content:'{"handoff":{"id":"receipt"}}'}];
+  expect(resolveDesignDeliveryOutcome({sessionMode:'design',runStatus:'succeeded',content:'',producedFileCount:0,events:recovered})).toBe('report_only');
+});
+
+it('recognises structured handoffs and their recovered MCP receipts',()=>{
+ const events = [
+  {kind:'tool_use' as const,id:'h',name:'mcp__pixflow_builtin__pixflow_builder_handoff',input:{action:'open',builder:'bricks',postId:41}},
+  {kind:'tool_result' as const,toolUseId:'h',isError:true,content:'Connection interrupted'},
+ ];
+ expect(resolveDesignDeliveryOutcome({sessionMode:'design',runStatus:'succeeded',content:'',producedFileCount:0,events})).toBe('handoff_failed');
+ const checked=[...events,{kind:'tool_use' as const,id:'s',name:'pixflow_builder_handoff_status',input:{}},{kind:'tool_result' as const,toolUseId:'s',isError:false,content:JSON.stringify({content:[{type:'text',text:JSON.stringify({ok:true,handoff:{id:'receipt'}})}]})}];
+ expect(resolveDesignDeliveryOutcome({sessionMode:'design',runStatus:'succeeded',content:'',producedFileCount:0,events:checked})).toBe('report_only');
+});

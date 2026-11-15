@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { createAgentInvocation } from './runtimes/invocation.js';
 // LLM-driven memory extractor.
 //
 // The heuristic regex pack in `memory.ts` only catches explicit markers
@@ -64,7 +65,7 @@ import { AIHUBMIX_APP_CODE } from './aihubmix.js';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
-import { createCommandInvocation } from '@open-design/platform';
+
 import {
   applyAgentLaunchEnv,
   getAgentDef,
@@ -901,7 +902,7 @@ async function callLocalCli(provider, system, user, options) {
     ),
     launch,
   );
-  const invocation = createCommandInvocation({
+  const invocation = createAgentInvocation({
     command: launch.launchPath,
     args,
     env,

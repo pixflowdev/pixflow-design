@@ -147,6 +147,19 @@ final class DirectSiteRestController
             $tool = (string) ($body['tool'] ?? '');
             if (str_starts_with($tool, 'bricks.')) \PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'active');
             $args = is_array($body['arguments'] ?? null) ? $body['arguments'] : [];
+            if ($tool === 'bricks.native.catalogue') {
+                return (\PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'nativeCatalogue'))($args);
+            }
+            if ($tool === 'bricks.native.changeset') {
+                $adapted = (\PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'nativeChangeset'))($args, $this->session['writable']);
+                $args = $adapted['arguments'];
+            }
+            if ($tool === 'bricks.native' || ($tool === 'ability.call' && str_starts_with((string) ($args['name'] ?? ''), 'bricks/'))) {
+                $adapted = (\PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'nativeAdapter'))($args, $this->session['writable']);
+                if (array_key_exists('result', $adapted)) return $adapted['result'];
+                $tool = $adapted['tool'];
+                $args = $adapted['arguments'];
+            }
             if ($tool === 'provider.turn') return (new \PixflowDesign\WordPress\Http\Routes\ProviderSettingsRoutes())->agent_turn($args);
             $builder = str_starts_with($tool, 'gutenberg.') ? 'gutenberg' : (str_starts_with($tool, 'elementor.') ? 'elementor' : (str_starts_with($tool, 'etch.') ? 'etch' : 'bricks'));
             if ($builder !== 'bricks') $args = $this->native_payload($request, 'arguments');

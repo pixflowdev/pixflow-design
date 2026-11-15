@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { createCommandInvocation } from '@open-design/platform';
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import type {
   AmrEntryAttribution,
   TrackingAmrEntrySource,
@@ -341,12 +341,12 @@ export async function spawnVelaLogin(
     ...spawnEnvForAgent('amr', baseEnv, configuredEnv),
     ...velaLoginAttributionEnv(deps.attribution),
   };
-  // Route through createCommandInvocation so an npm/Node-style `vela.cmd` or
+  // Route through createAgentInvocation so an npm/Node-style `vela.cmd` or
   // `vela.bat` shim on Windows gets wrapped under `cmd.exe /d /s /c …` with
   // verbatim args, matching what `execAgentFile` / chat-run spawning do. A
   // direct `spawn(bin, args)` on a `.cmd` shim quietly fails to find the
   // shim's actual entry point. POSIX is unchanged (no wrapping needed).
-  const invocation = createCommandInvocation({ command: bin, args: ['login'], env });
+  const invocation = createAgentInvocation({ command: bin, args: ['login'], env });
   const child = spawn(invocation.command, invocation.args, {
     stdio: ['ignore', 'pipe', 'pipe'],
     env,

@@ -1,3 +1,4 @@
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
 import { changedPrompt, snapshotPrompt } from './direct-prompt-context.js';
 import { createHash } from 'node:crypto';
@@ -40,8 +41,9 @@ export async function runCodexTurn(options: {
   assertCodexReasoningSupported(options.reasoning);
   const lease = options.isolateProjectInstructions && !options.configArgs?.length ? options.warmWorker?.acquire(options, options.resumeSessionId, options.threadScope) : undefined;
   let reusable = false;
-  const child = lease?.worker.child ?? spawn(options.executable, ['app-server', '--stdio', ...(options.configArgs ?? []),
-    ...(options.isolateProjectInstructions ? ['-c', 'project_root_markers=["AGENTS.md"]'] : [])], {
+  const invocation = createAgentInvocation({command:options.executable, args:['app-server', '--stdio', ...(options.configArgs ?? []),
+    ...(options.isolateProjectInstructions ? ['-c', 'project_root_markers=["AGENTS.md"]'] : [])], env:options.env});
+  const child = lease?.worker.child ?? spawn(invocation.command, invocation.args, {windowsVerbatimArguments:invocation.windowsVerbatimArguments,
     cwd: options.cwd, env: options.env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   });
   options.onChild(child);

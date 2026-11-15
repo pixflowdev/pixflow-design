@@ -62,17 +62,23 @@ describe('Workspace CLI builder connection', () => {
       const directory = path.join(root, 'workspace-builder-sessions', (await readdir(path.join(root, 'workspace-builder-sessions')))[0]!);
       const helper = path.join(directory, 'builder-tool.mjs');
       const context = await promisify(execFile)(process.execPath, [helper, 'context']);
-      const launcher = process.platform === 'win32' ? path.join(directory, 'builder-tool.ps1') : helper;
+      const launcher = process.platform === 'win32' ? path.join(directory, 'builder-tool.cmd') : helper;
       expect(JSON.parse(context.stdout)).toMatchObject({ scope: 'workspace', helper: launcher, siteTitle: null });
       expect(context.stdout).not.toContain(session.token);
       expect(calls).toHaveLength(0);
       const discoveryResult = process.platform === 'win32'
-        ? await promisify(execFile)(path.join(process.env.SystemRoot!, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-File', 'builder-tool.ps1', 'builder.destinations', '--builder', 'bricks'], {
+        ? await promisify(execFile)(path.join(process.env.SystemRoot!, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Restricted', '-Command', '& ./builder-tool.cmd builder.destinations --builder bricks; exit $LASTEXITCODE'], {
           cwd: directory, env: { ...process.env, PATH: path.join(process.env.SystemRoot!, 'System32') },
         })
         : await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '--builder', 'bricks']);
       expect(JSON.parse(discoveryResult.stdout).ok).toBe(true);
       expect(calls.pop()).toMatchObject({ body: { tool: 'builder.destinations', arguments: { builder: 'bricks' } } });
+      await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '--builder', 'bricks', '--search', 'Services']);
+      expect(calls.pop()).toMatchObject({body:{tool:'builder.destinations',arguments:{builder:'bricks',search:'Services'}}});
+      for (const flags of [['--builder','bricks','--search'],['--builder','bricks','--builder','etch'],['--search','Services','--unknown','x']]) {
+        const failure = await promisify(execFile)(process.execPath,[helper,'builder.destinations',...flags]).catch(error=>error);
+        expect(JSON.parse(failure.stdout).code).toBe('INVALID_ARGUMENTS');
+      }
       const invalid = await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '{broken']).catch(error => error);
       expect(JSON.parse(invalid.stdout)).toMatchObject({ ok: false, code: 'INVALID_ARGUMENTS' });
       expect(invalid.stdout).not.toContain(session.token);

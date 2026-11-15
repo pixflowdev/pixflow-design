@@ -5,7 +5,19 @@ import { promisify } from 'node:util';
 import { createCommandInvocation } from '@open-design/platform';
 import type { RuntimeExecOptions } from './types.js';
 
-const execFileP = promisify(execFile);
+/** One execution contract for provider probes and turns. Native binaries launch
+ * directly; JavaScript entry points use the Bridge runtime, and Windows batch
+ * wrappers alone use the platform's escaped cmd compatibility path. */
+export function createAgentInvocation({command, args = [], env = process.env}: {
+  command: string; args?: string[]; env?: NodeJS.ProcessEnv;
+}) {
+  const script = ['.js', '.cjs', '.mjs'].includes(path.extname(command).toLowerCase());
+  return createCommandInvocation({
+    command: script ? process.execPath : command,
+    args: script ? [command, ...args] : args,
+    env,
+  });
+}
 
 // Agent probes (model-list / version / help / auth-status) are short read-only
 // metadata calls that never need the caller's project files. Default them to a
@@ -23,24 +35,10 @@ export function execAgentFile(
   args: string[],
   options: RuntimeExecOptions = {},
 ) {
-  const scriptExtension = path.extname(command).toLowerCase();
-  const executable = ['.js', '.cjs', '.mjs'].includes(scriptExtension)
-    ? { command: process.execPath, args: [command, ...args] }
-    : { command, args };
-  const invocation = createCommandInvocation(
-    options.env
-      ? {
-          command: executable.command,
-          args: executable.args,
-          env: options.env,
-        }
-      : {
-          command: executable.command,
-          args: executable.args,
-        },
-  );
-  return execFileP(invocation.command, invocation.args, {
+  const invocation = createAgentInvocation({command, args, env: options.env ?? process.env});
+  return promisify(execFile)(invocation.command, invocation.args, {
     ...options,
+    shell: false,
     cwd: options.cwd ?? os.tmpdir(),
     windowsHide: process.platform === 'win32',
     windowsVerbatimArguments: invocation.windowsVerbatimArguments,

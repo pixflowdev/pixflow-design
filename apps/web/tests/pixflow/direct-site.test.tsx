@@ -249,6 +249,33 @@ describe('direct site panel', () => {
     expect(requests.daemon.mock.calls.map(call=>call[0])).toEqual(['/api/pixflow/direct-site/run-stream','/api/pixflow/direct-site/resume-stream','/api/pixflow/direct-site/cancel']);
     expect(pendingDirectSiteRun()).toBeNull();
   });
+  it('obtains fresh WordPress authorization before stopping a run restored after reload', async () => {
+    const connection = { id: 'owned-run', token: 'owned-run-secret' };
+    const stop = new AbortController();
+    const session = { endpoint: 'https://site.example/tools', writable: true };
+    requests.wordpress.mockResolvedValueOnce(Response.json({ ...session, token: 'resume-only' }))
+      .mockResolvedValueOnce(Response.json({ ...session, token: 'fresh-stop-token' }));
+    requests.daemon.mockImplementation(async (url: string) => {
+      if (url.endsWith('/resume-stream')) {
+        return new Response(new ReadableStream({ start(controller) {
+          stop.signal.addEventListener('abort', () => controller.close(), { once: true });
+          setTimeout(() => stop.abort(), 0);
+        } }));
+      }
+      return Response.json({ canceled: true });
+    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response()));
+    await expect(runDirectSite({
+      agentId: 'claude', mode: 'design', prompt: '', history: [], signal: stop.signal,
+      resume: { connection, conversationId: 'restored-chat', metadata: { id: 'restored-chat' } }, onUpdate: vi.fn(),
+    })).rejects.toMatchObject({ name: 'AbortError' });
+    await waitFor(() => expect(requests.daemon).toHaveBeenCalledTimes(2));
+    expect(requests.daemon.mock.calls[1]![0]).toBe('/api/pixflow/direct-site/cancel');
+    expect(JSON.parse(requests.daemon.mock.calls[1]![1].body)).toEqual({
+      ...connection, session: { ...session, token: 'fresh-stop-token' },
+    });
+  });
+
   it('gives separate outages a fresh recovery budget only after new sequenced activity', async () => {
     requests.wordpress.mockImplementation(async()=>Response.json({endpoint:'https://site.example/tools',token:'session-token',writable:true}));
     for(let sequence=1;sequence<=4;sequence++) requests.daemon.mockResolvedValueOnce(new Response(JSON.stringify({type:'text_delta',sequence,delta:String(sequence)})+'\n'));

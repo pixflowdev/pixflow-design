@@ -81,6 +81,8 @@ let cachedHealth: {
 
 const HEALTH_CACHE_MS = 30_000;
 const SITE_HEALTH_TIMEOUT_MS = 5_500;
+const BRIDGE_RESTART_GRACE_MS = 12_000;
+const BRIDGE_RESTART_POLL_MS = 500;
 const HEALTH_FAILURE_CACHE_MS = 2_000;
 const AGENTS_CACHE_MS = 60_000;
 const PERSISTED_AGENTS_CACHE_TTL_MS = 24 * 60 * 60_000;
@@ -393,8 +395,25 @@ export async function ensurePixflowOptionalBridgeSiteContext(options?: {
     const isReady = (value: SiteReadiness) => String(value?.site?.key || '') === siteKey
       && value.ok !== false && (!value.state || value.state === 'running')
       && !['sleeping', 'waking', 'releasing', 'unavailable'].includes(value.runtimeState || '');
-    const health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, { timeoutMs: Math.min(timeoutMs, SITE_HEALTH_TIMEOUT_MS) });
     const publishRuntime = (state: string) => window.dispatchEvent(new CustomEvent('pixflow-design:bridge-runtime-state', { detail: { state } }));
+    const restartDeadline = startedAt + Math.min(timeoutMs, BRIDGE_RESTART_GRACE_MS);
+    let health: SiteReadiness;
+    for (;;) {
+      try {
+        health = await pixflowOptionalBridgeJson<SiteReadiness>('health', {}, {
+          timeoutMs: Math.max(1, Math.min(SITE_HEALTH_TIMEOUT_MS, restartDeadline - Date.now())),
+        });
+        break;
+      } catch (error) {
+        // The first read can reach a stopping process or an unbound port. Wait
+        // for the same configured Bridge before authorizing or sending any work.
+        const temporary = error instanceof PixflowOptionalBridgeUnavailableError
+          && !(error instanceof PixflowOptionalBridgeLoopbackAccessError);
+        if (!temporary || Date.now() >= restartDeadline) throw error;
+        publishRuntime('waking');
+        await new Promise(resolve => window.setTimeout(resolve, Math.min(BRIDGE_RESTART_POLL_MS, restartDeadline - Date.now())));
+      }
+    }
     publishRuntime(health.runtimeState || 'ready');
     if (isReady(health)) { refreshFailedProvidersAfterReconnect(); return; }
     if (!allowSiteSwitch && health.runtimeState === 'sleeping') return;

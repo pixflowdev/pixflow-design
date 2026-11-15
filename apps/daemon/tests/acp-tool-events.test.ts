@@ -19,3 +19,19 @@ it('preserves failed and cancelled results as errors and accepts result-only cal
     expect(events.at(-1)).toMatchObject({type:'tool_result',isError:true});
   }
 });
+
+it('shows the actual Pixflow tool and receipt when Grok uses its ACP tool dispatcher', () => {
+  const events: Record<string, unknown>[] = [];
+  const update = createAcpToolEvents(event => events.push(event));
+  update({ toolCallId: 'grok', title: 'use_tool', rawInput: {
+    tool_name: 'pixflow_builtin__pixflow_call', tool_input: { tool: 'builder.handoff', arguments: { action: 'open' } },
+  } });
+  update({ toolCallId: 'grok', status: 'completed', rawOutput: {
+    type: 'MCP', server_name: 'pixflow_builtin', output: { Error: 'Permission denied' }, is_error: true,
+  } });
+  expect(events).toEqual([
+    { type: 'tool_use', id: 'grok', name: 'pixflow_call',
+      input: { tool: 'builder.handoff', arguments: { action: 'open' }, description: 'use_tool' } },
+    { type: 'tool_result', toolUseId: 'grok', content: 'Permission denied', isError: true },
+  ]);
+});

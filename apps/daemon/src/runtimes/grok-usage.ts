@@ -1,9 +1,10 @@
+import { createAgentInvocation } from './invocation.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import type { CodexUsage } from '@open-design/contracts';
 import { grokBuildAgentDef } from './defs/grok-build.js';
 import { resolveAgentLaunch, applyAgentLaunchEnv, agentRuntimeSource } from './launch.js';
@@ -34,7 +35,7 @@ export async function readGrokUsage(executable: string, env: NodeJS.ProcessEnv, 
   const cwd = await mkdtemp(join(tmpdir(), 'pixflow-grok-usage-'));
   try {
     return await new Promise<CodexUsage>(resolve => {
-      const invocation = createCommandInvocation({ command: executable, args: ['agent', '--no-leader', 'stdio'], env });
+      const invocation = createAgentInvocation({ command: executable, args: ['agent', '--no-leader', 'stdio'], env });
       const child = spawn(invocation.command, invocation.args, { cwd, env, windowsHide: true,
         windowsVerbatimArguments: invocation.windowsVerbatimArguments, stdio: ['pipe', 'pipe', 'pipe'] });
       let settled = false, buffer = '', bytes = 0, expectedId = 1;

@@ -98,3 +98,8 @@ it('uses the native image call timestamp and drops result bytes before saving th
     type:'tool_result',toolUseId:'image-1',isError:true,content:'failed',
   });
 });
+
+it('preserves MCP permission failures as tool errors',()=>{
+ const result=voiceProgress('item/completed',{item:{id:'denied',type:'mcpToolCall',tool:'pixflow_call',status:'completed',result:{isError:true,content:[{type:'text',text:'Permission denied'}]}}});
+ expect(result?.isError).toBe(true);
+});

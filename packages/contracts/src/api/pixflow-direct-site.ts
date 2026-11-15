@@ -1,3 +1,10 @@
+/** Safe transport metadata only; never persist headers, bodies or credentials. */
+export interface PixflowAccessCheckDiagnostics {
+  httpStatus: number;
+  format: 'html' | 'empty' | 'invalid-json' | 'unreadable' | 'too-large';
+  receivedBytes: number;
+}
+
 /** Live site integrations returned by the authenticated WordPress session check. */
 export interface PixflowSiteIntegrations { bricks?: boolean }
 /** Source bound by WordPress when the Workspace opens a tool session. */

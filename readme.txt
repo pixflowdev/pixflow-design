@@ -35,6 +35,23 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = Unreleased =
 
+**Added**
+
+* Give local assistants including Grok Build and Antigravity direct access to Pixflow site tools through MCP, with WordPress permissions and native helpers available when needed.
+
+**Fixed**
+
+* Let the open assistant panel reconnect during a Bridge restart and send the waiting message once the Bridge is ready.
+* Fix Stop after reloading a page while a Bridge assistant is still running.
+* Use consistent CLI launching for provider checks, sign-in and chats, including JavaScript entry points and Windows command wrappers.
+* Fix Windows assistant commands failing when PowerShell scripts are disabled, without changing your execution policy.
+* Show clearer builder handoff and WordPress connection errors instead of incorrectly reporting a missing design file.
+* Let assistants filter available builder pages by name without retrying an unsupported command.
+
+**Removed**
+
+* Retire the legacy Windows PowerShell installation script from new Bridge build output; Windows uses the native installer.
+
 = 2.3.2 =
 
 **Changed**

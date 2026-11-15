@@ -1,10 +1,11 @@
+import { createAgentInvocation } from './invocation.js';
 import { assertCodexReasoningSupported } from './defs/shared.js';
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { StringDecoder } from 'node:string_decoder';
 import { join } from 'node:path';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import { DEFAULT_MODEL_OPTION, sanitizeCustomModel, getRememberedLiveModels } from './models.js';
 import type { RuntimeEnv, RuntimeModelOption, RuntimeAgentDef } from './types.js';
 
@@ -58,7 +59,7 @@ export function parseClaudeModels(value: unknown): RuntimeModelOption[] | null {
 export async function discoverClaudeModels(executable: string, env: RuntimeEnv, timeoutMs = 15000): Promise<RuntimeModelOption[] | null> {
   const cwd = await mkdtemp(join(tmpdir(), 'pixflow-claude-models-'));
   try {
-    const invocation = createCommandInvocation({ command: executable, env, args: [
+    const invocation = createAgentInvocation({ command: executable, env, args: [
       '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
       '--no-session-persistence', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
       '--settings', '{"disableAllHooks":true}', '--setting-sources', 'user',

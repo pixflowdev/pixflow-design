@@ -4,7 +4,7 @@ import type { ArtifactDeliveryFailure } from '../artifacts/delivery';
 import { appendErrorStatusEvent } from './chat-events';
 import { hasFileMutationToolUse } from './file-ops';
 import { unfinishedTodosFromEvents } from './todos';
-import { hasSuccessfulToolResult, hasUncertainSiteDelivery } from './site-delivery';
+import { hasSuccessfulToolResult, hasUncertainSiteDelivery, failedBuilderHandoff } from './site-delivery';
 
 export type DesignDeliveryOutcome =
   | 'not_required'
@@ -12,7 +12,8 @@ export type DesignDeliveryOutcome =
   | 'delivered'
   | 'report_only'
   | 'no_result'
-  | 'delivery_failed';
+  | 'delivery_failed'
+  | 'handoff_failed';
 
 export interface DesignDeliveryInput {
   sessionMode: ChatSessionMode | null | undefined;
@@ -56,6 +57,7 @@ function hasLiveArtifactDelivery(events: AgentEvent[] | undefined): boolean {
 export function resolveDesignDeliveryOutcome(input: DesignDeliveryInput): DesignDeliveryOutcome {
   if (input.sessionMode !== 'design' || input.runStatus !== 'succeeded') return 'not_required';
   if (isIntermediateDesignTurn(input.content, input.events)) return 'awaiting_input';
+  if (failedBuilderHandoff(input.events)) return 'handoff_failed';
   if (input.persistenceFailed) return 'delivery_failed';
   if (
     input.producedFileCount > 0 ||
@@ -80,6 +82,10 @@ export function applyDesignDeliveryOutcome(
 ): ChatMessage {
   if (outcome === 'delivered') {
     return { ...message, resultDeliveryState: 'delivered' };
+  }
+  const handoffFailure = failedBuilderHandoff(message.events);
+  if ((outcome === 'no_result' || outcome === 'handoff_failed') && handoffFailure) {
+    return appendErrorStatusEvent({...message, resultDeliveryState:'delivery_failed', resumable:false}, handoffFailure.detail, handoffFailure.code);
   }
   if (outcome !== 'no_result' && outcome !== 'delivery_failed') return message;
   if (outcome === 'delivery_failed' && persistenceFailure) {

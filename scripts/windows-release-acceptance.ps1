@@ -11,9 +11,9 @@ New-Item -ItemType Directory -Path $qaRoot | Out-Null
 $repo = 'https://api.github.com/repos/pixflowdev/pixflow-design'
 $headers = @{ Authorization = 'Bearer ' + $env:GH_TOKEN; Accept = 'application/vnd.github+json' }
 $draft = Invoke-RestMethod -Uri "$repo/releases/445657482" -Headers $headers
-if (!$draft.draft -or $draft.target_commitish -ne '21804a5928451edeef6f1908affeb85191035f9c') { throw 'Unexpected draft release' }
+if (!$draft.draft -or $draft.target_commitish -ne 'c2a655ca7e45861de14ea074d138fe3fdd58f857') { throw 'Unexpected draft release' }
 $asset = $draft.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.2-win-x64-setup.exe'
-$expectedHash = '471ab019031d843802531cb2128914d97068c1ea90abea811851877365f68a3a'
+$expectedHash = '5746ae643dbed24ad171597b32681f0801d67b4ddbb85aa7d13c051a1b1405d5'
 if (!$asset -or $asset.digest -ne "sha256:$expectedHash") { throw 'Unexpected draft installer digest' }
 $candidate = Join-Path $qaRoot 'candidate.exe'
 $previous = Join-Path $qaRoot 'stable.exe'
@@ -81,4 +81,5 @@ Test-BridgeHealth '2.3.2'
 if ((Get-FileHash $marker).Hash -ne $markerHash) { throw 'Upgrade changed the existing data marker' }
 @{ installerSha256 = $expectedHash; previousInstallerSha256 = $oldAsset.digest; freshInstall = 'passed'; upgradeFrom = '2.3.1'; upgrade = 'passed'; installedHealth = 'passed'; chromeNativeHost = 'passed'; namespaceDataPreserved = 'passed' } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $qaRoot 'receipt.json') -Encoding utf8
+
 

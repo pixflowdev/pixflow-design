@@ -76,9 +76,6 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
-* Keep pending questions visible above the composer in floating chat panels with long conversations.
-* Use the shared Workspace tooltip for floating-panel header and composer controls, keeping hints compact, correctly positioned and keyboard accessible.
-* Avoid unnecessary assistant retries when searching media or reading a post using named command arguments.
 * Reconnect Workspace to the Bridge before syncing protected project files.
 * Send the connected site origin with authenticated Workspace, editor, and site-tool POSTs so hosts that require it can pass the requests to WordPress for authorization.
 
@@ -141,9 +138,6 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Fixed**
 
-* Keep pending questions visible above the composer in floating chat panels with long conversations.
-* Use the shared Workspace tooltip for floating-panel header and composer controls, keeping hints compact, correctly positioned and keyboard accessible.
-* Avoid unnecessary assistant retries when searching media or reading a post using named command arguments.
 * Show one continuous loading indicator when opening the Sitemap Builder.
 * Keep chat project icons compact, make sidebar search easier to spot, and let the Workspace Media Library fill wide screens.
 * Keep floating-panel composer controls on one row at the minimum width, with a single Send control.

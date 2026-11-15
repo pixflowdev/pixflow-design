@@ -37,10 +37,12 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 **Added**
 
+* Let assistants filter WordPress posts by category or tag and sort by publication date when building or checking query loops.
 * Give local assistants including Grok Build and Antigravity direct access to Pixflow site tools through MCP, with WordPress permissions and native helpers available when needed.
 
 **Fixed**
 
+* Fix Antigravity failing to start when a model variant specifies a reasoning level that conflicts with the saved setting.
 * Let the open assistant panel reconnect during a Bridge restart and send the waiting message once the Bridge is ready.
 * Fix Stop after reloading a page while a Bridge assistant is still running.
 * Keep your prompt queued if Claude Code needs you to sign in again. Retry it in the same chat after reconnecting.

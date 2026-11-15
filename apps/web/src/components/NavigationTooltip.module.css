@@ -1,5 +1,9 @@
 .positioner { z-index: 18010; }
-.content {
+.content[data-slot="tooltip-content"][role="tooltip"] {
+  /* Host editors can impose their own minimum width on [role=tooltip]. */
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 0;
   max-width: min(280px, calc(100vw - 24px));
   padding: 6px 10px;
   border-radius: var(--radius-sm, 6px);

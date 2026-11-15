@@ -2,13 +2,29 @@
 
 import { useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TooltipLayer } from '../../src/components/TooltipLayer';
 
 afterEach(() => cleanup());
 
 describe('TooltipLayer', () => {
+  it('shares event ownership between independently bundled layers', async () => {
+    vi.resetModules();
+    const { TooltipLayer: OtherBundleLayer } = await import('../../src/components/TooltipLayer');
+    render(<div className="pixflow-bricks-agent-shell"><button title="Dictation">Dictation</button><TooltipLayer /><OtherBundleLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Dictation' }));
+    await waitFor(() => expect(screen.getAllByRole('tooltip')).toHaveLength(1));
+  });
+
+  it('keeps the expanded panel collapse control discoverable', async () => {
+    render(<div className="pixflow-bricks-agent-shell"><button className="pixflow-bricks-agent-panel__icon-button" aria-expanded="true" title="Collapse panel">Collapse panel</button><TooltipLayer /></div>);
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(screen.getByRole('button', { name: 'Collapse panel' }));
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Collapse panel');
+  });
+
   it('shows only one floating tooltip when multiple panel roots are mounted', async () => {
     render(<div className="pixflow-bricks-agent-shell"><button title="Dictation">Dictation</button><TooltipLayer /><TooltipLayer /></div>);
     fireEvent.keyDown(document, { key: 'Tab' });

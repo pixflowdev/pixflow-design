@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { FloatingChatMenu } from './FloatingChatMenu';
+import { TooltipLayer } from '../components/TooltipLayer';
 import {
   getPixflowSettingsSurfaceProfile,
   PIXFLOW_SURFACE_FEATURES,
@@ -49,6 +50,7 @@ export function PixflowAgentSurfaceShell({ surface, children, className = '' }: 
       data-pixflow-stage-a={features.stageAHtmlCssJsPreview ? 'enabled' : 'disabled'}
       data-pixflow-settings-profile={settingsProfile.surface === 'wp_admin' ? 'wp_admin_slim' : 'full'}
     >
+      <TooltipLayer />
       <FloatingChatMenu />
       {children}
     </div>

@@ -22,7 +22,14 @@ const TOOLTIP_MARGIN = 8;
 const TOOLTIP_GAP = 7;
 // Several floating roots can share a document. Only one delegated layer owns
 // each opening event; all layers still receive dismissal and cleanup events.
-const handledFloatingTooltipEvents = new WeakSet<Event>();
+const floatingTooltipEventHandled = Symbol.for('pixflow:floating-tooltip-event-handled');
+function claimFloatingTooltipEvent(event: Event): boolean {
+  // Core and Pro may each bundle this module, so module-local state is not
+  // enough. The native event is shared by every listener in this document.
+  if (Reflect.get(event, floatingTooltipEventHandled)) return false;
+  Reflect.set(event, floatingTooltipEventHandled, true);
+  return true;
+}
 
 const FLOATING_TOOLTIP_SCOPE = '.pixflow-bricks-agent-shell, .pixflow-bricks-agent-portal-root, .pixflow-agent-surface-shell, .pixflow-bricks-agent-frame-app';
 function isFloatingTarget(target: HTMLElement): boolean {
@@ -36,7 +43,8 @@ function isTooltipTarget(el: Element | null): el is HTMLElement {
   return el instanceof HTMLElement
     && (el.classList.contains('od-tooltip') || isFloatingTarget(el))
     && Boolean(tooltipText(el))
-    && el.getAttribute('aria-expanded') !== 'true';
+    && (el.getAttribute('aria-expanded') !== 'true'
+      || el.classList.contains('pixflow-bricks-agent-panel__icon-button'));
 }
 
 function readTooltipTarget(start: EventTarget | null): HTMLElement | null {
@@ -176,7 +184,7 @@ export function TooltipLayer() {
     setState((current) => {
       if (!current) return null;
       if (!document.contains(current.target)) return null;
-      if (current.target.getAttribute('aria-expanded') === 'true') return null;
+      if (!isTooltipTarget(current.target)) return null;
       // Base UI owns collision handling and anchor updates for floating panels.
       if (isFloatingTarget(current.target)) return current;
       const node = tooltipRef.current;
@@ -249,8 +257,7 @@ export function TooltipLayer() {
       lastInputRef.current = 'pointer';
       const target = readTooltipTarget(event.target);
       if (target && isFloatingTarget(target)) {
-        if (handledFloatingTooltipEvents.has(event)) return;
-        handledFloatingTooltipEvents.add(event);
+        if (!claimFloatingTooltipEvent(event)) return;
       }
       if (delayRef.current !== null) clearTimeout(delayRef.current);
       if (target && isFloatingTarget(target)) {
@@ -280,8 +287,7 @@ export function TooltipLayer() {
       const target = readTooltipTarget(event.target);
       if (!target) return;
       if (isFloatingTarget(target)) {
-        if (handledFloatingTooltipEvents.has(event)) return;
-        handledFloatingTooltipEvents.add(event);
+        if (!claimFloatingTooltipEvent(event)) return;
       }
       if (shouldShowForFocus(target)) {
         showTooltip(target);

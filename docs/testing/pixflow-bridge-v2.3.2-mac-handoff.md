@@ -4,8 +4,8 @@ Publication is on hold. Build and validate Apple Silicon and Intel DMGs; do not 
 
 ## Exact source pair
 
-- Core: `pixflowdev/pixflow-design`, branch `codex/v232-core-candidate`, commit `21804a5928451edeef6f1908affeb85191035f9c`.
-- Pro: `pixflowdev/pixflow-design-pro`, branch `codex/v232-pro-candidate`, commit `8c903c8f340bc853a7e75f5ad9f39026bcaa1022`.
+- Core: `pixflowdev/pixflow-design`, branch `codex/v232-core-candidate`, commit `c2a655ca7e45861de14ea074d138fe3fdd58f857`.
+- Pro: `pixflowdev/pixflow-design-pro`, branch `codex/v232-pro-candidate`, commit `85be1218309185c9739f9973fcb9c8459a750d85`.
 - Pro's `pixflow-pro.json` pins that exact Core revision. No dirty-source override is permitted for runtime changes. Do not build from this documentation branch.
 - Both plugins and Bridge are stamped 2.3.2. The source includes the merged v2.3.2 builder reliability and Bricksforge work, and preserves the server-to-server pairing correction from Core #133. Do not add Origin or Sec-Fetch-Site to the pairing exchange: WordPress deliberately rejects them.
 
@@ -117,6 +117,14 @@ Evidence remains local under `outputs/mac232/`: sanitized `efficiency/fixed2/*.j
 
 Return `pixflow-design-bridge-2.3.2-mac-arm64.dmg`, `pixflow-design-bridge-2.3.2-mac-x64.dmg`, `SHA256SUMS-mac.txt` and `validation-receipt-mac.md`. Include exact pins, architecture, macOS version, signing status, checks, live results, known limitations and any packaging-only patch.
 
-Stage locally or upload only to a coordinator-confirmed unpublished v2.3.2 GitHub draft. Do not reuse v2.3.1 releases or replace their assets. No draft ID is assigned in this handoff. Report artifact location and hashes to the coordinator; publication remains on hold.
+Stage locally or upload only to a coordinator-confirmed unpublished v2.3.2 GitHub draft. Do not reuse v2.3.1 releases or replace their assets. The coordinator-confirmed Bridge draft is release ID 445657482 (bridge-v2.3.2). Confirm draft=true before uploading. Report artifact location and hashes to the coordinator; publication remains on hold.
 
 Before public release the coordinator must finish Windows install/upgrade acceptance, paired plugin upgrade/packaging checks, publish and verify the 18 exact language-pack hashes, and align website changelogs. Final order remains language packs, Bridge, then paired Core/Pro and website notes after explicit approval.
+
+## Coordinator review and replacement pins — 15 November
+
+Core #148 and Pro #82 were reviewed and merged into their v2.3.2 candidate branches. The Exact source pair at the top now supersedes the original acceptance pins. Both readme changelogs include the three new fixes from each repository, and Pro pins the replacement Core revision.
+
+Windows reran all 105 direct-site helper tests and all 11 TooltipLayer tests successfully. Pro's three repository/build contracts passed. Original Mac PR heads had all three Core and five Pro workflows green. Candidate PRs #147 and #81 include the final documentation and pin updates.
+
+Build final arm64 and x64 DMGs from the replacement pair, verify signatures, packaged Node, architecture, hashes and launch, and upload to the confirmed unpublished draft. Keep ad hoc signing and the explicit notarisation waiver. The coordinator must rebuild Windows and both plugin ZIPs, regenerate website notes, and refresh acceptance receipts against this pair before publication.

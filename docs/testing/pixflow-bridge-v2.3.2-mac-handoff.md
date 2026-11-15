@@ -128,3 +128,16 @@ Core #148 and Pro #82 were reviewed and merged into their v2.3.2 candidate branc
 Windows reran all 105 direct-site helper tests and all 11 TooltipLayer tests successfully. Pro's three repository/build contracts passed. Original Mac PR heads had all three Core and five Pro workflows green. Candidate PRs #147 and #81 include the final documentation and pin updates.
 
 Build final arm64 and x64 DMGs from the replacement pair, verify signatures, packaged Node, architecture, hashes and launch, and upload to the confirmed unpublished draft. Keep ad hoc signing and the explicit notarisation waiver. The coordinator must rebuild Windows and both plugin ZIPs, regenerate website notes, and refresh acceptance receipts against this pair before publication.
+
+## Production Mac DMGs — 15 November
+
+Both v2.3.2 production DMGs were built from Core `c2a655ca7e45861de14ea074d138fe3fdd58f857` and Pro `85be1218309185c9739f9973fcb9c8459a750d85` and uploaded to release ID `445657482`. GitHub reported the confirmed Core target and `draft=true`. Use a signed-in account with access to the [Bridge draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-dd0659693abf83eacb86).
+
+- Apple Silicon DMG, 253,766,080 bytes, asset `749373360`. [Apple Silicon DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-dd0659693abf83eacb86/pixflow-design-bridge-2.3.2-mac-arm64.dmg)
+- Intel DMG, 266,929,790 bytes, asset `749375317`. [Intel DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-dd0659693abf83eacb86/pixflow-design-bridge-2.3.2-mac-x64.dmg)
+- [SHA-256 manifest](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-dd0659693abf83eacb86/SHA256SUMS-mac.txt)
+- [Mac validation receipt](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-dd0659693abf83eacb86/validation-receipt-mac.md)
+
+Both DMGs passed integrity, architecture, bundled Node and SQLite, and strict signature verification. The installed apps launched on Apple Silicon, with the Intel app running under Rosetta. The native host registered correctly in isolated homes. Both downloads from GitHub matched their local SHA-256 hashes.
+
+Notarisation was skipped as authorised. Gatekeeper rejected both ad hoc signed apps during assessment and may warn or block users when they open a downloaded app. The previous local Bridge was restored after the smoke tests.

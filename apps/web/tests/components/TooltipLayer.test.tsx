@@ -9,7 +9,7 @@ import { TooltipLayer } from '../../src/components/TooltipLayer';
 afterEach(() => cleanup());
 
 describe('TooltipLayer', () => {
-  it('portals viewport-positioned tooltips into an isolated themed layer outside contained editors', () => {
+  it('uses the shared shadcn tooltip outside contained floating editors', async () => {
     const editor = document.createElement('div');
     editor.className = 'workspace-shell pixflow-bricks-agent-shell';
     editor.style.contain = 'layout paint';
@@ -20,15 +20,29 @@ describe('TooltipLayer', () => {
     try {
       render(<><button className="od-tooltip" data-tooltip="Add context">Add context</button><TooltipLayer /></>, { container: editor });
       fireEvent.pointerOver(screen.getByRole('button', { name: 'Add context' }));
-      const tooltip = screen.getByRole('tooltip');
-      const layer = tooltip.parentElement!;
+      const tooltip = await screen.findByRole('tooltip');
+      const layer = tooltip.closest('.pixflow-bricks-agent-portal-root')!;
       expect(layer.parentElement).toBe(document.body);
-      expect(layer.classList.contains('pixflow-design-portal-scope')).toBe(true);
-      expect(layer.style.position).toBe('fixed');
-      expect(layer.style.contain).toContain('paint');
-      expect(Number(layer.style.zIndex)).toBeGreaterThan(100090);
-      expect(tooltip.style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+      expect(editor.contains(tooltip)).toBe(false);
+      expect(tooltip.getAttribute('data-slot')).toBe('tooltip-content');
+      expect((layer as HTMLElement).style.getPropertyValue('--bg-elevated')).toBe('rgb(30, 30, 30)');
+      expect(screen.getByRole('button', { name: 'Add context' }).getAttribute('aria-describedby')).toContain(tooltip.id);
     } finally { editor.remove(); }
+  });
+
+  it.each(['Design styling', 'Start Codex voice', 'Dictation', 'Annotate page', 'Set panel size SM'])('uses one tooltip for native floating control %s and restores its title', async label => {
+    render(<div className="pixflow-bricks-agent-shell"><button title={label}>{label}</button><TooltipLayer /></div>);
+    const button = screen.getByRole('button', { name: label });
+    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.focusIn(button);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.getAttribute('data-slot')).toBe('tooltip-content');
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+    expect(button.hasAttribute('title')).toBe(false);
+    fireEvent.keyDown(button, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+    expect(button.getAttribute('title')).toBe(label);
+    expect(button.hasAttribute('aria-describedby')).toBe(false);
   });
 
   it('dismisses a hovered icon tooltip when the icon is activated', () => {

@@ -100,3 +100,17 @@ test('lost start response reconciles status without replaying the start mutation
   expect(screen.getByRole('status').textContent).toContain('Finish signing in');
   expect(request.mock.calls.filter(([action]) => action === 'start')).toHaveLength(1);
 });
+
+test('recovery ignores the previous sign-in receipt and waits for a new verified attempt', async () => {
+  const connected = vi.fn();
+  request.mockResolvedValueOnce({ state: 'connected', source: 'cli' });
+  await act(async () => {
+    render(<I18nProvider initial="en"><ClaudeSignIn requireFreshSignIn onConnected={connected} /></I18nProvider>);
+  });
+  expect(connected).not.toHaveBeenCalled();
+  request.mockResolvedValueOnce({ state: 'waiting', source: 'cli' });
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Sign in with Claude' })); });
+  request.mockResolvedValueOnce({ state: 'connected', source: 'cli' });
+  await act(async () => { await vi.advanceTimersByTimeAsync(1001); });
+  expect(connected).toHaveBeenCalledOnce();
+});

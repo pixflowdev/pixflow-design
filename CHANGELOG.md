@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let the open assistant panel reconnect during a Bridge restart and send the waiting message once the Bridge is ready.
 - Fix Stop after reloading a page while a Bridge assistant is still running.
+- Keep your prompt queued if Claude Code needs you to sign in again. Retry it in the same chat after reconnecting.
 - Use consistent CLI launching for provider checks, sign-in and chats, including JavaScript entry points and Windows command wrappers.
 - Fix Windows assistant commands failing when PowerShell scripts are disabled, without changing your execution policy.
 - Show clearer builder handoff and WordPress connection errors instead of incorrectly reporting a missing design file.

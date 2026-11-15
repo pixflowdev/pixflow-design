@@ -240,8 +240,10 @@ interface Props {
     commentAttachments: ChatCommentAttachment[],
     meta?: ChatSendMeta,
     onAccepted?: () => void,
+    onClaudeSignInRequired?: (messageId: string, conversationId: string) => boolean,
   ) => ChatSendOutcome | Promise<ChatSendOutcome>;
   requireQueueAcceptance?: boolean;
+  recoverClaudeSignIn?: boolean;
   onStop: () => void;
   // Opens the global settings dialog (CLI / model / agent picker). The
   // composer's leading gear icon routes here so users can switch models
@@ -366,6 +368,8 @@ export interface ChatComposerHandle {
 }
 
 export interface ChatSendMeta {
+  /** Local queue receipt for replacing a failed Claude startup in the same chat. */
+  claudeRetry?: { messageId: string; conversationId: string };
   voice?: CodexVoiceConnection;
   queueOnly?: boolean;
   research?: ResearchOptions;
@@ -401,7 +405,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       projectFiles,
       activeProjectFileName = null,
       streaming,
-      queueStorageKey, queueOutcome, acceptedSteeringIds, requireQueueAcceptance, onSteer: uncheckedSteer,
+      queueStorageKey, queueOutcome, acceptedSteeringIds, requireQueueAcceptance, recoverClaudeSignIn, onSteer: uncheckedSteer,
       sessionMode = 'design',
       onSessionModeChange,
       hideSessionModeToggle = false,
@@ -466,12 +470,12 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const annotationDispatch = useRef(false);
     const effectiveSendDisabled = annotationAuthorizing || (sendDisabled || bridgeUpdateRequired) && !(queueStorageKey && streaming);
     const [annotationSendError, setAnnotationSendError] = useState('');
-    const onSend: Props['onSend'] = useCallback((prompt, attachments, comments, meta, onAccepted) => {
+    const onSend: Props['onSend'] = useCallback((prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired) => {
       setAnnotationSendError('');
-      if (!containsAnnotations(prompt, attachments, comments)) return uncheckedSend(prompt, attachments, comments, meta, onAccepted);
+      if (!containsAnnotations(prompt, attachments, comments)) return uncheckedSend(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired);
       if (annotationDispatch.current) return 'restore-draft';
       annotationDispatch.current = true; setAnnotationAuthorizing(true);
-      return requireAnnotations().then(() => uncheckedSend(prompt, attachments, comments, meta, onAccepted), error => { setAnnotationSendError(error.message); throw error; })
+      return requireAnnotations().then(() => uncheckedSend(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired), error => { setAnnotationSendError(error.message); throw error; })
         .finally(() => { annotationDispatch.current = false; setAnnotationAuthorizing(false); });
     }, [uncheckedSend, onShowToast]);
     const onSteer: Props['onSteer'] = uncheckedSteer ? async item => {
@@ -481,7 +485,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       }
       return uncheckedSteer(item);
     } : undefined;
-    const messageQueue = useComposerQueue({ key: queueStorageKey, streaming, disabled: sendDisabled || bridgeUpdateRequired, outcome: queueOutcome, acceptedSteeringIds, send: onSend, steer: onSteer, requireAcceptance: requireQueueAcceptance });
+    const messageQueue = useComposerQueue({ key: queueStorageKey, streaming, disabled: sendDisabled || bridgeUpdateRequired, outcome: queueOutcome, acceptedSteeringIds, send: onSend, steer: onSteer, requireAcceptance: requireQueueAcceptance, recoverClaudeSignIn });
     const activeFileContext =
       projectMetadata?.importedFrom === 'folder' && activeProjectFileName
         ? activeProjectFileName
@@ -1254,7 +1258,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       if (queueStorageKey && (streaming || messageQueue.items.some(item => item.state !== 'accepted') || meta?.queueOnly)) {
         if (messageQueue.add(prompt, nextAttachments, nextCommentAttachments, meta)) reset();
       } else if (queueStorageKey) {
-        const outcome = onSend(prompt, nextAttachments, nextCommentAttachments, meta);
+        const outcome = onSend(prompt, nextAttachments, nextCommentAttachments, meta, undefined, recoverClaudeSignIn
+          ? (messageId, conversationId) => messageQueue.recoverClaude(messageId, conversationId, prompt, nextAttachments, nextCommentAttachments, meta)
+          : undefined);
         if (containsAnnotations(prompt, nextAttachments, nextCommentAttachments)) {
           finishComposedSend(outcome);
           return true;
@@ -2769,7 +2775,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                 const meta = currentRunContextMeta();
                 const accepted = queueStorageKey && (streaming || messageQueue.items.some(item => item.state !== 'accepted'))
                   ? messageQueue.add(prompt, batchAttachments, [], meta)
-                  : (await onSend(prompt, batchAttachments, [], meta)) !== 'restore-draft';
+                  : (await onSend(prompt, batchAttachments, [], meta, undefined, recoverClaudeSignIn
+                    ? (messageId, conversationId) => messageQueue.recoverClaude(messageId, conversationId, prompt, batchAttachments, [], meta)
+                    : undefined)) !== 'restore-draft';
                 if (accepted && annotationContext.current === owner) {
                   setStaged(current => current.filter(item => !item.annotationScreenshot || !names.has(item.name)));
                   replaceEditorDraft(replaceDraftAnnotations(currentEditorDraft(), []));

@@ -23,6 +23,10 @@ afterEach(async()=>{
   if(directory)await fs.rm(directory,{recursive:true,force:true});
   native.calls=[];
 });
+/** The fixture appends one JSON line after the generated tool guidance. */
+function recordedContext(call: Turn): {prompt:string;history:unknown[]} {
+  return JSON.parse(call.prompt.trimEnd().split('\n').at(-1)!);
+}
 async function setup(){
   directory=await fs.mkdtemp(path.join(os.tmpdir(),'pixflow-native-context-'));
   const app=express();app.use(express.json());
@@ -49,8 +53,8 @@ it('recovers a missing native context once with complete history and replays ret
   };
   const output=await(await post('run-stream',request)).text();
   expect(native.calls.map(call=>call.resumeSessionId)).toEqual([null,'saved-native',null]);
-  expect(JSON.parse(native.calls[1]!.prompt).history).toEqual([]);
-  expect(JSON.parse(native.calls[2]!.prompt).history).toEqual(preserved);
+  expect(recordedContext(native.calls[1]!).history).toEqual([]);
+  expect(recordedContext(native.calls[2]!).history).toEqual(preserved);
   expect(request.history).toEqual(preserved);
   expect(output).toContain('"outcome":"answered"');
   const replay=await(await post('run-stream',request)).text();
@@ -84,7 +88,7 @@ it('retains a canceled compacting run for recovery and seeds the next request wi
   native.execute=async options=>{options.onEvent({type:'text_delta',delta:'Next answer'});return 'next-native';};
   await(await post('run-stream',{...request,prompt:'Next queued request',continuation:{id:'5'.repeat(32),token:'6'.repeat(64)}})).text();
   expect(native.calls).toHaveLength(3);expect(native.calls[2]!.resumeSessionId).toBeNull();
-  expect(JSON.parse(native.calls[2]!.prompt)).toEqual({prompt:'Next queued request',history:request.history});
+  expect(recordedContext(native.calls[2]!)).toEqual({prompt:'Next queued request',history:request.history});
 });
 it.each([false,true])('resumes a compacted native session after accepted steering using its actual split transcript, but rejects changed history (boundaries %s)',async(boundaries)=>{
   const {request,post}=await setup();let finish=()=>{};
@@ -109,7 +113,7 @@ it.each([false,true])('resumes a compacted native session after accepted steerin
   const next={...request,history:steeredHistory,prompt:'Queued follow-up',continuation:{id:'5'.repeat(32),token:'6'.repeat(64)}};
   await(await post('run-stream',next)).text();
   expect(native.calls.at(-1)?.resumeSessionId).toBe('compacted-native');
-  expect(JSON.parse(native.calls.at(-1)!.prompt).history).toEqual([]);
+  expect(recordedContext(native.calls.at(-1)!).history).toEqual([]);
   await(await post('run-stream',{...next,history:[...steeredHistory,{role:'user',content:'Changed queued follow-up'},{role:'assistant',content:'Follow-up answer'}],continuation:{id:'7'.repeat(32),token:'8'.repeat(64)}})).text();
   expect(native.calls.at(-1)?.resumeSessionId).toBeNull();
 });
@@ -118,12 +122,14 @@ it('bounds direct-site instructions to its generated workspace while preserving 
   const {request,post}=await setup();
   const first=native.calls[0]!;
   expect(first.isolateProjectInstructions).toBe(true);
+  expect(first.prompt).toContain('Use the connected pixflow_builtin MCP server');
+  expect(first.mcpServers).toHaveProperty('pixflow_builtin');
   expect(await fs.readFile(path.join(first.cwd,'AGENTS.md'),'utf8')).toContain('Pixflow Direct WordPress workspace');
   await(await post('run-stream',request)).text();
   expect(native.calls[1]!.isolateProjectInstructions).toBe(true);
   expect(native.calls[1]!.resumeSessionId).toBe('saved-native');
   expect(native.calls[1]!.cwd).toBe(first.cwd);
-  expect(JSON.parse(native.calls[1]!.prompt).history).toEqual([]);
+  expect(recordedContext(native.calls[1]!).history).toEqual([]);
 });
 
 it.each(['edit', 'delete', 'insert'])('rebuilds native context after an earlier history %s even when the last exchange is unchanged', async change => {
@@ -136,7 +142,7 @@ it.each(['edit', 'delete', 'insert'])('rebuilds native context after an earlier 
   if (change === 'insert') history.unshift({ role: 'user', content: 'Earlier imported context' });
   await (await post('run-stream', { ...request, prompt: 'Continue after history changed', history, continuation: { id: '7'.repeat(32), token: '8'.repeat(64) } })).text();
   expect(native.calls.at(-1)?.resumeSessionId).toBeNull();
-  expect(JSON.parse(native.calls.at(-1)!.prompt).history).toEqual(history);
+  expect(recordedContext(native.calls.at(-1)!).history).toEqual(history);
 });
 
 it.each([false, true])('reports preparation and submission separately and counts only nonempty provider text (%s)', async withText => {

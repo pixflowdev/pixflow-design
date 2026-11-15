@@ -1,7 +1,8 @@
+import { createAgentInvocation } from './invocation.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { tmpdir } from 'node:os';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import type { CodexUsage } from '@open-design/contracts';
 import { codexAgentDef } from './defs/codex.js';
 import { resolveAgentLaunch, applyAgentLaunchEnv, agentRuntimeSource } from './launch.js';
@@ -23,7 +24,7 @@ export function usageWindows(input: any): CodexUsage['windows'] {
 export async function readCodexUsage(executable: string, env: NodeJS.ProcessEnv, source: CodexUsage['source'], timeoutMs = 10000): Promise<CodexUsage> {
   const empty = (): CodexUsage => ({ status: 'unavailable', source, checkedAt: new Date().toISOString(), windows: [] });
   return new Promise(resolve => {
-    const invocation = createCommandInvocation({ command: executable, args: ['app-server', '--stdio'], env });
+    const invocation = createAgentInvocation({ command: executable, args: ['app-server', '--stdio'], env });
     const child = spawn(invocation.command, invocation.args, { cwd: tmpdir(), env, windowsHide: true,
       windowsVerbatimArguments: invocation.windowsVerbatimArguments, stdio: ['pipe', 'pipe', 'pipe'] });
     let settled = false, buffer = '', identity = '', snapshot: unknown, expectedId = 1;

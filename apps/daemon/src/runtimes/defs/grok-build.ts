@@ -84,6 +84,12 @@ export const grokBuildAgentDef = {
     }
     return args;
   },
+  pixflowAcpArgs: ({ model, reasoning }) => {
+    const args = ['agent', '--no-leader', '--always-approve'];
+    if (model && model !== DEFAULT_MODEL_OPTION.id) args.push('--model', model);
+    if (reasoning && grokReasoningOptions(model).some(({ id }) => id === reasoning)) args.push('--effort', reasoning);
+    return [...args, 'stdio'];
+  },
   reasoningOptions: [],
   modelReasoningOptions: grokReasoningOptions,
   promptViaFile: true,

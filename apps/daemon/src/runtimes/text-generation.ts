@@ -1,9 +1,10 @@
+import { createAgentInvocation } from './invocation.js';
 import { assertCodexReasoningSupported } from './defs/shared.js';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import { codexAgentDef } from './defs/codex.js';
 import { claudeAgentDef } from './defs/claude.js';
 import { grokBuildAgentDef } from './defs/grok-build.js';
@@ -86,7 +87,7 @@ export async function generateAgentText(input: AgentTextRequest, configured: Rec
       // Keep native OAuth in its original home; never clone refresh tokens for workers.
       Object.assign(env,{GROK_DISABLE_AUTOUPDATER:'1',GROK_SUBAGENTS:'0',GROK_MEMORY:'0',GROK_WEB_FETCH:'0'});
     }
-    const invocation=createCommandInvocation({command:launch.launchPath,args:textGenerationArgs(input.agentId,input.model,input.reasoning,promptFile),env});
+    const invocation=createAgentInvocation({command:launch.launchPath,args:textGenerationArgs(input.agentId,input.model,input.reasoning,promptFile),env});
     const text=await new Promise<string>((resolve,reject)=>{
       const child=spawn(invocation.command,invocation.args,{cwd,env,windowsHide:true,
         windowsVerbatimArguments:invocation.windowsVerbatimArguments,stdio:['pipe','pipe','pipe']});

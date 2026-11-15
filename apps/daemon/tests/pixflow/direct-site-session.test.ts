@@ -98,3 +98,24 @@ describe('Direct recovery authorization',()=>{
     expect(String(result.output)).toContain('"tokenCount":7');
   });
 });
+
+it.each([
+  ['<html>private-token</html>', 'text/html', 'html'],
+  ['', 'application/json', 'empty'],
+  ['{"identity":', 'application/json', 'invalid-json'],
+])('reports safe response diagnostics for %s', async (body, contentType, format) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, {headers:{'Content-Type':contentType}})));
+  const error = await authenticateDirectOwner(session, true).catch(e=>e);
+  expect(error).toMatchObject({code:'DIRECT_AUTH_UNAVAILABLE', diagnostics:{httpStatus:200,format,receivedBytes:Buffer.byteLength(body)}});
+  expect(error.message).toContain('HTTP 200');
+  expect(JSON.stringify(error)).not.toContain('private-token');
+});
+
+it('bounds access responses and rejects JSON primitives without authorising', async () => {
+  for (const body of ['null', '[]', 'true']) {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(JSON.parse(body))));
+    await expect(authenticateDirectOwner(session,true)).rejects.toMatchObject({code:'DIRECT_AUTH_UNAVAILABLE',diagnostics:{format:'invalid-json'}});
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('x'.repeat(70_000))));
+  await expect(authenticateDirectOwner(session,true)).rejects.toMatchObject({diagnostics:{format:'too-large'}});
+});

@@ -1,8 +1,9 @@
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
-import { createCommandInvocation } from '@open-design/platform';
+
 import type { PixflowDirectSiteSteerResponse } from '@open-design/contracts';
 import type { runCodexTurn } from './codex-turn.js';
 import { NativeSessionMissingError } from './native-session-recovery.js';
@@ -71,7 +72,7 @@ export async function runOpenCodeTurn(options: Options): Promise<string> {
   const port = await availablePort(), password = randomBytes(32).toString('hex');
   const origin = `http://127.0.0.1:${port}`;
   const env = { ...options.env, OPENCODE_SERVER_USERNAME: 'pixflow', OPENCODE_SERVER_PASSWORD: password };
-  const invocation = createCommandInvocation({ command: options.executable, args: ['serve', '--hostname', '127.0.0.1', '--port', String(port)], env });
+  const invocation = createAgentInvocation({ command: options.executable, args: ['serve', '--hostname', '127.0.0.1', '--port', String(port)], env });
   const child = spawn(invocation.command, invocation.args, { cwd: options.cwd, env, shell: false, windowsHide: true, windowsVerbatimArguments: invocation.windowsVerbatimArguments, stdio: ['pipe', 'pipe', 'pipe'] });
   options.onChild(child);
   // Drain diagnostics without persisting credentials or private provider output.

@@ -30,17 +30,20 @@ final class WpAdminWordPressCapabilityService
         if ($status !== 'any' && !in_array($status, $allowed_statuses, true)) return $this->error('status_not_allowed', 'Post status is not public or registered.', 400);
         $per_page = max(1, min((int) ($arguments['perPage'] ?? 20), 50));
         $page = max(1, min((int) ($arguments['page'] ?? 1), 1000));
-        $posts = get_posts([
+        $query = [
             'post_type' => $post_types,
             'post_status' => $status,
             's' => sanitize_text_field((string) ($arguments['search'] ?? '')),
             'posts_per_page' => $per_page,
             'paged' => $page,
-            'orderby' => 'modified',
+            'orderby' => ($arguments['orderBy'] ?? '') === 'date' ? 'date' : 'modified',
             'order' => 'DESC',
             'no_found_rows' => true,
             'ignore_sticky_posts' => true,
-        ]);
+        ];
+        if (isset($arguments['categoryId'])) $query['category__in'] = [(int) $arguments['categoryId']];
+        if (isset($arguments['tagId'])) $query['tag__in'] = [(int) $arguments['tagId']];
+        $posts = get_posts($query);
         $out = [];
         foreach ($posts as $post) {
             if (!$post instanceof \WP_Post || !current_user_can('read_post', $post->ID)) continue;
@@ -518,6 +521,7 @@ final class WpAdminWordPressCapabilityService
             'title' => sanitize_text_field($post->post_title),
             'slug' => sanitize_title($post->post_name),
             'excerpt' => sanitize_textarea_field($post->post_excerpt),
+            'dateGmt' => (string) $post->post_date_gmt,
             'modifiedGmt' => sanitize_text_field($post->post_modified_gmt),
             'authorId' => (int) $post->post_author,
             'parentId' => (int) $post->post_parent,

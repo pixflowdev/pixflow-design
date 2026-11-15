@@ -85,6 +85,8 @@ export type RuntimePromptBudgetError = {
 };
 
 export type RuntimeAgentDef = {
+  /** Optional isolated ACP launch for Pixflow runs that attach built-in tools. */
+  pixflowAcpArgs?: (options: RuntimeBuildOptions) => string[];
   id: string;
   name: string;
   bin: string;

@@ -120,10 +120,14 @@ export const antigravityAgentDef = {
       args.push('--add-dir', dir);
     }
 
-    if (options.model && options.model !== DEFAULT_MODEL_OPTION.id) {
-      args.push('--model', normalizeAntigravityModelId(options.model));
-    }
-    if (options.reasoning && options.reasoning !== 'default') {
+    const model = options.model && options.model !== DEFAULT_MODEL_OPTION.id
+      ? normalizeAntigravityModelId(options.model)
+      : undefined;
+    if (model) args.push('--model', model);
+    // Variant IDs already select their reasoning level. The CLI rejects a
+    // conflicting saved configuration before it connects any tools.
+    const variantEffort = model?.match(/-(low|medium|high|xhigh|max)$/)?.[1];
+    if (options.reasoning && options.reasoning !== 'default' && (!variantEffort || variantEffort === options.reasoning)) {
       args.push('--effort', options.reasoning);
     }
     return args;

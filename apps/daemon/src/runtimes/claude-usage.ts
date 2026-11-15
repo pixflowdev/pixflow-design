@@ -1,10 +1,11 @@
+import { createAgentInvocation } from './invocation.js';
 import type { CodexUsage } from '@open-design/contracts';
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import { claudeAgentDef } from './defs/claude.js';
 import { resolveAgentLaunch, applyAgentLaunchEnv, agentRuntimeSource } from './launch.js';
 import { spawnEnvForAgent } from './env.js';
@@ -40,7 +41,7 @@ export async function readClaudeUsage(executable:string, env:NodeJS.ProcessEnv, 
  const cwd=await mkdtemp(join(tmpdir(),'pixflow-claude-usage-'));
  const empty=():CodexUsage=>({status:'unavailable',source,checkedAt:new Date().toISOString(),windows:[]});
  try { return await new Promise(resolve=>{
-  const invocation=createCommandInvocation({command:executable,env,args:['-p','--input-format','stream-json','--output-format','stream-json','--verbose','--no-session-persistence','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--settings','{"disableAllHooks":true}','--setting-sources','user']});
+  const invocation=createAgentInvocation({command:executable,env,args:['-p','--input-format','stream-json','--output-format','stream-json','--verbose','--no-session-persistence','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--settings','{"disableAllHooks":true}','--setting-sources','user']});
   const child=spawn(invocation.command,invocation.args,{cwd,env,windowsHide:true,windowsVerbatimArguments:invocation.windowsVerbatimArguments,stdio:['pipe','pipe','pipe']});
   let done=false,buffer='',bytes=0,initialized=false;const decoder=new StringDecoder('utf8');
   const finish=(value:CodexUsage)=>{if(done)return;done=true;clearTimeout(timer);child.stdin.end();void stopChildProcessTree(child).catch(()=>{child.kill();}).finally(()=>resolve(value));};

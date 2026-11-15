@@ -1,3 +1,4 @@
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { stopChildProcessTree } from '@open-design/platform';
@@ -27,7 +28,8 @@ export class DirectCodexWorker {
     if (this.idle) retire(this.idle);
     this.idle = undefined;
     if (!launch) return;
-    const child = spawn(launch.executable, ['app-server', '--stdio', '-c', 'project_root_markers=["AGENTS.md"]'], {cwd:this.hostDirectory, env:launch.env, windowsHide:true, stdio:['pipe','pipe','pipe']});
+    const invocation = createAgentInvocation({command:launch.executable, args:['app-server', '--stdio', '-c', 'project_root_markers=["AGENTS.md"]'], env:launch.env});
+    const child = spawn(invocation.command, invocation.args, {shell:false, windowsVerbatimArguments:invocation.windowsVerbatimArguments, cwd:this.hostDirectory, env:launch.env, windowsHide:true, stdio:['pipe','pipe','pipe']});
     const ready = new Promise<void>((resolve, reject) => {
       let buffer = '';
       const finish = (error?: Error) => {

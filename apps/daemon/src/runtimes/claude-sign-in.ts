@@ -2,13 +2,13 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { stripVTControlCharacters } from 'node:util';
-import { createCommandInvocation, stopChildProcessTree } from '@open-design/platform';
+import { stopChildProcessTree } from '@open-design/platform';
 import type { ClaudeSignInStatus, ClaudeSupportStage } from '@open-design/contracts';
 import { claudeAgentDef } from './defs/claude.js';
 import { resolveAgentLaunch, applyAgentLaunchEnv, agentRuntimeSource } from './launch.js';
 import { openBrowser } from '../browser-open.js';
 import { spawnEnvForAgent } from './env.js';
-import { execAgentFile } from './invocation.js';
+import {createAgentInvocation, execAgentFile} from './invocation.js';
 import { ClaudeSupportHistory } from './claude-support-history.js';
 
 const CLAUDE_AUTHORIZATION_ORIGINS = new Set([
@@ -176,7 +176,7 @@ export function createClaudeSignIn(configuredEnv: () => Record<string, string>, 
       const env = applyAgentLaunchEnv(spawnEnvForAgent('claude', process.env, configured, {}, { resolvedBin: launch.selectedPath }), launch);
       // Subscription login must not silently alter a user's configured third-party gateway.
       if (env.ANTHROPIC_BASE_URL && !/^https:\/\/api\.anthropic\.com\/?$/.test(env.ANTHROPIC_BASE_URL)) return null;
-      const invocation = createCommandInvocation({ command: launch.launchPath, args: ['auth', 'login', '--claudeai'], env });
+      const invocation = createAgentInvocation({ command: launch.launchPath, args: ['auth', 'login', '--claudeai'], env });
       return { ...invocation, executable: launch.launchPath, env, source: agentRuntimeSource(launch) };
     },
     launch: target => spawn(target.command, target.args, { env: target.env, cwd: tmpdir(), windowsHide: true,

@@ -1,3 +1,4 @@
+import { createAgentInvocation } from '../runtimes/invocation.js';
 import { assertCodexReasoningSupported, clampCodexReasoning } from '../runtimes/defs/shared.js';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
@@ -39,7 +40,7 @@ export function voiceProgress(method: string, params: Event): Event | null {
   const output = item.aggregatedOutput ?? item.result ?? item.changes ?? '';
   return method === 'item/started'
     ? { type: 'tool_use', id: item.id, name, input: item.type === 'commandExecution' ? { command: item.command } : item.arguments ?? { changes: item.changes, query: item.query } }
-    : { type: 'tool_result', toolUseId: item.id, content: typeof output === 'string' ? output : JSON.stringify(output), isError: item.status === 'failed' || !!item.error || (typeof item.exitCode === 'number' && item.exitCode !== 0) };
+    : { type: 'tool_result', toolUseId: item.id, content: typeof output === 'string' ? output : JSON.stringify(output), isError: item.status === 'failed' || !!item.error || (item.result as {isError?:boolean} | undefined)?.isError === true || (typeof item.exitCode === 'number' && item.exitCode !== 0) };
 }
 
 /** One authenticated site run owns one native voice process and its lifetime. */
@@ -56,7 +57,8 @@ export async function runCodexVoice(options: {
   if (options.signal.aborted) throw new Error('Voice canceled.');
   const expires = options.expiresAt < 1e12 ? options.expiresAt * 1000 : options.expiresAt;
   if (!Number.isFinite(expires) || expires <= Date.now()) throw new Error('The WordPress voice session expired. Start a new call to reconnect.');
-  const child = spawn(options.executable, ['app-server', '--stdio'], {
+  const invocation = createAgentInvocation({command:options.executable, args:['app-server', '--stdio'], env:options.env});
+  const child = spawn(invocation.command, invocation.args, {shell:false, windowsVerbatimArguments:invocation.windowsVerbatimArguments,
     cwd: options.cwd, env: options.env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   });
   options.onChild(child);

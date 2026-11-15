@@ -10,7 +10,7 @@ final class WordPressAdminOperations
     private const ARGUMENTS = [
         'wordpress.media.folders.list' => ['provider'],
         'wordpress.media.folders.change' => ['provider','action','id','beforeId','name','parent','attachmentIds','append'],
-        'wordpress.posts.list' => ['postType','status','search','perPage','page'],
+        'wordpress.posts.list' => ['postType','status','search','perPage','page','categoryId','tagId','orderBy'],
         'wordpress.posts.get' => ['postId'],
         'wordpress.posts.create' => ['postType','status','title','slug','content','excerpt','parent','terms','featuredMediaId'],
         'wordpress.posts.update' => ['postId','expectedModifiedGmt','fields'],
@@ -41,7 +41,7 @@ final class WordPressAdminOperations
     public static function catalogue(): array
     {
         return [
-            'wordpress.posts.list' => ['postType'=>'post (default) or page', 'status'=>'Optional registered status or any', 'search'=>'Optional title/content search', 'perPage'=>'1..50', 'page'=>'1..1000'],
+            'wordpress.posts.list' => ['postType'=>'post (default) or page', 'status'=>'Optional registered status or any; publish for public results', 'search'=>'Optional title/content search', 'perPage'=>'1..50', 'page'=>'1..1000', 'categoryId'=>'Exact category ID for posts', 'tagId'=>'Exact post tag ID; combines with categoryId if both are supplied', 'orderBy'=>'date for newest publication first, or modified (default)'],
             'wordpress.posts.get' => ['postId'=>'Exact numeric post ID; returns modifiedGmt and fingerprint for subsequent writes'],
             'wordpress.posts.create' => ['postType'=>'post (default) or page', 'title'=>'Title', 'slug'=>'Optional slug', 'status'=>'draft (default), pending, private or publish with native permission', 'content'=>'Optional safe classic HTML/text; use live Gutenberg tools for block documents', 'excerpt'=>'Optional plain text', 'parent'=>'Optional editable parent ID', 'terms'=>'Optional taxonomy to existing term ID arrays', 'featuredMediaId'=>'Optional existing image attachment ID'],
             'wordpress.posts.update' => ['postId'=>'Exact post ID from a fresh read', 'expectedModifiedGmt'=>'modifiedGmt from wordpress.posts.get', 'fields'=>'Nonempty object of title, slug, content, excerpt, status, parent, terms only; native permissions, editor locks, revisions and builder boundaries apply'],
@@ -73,7 +73,7 @@ final class WordPressAdminOperations
         // Provider wrappers sometimes encode IDs as strings. Accept only a
         // lossless canonical decimal representation; all normal validation and
         // target permission checks still run before dispatch.
-        foreach (['postId','termId','attachmentId','parent','featuredMediaId','page','perPage'] as $key) {
+        foreach (['postId','termId','attachmentId','parent','featuredMediaId','page','perPage','categoryId','tagId'] as $key) {
             $value = $arguments[$key] ?? null;
             if (is_string($value) && preg_match('/^(0|[1-9][0-9]*)$/D', $value)
                 && (string) (int) $value === $value) $arguments[$key] = (int) $value;
@@ -129,10 +129,12 @@ final class WordPressAdminOperations
                 if (!is_array($value) || ($value !== [] && array_is_list($value))) return $this->error('invalid_arguments', $key . ' must be an object.', 400);
                 continue;
             }
-            if (in_array($key, ['postId','termId','attachmentId','parent','featuredMediaId','page','perPage'], true)) {
+            if (in_array($key, ['postId','termId','attachmentId','parent','featuredMediaId','page','perPage','categoryId','tagId'], true)) {
                 if (!is_int($value) || $value < (in_array($key, ['parent','featuredMediaId'], true) ? 0 : 1)) return $this->error('invalid_arguments', $key . ' must be a bounded integer.', 400);
             } elseif (!is_string($value) || strlen($value) > 1048576) return $this->error('invalid_arguments', $key . ' must be bounded text.', 400);
         }
+        if (($args['postType'] ?? 'post') === 'page' && (isset($args['categoryId']) || isset($args['tagId']))) return $this->error('invalid_arguments', 'Category and tag filters apply to posts.', 400);
+        if (isset($args['orderBy']) && !in_array($args['orderBy'], ['date','modified'], true)) return $this->error('invalid_arguments', 'orderBy must be date or modified.', 400);
         foreach (['postId','termId','attachmentId'] as $id) {
             if (in_array($id, self::ARGUMENTS[$tool], true) && !isset($args[$id])) return $this->error('invalid_arguments', $id . ' is required.', 400);
         }

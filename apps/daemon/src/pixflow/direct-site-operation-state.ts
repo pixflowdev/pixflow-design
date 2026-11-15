@@ -8,7 +8,7 @@ interface OperationEntry {
   ok?: boolean;
 }
 
-const nativeEdits = new Set(['bricks.mutate', 'bricks.run', 'bricks.save']);
+const nativeEdits = new Set(['bricks.mutate', 'bricks.run', 'bricks.save', 'bricks.native.changeset']);
 
 /** Native command acknowledgement is independent of the agent exiting cleanly.
  * Only this run's structured transport records contribute; prose never does.

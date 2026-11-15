@@ -1,9 +1,40 @@
-import type { PixflowDirectSiteSession, PixflowDirectSiteAuthorization, PixflowSiteIntegrations } from '@open-design/contracts';
+import type { PixflowDirectSiteSession, PixflowDirectSiteAuthorization, PixflowSiteIntegrations, PixflowAccessCheckDiagnostics } from '@open-design/contracts';
 import { directDigest } from './direct-site-store.js';
 
 /** Distinguish a denied credential from a service that could not verify it. */
 export class DirectSessionAuthorizationError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
+  constructor(readonly status: number, readonly code: string, message: string, readonly diagnostics?: PixflowAccessCheckDiagnostics) { super(message); }
+}
+
+/** Reject malformed access evidence with bounded, non-sensitive diagnostics. */
+export async function readDirectAuthorizationResponse(response: Response): Promise<PixflowDirectSiteAuthorization> {
+  let receivedBytes = 0;
+  let text = '';
+  let format: PixflowAccessCheckDiagnostics['format'] = 'unreadable';
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  try {
+    if (reader) {
+      for (;;) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        receivedBytes += value.byteLength;
+        if (receivedBytes > 65_536) { format = 'too-large'; await reader.cancel(); throw new Error(); }
+        text += decoder.decode(value, {stream:true});
+      }
+      text += decoder.decode();
+    }
+    const trimmed = text.trim();
+    format = !trimmed ? 'empty' : /^</.test(trimmed) || response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() === 'text/html' ? 'html' : 'invalid-json';
+    const value: unknown = JSON.parse(trimmed);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
+    return value as PixflowDirectSiteAuthorization;
+  } catch {
+    const description = {html:'HTML instead of access data',empty:'an empty access response','invalid-json':'invalid access JSON',unreadable:'an interrupted access response','too-large':'an oversized access response'}[format];
+    throw new DirectSessionAuthorizationError(503, 'DIRECT_AUTH_UNAVAILABLE',
+      `WordPress returned ${description} (HTTP ${response.status}). This request could not be authorised. Check the site's server or security logs, then retry.`,
+      {httpStatus:response.status,format,receivedBytes});
+  } finally { reader?.releaseLock(); }
 }
 
 export function directSessionUrl(endpoint: string): URL {
@@ -46,9 +77,7 @@ export async function authenticateDirectOwner(session: PixflowDirectSiteSession,
   if (!response.ok) throw new DirectSessionAuthorizationError(response.status >= 500 || [408, 429].includes(response.status) ? 503 : 403,
     response.status >= 500 || [408, 429].includes(response.status) ? 'DIRECT_AUTH_UNAVAILABLE' : 'DIRECT_SESSION_REJECTED',
     response.status >= 500 || [408, 429].includes(response.status) ? 'WordPress could not verify access right now. Keep your message queued and try again when the site responds.' : 'WordPress did not authorize this Direct session.');
-  let value: PixflowDirectSiteAuthorization;
-  try { value = await response.json() as PixflowDirectSiteAuthorization; }
-  catch { throw new DirectSessionAuthorizationError(503, 'DIRECT_AUTH_UNAVAILABLE', 'WordPress returned an unreadable access check. Keep your message queued and try again.'); }
+  const value = await readDirectAuthorizationResponse(response);
   if (requiredFeature && value?.features?.[requiredFeature] !== true) throw new DirectSessionAuthorizationError(403, 'DIRECT_FEATURE_REQUIRED', requiredFeature === 'audio' ? 'Dictation and Codex Voice require Pixflow Design Pro on this WordPress site.' : 'External MCP requires Pixflow Design Pro on this WordPress site.');
   if (!value.identity?.siteId || !Number.isInteger(value.identity.userId) || value.identity.userId! <= 0 || !Number.isInteger(value.identity.blogId) || value.identity.blogId! <= 0)
     throw new Error('Update the Pixflow plugin to enable authenticated conversation recovery.');

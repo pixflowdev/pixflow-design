@@ -1,5 +1,8 @@
 import { expect, it } from 'vitest';
-import { directMcpConfiguration, configureDirectMcpProcess } from '../../src/pixflow/direct-site-mcp.js';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { directMcpConfiguration, configureDirectMcpProcess, withPixflowTools } from '../../src/pixflow/direct-site-mcp.js';
 import type { McpServerConfig } from '../../src/mcp-config.js';
 
 const servers: McpServerConfig[] = [
@@ -41,4 +44,58 @@ it('does not inject settings for unsupported providers and makes that explicit',
 it('removes disabled servers from a fresh process configuration',()=>{
   expect(directMcpConfiguration('codex',servers.map(server=>({...server,enabled:false}))).codex).toEqual({});
   expect(directMcpConfiguration('claude',servers).claude?.mcpServers.legacy).toMatchObject({type:'sse'});
+});
+
+const builtIn = { command: 'C:/Program Files/nodejs/node.exe', args: ['D:/Run folder/pixflow-tools.mjs'] };
+
+it('stages Antigravity MCP in the caller workspace and preserves existing configuration', async () => {
+  const project = await mkdtemp(path.join(tmpdir(), 'pixflow-agy-mcp-'));
+  try {
+    const config = withPixflowTools(directMcpConfiguration('antigravity', []), builtIn);
+    const file = path.join(project, '.agents', 'mcp_config.json');
+    const cleanup = await configureDirectMcpProcess(config, 'antigravity', project, {}, []);
+    expect(JSON.parse(await readFile(file, 'utf8')).mcpServers.pixflow_builtin).toMatchObject({
+      ...builtIn, cwd: project, tools: { pixflow_call: { eager: true } },
+    });
+    await cleanup?.();
+    await expect(readFile(file, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, '{"mcpServers":{"existing":{}}}');
+    expect(await configureDirectMcpProcess(config, 'antigravity', project, {}, [])).toBeUndefined();
+    expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ mcpServers: { existing: {} } });
+  } finally {
+    await rm(project, { recursive: true, force: true });
+  }
+});
+
+it.each([
+  ['cursor-agent', '.cursor/mcp.json'],
+  ['qwen', '.qwen/settings.json'],
+  ['qoder', 'pixflow-mcp-config.json'],
+  ['copilot', 'pixflow-mcp-config.json'],
+])('installs and removes the run-local Pixflow configuration for %s', async (agent, relative) => {
+  const project = await mkdtemp(path.join(tmpdir(), 'pixflow-provider-mcp-'));
+  try {
+    const config = withPixflowTools(directMcpConfiguration(agent, []), builtIn);
+    const args: string[] = [];
+    const cleanup = await configureDirectMcpProcess(config, agent, project, {}, args);
+    const file = path.join(project, relative);
+    expect(JSON.parse(await readFile(file, 'utf8')).mcpServers.pixflow_builtin).toMatchObject(builtIn);
+    expect(args).toEqual(agent === 'copilot' ? [`--additional-mcp-config=@${file}`] : agent === 'qoder' ? ['--mcp-config', file] : []);
+    await cleanup?.();
+    await expect(readFile(file, 'utf8')).rejects.toMatchObject({code: 'ENOENT'});
+  } finally {
+    await rm(project, { recursive: true, force: true });
+  }
+});
+
+it('adds the Pixflow server through the isolated MiMo config variable', async () => {
+  const config = withPixflowTools(directMcpConfiguration('mimo', []), builtIn);
+  const env = { MIMOCODE_CONFIG_CONTENT: JSON.stringify({ model: 'existing' }) };
+  await configureDirectMcpProcess(config, 'mimo', 'unused', env, []);
+  expect(JSON.parse(env.MIMOCODE_CONFIG_CONTENT)).toMatchObject({
+    model: 'existing',
+    mcp: { pixflow_builtin: { enabled: true, type: 'local', command: [builtIn.command, ...builtIn.args] } },
+  });
 });

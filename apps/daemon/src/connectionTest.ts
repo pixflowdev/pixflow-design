@@ -1,3 +1,4 @@
+import { createAgentInvocation } from './runtimes/invocation.js';
 // Smoke tests for the Settings dialog. Two entry points:
 //
 //   - testProviderConnection: posts a tiny "Reply with only: ok" request to
@@ -30,7 +31,6 @@ import {
   spawnEnvForAgent,
 } from './agents.js';
 import {
-  createCommandInvocation,
   mergeProxyAwareEnv,
   resolveSystemProxyEnv,
 } from '@open-design/platform';
@@ -2116,7 +2116,7 @@ async function testAgentConnectionInternal(
         diagnostics: buildDiagnostics(probeOverrides),
       };
     }
-    const invocation = createCommandInvocation({
+    const invocation = createAgentInvocation({
       command: executableResolution.launchPath,
       args,
       env,

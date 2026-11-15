@@ -16,8 +16,10 @@ final class NativeAbilityCatalog
     public static function list(array $args): array
     {
         $items = [];
+        $names = is_array($args['names'] ?? null) ? $args['names'] : null;
         foreach (function_exists('wp_get_abilities') ? wp_get_abilities() : [] as $ability) {
             $name = $ability->get_name();
+            if ($names !== null && !in_array($name, $names, true)) continue;
             if (!self::allowed($name)) continue;
             if (str_starts_with($name, 'bricks/') && !\PixflowDesign\WordPress\Modules\BuilderIntegrations::active('bricks')) continue;
             $meta = $ability->get_meta();

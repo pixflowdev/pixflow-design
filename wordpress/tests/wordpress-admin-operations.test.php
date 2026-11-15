@@ -45,6 +45,11 @@ namespace {
     check($service->call('wordpress.posts.get',['postId'=>12],false)['id']===12,'Native reads work without WordPress Abilities API');
     check($service->call('wordpress.posts.list',[],false)['posts']['postType']==='post','Standard posts remain discoverable');
     check($service->call('wordpress.posts.list',['postType'=>'page'],false)['posts']['postType']==='page','Pages remain discoverable');
+    $filtered=$service->call('wordpress.posts.list',['categoryId'=>'73','tagId'=>75,'status'=>'publish','orderBy'=>'date'],false);
+    check(is_array($filtered)&&$filtered['posts']['categoryId']===73&&$filtered['posts']['tagId']===75&&$filtered['posts']['orderBy']==='date','Filtered published posts are available in a read-only session');
+    check(error_is($service->call('wordpress.posts.list',['postType'=>'page','categoryId'=>73],false),'invalid_arguments'),'Post filters do not silently list unfiltered pages');
+    check(error_is($service->call('wordpress.posts.list',['categoryId'=>0],false),'invalid_arguments'),'A filter cannot silently turn into an unfiltered read');
+    check(error_is($service->call('wordpress.posts.list',['orderBy'=>'unknown'],false),'invalid_arguments'),'Only known sort keys can be dispatched');
     check(error_is($service->call('wordpress.posts.create',['title'=>'Draft'],false),'read_only_session'),'Read-only session cannot create content');
     check($GLOBALS['calls']===[],'Rejected request must not reach a write handler');
     foreach ([['postType'=>'php_snippet'],['postType'=>'wpcode'],['postType'=>'custom_css']] as $args) check(error_is($service->call('wordpress.posts.create',$args+['title'=>'Unsafe'],true),'post_type_not_allowed'),'Executable/custom types require dedicated integrations');

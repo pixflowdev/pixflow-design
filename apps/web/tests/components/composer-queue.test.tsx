@@ -383,3 +383,31 @@ it('resumes the remaining queue after reloading a delivery pause and replaying i
   renderHook(() => useComposerQueue({ key: 'persisted-pause', streaming: false, disabled: false, outcome: 'succeeded', send, acceptedSteeringIds: [guidance.id] }));
   expect(send).toHaveBeenCalledExactlyOnceWith('Next turn', [], [], undefined);
 });
+
+it('restores a Claude prompt after dispatch acknowledgement and keeps later prompts paused through reload', () => {
+  const send = vi.fn((_prompt, _files, _comments, _meta, accepted, signInRequired) => {
+    accepted();
+    expect(signInRequired('direct:123','original-conversation')).toBe(true);
+  });
+  const { result, rerender } = renderHook(({streaming}) => useComposerQueue({
+    key: 'claude-recovery', streaming, disabled: false, requireAcceptance: true, recoverClaudeSignIn: true, send,
+  }), {initialProps: {streaming: true}});
+  const meta = {context:{skillMentions:[{id:'design',label:'Design',start:0,token:'/design'}]}};
+  act(() => {
+    result.current.add('Build this', [{name:'Brief',path:'brief.md',kind:'file'}], [], meta);
+    result.current.add('Then review it', [], []);
+  });
+  rerender({streaming:false});
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(readComposerQueue('claude-recovery')).toMatchObject({paused:true,items:[
+    {prompt:'Build this',attachments:[{path:'brief.md'}],meta:{...meta,claudeRetry:{messageId:'direct:123',conversationId:'original-conversation'}},requiresClaudeSignIn:true},
+    {prompt:'Then review it'},
+  ]});
+  act(() => { result.current.resume(); });
+  expect(send).toHaveBeenCalledTimes(1);
+  send.mockImplementationOnce((_prompt, _files, _comments, _meta, accepted) => { accepted(); });
+  act(() => { result.current.clearClaudeSignIn(); });
+  expect(send).toHaveBeenCalledTimes(1);
+  act(() => { result.current.resume(); });
+  expect(send.mock.calls[1]?.[0]).toBe('Build this');
+});

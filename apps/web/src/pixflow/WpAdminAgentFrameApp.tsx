@@ -34,7 +34,7 @@ import { EnhancedDesignGuidance } from './EnhancedDesignGuidance';
 import { directSkillMentions, isDiscoverableSkillMention } from './direct-skill-mentions';
 import { directMcpMentionContext } from './mcp-mentions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SiteAccessNotice, runDirectSite, preparePanelSession, beginDirectPreparation, pendingDirectSiteRun, directRunStatus, useSiteAccess, useDirectAttachmentProject } from './direct-site';
+import { SiteAccessNotice, runDirectSite, directRunClaudeSignInConversation, preparePanelSession, beginDirectPreparation, pendingDirectSiteRun, directRunStatus, useSiteAccess, useDirectAttachmentProject } from './direct-site';
 import { directRunFailurePresentation } from './direct-run-presentation';
 import type { MutableRefObject } from 'react';
 import {
@@ -3706,7 +3706,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     });
   }, [translateUi, agents, config, mode, sessionKey]);
 
-  const sendPrompt = useCallback(async (prompt: string, attachments: ChatAttachment[], _comments: ChatCommentAttachment[], meta?: SharedChatSendMeta, handoff?: BuilderHandoffExecution, onAccepted?: () => void) => {
+  const sendPrompt = useCallback(async (prompt: string, attachments: ChatAttachment[], _comments: ChatCommentAttachment[], meta?: SharedChatSendMeta, handoff?: BuilderHandoffExecution, onAccepted?: () => void, onClaudeSignInRequired?: (messageId: string, conversationId: string) => boolean) => {
     const runContext = meta?.context?.skillMentions?.length ? { skillMentions: meta.context.skillMentions } : undefined;
     const discussion = handoff ? {} : readPanelDiscussion(prompt);
     const annotationAgent = selectedAdminAgent(config, agents);
@@ -3720,9 +3720,11 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       const controller = new AbortController();
       abortRef.current = controller;
       stopRunRef.current = () => controller.abort();
-      const id = handoff?.receipt.messageId || `direct:${Date.now()}`;
+      const retryId = meta?.claudeRetry?.messageId;
+      const priorMessages = retryId ? messages.filter(message => message.id !== retryId && message.id !== `${retryId}:user`) : messages;
+      const id = handoff?.receipt.messageId || retryId || `direct:${Date.now()}`;
       let agent = selectedAdminAgent(config, agents);
-      const initial: WpAdminMessage[] = [...messages, { id: `${id}:user`, role: 'user', content: prompt, handoffPresentation: handoff?.receipt.presentation, createdAt: Date.now(), attachments, sessionMode: turnMode, runContext }, {
+      const initial: WpAdminMessage[] = [...priorMessages, { id: `${id}:user`, role: 'user', content: prompt, handoffPresentation: handoff?.receipt.presentation, createdAt: Date.now(), attachments, sessionMode: turnMode, runContext }, {
         id, role: 'assistant', content: '', status: 'streaming', runStatus: 'running', createdAt: Date.now(), agentId: config.mode === 'api' ? apiExecutionAgentId(config) : agent?.id, agentName: config.mode === 'api' ? apiExecutionLabel(config) : agent?.name, sessionMode: turnMode,
         events: meta?.voice ? [{ kind: 'status', code: 'voice_connection', label: translateUi("ui.wpAdminAgentFrameApp.connecting") }] : [],
       }];
@@ -3764,8 +3766,8 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           assertBuilderHandoffTarget(handoff, await resolveEditorRunTarget({ context: withGutenbergTarget(applyBuilderContext(context || {})) }, controller.signal));
         }
         const outcome = await runDirectSite({ config, panelPreparation, voiceConnection: meta?.voice,
-          ...(handoff && !handoff.receipt.continueConversation ? { conversationId: `builder-handoff:${handoff.receipt.id}` } : { historySource: {
-            sessionKey: directOwner, messages,
+          ...(handoff && !handoff.receipt.continueConversation ? { conversationId: `builder-handoff:${handoff.receipt.id}` } : { conversationId: meta?.claudeRetry?.conversationId, historySource: {
+            sessionKey: directOwner, messages: priorMessages,
             ...(durableHistory.ready && durableHistory.binding ? {
               binding: durableHistory.binding, checkSavedPageFirst: durableHistory.acknowledged || await priorSaved,
             } : {}),
@@ -3788,7 +3790,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           }),
           mode: turnMode, prompt, context: { ...discussion, ...withGutenbergTarget(applyBuilderContext(context || {})), attachments, commentAttachments: _comments, workspaceItems: meta?.context?.workspaceItems, selectedSkills: directSkillMentions(meta), ...directMcpMentionContext(meta) },
           persistenceSurface,persistenceMetadata:{messages:initial.map(message => message.id === id ? { ...message, agentId: resolvedAgent.id, agentName: resolvedAgent.name } : message),messageId:id,sessionKey:directOwner,mode:turnMode,...(handoff ? {handoff:handoff.receipt} : {})},
-          history: handoff && !handoff.receipt.continueConversation ? [] : steeringPromptHistory(messages), signal: controller.signal,
+          history: handoff && !handoff.receipt.continueConversation ? [] : steeringPromptHistory(priorMessages), signal: controller.signal,
           onUpdate: (content, events) => {
             finalContent = content; finalEvents = events;
             if(directSessionKeyRef.current===directOwner)setMessages(current => current.map(message => message.id === id ? { ...message, content, events } : message));
@@ -3796,6 +3798,9 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
         });
         awaitingInput = outcome === 'awaiting_input';
       } catch (error) {
+        const recoveryConversation = directRunClaudeSignInConversation(error);
+        if (!controller.signal.aborted && !handoff && config.mode === 'daemon' &&
+          directSessionKeyRef.current === directOwner && recoveryConversation) onClaudeSignInRequired?.(id, recoveryConversation);
         const presentation = directRunFailurePresentation(error, controller.signal.aborted, directRunStatus(error));
         failureStatus = presentation.failureStatus;
         failure = presentation.failure;
@@ -4848,10 +4853,11 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               workspaceContexts={workspaceContexts}
               activeWorkspaceContext={activeWorkspaceContext}
               requireQueueAcceptance={!siteAccess.guarded}
-              onSend={(prompt, attachments, comments, meta, onAccepted) => {
+              recoverClaudeSignIn={!siteAccess.guarded && config.mode === 'daemon'}
+              onSend={(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired) => {
                 if (!streaming && !meta?.queueOnly) chatScroll.followOnSend();
-                const sent = sendPrompt(prompt, attachments, comments, meta, undefined, onAccepted);
-                if (onAccepted) return sent;
+                const sent = sendPrompt(prompt, attachments, comments, meta, undefined, onAccepted, onClaudeSignInRequired);
+                if (onAccepted || onClaudeSignInRequired) return sent;
                 void sent;
               }}
               onStop={() => {

@@ -21,6 +21,7 @@ import type { PixflowDirectSiteAttachment, PixflowDirectSiteContinuationRequest,
 import { getAgentDef, resolveAgentLaunch, applyAgentLaunchEnv, spawnEnvForAgent } from '../agents.js';
 import { getRememberedLiveModels } from '../runtimes/models.js';
 import { resolveRuntimeReasoning } from '../runtimes/claude-models.js';
+import { isClaudeAuthFailureText } from '../runtimes/auth.js';
 import { preparePromptFileForAgent } from '../runtimes/prompt-file.js';
 import { agentCliEnvForAgent, readAppConfig } from '../app-config.js';
 import { openDatabase } from '../db.js';
@@ -45,7 +46,7 @@ import { directHistoryLineage as lineage, directTurnLineage, type AcceptedDirect
 import { runCodexVoice } from './codex-voice.js';
 import { installedVoiceSample } from './voice-preview.js';
 import { cachedVoiceSample } from './voice-preview-cache.js';
-import { PIXFLOW_CODEX_VOICES, preferredNamedModel } from '@open-design/contracts';
+import { PIXFLOW_CLAUDE_SIGN_IN_REQUIRED, PIXFLOW_CODEX_VOICES, preferredNamedModel } from '@open-design/contracts';
 import { pixflowDocumentInstructions } from '@open-design/contracts';
 import { registerPixflowRuntimeWork } from './runtime-idle.js';
 import { readDirectMcpConfiguration, configureDirectMcpProcess, withPixflowTools } from './direct-site-mcp.js';
@@ -284,10 +285,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
       if(!['text_delta','thinking_delta'].includes(String(event.type)) || eventBatch.length>=64)flushEvents();
       else batchTimer ??= setTimeout(flushEvents,16);
     };
-    const finish = (outcome: PixflowDirectSiteOutcome, message?: string) => {
+    const finish = (outcome: PixflowDirectSiteOutcome, message?: string, code?: typeof PIXFLOW_CLAUDE_SIGN_IN_REQUIRED) => {
       if(storageFailed)return;
       if(record && store.get(record.id)?.outcome)return;
-      send({type:'done',ok:['answered','completed','awaiting_input'].includes(outcome),outcome,timings:{...timings,totalMs:elapsed()},...(message?{message}:{})});
+      send({type:'done',ok:['answered','completed','awaiting_input'].includes(outcome),outcome,timings:{...timings,totalMs:elapsed()},...(message?{message}:{}),...(code?{code}:{})});
     };
     try {
       if (!input.prompt?.trim() || !Array.isArray(input.history)) throw new Error('A prompt and conversation history are required.');
@@ -543,6 +544,7 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         if(def.id==='codex')args.push('-c','sandbox_workspace_write.network_access=true','-c','approval_policy="never"');
         if(def.id==='opencode') {const inherited=env.OPENCODE_CONFIG_CONTENT?JSON.parse(env.OPENCODE_CONFIG_CONTENT):{};env.OPENCODE_CONFIG_CONTENT=JSON.stringify({...inherited,permission:'allow'});args.push('--title','Pixflow Direct');}
         const invocation=createAgentInvocation({command:launch.launchPath,args,env});
+        let claudeAuthFailure = false;
         const onEvent=(event:Record<string,unknown>)=>{
           timings.firstProviderEventMs ??= elapsed();
           if(event.type==='text_delta' && typeof event.delta==='string' && event.delta.length) timings.firstTextMs ??= elapsed();
@@ -554,7 +556,10 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
             if (!activeAssistantMessage) for (const accepted of deferredSteering.splice(0)) accepted.contentOffset = assistant.length;
           }
           if(event.type==='tool_use')usedTools=true;
-          if(event.type==='error')fatalError=true;
+          if (event.type === 'error') {
+            fatalError = true;
+            if (def.id === 'claude' && isClaudeAuthFailureText(String(event.message ?? ''))) claudeAuthFailure = true;
+          }
           send(event);
           const stopReason=event.stopReason ?? event.stop_reason;
           if(def.promptInputFormat==='stream-json' && event.type==='turn_end' && stopReason && stopReason!=='tool_use')child?.stdin?.end();
@@ -565,6 +570,13 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         const accept=(line:string)=>{
           try {
             const raw=JSON.parse(line) as Record<string,unknown>;
+            // Claude wraps startup authentication diagnostics in an assistant
+            // message. Do not treat the synthetic text as a model reply.
+            if (def.id === 'claude' && raw.type === 'assistant' && raw.error === 'authentication_failed') {
+              claudeAuthFailure = true;
+              fatalError = true;
+              return;
+            }
             if(typeof raw.sessionID==='string' && /^[\w.-]{1,256}$/.test(raw.sessionID))capturedSessionId=raw.sessionID;
             const part=raw.part as {reason?:string}|undefined;
             if(raw.type==='turn.completed'||(raw.type==='result' && raw.is_error===false)||(raw.type==='step_finish'&&part?.reason==='stop')) {turnSucceeded=true;fatalError=false;}
@@ -638,6 +650,14 @@ export function registerDirectSiteRoutes(app: Express, dataDir: string, permissi
         const sessionMissing=missingSession || (def.id==='claude'&&isClaudeResumeFailure(stderr));
         const journal=await fs.readFile(path.join(workspace,'site-tool-journal.jsonl'),'utf8').catch(()=>'');
         const dispatched=journal.split('\n').some(line=>{try{return JSON.parse(line).runId===id;}catch{return false;}});
+        if (def.id === 'claude' && !canceled && !turnSucceeded && (code !== 0 || fatalError) &&
+          (claudeAuthFailure || isClaudeAuthFailureText(stderr))) {
+          const message = 'Claude Code could not sign in. Complete Claude Code sign-in before retrying.';
+          // A run that produced a reply or dispatched a tool may already have
+          // made progress. Only startup failures can be returned to the queue.
+          finish('failed', message, !usedTools && !dispatched && !assistant ? PIXFLOW_CLAUDE_SIGN_IN_REQUIRED : undefined);
+          break;
+        }
         if(attempt===0 && resumeSessionId && sessionMissing && !usedTools && !dispatched && !assistant && !canceled) {
           resumeSessionId=null;capturedSessionId=null;fatalError=false;turnSucceeded=false;missingSession=false;
           send({type:'status',label:'The saved agent session is unavailable. Continuing from the visible conversation.'});store.nextAttempt(id);continue;

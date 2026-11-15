@@ -6,7 +6,7 @@ import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 import styles from './ClaudeSignIn.module.css';
 
-export function ClaudeSignIn({ onConnected, authenticated = false, testAction }: { onConnected: () => void; authenticated?: boolean; testAction?: ReactNode }) {
+export function ClaudeSignIn({ onConnected, authenticated = false, testAction, requireFreshSignIn = false }: { onConnected: () => void; authenticated?: boolean; testAction?: ReactNode; requireFreshSignIn?: boolean }) {
   const { t } = useI18n();
   const [status, setStatus] = useState<ClaudeSignInStatus>({state:'idle',source:null});
   const [busy, setBusy] = useState(false);
@@ -15,6 +15,7 @@ export function ClaudeSignIn({ onConnected, authenticated = false, testAction }:
   const [code, setCode] = useState('');
   const codeId = useId();
   const notified = useRef(false);
+  const observedWaiting = useRef(false);
   const revision = useRef(0);
   const connected = useRef(onConnected); connected.current = onConnected;
   const live = useRef(true);
@@ -24,8 +25,8 @@ export function ClaudeSignIn({ onConnected, authenticated = false, testAction }:
     const initialRevision = revision.current;
     void claudeSignInRequest('status', controller.signal).then(status => {
       if (!live.current || controller.signal.aborted || initialRevision !== revision.current) return;
-      if (status.state === 'waiting') setStatus(status);
-      if (status.state === 'connected' && !authenticated && !notified.current) {
+      if (status.state === 'waiting') { observedWaiting.current = true; setStatus(status); }
+      if (status.state === 'connected' && !authenticated && !requireFreshSignIn && !notified.current) {
         notified.current = true; setStatus(status); connected.current();
       }
     }).catch(() => {});
@@ -42,6 +43,11 @@ export function ClaudeSignIn({ onConnected, authenticated = false, testAction }:
         const result = await claudeSignInRequest('status', controller.signal);
         if (controller.signal.aborted) return;
         if (pollRevision !== revision.current) { timer = setTimeout(poll, 1500); return; }
+        if (result.state === 'waiting') observedWaiting.current = true;
+        if (result.state === 'connected' && requireFreshSignIn && !observedWaiting.current) {
+          setStatus({ state: 'idle', source: null }); setConnectionLost(false); setActionError(true);
+          return;
+        }
         setStatus(result); setConnectionLost(false); failures = 0;
         if (result.state === 'connected' && !notified.current) { notified.current = true; connected.current(); }
         if (result.state === 'idle') setActionError(true);
@@ -61,12 +67,13 @@ export function ClaudeSignIn({ onConnected, authenticated = false, testAction }:
     if (busy) return; setBusy(true);
     ++revision.current;
     setActionError(false);
-    if (action === 'start') notified.current = false;
+    if (action === 'start') { notified.current = false; observedWaiting.current = false; }
     const input = ['code','open-browser'].includes(action) && status.attemptId ? {attemptId:status.attemptId,...(action==='code'?{code}: {})} : undefined;
     if (action === 'code') setCode('');
     try {
       const result = await (input ? claudeSignInRequest(action, undefined, input) : claudeSignInRequest(action));
       if (live.current) {
+        if (result.state === 'waiting') observedWaiting.current = true;
         setStatus(result); setConnectionLost(false);
         if (result.state === 'connected' && !notified.current) { notified.current=true; connected.current(); }
       }

@@ -1,6 +1,7 @@
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { useRef, useState } from 'react';
 import { Button } from '@open-design/components';
+import { ClaudeSignIn } from './ClaudeSignIn';
 import { Icon } from './Icon';
 import type { ComposerQueueItem } from './composer-queue';
 import styles from './ComposerQueue.module.css';
@@ -14,6 +15,7 @@ export interface ComposerQueueModel {
   reorder: (id: string, targetId: string) => void;
   remove: (id: string) => void;
   resume: () => void;
+  clearClaudeSignIn?: () => void;
   steer: (item: ComposerQueueItem) => unknown;
 }
 
@@ -33,7 +35,8 @@ export function ComposerQueue({ queue, canSteer, busy = false, onEdit, canEdit =
   const [drag, setDrag] = useState<{ id: string; offset: number; shifts: Record<string, number> } | null>(null);
   const items = queue.items.filter(item => item.state !== 'accepted');
   if (!items.length && !queue.error) return null;
-  const editable = canReorder && items.every(item => item.state === 'queued');
+  const needsClaudeSignIn = Boolean(queue.clearClaudeSignIn && items.some(item => item.requiresClaudeSignIn));
+  const editable = !needsClaudeSignIn && canReorder && items.every(item => item.state === 'queued');
   return <section className={styles.queue} aria-label={translateUi("ui.composerQueue.queuedMessages")}>
     <ol className={styles.list}>{items.map(item => <li key={item.id} className={styles.item} data-queue-id={item.id} data-dragging={drag?.id === item.id || undefined}
       style={drag ? { transform: `translateY(${drag.id === item.id ? drag.offset : drag.shifts[item.id] ?? 0}px)` } : undefined}
@@ -93,12 +96,15 @@ export function ComposerQueue({ queue, canSteer, busy = false, onEdit, canEdit =
         </div>
         <div className={styles.actions}>
           {!busy && !canSteer && onSendNow && item.state === 'queued' && <Button variant="ghost" className={styles.steer} title={translateUi("chat.send")} onClick={() => onSendNow(item.id)}><Icon name="play" size={14}/>{translateUi("chat.send")}</Button>}
-          {!busy && queue.paused && !onSendNow && !canSteer && item.state === 'queued' && <Button variant="ghost" title={translateUi("ui.composerQueue.sendThisQueuedMessageAndContinueThe")} onClick={() => { queue.reorder(item.id, items[0]!.id); queue.resume(); }}><Icon name="play" size={14}/>{translateUi("chat.send")}</Button>}
+          {!busy && !needsClaudeSignIn && queue.paused && !onSendNow && !canSteer && item.state === 'queued' && <Button variant="ghost" title={translateUi("ui.composerQueue.sendThisQueuedMessageAndContinueThe")} onClick={() => { queue.reorder(item.id, items[0]!.id); queue.resume(); }}><Icon name="play" size={14}/>{translateUi("chat.send")}</Button>}
           {canSteer && item.state === 'queued' && <Button variant="ghost" className={styles.steer} title={translateUi("ui.composerQueue.submitWithoutInterruptingTheModel")} onClick={() => void queue.steer(item)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 5v5a4 4 0 0 0 4 4h12m-5-5 5 5-5 5"/></svg>{translateUi("ui.composerQueue.steer")}</Button>}
           <Button variant="ghost" className={styles.iconAction} disabled={!canRemove || item.state === 'sending'} aria-label={translateUi("ui.composerQueue.deleteQueuedMessage")} onClick={() => queue.remove(item.id)}><Icon name="trash" size={14}/></Button>
           {item.state === 'queued' && <Button variant="ghost" className={styles.iconAction} disabled={!canEdit} aria-label={translateUi("ui.composerQueue.editQueuedMessage")} title={canEdit ? translateUi("ui.composerQueue.editInComposer") : translateUi("ui.composerQueue.sendOrClearYourCurrentDraftFirst")} onClick={() => onEdit(item)}><Icon name="edit" size={14}/></Button>}
         </div>
     </li>)}</ol>
+    {needsClaudeSignIn && !busy && queue.clearClaudeSignIn && <ClaudeSignIn
+      requireFreshSignIn onConnected={queue.clearClaudeSignIn}
+    />}
     {queue.error && <p role="alert">{queue.error}</p>}
   </section>;
 }

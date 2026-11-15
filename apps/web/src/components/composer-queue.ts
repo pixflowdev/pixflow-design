@@ -18,7 +18,7 @@ const QUEUE_MESSAGES: Record<string, keyof Dict> = {
 
 export interface ComposerQueueItem {
   id: string; prompt: string; attachments: ChatAttachment[]; comments: ChatCommentAttachment[]; meta?: ChatSendMeta;
-  state: 'queued' | 'editing' | 'sending' | 'unconfirmed' | 'accepted'; message?: string;
+  state: 'queued' | 'editing' | 'sending' | 'unconfirmed' | 'accepted'; message?: string; requiresClaudeSignIn?: boolean;
 }
 interface QueueState { items: ComposerQueueItem[]; paused: boolean; steeringPauseIds?: string[] }
 export function readComposerQueue(key: string): QueueState {
@@ -34,8 +34,9 @@ export function useComposerQueue(options: {
   key?: string; streaming: boolean; disabled: boolean; outcome?: string;
   /** Preparation can show activity before the provider owns the request. */
   requireAcceptance?: boolean;
+  recoverClaudeSignIn?: boolean;
   acceptedSteeringIds?: readonly string[];
-  send: (prompt: string, attachments: ChatAttachment[], comments: ChatCommentAttachment[], meta?: ChatSendMeta, onAccepted?: () => void) => ChatSendOutcome | Promise<ChatSendOutcome>;
+  send: (prompt: string, attachments: ChatAttachment[], comments: ChatCommentAttachment[], meta?: ChatSendMeta, onAccepted?: () => void, onClaudeSignInRequired?: (messageId: string, conversationId: string) => boolean) => ChatSendOutcome | Promise<ChatSendOutcome>;
   steer?: (item: ComposerQueueItem) => Promise<PixflowDirectSiteSteerResponse>;
 }) {
   const { t } = useI18n();
@@ -58,6 +59,15 @@ export function useComposerQueue(options: {
   function change(fn: (value: QueueState) => QueueState) {
     try { update(fn(current.current)); setError(''); return true; }
     catch { setError('The queue could not be saved. Your message has been kept in the composer.'); return false; }
+  }
+  function recoverClaude(item: ComposerQueueItem, messageId: string, conversationId: string) {
+    if (!options.key || !mounted.current || scope.current !== options.key) return false;
+    const saved = change(value => ({
+      ...value, paused: true, steeringPauseIds: undefined,
+      items: [{ ...item, meta: { ...item.meta, claudeRetry: { messageId, conversationId } }, state: 'queued', requiresClaudeSignIn: true }, ...value.items.filter(row => row.id !== item.id)],
+    }));
+    if (saved && busy.current === item.id) busy.current = null;
+    return saved;
   }
   useEffect(() => {
     if (scope.current === options.key) return;
@@ -109,7 +119,7 @@ export function useComposerQueue(options: {
     const restoringRun = ['queued', 'running', 'streaming'].includes(options.outcome || '');
     if (options.streaming || restoringRun || options.disabled || current.current.paused || busy.current) return;
     const item = current.current.items.find(item => item.state !== 'accepted');
-    if (!item || item.state !== 'queued') return;
+    if (!item || item.state !== 'queued' || current.current.items.some(row => row.requiresClaudeSignIn)) return;
     const key = options.key;
     busy.current = item.id;
     if (!change(value => ({ ...value, items: value.items.map(row => row.id === item.id ? { ...row, state: 'sending' } : row) }))) { busy.current = null; return; }
@@ -121,7 +131,9 @@ export function useComposerQueue(options: {
       // Do not persist the callback in queue metadata: it belongs only to this
       // dispatch generation. Existing surfaces keep their streaming contract.
       const result = options.requireAcceptance
-        ? latest.current.send(item.prompt, item.attachments, item.comments, item.meta, accepted)
+        ? latest.current.recoverClaudeSignIn
+          ? latest.current.send(item.prompt, item.attachments, item.comments, item.meta, accepted, (messageId, conversationId) => recoverClaude(item, messageId, conversationId))
+          : latest.current.send(item.prompt, item.attachments, item.comments, item.meta, accepted)
         : latest.current.send(item.prompt, item.attachments, item.comments, item.meta);
       void Promise.resolve(result).then(result => {
         if (!mounted.current || scope.current !== key || busy.current !== item.id) return;
@@ -151,8 +163,13 @@ export function useComposerQueue(options: {
       paused: value.items.some(item => item.state !== 'accepted') ? value.paused : false,
       items: [...value.items, { id: secureRandomUUID(), prompt, attachments, comments, meta, state: 'queued' }],
     })),
+    recoverClaude: (messageId: string, conversationId: string, prompt: string, attachments: ChatAttachment[], comments: ChatCommentAttachment[], meta?: ChatSendMeta) =>
+      recoverClaude({ id: secureRandomUUID(), prompt, attachments, comments, meta, state: 'queued' }, messageId, conversationId),
+    clearClaudeSignIn: () => change(value => ({
+      ...value, items: value.items.map(row => row.requiresClaudeSignIn ? { ...row, requiresClaudeSignIn: undefined } : row),
+    })),
     pause: () => change(value => ({ ...value, paused: true, steeringPauseIds: undefined })),
-    resume: () => change(value => ({ ...value, paused: false, steeringPauseIds: undefined })),
+    resume: () => change(value => value.items.some(item => item.requiresClaudeSignIn) ? value : { ...value, paused: false, steeringPauseIds: undefined }),
     reorder: (id: string, targetId: string) => change(value => {
       const items = [...value.items];
       if (items.some(item => item.state !== 'queued' && item.state !== 'accepted')) return value;

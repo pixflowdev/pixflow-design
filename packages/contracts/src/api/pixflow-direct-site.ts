@@ -69,6 +69,8 @@ export interface PixflowEditorTarget { builder: 'bricks' | 'etch' | 'elementor' 
 /** Removes display-only tool logs for the authenticated site/user; native CLI memory is preserved. */
 export interface PixflowDirectToolHistoryRequest { session: PixflowDirectSiteSession }
 export interface PixflowDirectToolHistoryResponse { clearedEvents: number; retentionDays: number }
+export const PIXFLOW_CLAUDE_SIGN_IN_REQUIRED = 'CLAUDE_SIGN_IN_REQUIRED';
+
 export type PixflowDirectSiteOutcome = 'answered' | 'completed' | 'awaiting_input' | 'interrupted' | 'canceled' | 'failed';
 /** Durations from request receipt, never credentials or prompt content. Carried on terminal events. */
 export interface PixflowDirectSiteTimings {

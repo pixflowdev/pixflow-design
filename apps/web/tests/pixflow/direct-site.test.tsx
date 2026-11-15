@@ -10,7 +10,7 @@ vi.mock('../../src/pixflow/optional-bridge', () => ({ fetchPixflowOptionalBridge
 vi.mock('../../src/pixflow/license', () => ({ ensurePixflowLicenseEntitlement: requests.entitlement }));
 vi.mock('../../src/pixflow/runtime-fetch', () => ({ pixflowWordPressRestFetch: requests.wordpress, pixflowRuntimeFetch: requests.daemon }));
 vi.mock('../../src/i18n', async (original) => { const actual = await original<typeof import('../../src/i18n')>(); return { ...actual, useT: () => (key: Parameters<typeof actual.translateLocale>[1]) => actual.translateLocale('en', key) }; });
-import { preparePanelSession, runDirectSite, steerDirectSite, pendingDirectSiteRun, DirectSiteRunError, directConversationId, DIRECT_BRICKS_RUN_STORAGE, SiteAccessNotice, useSiteAccess, useDirectAttachmentProject } from '../../src/pixflow/direct-site';
+import { preparePanelSession, runDirectSite, steerDirectSite, pendingDirectSiteRun, DirectSiteRunError, directRunClaudeSignInConversation, directConversationId, DIRECT_BRICKS_RUN_STORAGE, SiteAccessNotice, useSiteAccess, useDirectAttachmentProject } from '../../src/pixflow/direct-site';
 
 afterEach(() => { cleanup(); window.sessionStorage.clear(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
@@ -26,6 +26,24 @@ describe('direct site panel', () => {
     expect(onOutcome).toHaveBeenCalledWith('failed');
     expect(pendingDirectSiteRun()).toBeNull();
     expect(requests.daemon).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the terminal Bridge classification for a safe Claude sign-in retry', async () => {
+    requests.wordpress.mockImplementation(async () => Response.json({
+      endpoint:'https://site.example/tools',token:'session-token',writable:true,expiresAt:9999999999,
+    }));
+    requests.daemon.mockImplementation(async () => new Response([
+      {type:'error',message:'Failed to authenticate: OAuth session expired and could not be refreshed'},
+      {type:'done',ok:false,outcome:'failed',message:'Sign in to Claude Code',code:'CLAUDE_SIGN_IN_REQUIRED'},
+    ].map(event => JSON.stringify(event)).join('\n') + '\n'));
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response()));
+    const input = {agentId:'claude',prompt:'Keep this message',history:[],mode:'ask' as const,
+      persistenceMetadata:{id:'claude-auth'},signal:new AbortController().signal,onUpdate:vi.fn()};
+    const failure = await runDirectSite(input).catch(error => error);
+    expect(directRunClaudeSignInConversation(failure)).toEqual(JSON.parse(requests.daemon.mock.calls[0]![1].body).conversationId);
+    expect(failure).toMatchObject({outcome:'failed',message:'Sign in to Claude Code'});
+    expect(requests.daemon).toHaveBeenCalledTimes(1);
+    expect(pendingDirectSiteRun()).toBeNull();
   });
 
   it('does not wait for a discarded preparation when the authoritative message cutoff changes', async () => {

@@ -9,6 +9,7 @@ import type { PixflowDirectSiteSession, PixflowDirectSiteRunRequest, PixflowDire
 import type { ComposerQueueItem } from '../components/composer-queue';
 import type { AgentEvent, AppConfig } from '../types';
 import { runByokSite, SiteDeliveryUncertain, type ByokSiteCheckpoint } from './direct-site-byok';
+import { PIXFLOW_CLAUDE_SIGN_IN_REQUIRED } from '@open-design/contracts';
 import { translateAgentEvent } from '../providers/daemon';
 
 import { pixflowRuntimeFetch, pixflowWordPressRestFetch } from './runtime-fetch';
@@ -128,6 +129,12 @@ export type PendingDirectSiteRun = {
 export class DirectSiteRunError extends Error {
   constructor(message: string, public readonly outcome: PixflowDirectSiteOutcome, options?: ErrorOptions) { super(message, options); this.name='DirectSiteRunError'; }
 }
+export function directRunClaudeSignInConversation(error: unknown): string | undefined {
+  if (!(error instanceof DirectSiteRunError)) return;
+  const cause = error.cause as { code?: string; conversationId?: string } | undefined;
+  if (cause?.code === PIXFLOW_CLAUDE_SIGN_IN_REQUIRED) return cause.conversationId;
+}
+
 export function directRunStatus(error: unknown): PixflowDirectSiteOutcome {
   if(error instanceof SiteDeliveryUncertain)return 'interrupted';
   return error instanceof DirectSiteRunError ? error.outcome : 'failed';
@@ -498,6 +505,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     let reconnects = 0;
     let buffer = '';
     let failure = '';
+    let claudeSignInRequired = false;
     const accept = (line: string) => {
       if (!line.trim()) return;
       diagnostic.stage = 'activity';
@@ -533,6 +541,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
       if (event.type === 'done') {
         presentation.flush();
         serverTimings = bridgeTimings(event.timings);
+        claudeSignInRequired = event.code === PIXFLOW_CLAUDE_SIGN_IN_REQUIRED && !event.ok;
         completed=true;outcome=event.outcome || (event.ok?'completed':'failed');
         endedAt=Number.isSafeInteger(event.timestamp) && event.timestamp>0 ? event.timestamp : undefined;
         failure=event.ok?'':String(event.message || failure || 'Agent run did not complete.');
@@ -632,7 +641,7 @@ async function executeDirectSite(input: Omit<PixflowDirectSiteRunRequest, 'sessi
     }
     if (completed) await reader.cancel().catch(() => undefined);
 
-    if (failure) throw new DirectSiteRunError(failure,outcome);
+    if (failure) throw new DirectSiteRunError(failure, outcome, claudeSignInRequired ? {cause: {code: PIXFLOW_CLAUDE_SIGN_IN_REQUIRED, conversationId}} : undefined);
     if (!completed) throw new DirectSiteRunError('The direct agent connection ended before completion. Reopen the panel to reconnect; the agent may still be running.', 'interrupted');
     return outcome;
   } catch(error) {

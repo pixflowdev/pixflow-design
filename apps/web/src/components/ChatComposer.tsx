@@ -472,10 +472,13 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     const [annotationSendError, setAnnotationSendError] = useState('');
     const onSend: Props['onSend'] = useCallback((prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired) => {
       setAnnotationSendError('');
-      if (!containsAnnotations(prompt, attachments, comments)) return uncheckedSend(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired);
+      const send = () => onClaudeSignInRequired
+        ? uncheckedSend(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired)
+        : uncheckedSend(prompt, attachments, comments, meta, onAccepted);
+      if (!containsAnnotations(prompt, attachments, comments)) return send();
       if (annotationDispatch.current) return 'restore-draft';
       annotationDispatch.current = true; setAnnotationAuthorizing(true);
-      return requireAnnotations().then(() => uncheckedSend(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired), error => { setAnnotationSendError(error.message); throw error; })
+      return requireAnnotations().then(send, error => { setAnnotationSendError(error.message); throw error; })
         .finally(() => { annotationDispatch.current = false; setAnnotationAuthorizing(false); });
     }, [uncheckedSend, onShowToast]);
     const onSteer: Props['onSteer'] = uncheckedSteer ? async item => {

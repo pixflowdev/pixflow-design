@@ -73,7 +73,8 @@ describe('direct site agent connection', () => {
     const receipt=JSON.parse(stdout);
     expect(receipt.skillFiles).toHaveLength(2);
     for(const [i,file] of receipt.skillFiles.entries()) {
-      expect(path.dirname(file.localPath)).toBe(dir);
+      // macOS exposes /var through /private/var; compare filesystem identity.
+      expect(await fs.realpath(path.dirname(file.localPath))).toBe(await fs.realpath(dir));
       expect(path.basename(file.localPath)).toMatch(/^skill-reference-[a-f0-9-]+\.md$/);
       expect(await fs.readFile(file.localPath,'utf8')).toBe(refs[i]!.content);
       expect(file.path).toBe(refs[i]!.path);
@@ -653,6 +654,31 @@ describe('direct site agent connection', () => {
     const result = await promisify(execFile)(process.execPath, ['site-tool.mjs', 'media.stock.search', '--query', 'creative studio'], { cwd: dir });
     expect(JSON.parse(result.stdout)).toEqual({ ok: true, images: [{ id: 'photo' }] });
     expect(calls).toEqual([{ body: { query: 'creative studio' }, authorization: undefined }]);
+  });
+  it('accepts common WordPress read flags with typed IDs and rejects ambiguous values', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct read café ')); dirs.push(dir);
+    const app = express(); app.use(express.json()); const calls: unknown[] = [];
+    app.post('/tools', (req, res) => { calls.push(req.body); res.json({ ok: true }); });
+    const url = await listen(app);
+    await fs.writeFile(path.join(dir, 'site-tool.mjs'), DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir, 'visual-capture.mjs'), 'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir, 'site-connection.json'), JSON.stringify({ endpoint: url + '/tools', token: 'test-only' }));
+    const run = (args: string[]) => promisify(execFile)(process.execPath, ['site-tool.mjs', ...args], { cwd: dir });
+    await run(['wordpress.media.list', '--search', 'pottery café', '--mimeType', 'image', '--perPage', '12']);
+    await run(['wordpress.posts.get', '--postId', '388']);
+    await run(['wordpress.media.inspect', '--attachmentId', '395']);
+    expect(calls).toEqual([
+      expect.objectContaining({tool:'wordpress.media.list',arguments:{search:'pottery café',mimeType:'image',perPage:12}}),
+      expect.objectContaining({tool:'wordpress.posts.get',arguments:{postId:388}}),
+      expect.objectContaining({tool:'wordpress.media.inspect',arguments:{attachmentId:395}}),
+    ]);
+    for (const value of ['NaN','1.5','-1','0','9007199254740992']) {
+      await expect(run(['wordpress.posts.get','--postId',value])).rejects.toMatchObject({code:1});
+    }
+    await expect(run(['wordpress.posts.get','{"postId":387}','--postId','388'])).rejects.toMatchObject({code:1});
+    await expect(run(['wordpress.posts.get','--postId'])).rejects.toMatchObject({code:1});
+    await expect(run(['wordpress.posts.update','--postId','388'])).rejects.toMatchObject({code:1});
+    expect(calls).toHaveLength(3);
   });
   it('explains unquoted multiword flags without dispatching a partial search', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-quoted-query-')); dirs.push(dir);

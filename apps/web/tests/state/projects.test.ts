@@ -7,6 +7,7 @@ import {
   importFolderProject,
   installGeneratedPluginFolder,
   listPlugins,
+  listTemplates,
   pickLocalFolderPath,
   publishGeneratedPluginToGitHub,
 } from '../../src/state/projects';
@@ -157,6 +158,7 @@ describe('createProject', () => {
 
   it('carries the WordPress REST nonce when creating an embedded project', async () => {
     vi.stubGlobal('window', {
+      dispatchEvent: vi.fn(),
       location: { pathname: '/wp-admin/post.php', search: '', hash: '' },
       __PIXFLOW_DESIGN_WORDPRESS__: {
         version: '1.1.0',
@@ -474,5 +476,28 @@ describe('pickLocalFolderPath', () => {
     )));
 
     await expect(pickLocalFolderPath()).rejects.toThrow('cross-origin request rejected');
+  });
+});
+
+
+describe('listTemplates', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('authenticates the WordPress template list request', async () => {
+    vi.stubGlobal('window', {
+      location: { pathname: '/wp-admin/plugins.php', search: '', hash: '' },
+      __PIXFLOW_DESIGN_WORDPRESS__: {
+        apiBaseUrl: 'https://example.test/wp-json/pixflow-design/v1/od',
+        restBaseUrl: 'https://example.test/wp-json/pixflow-design/v1',
+        restNonce: 'nonce-templates',
+      },
+    });
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ templates: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTemplates()).resolves.toEqual([]);
+    const [url, options] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('https://example.test/wp-json/pixflow-design/v1/od/templates');
+    expect(new Headers(options?.headers).get('X-WP-Nonce')).toBe('nonce-templates');
   });
 });

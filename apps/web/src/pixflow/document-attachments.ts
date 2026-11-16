@@ -6,6 +6,16 @@ type Reader = typeof import('./document-reader-entry');
 type AttachmentReference = Omit<PixflowDirectSiteAttachment, 'projectId'> & { projectId?: string };
 type ReadFile = (attachment: AttachmentReference, signal: AbortSignal) => Promise<{ content?: string }>;
 
+/** Read a browser-selected brief using the same packaged parsers as chat attachments. */
+export async function readLocalDocument(file: File, signal: AbortSignal) {
+  if (file.size > documentInputLimit) return { status: 'unreadable' as const, sections: [], note: 'This document exceeds the 20 MB reading limit.' };
+  const assetBase = new URL(pixflowPublicAssetUrl('documents/'), window.location.href);
+  const source = new URL('reader.js', assetBase).href;
+  const [module, bytes] = await Promise.all([import(/* webpackIgnore: true */ source) as Promise<Reader>, file.arrayBuffer()]);
+  signal.throwIfAborted();
+  return module.readDocument(file.name, bytes, assetBase.href, signal);
+}
+
 export function siteDocumentRead(session: PixflowDirectSiteSession): ReadFile {
   return async (attachment, signal) => {
     if (!attachment.projectId) throw new Error('Attachment workspace unavailable');

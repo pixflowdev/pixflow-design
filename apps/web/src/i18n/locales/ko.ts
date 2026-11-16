@@ -191,6 +191,8 @@ export const ko: Dict = {
   "guidance.chooseAgent": "먼저 실행 설정에서 에이전트를 선택하세요.",
   "guidance.incomplete": "에이전트가 초안을 완료하지 못했습니다. 문서는 변경되지 않았습니다.",
   "guidance.title": "제품 및 디자인 안내",
+  "guidance.clientBrief": "고객 브리프",
+  "guidance.clientBriefHint": "고객 브리프를 붙여넣거나 문서를 가져오세요. 에이전트가 이를 토대로 PRODUCT.md와 DESIGN.md 초안을 작성할 수 있습니다.",
   "guidance.subtitle": "에이전트에게 일관된 브리프와 시각적 방향을 제공하세요.",
   "guidance.generateAgent": "에이전트로 생성",
   "guidance.conflict": "더 최신 버전이 저장되어 있습니다. 초안과 비교한 뒤 유지할 버전을 선택하세요.",

@@ -191,6 +191,8 @@ export const it: Dict = {
   "guidance.chooseAgent": "Scegli prima un agente nelle impostazioni di esecuzione.",
   "guidance.incomplete": "L’agente non ha completato la bozza. I documenti non sono stati modificati.",
   "guidance.title": "Indicazioni di prodotto e design",
+  "guidance.clientBrief": "Brief del cliente",
+  "guidance.clientBriefHint": "Incolla il brief del cliente o importa un documento. L’agente può usarlo per preparare PRODUCT.md e DESIGN.md.",
   "guidance.subtitle": "Fornisci all’agente un brief coerente e una direzione visiva.",
   "guidance.generateAgent": "Genera con l’agente",
   "guidance.conflict": "È stata salvata una versione più recente. Confrontala con la bozza prima di scegliere quale conservare.",

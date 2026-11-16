@@ -342,6 +342,7 @@ interface Props {
   portalToBody?: boolean;
   /** Persistent toolbar intent survives lazy Pro asset loading. */
   openManualDesignSystem?: boolean;
+  onOpenWorkspaceDesignSystems?: () => void;
   initial: AppConfig;
   agents: AgentInfo[];
   agentsLoading?: boolean;
@@ -1162,6 +1163,7 @@ function normalizeSettingsRuntimeConfig(config: AppConfig): AppConfig {
 export function SettingsDialog({
   portalToBody = false,
   openManualDesignSystem = false,
+  onOpenWorkspaceDesignSystems,
   initial,
   agents,
   agentsLoading = false,
@@ -4824,6 +4826,7 @@ export function SettingsDialog({
 
           {activeSection === 'designSystems' ? (
             <DesignSystemsSection
+              onOpenWorkspace={onOpenWorkspaceDesignSystems}
               openManualEditor={openManualDesignSystem}
               cfg={cfg}
               setCfg={setCfg}

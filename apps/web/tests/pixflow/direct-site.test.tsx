@@ -775,7 +775,7 @@ it('opens the authorized site session while loading history and revokes it if hi
   const close = vi.fn().mockResolvedValue(Response.json({closed:true}));
   vi.stubGlobal('fetch',close);
   try {
-    const run = runDirectSite({agentId:'codex',prompt:'Hello',history:[],historySource:{sessionKey:'chat',messages:[{id:'previous',role:'user',content:'Previous'}]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
+    const run = runDirectSite({agentId:'codex',prompt:'Hello',history:[],historySource:{sessionKey:'chat',binding:{projectId:'a'.repeat(36),conversationId:'chat'},messages:[{id:'previous',role:'user',content:'Previous'}]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
     await waitFor(() => { expect(requests.wordpress).toHaveBeenCalled(); expect(loading).toHaveBeenCalled(); });
     rejectHistory(new Error('History conflict'));
     await expect(run).rejects.toThrow('History conflict');
@@ -841,4 +841,18 @@ it('does not admit a new-chat run when its saved identity cannot be established'
   await expect(runDirectSite({agentId:'claude',prompt:'Build a homepage',history:[],historySource:{sessionKey:'new-session',messages:[]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('Chat unavailable');
   expect(requests.daemon).not.toHaveBeenCalled();
   expect(requests.wordpress.mock.calls.every(call => !String(call[0]).includes('/direct/sessions'))).toBe(true);
+});
+
+it('binds a continued chat with existing messages before admitting Plan tools', async () => {
+  const binding = { projectId: 'a'.repeat(36), conversationId: 'continued-chat' };
+  const messages = [{ id: 'prior', role: 'user' as const, content: 'Keep the consultation plan' }];
+  requests.wordpress.mockImplementation(async (path) => Response.json(String(path).includes('/chat-history/resolve') ? binding : {endpoint:'https://site.example/tools',token:'temporary',writable:true,historyPage:{messages,hasMore:false,nextCursor:null}}));
+  requests.daemon.mockResolvedValue(new Response('{"type":"done","ok":true}\n'));
+  const working = await import('../../src/pixflow/working-context');
+  const prepared = vi.spyOn(working, 'prepareHistorySource').mockResolvedValue({binding, throughMessageId:'prior', messages:[{role:'user',content:'Keep the consultation plan'}]});
+  try {
+    await runDirectSite({agentId:'codex',prompt:'Continue the plan',history:[],historySource:{sessionKey:'continued-session',messages},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
+    const session = requests.wordpress.mock.calls.find(call => String(call[0]).includes('/direct/sessions'));
+    expect(JSON.parse(session![1].body).historyBinding).toEqual(binding);
+  } finally { prepared.mockRestore(); }
 });

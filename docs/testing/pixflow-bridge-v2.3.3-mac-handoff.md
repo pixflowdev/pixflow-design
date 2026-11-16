@@ -76,3 +76,13 @@ Initial artifact inventory (not final accepted release assets):
 | x64 | 266961553 | `c1378aefcadc8e36421d53f77ced37e4a7cd07c87cfbe0e6e3a86cc406045120` |
 
 Local evidence is under `outputs/mac233`; the validation build combining the two PRs uses separate output paths and is not a release-source approval. QA plugins were backed up and replaced with freshly built v2.3.3 ZIPs from the designated pair. Published feeds and live sites were not modified.
+
+### Mac follow-up: trace stream jumping — 16 November 2026
+
+- Reproduced the user-reported issue before editing source on local QA Bricks page 438 using a read-only Claude prompt. With no disclosure clicks, the activity group changed `aria-expanded=false → true → false`, grew from 20px to 366px and collapsed to 20px in about 350ms; another tool immediately repeated the transition. Nested tool details also auto-expanded. This was running-status-driven disclosure state, not a scroll-only issue.
+- Fix for review: [Core #161](https://github.com/pixflowdev/pixflow-design/pull/161), branch `codex/v233-manual-trace-disclosure`, head `47974fb52`. Activity groups, individual tools and reasoning now default collapsed and retain only user-selected expansion state across streaming and completion. Shared components cover floating panels and Workspace. Plan/queue presentation remains separate.
+- Regression went red before source changes on the candidate-based validation checkout, then green. 43 focused stream-elements/AssistantMessage tests pass; Core guard and root typecheck pass. Core and paired Pro WordPress bundles built and installed on local QA only.
+- Identical read-only live prompt passed after the fix. Additional 50ms DOM sampling captured the tool count increasing from 2 to 3 with `aria-expanded=false`, group height 20px and detail height 0 throughout. Manual expansion/collapse then passed. One longer browser sampling call timed out and is not counted as evidence. No site content changed.
+- Evidence screenshot is in PR #161 under `docs/testing/screenshots/v233-trace-collapsed.jpg`. Local sampling evidence: `outputs/mac233/trace-fixed-samples.json`.
+- Installed QA test source is combined Core `d9afc1909` (includes #159/#160 plus the trace fix), with private pairing commit `e0c2cf0`. These are validation inputs, not approved final release pins. The separately prepared Pro saved-Plan/Stop fix is not included in this installation.
+- Review/merge #161 together with the other required fixes and establish the final compatible source pair before production rebuilds. Existing DMGs do not include this change; no draft uploads, publication or updater changes occurred in this follow-up.

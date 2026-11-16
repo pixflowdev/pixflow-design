@@ -186,6 +186,8 @@ export const en: Dict = {
   "guidance.chooseAgent": "Choose an agent in Execution settings first.",
   "guidance.incomplete": "The agent did not complete the draft. Your documents are unchanged.",
   "guidance.title": "Product & design guidance",
+  "guidance.clientBrief": "Client brief",
+  "guidance.clientBriefHint": "Paste the client’s brief or import a document. The agent can use it to draft PRODUCT.md and DESIGN.md.",
   "guidance.subtitle": "Give your agent a consistent brief and visual direction.",
   "guidance.generateAgent": "Generate with agent",
   "guidance.conflict": "A newer version is saved. Compare it below with your draft before choosing which to keep.",

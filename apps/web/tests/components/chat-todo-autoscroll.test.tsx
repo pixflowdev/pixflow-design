@@ -328,12 +328,12 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     expect(todoCard!.compareDocumentPosition(after)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it('keeps the todo card rendered when virtualization omits the original TodoWrite row from the tail window', async () => {
+  it('keeps the plan and earlier messages searchable in long transcripts', async () => {
     geom = { scrollHeight: 20000, clientHeight: 400, scrollTop: 20000 };
     render(chatPaneEl(longConversationWithEarlyTodo()));
     await flushFrames();
 
-    expect(document.querySelector('[data-testid="chat-virtual-spacer"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="chat-virtual-spacer"]')).toBeNull();
     expect(document.querySelectorAll('.chat-log [data-trace-kind="plan"]')).toHaveLength(1);
     expect(screen.queryAllByText('Task 1').length).toBeGreaterThan(0);
   });
@@ -359,6 +359,6 @@ describe('chat-log autoscroll when inline todo card grows', () => {
 
     // followLatestIfPinned fires from the shared callback and snaps scrollTop
     // to scrollHeight (1000).
-    expect(geom.scrollTop).toBe(1000);
+    expect(geom.scrollTop).toBe(700);
   });
 });

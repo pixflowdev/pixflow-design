@@ -131,6 +131,7 @@ final class DirectSiteRestController
                 }
             }
             $extra['historyPage'] = $page;
+            $session['planBinding'] = ['projectId' => $binding['projectId'], 'conversationId' => $binding['conversationId']];
         }
         set_transient($this->key($token), $session, 3600);
         return $extra + ['designGuidance' => is_array($guidance) ? $guidance : null, 'token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
@@ -167,6 +168,18 @@ final class DirectSiteRestController
             $tool = (string) ($body['tool'] ?? '');
             if (str_starts_with($tool, 'bricks.')) \PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'active');
             $args = is_array($body['arguments'] ?? null) ? $body['arguments'] : [];
+            if ($tool === 'preview.issue') return SavedPreviewAccess::issue($this->session, $this->key($this->token($request)), (int)($args['postId'] ?? 0));
+            if ($tool === 'preview.revoke') {
+                SavedPreviewAccess::revoke((string)($args['token'] ?? ''), $this->key($this->token($request)));
+                return ['ok'=>true];
+            }
+            if ($tool === 'plan.read' || $tool === 'plan.update') {
+                $binding = $this->session['planBinding'] ?? $this->session['workspaceSource'] ?? null;
+                if (!$binding) return new \WP_Error('pixflow_plan_unbound', 'Start this request from a saved chat to use its plan.', ['status' => 400]);
+                if ($tool === 'plan.update' && !$this->session['writable']) return new \WP_Error('pixflow_plan_readonly', 'This session is read-only.', ['status' => 403]);
+                if ($tool === 'plan.read' && $args) throw new \InvalidArgumentException('plan.read is bound to this chat and takes no arguments.');
+                return (new \PixflowDesign\WordPress\Chat\HistoryService())->plan($binding['projectId'], $binding['conversationId'], $tool === 'plan.update' ? $args : null);
+            }
             if ($tool === 'bricks.native.catalogue') {
                 return (\PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'nativeCatalogue'))($args);
             }

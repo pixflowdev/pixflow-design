@@ -1,4 +1,7 @@
-.marker { display:flex; align-items:center; gap:8px; width:100%; min-width:0; color:var(--text-muted); font-size:12px; line-height:1.5; }
-.marker::after { content:""; height:1px; flex:1; min-width:20px; background:var(--border); }
-.marker [data-slot="marker-icon"] { display:flex; flex:none; }
-.marker [data-slot="marker-content"] { min-width:0; overflow-wrap:anywhere; }
+.marker { position:relative; display:flex; min-height:16px; width:100%; align-items:center; gap:8px; text-align:start; font-size:14px; color:var(--text-muted); }
+.marker::before,.marker::after { content:''; height:1px; min-width:0; flex:1; background:var(--border); }
+.marker::before { margin-inline-end:4px; }
+.marker::after { margin-inline-start:4px; }
+.marker [data-slot=marker-icon] { width:16px; height:16px; flex-shrink:0; }
+.marker [data-slot=marker-icon] svg { width:16px; height:16px; }
+.marker [data-slot=marker-content] { min-width:0; flex:none; text-align:center; overflow-wrap:break-word; }

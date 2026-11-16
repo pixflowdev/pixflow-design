@@ -93,7 +93,7 @@
 
   function panelLimits() {
     var view = viewport();
-    var maxWidth = Math.max(450, Math.min(760, view.width - 24));
+    var maxWidth = Math.max(1, Math.min(760, view.width - 24));
     var maxHeight = Math.min(900, view.height - 64);
     return {
       minWidth: Math.min(PANEL_SIZES.sm.width, maxWidth),

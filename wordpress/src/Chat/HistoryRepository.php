@@ -107,6 +107,12 @@ final class HistoryRepository
         return is_array($row) ? $row : null;
     }
 
+    public function message(string $project, string $conversation, string $id): ?array
+    {
+        $row = $this->row(self::key($project, $conversation), $id);
+        return $row && !(int) $row['deleted'] ? $this->payload($row) : null;
+    }
+
     private function clean(array $message): array
     {
         unset($message['historyRevision'], $message['historySequence']);

@@ -99,6 +99,25 @@ export async function revokeDirectSession(session: PixflowDirectSiteSession): Pr
 
 /** Renewed credentials must never leak into durable event records. */
 export function redactDirectEvent(event: Record<string, unknown>, secrets: string[]): Record<string, unknown> {
+  if (event.type === 'tool_result' && typeof event.content === 'string') {
+    // The provider already received these images over MCP. Persist the receipt,
+    // not another base64 copy in every streamed/reloaded chat event.
+    const compact = (text: string): string => {
+      try {
+        let changed = false;
+        const value = JSON.parse(text, (_key, value) => {
+          if (value && typeof value === 'object' && value.type === 'image' && (typeof value.data === 'string' || value.source?.type === 'base64')) {
+            changed = true;
+            return {type:'text',text:'[Screenshot supplied to the agent]'};
+          }
+          return value;
+        });
+        return changed ? JSON.stringify(value) : text;
+      } catch { return text; }
+    };
+    const whole = compact(event.content);
+    event = {...event,content:whole === event.content ? event.content.split('\n').map(compact).join('\n') : whole};
+  }
   const sensitive = (key: string) => /(?:authorization|cookie|password|token|secret|apikey|accesskey|licensekey|privatekey|pairingcode|recoverycode)$/.test(key.toLowerCase().replace(/[^a-z0-9]/g, ''));
   let json = JSON.stringify(event, (key,value:unknown) => {
     if (sensitive(key)) return '[redacted]';

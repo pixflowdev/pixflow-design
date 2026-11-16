@@ -39,6 +39,27 @@ const translations: Partial<Record<keyof Dict, string>> = {
 const t = (key: keyof Dict) => translations[key] ?? key;
 
 describe('SharedChatRows', () => {
+  it('keeps the actual reply active when a durable plan follows it', () => {
+    render(<SharedChatRows t={t} paneStreaming messages={[
+      {id:'reply',role:'assistant',content:'Planning',runStatus:'running'},
+      {id:'pixflow-saved-plan',role:'assistant',content:'',events:[{kind:'tool_use',id:'plan',name:'TodoWrite',input:{savedPlanRevision:1,todos:[{content:'Build after approval',status:'pending'}]}}]},
+    ]} />);
+    expect(screen.getByTestId('assistant-reply').getAttribute('data-streaming')).toBe('true');
+    expect(screen.getByTestId('assistant-reply').getAttribute('data-unfinished')).toBe('[]');
+  });
+  it('restores one saved Plan card with honest completed progress and no assistant bubble', () => {
+    const input = {title:'Build service page',summary:'Approved service outline',savedPlanRevision:2,todos:[
+      {content:'Plan',status:'completed'}, {content:'Build',status:'in_progress'}, {content:'Verify',status:'pending'},
+    ]};
+    const view = render(<SharedChatRows t={t} messages={[{id:'pixflow-saved-plan',role:'assistant',content:'',events:[{kind:'tool_use',id:'saved-plan',name:'TodoWrite',input}]}]} />);
+    expect(view.container.querySelectorAll('[data-trace-kind="plan"]')).toHaveLength(1);
+    expect(view.container.querySelector('.op-todo, .todo-list, .todo-item')).toBeNull();
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByText('Build service page')).toBeTruthy();
+    expect(screen.getByText('Approved service outline')).toBeTruthy();
+    expect(screen.getByText('1/3')).toBeTruthy();
+    expect(screen.queryByTestId('assistant-pixflow-saved-plan')).toBeNull();
+  });
   it('renders saved skill and link references inline while retaining the original prompt', () => {
     const url = 'https://www.example.com/docs?q=design';
     const content = `Try @Editorial, /design layout and (${url}). @Editorial`;

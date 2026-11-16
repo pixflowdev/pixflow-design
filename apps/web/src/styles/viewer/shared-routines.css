@@ -730,35 +730,14 @@ html:not([data-theme]) .routines-project-select {
   padding: 18px 18px 20px;
   background: var(--bg-panel);
 }
-/* Cancel the 14px flex gap so the idle spacer adds no trailing space. */
-.app .chat-log-tail-spacer {
-  margin-top: -14px;
-}
 .app .msg {
   max-width: 100%;
 }
-.app .msg.user {
-  width: fit-content;
-  max-width: min(88%, 520px);
-}
-.app .msg.user .user-text-wrap {
-  max-width: 100%;
-}
-.app .msg.user .user-text {
-  width: max-content;
-  max-width: 100%;
-}
-.app .msg.assistant {
-  max-width: min(100%, 620px);
-}
-.app .msg .role {
-  margin-bottom: 5px;
-  gap: 7px;
-  font-size: 11.5px;
-  line-height: 1.25;
-  color: var(--text-muted);
-  font-weight: 560;
-}
+
+
+
+
+
 .app .msg .role > span:first-child,
 .app .msg .role .role-name {
   color: var(--text);
@@ -768,15 +747,8 @@ html:not([data-theme]) .routines-project-select {
   padding-right: 4px;
   color: var(--text-soft);
 }
-.app .msg.assistant .role {
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-soft);
-}
-.app .msg.assistant .role .role-name {
-  font-weight: 600;
-}
+
+
 .app .msg.assistant .role .role-agent-icon {
   flex: 0 0 auto;
   border-radius: var(--radius-sm);
@@ -786,17 +758,7 @@ html:not([data-theme]) .routines-project-select {
   color: var(--text);
   font-weight: 500;
 }
-.app .msg.user .user-text {
-  padding: 12px 16px;
-  border: 0;
-  border-radius: 24px;
-  corner-shape: squircle;
-  background: var(--chat-bubble-bg, var(--selected));
-  color: #fff;
-  line-height: 1.6;
-  font-size: 15px;
-  box-shadow: none;
-}
+
 .app .msg.user .user-copy-btn {
   color: var(--text);
 }
@@ -804,14 +766,12 @@ html:not([data-theme]) .routines-project-select {
   background: var(--bg-subtle);
   color: var(--text);
 }
-.app .msg.assistant .assistant-flow {
-  gap: 14px;
-}
+
 .app .msg.assistant .prose-block {
   max-width: 68ch;
   color: var(--text);
-  font-size: var(--prose-font-size, 15px);
-  line-height: var(--prose-line-height, 1.75);
+  font-size: var(--prose-font-size, 14px);
+  line-height: var(--prose-line-height, 1.625);
 }
 .app .msg.assistant .prose-block .md-p + .md-p {
   margin-top: 14px;
@@ -831,17 +791,11 @@ html:not([data-theme]) .routines-project-select {
   font-weight: 500;
 }
 .app .assistant-footer {
-  padding: 4px 0;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text);
-  opacity: 0;
-  transition: opacity 150ms var(--ease-out);
+  padding: 0;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
-.app .msg.assistant:hover .assistant-footer,
-.app .msg.assistant:focus-within .assistant-footer,
-.app .assistant-footer[data-streaming="true"],
-.app .assistant-footer[data-last="true"] { opacity: 1; }
 .app .assistant-footer .dot {
   width: 5px;
   height: 5px;
@@ -853,12 +807,12 @@ html:not([data-theme]) .routines-project-select {
 }
 .app .assistant-footer .assistant-label {
   font-weight: 400;
-  font-size: 11px;
-  color: var(--text);
+  font-size: inherit;
+  color: inherit;
 }
 .app .assistant-footer .assistant-stats {
-  font-size: 11.5px;
-  color: var(--text);
+  font-size: inherit;
+  color: inherit;
 }
 .app .op-waiting {
   width: fit-content;
@@ -869,123 +823,6 @@ html:not([data-theme]) .routines-project-select {
   width: 7px;
   height: 7px;
   margin-top: 1px;
-}
-.app .action-card {
-  border: none;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.app .action-card:hover {
-  background: none;
-}
-.app .action-card-toggle {
-  min-height: 36px;
-  padding: 4px;
-  gap: 6px;
-  border-radius: var(--radius);
-  font-size: 13px;
-}
-.app .action-card-toggle:hover {
-  background: var(--bg-fill-tertiary);
-}
-.app .action-card-status {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-soft);
-  background: var(--bg-panel);
-}
-.app .action-card-toggle .summary {
-  font-size: 13px;
-}
-.app .action-card-body {
-  padding: 8px 0 8px 32px;
-  border-top: none;
-}
-.app .op-card {
-  border: none;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  transition: background 160ms var(--ease-out);
-}
-.app .op-card:hover {
-  background: none;
-}
-.app .op-card-head {
-  padding: 4px;
-  gap: 6px;
-  border-radius: var(--radius);
-}
-.app .op-card-head:hover {
-  background: var(--bg-fill-tertiary);
-}
-/* `.app .op-card` above resets border/background to none; re-assert the live
-   code box framing inside the app scope so the streaming panel stays boxed. */
-.app .live-code-box {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-fill-secondary);
-}
-.app .live-code-box .live-code-head {
-  cursor: default;
-  border-radius: 0;
-}
-.app .live-code-box .live-code-head:hover {
-  background: transparent;
-}
-.app .op-status {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-soft);
-  background: var(--bg-panel);
-}
-.app .thinking-block {
-  background: none;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-.app .thinking-toggle {
-  min-height: 36px;
-  padding: 4px;
-  gap: 6px;
-  border-radius: var(--radius);
-  font-size: 13px;
-}
-.app .thinking-toggle:hover {
-  background: var(--bg-fill-tertiary);
-}
-.app .thinking-status {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-soft);
-  background: var(--bg-panel);
-}
-.app .thinking-label {
-  font-size: 13px;
-}
-.app .thinking-copy {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-.app .thinking-preview {
-  color: var(--text-muted);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-.app .thinking-body {
-  padding: 4px 8px 8px 32px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text-muted);
-  border-top: none;
-  max-height: min(40vh, 320px);
-  overflow-y: auto;
 }
 .app .produced-files {
   border: none;

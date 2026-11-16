@@ -191,6 +191,8 @@ export const th: Dict = {
   "guidance.chooseAgent": "เลือกเอเจนต์ในการตั้งค่าการทำงานก่อน",
   "guidance.incomplete": "เอเจนต์ยังสร้างร่างไม่เสร็จ เอกสารของคุณไม่ได้เปลี่ยนแปลง",
   "guidance.title": "คำแนะนำด้านผลิตภัณฑ์และการออกแบบ",
+  "guidance.clientBrief": "บรีฟลูกค้า",
+  "guidance.clientBriefHint": "วางบรีฟของลูกค้าหรือนำเข้าเอกสาร เอเจนต์สามารถใช้เพื่อร่าง PRODUCT.md และ DESIGN.md ได้",
   "guidance.subtitle": "ให้บรีฟที่สอดคล้องกันและทิศทางภาพแก่เอเจนต์",
   "guidance.generateAgent": "สร้างด้วยเอเจนต์",
   "guidance.conflict": "มีเวอร์ชันใหม่กว่าที่บันทึกไว้ เปรียบเทียบกับร่างก่อนเลือกว่าจะเก็บเวอร์ชันใด",

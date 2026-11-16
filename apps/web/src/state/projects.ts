@@ -195,7 +195,7 @@ export async function importClaudeDesignZip(
 
 export async function listTemplates(): Promise<ProjectTemplate[]> {
   try {
-    const resp = await fetch(toPixflowRuntimeUrl('/api/templates'));
+    const resp = await pixflowRuntimeFetch('/api/templates');
     if (!resp.ok) return [];
     const json = (await resp.json()) as { templates: ProjectTemplate[] };
     return json.templates ?? [];

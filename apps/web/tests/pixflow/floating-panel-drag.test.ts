@@ -70,3 +70,13 @@ it('keeps the 450px minimum when floating, docked and restoring a narrow saved p
     }
   } finally { dom.window.close(); }
 });
+it('fits a narrow phone viewport without losing the desktop minimum', () => {
+  const dom = new JSDOM('<body></body>', {runScripts:'outside-only',url:'http://localhost/'});
+  try {
+    Object.defineProperty(dom.window, 'innerWidth', {value:390});
+    dom.window.eval(readFileSync(fileURLToPath(new URL('../../../../wordpress/assets/pixflow-design-floating-panel.js', import.meta.url)), 'utf8'));
+    const state = dom.window.PixflowDesignFloatingPanel.normalizePanelState({dock:'float',width:460,height:640});
+    expect(state.width).toBeLessThanOrEqual(374);
+    expect(state.x + state.width).toBeLessThanOrEqual(390);
+  } finally { dom.window.close(); }
+});

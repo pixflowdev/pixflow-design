@@ -191,6 +191,8 @@ export const pl: Dict = {
   "guidance.chooseAgent": "Najpierw wybierz agenta w ustawieniach wykonywania.",
   "guidance.incomplete": "Agent nie ukończył szkicu. Dokumenty nie zostały zmienione.",
   "guidance.title": "Wytyczne produktu i projektu",
+  "guidance.clientBrief": "Brief klienta",
+  "guidance.clientBriefHint": "Wklej brief klienta lub zaimportuj dokument. Agent może na tej podstawie przygotować szkice PRODUCT.md i DESIGN.md.",
   "guidance.subtitle": "Przekaż agentowi spójny brief i kierunek wizualny.",
   "guidance.generateAgent": "Generuj z agentem",
   "guidance.conflict": "Zapisano nowszą wersję. Porównaj ją ze szkicem przed wyborem wersji do zachowania.",

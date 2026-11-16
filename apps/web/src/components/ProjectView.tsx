@@ -42,7 +42,7 @@ import {
   streamViaDaemon,
   steerChatRun,
 } from '../providers/daemon';
-import { isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
+import { hasActiveWorkspaceRun, isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../runtime/run-reattach';
 import { fetchElevenLabsVoiceOptions } from '../providers/elevenlabs-voices';
 import { normalizeCustomReason } from '@open-design/contracts/analytics';
 import {
@@ -6304,7 +6304,7 @@ export function ProjectView({
                 setProjectActionsToast({ message, details: null });
               }}
               headerActions={<>
-                {hasPixflowWordPressContext() && activeConversationId && <ConversationActions workspace={false} disabled={currentConversationBusy} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
+                {hasPixflowWordPressContext() && activeConversationId && <ConversationActions workspace={false} disabled={currentConversationLoading || currentConversationStreaming || hasActiveWorkspaceRun(messages)} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && activeConversationId && <ChatExportButton key={activeConversationId} binding={{ projectId: project.id, conversationId: activeConversationId }} />}
                 {hasPixflowWordPressContext() && <BuilderDestinationControl key={builderChatId} chatId={builderChatId}
                   disabled={currentConversationBusy} open={destinationDialogOpen} onOpenChange={setDestinationDialogOpen}

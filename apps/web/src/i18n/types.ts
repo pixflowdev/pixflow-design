@@ -163,6 +163,8 @@ export interface Dict {
   "guidance.chooseAgent": string;
   "guidance.incomplete": string;
   "guidance.title": string;
+  "guidance.clientBrief": string;
+  "guidance.clientBriefHint": string;
   "guidance.subtitle": string;
   "guidance.generateAgent": string;
   "guidance.conflict": string;

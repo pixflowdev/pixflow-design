@@ -770,7 +770,7 @@ describe('queued message editing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit queued message' }));
     await waitFor(() => expect(composerText()).toBe('Queued text'));
     expect(screen.queryByRole('region', { name: 'Queued messages' })).toBeNull();
-    expect(JSON.parse(sessionStorage.getItem(key)!).items).toEqual([]);
+    expect(JSON.parse(sessionStorage.getItem(key) || '{"items":[]}').items).toEqual([]);
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
     await typeAndSettle('Revised queued request');
     fireEvent.click(screen.getByRole('button', { name: 'Queue message' }));

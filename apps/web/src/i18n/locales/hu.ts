@@ -191,6 +191,8 @@ export const hu: Dict = {
   "guidance.chooseAgent": "Először válasszon ügynököt a végrehajtási beállításokban.",
   "guidance.incomplete": "Az ügynök nem fejezte be a piszkozatot. A dokumentumok nem változtak.",
   "guidance.title": "Termék- és tervezési útmutató",
+  "guidance.clientBrief": "Ügyfélbrief",
+  "guidance.clientBriefHint": "Illeszd be az ügyfélbriefet, vagy importálj egy dokumentumot. Az ügynök ennek alapján készítheti el a PRODUCT.md és DESIGN.md vázlatát.",
   "guidance.subtitle": "Adjon az ügynöknek egységes összefoglalót és vizuális irányt.",
   "guidance.generateAgent": "Létrehozás ügynökkel",
   "guidance.conflict": "Újabb verzió lett mentve. Hasonlítsa össze a piszkozattal, mielőtt kiválasztja, melyiket tartja meg.",

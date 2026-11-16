@@ -35,7 +35,7 @@ export function TraceCollapsible({ className = '', open: controlledOpen, default
 }
 export function TraceCollapsibleTrigger({ className = '', children, ...props }: ComponentProps<typeof Collapsible.Trigger>) {
   return <Collapsible.Trigger data-slot="trace-collapsible-trigger" className={`${styles.trigger} ${className}`} {...props}>
-    {children}<TraceIcon className={styles.chevron}><Icon name="chevron-right" size={12} /></TraceIcon>
+    {children}<TraceIcon className={styles.chevron}><Icon name="chevron-right" size={16} /></TraceIcon>
   </Collapsible.Trigger>;
 }
 export function TraceCollapsibleContent({ className = '', children, ...props }: ComponentProps<typeof Collapsible.Panel>) {

@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@open-design/components';
 import { useT } from '../i18n';
+import { SharedMessageStream } from '../components/shared-chat/SharedMessageStream';
 import { SharedChatRows, type SharedChatInputMessage } from '../components/shared-chat/SharedChatRows';
 import { listChatHistory, mergeChatHistory, readChatHistory, type SavedChatHistory } from './chat-history-client';
 import styles from './ChatHistoryBrowser.module.css';
@@ -15,7 +16,6 @@ export function ChatHistoryBrowser() {
   const dialog = useRef<HTMLDialogElement>(null);
   const requestId = useRef(0);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const anchor = useRef<{ top: number; height: number } | null>(null);
   const failedBefore = useRef<string | null>(null);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<SavedChatHistory | null>(null);
@@ -24,12 +24,6 @@ export function ChatHistoryBrowser() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  useLayoutEffect(() => {
-    const body = bodyRef.current;
-    if (!body || !anchor.current) return;
-    body.scrollTop = anchor.current.top + body.scrollHeight - anchor.current.height;
-    anchor.current = null;
-  }, [messages]);
   async function load(target: SavedChatHistory | null, before?: string | null) {
     const owner = ++requestId.current;
     setLoading(true); setFailed(false);
@@ -37,7 +31,6 @@ export function ChatHistoryBrowser() {
       if (target) {
         const result = await readChatHistory<SharedChatInputMessage>(target, before);
         if (owner !== requestId.current) return;
-        if (before && bodyRef.current) anchor.current = { top: bodyRef.current.scrollTop, height: bodyRef.current.scrollHeight };
         setMessages(current => before ? mergeChatHistory(result.messages, current) : result.messages);
         setCursor(result.hasMore ? result.nextCursor : null);
       } else {
@@ -65,14 +58,17 @@ export function ChatHistoryBrowser() {
         {open && selected && <ChatExportButton key={`${selected.projectId}:${selected.conversationId}`} binding={selected} />}
         <Button variant="subtle" onClick={() => setOpen(false)}>{t('common.close')}</Button>
       </header>
-      <div ref={bodyRef} className={styles.body}>
+      <div className={`${styles.body} ${selected ? styles.transcript : ''}`}>
         {selected && <Button variant="subtle" onClick={() => choose(null)}>{t('chat.conversationsAria')}</Button>}
         {failed && <p role="status">{t('history.loadError')} <Button variant="subtle" onClick={() => { void load(selected, failedBefore.current); }}>{t('history.retry')}</Button></p>}
         {loading && <div className={styles.loading}><CenteredLoader label={t('common.loading')} /></div>}
         {selected ? <>
           <ConversationActions binding={selected} disabled={loading || failed} onOpened={() => setOpen(false)} />
           {cursor && <Button variant="subtle" disabled={loading} onClick={() => { void load(selected, cursor); }}>{t('history.loadEarlier')}</Button>}
-          <SharedChatRows messages={messages} projectId={selected.projectId} t={t} />
+          <SharedMessageStream logRef={bodyRef} scrollSessionKey={`${selected.projectId}:${selected.conversationId}`}
+            loading={false} historyLoading={loading && messages.length === 0} t={t}
+            scrollToLatestLabel={t('chat.scrollToLatest')} jumpToLatestLabel={t('chat.jumpToLatest')}
+            rows={<SharedChatRows messages={messages} projectId={selected.projectId} t={t} />} />
         </> : <div className={styles.list}>
           {!loading && !failed && !conversations.length && <p>{t('chat.emptyConversations')}</p>}
           {conversations.map(conversation => <Button variant="subtle" key={`${conversation.projectId}:${conversation.conversationId}`} onClick={() => choose(conversation)}><span>{conversation.title || t('chat.conversationsAria')}</span>{conversation.updatedAt > 0 && <time dateTime={new Date(conversation.updatedAt).toISOString()}>{exactDateTime(conversation.updatedAt)}</time>}</Button>)}

@@ -4,9 +4,8 @@ import { useT as usePixflowUiTranslation } from '../i18n';
 import { ChatHistoryControls } from '../pixflow/ChatHistoryControls';
 import { PageAnnotationMessage } from './PageAnnotationMessage';
 import { expandVoiceMessages } from '../pixflow/voice-messages';
-import { chatScrollBehavior } from './shared-chat/use-floating-chat-scroll';
+import { ChatTranscriptItem } from './chat/MessageScroller';
 import {
-  Fragment,
   memo,
   useCallback,
   useEffect,
@@ -15,7 +14,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
   type ReactNode,
 } from 'react';
@@ -604,7 +602,6 @@ interface Props {
   compactComposer?: boolean;
   codexVoiceEnabled?: boolean;
   codexVoiceStartRequested?: boolean;
-  bottomAligned?: boolean;
   designSystemPicker?: ReactNode;
   config?: AppConfig;
 }
@@ -613,12 +610,6 @@ const AMR_PROFILE_ENV_KEY = 'OPEN_DESIGN_AMR_PROFILE';
 
 type Tab = 'chat' | 'comments';
 
-const CHAT_MESSAGE_VIRTUALIZE_THRESHOLD = 80;
-const CHAT_MESSAGE_OVERSCAN_PX = 900;
-const CHAT_VIRTUAL_ROW_GAP_PX = 14;
-const CHAT_VIRTUAL_MIN_ROW_HEIGHT = 36;
-const CHAT_VIRTUAL_DEFAULT_VIEWPORT_PX = 640;
-const CHAT_VIRTUAL_INITIAL_TAIL_ROWS = 16;
 const CONVERSATION_ROW_HEIGHT_PX = 34;
 const CONVERSATION_VIRTUALIZE_THRESHOLD = 36;
 const CONVERSATION_OVERSCAN_ROWS = 8;
@@ -651,7 +642,6 @@ interface QueuedSendUpdate {
 }
 
 // Gap left above the anchored user message when it is pinned to the top.
-const ANCHOR_TOP_PADDING = 12;
 
 export function ChatPane({
   messages: persistedMessages,
@@ -757,7 +747,6 @@ export function ChatPane({
   compactComposer = false,
   codexVoiceEnabled = false,
   codexVoiceStartRequested,
-  bottomAligned = true,
   designSystemPicker,
   config,
   projectResolvedDir,
@@ -772,45 +761,11 @@ export function ChatPane({
   const analytics = useAnalytics();
   const amrProfile = config?.agentCliEnv?.amr?.[AMR_PROFILE_ENV_KEY] ?? null;
   const logRef = useRef<HTMLDivElement | null>(null);
-  const historyScrollAnchor = useRef<{ height: number; top: number } | null>(null);
-  useLayoutEffect(() => {
-    const anchor = historyScrollAnchor.current;
-    const log = logRef.current;
-    if (!anchor || !log || olderHistory?.loading) return;
-    if (log.dataset.slot === 'message-scroller-viewport') { historyScrollAnchor.current = null; return; }
-    log.scrollTop = anchor.top + log.scrollHeight - anchor.height;
-    historyScrollAnchor.current = null;
-  }, [persistedMessages, olderHistory?.loading]);
-  const chatLogScrollIdleTimerRef = useRef<number | null>(null);
   const composerRef = useRef<SharedChatComposerHandle | null>(null);
   const composerSlotRef = useRef<HTMLDivElement | null>(null);
   const composerLayerRef = useRef<HTMLDivElement | null>(null);
   const queuedSendStripRef = useRef<HTMLDivElement | null>(null);
-  const didInitialScrollRef = useRef(false);
   const runFailedToastSurfaceKeysRef = useRef<Set<string>>(new Set());
-  // Tracks whether the user is glued close enough to the bottom that
-  // streamed content should auto-follow. Distinct from the jump-button
-  // state below, which uses a wider threshold (120px) so the affordance
-  // stays visible for short scroll-ups. Auto-follow needs the tighter
-  // 80px cutoff: scrolling ~90px up is an intentional pause that
-  // shouldn't be yanked back the moment the next chunk streams in.
-  const pinnedToBottomRef = useRef(true);
-  const jumpingToLatestRef = useRef(false);
-  const scrolledToFormRef = useRef<Set<string>>(new Set());
-  // "Anchor the just-sent turn to the top" (ChatGPT-style). On send we pin
-  // the user's message to the top of the viewport and let the reply stream
-  // below it instead of following the bottom. `pending` is armed by the
-  // composer's onSend; the messages effect promotes it to `active` once the
-  // new user turn actually renders. A dynamic tail spacer reserves just
-  // enough real, scrollable blank space below the turn so the message can
-  // reach the top even when the reply is short. The spacer is only resized
-  // while the message sits at its pinned position — once the user scrolls
-  // below it, the reserved blank stays put (no collapse, no jump).
-  const anchorPendingRef = useRef(false);
-  const anchorActiveRef = useRef(false);
-  const tailSpacerRef = useRef<HTMLDivElement | null>(null);
-  const prevStreamingRef = useRef(streaming);
-  const prevLastUserIdRef = useRef<string | undefined>(undefined);
   // AssistantMessage's interaction callbacks are re-created per render and
   // excluded from its memo comparison (so streaming doesn't re-render every
   // message). Route them through this ref so a memoized message still calls the
@@ -852,9 +807,6 @@ export function ChatPane({
   }, [skills]);
   const [tab, setTab] = useState<Tab>('chat');
 
-  const [scrolledFromBottom, setScrolledFromBottom] = useState(false);
-  const [chatLogScrollable, setChatLogScrollable] = useState(false);
-  const [chatLogScrolling, setChatLogScrolling] = useState(false);
   const [composerPortalTarget, setComposerPortalTarget] = useState<HTMLElement | null>(null);
   const [composerPortalRect, setComposerPortalRect] = useState<{
     left: number;
@@ -1026,23 +978,6 @@ export function ChatPane({
     return map;
   }, [messages]);
 
-  useEffect(() => {
-    didInitialScrollRef.current = false;
-    anchorPendingRef.current = false;
-    anchorActiveRef.current = false;
-    prevLastUserIdRef.current = undefined;
-    resetTailSpacer();
-    // A new conversation should land at the bottom (its own initial
-    // scroll), not inherit the previous conversation's saved position —
-    // including any anchor-to-top reserve still held by the tail spacer, which
-    // would otherwise strand the freshly opened conversation below a dead gap.
-    savedChatScrollRef.current = null;
-    scrolledToFormRef.current = new Set();
-    anchorActiveRef.current = false;
-    anchorPendingRef.current = false;
-    resetTailSpacer();
-  }, [activeConversationId]);
-
   // ChatComposer's internal `seededRef` latches after the first
   // non-empty `initialDraft`, so a parent setting `initialDraft` back
   // to `undefined` will not flow into the composer's draft state. When
@@ -1088,435 +1023,6 @@ export function ChatPane({
       meta: item.meta,
     });
   };
-
-  useEffect(() => {
-    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
-    const el = logRef.current;
-    if (!el || didInitialScrollRef.current || messages.length === 0) return;
-    didInitialScrollRef.current = true;
-    requestAnimationFrame(() => {
-      // If the last assistant message contains a question form, scroll to
-      // the form instead of the bottom, so the user sees the form first.
-      if (lastAssistantMsg?.content.includes('<question-form')) {
-        const assistantEls = el.querySelectorAll('.msg.assistant');
-        const lastAssistantEl = assistantEls[assistantEls.length - 1];
-        const formEl = lastAssistantEl?.querySelector<HTMLElement>('[data-form-id]');
-        if (formEl && !scrolledToFormRef.current.has(formEl.dataset.formId!)) {
-          scrolledToFormRef.current.add(formEl.dataset.formId!);
-          formEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-          pinnedToBottomRef.current = false;
-          setScrolledFromBottom(true);
-          return;
-        }
-        // Already handled by the auto-scroll effect — don't bottom-scroll.
-        if (formEl) return;
-      }
-      // Initial-load bottom-pin must be instant — smooth scrollTo emits
-      // intermediate scroll events that flip pinnedToBottomRef to false.
-      el.scrollTop = el.scrollHeight;
-      setScrolledFromBottom(false);
-      pinnedToBottomRef.current = true;
-    });
-    // `tab` is in the deps so that switching conversations while
-    // Comments is open doesn't strand the new conversation at scrollTop:
-    // 0. The activeConversationId-reset effect above clears
-    // didInitialScrollRef while the chat-log is unmounted; this effect
-    // then re-runs when the user returns to Chat and the element is
-    // available, scrolling the new conversation to its initial bottom.
-  }, [activeConversationId, messages.length, tab]);
-
-  // When a turn finishes streaming, release the anchor-to-top reserve. The
-  // tail spacer only exists to give a streaming reply room to grow while the
-  // user message stays pinned at the top; once the reply is final it must not
-  // linger, or a short turn (typical of a fresh fork) is left with a large
-  // dead gap below it. Collapsing the spacer lets the bottom-anchored layout
-  // settle the finished transcript against the composer.
-  useEffect(() => {
-    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
-    const was = prevStreamingRef.current;
-    prevStreamingRef.current = streaming;
-    // The tail spacer only ever holds the anchor-to-top reserve for an actively
-    // streaming reply, so once the turn ends it must collapse unconditionally —
-    // even if a mid-turn scroll already cleared `anchorActiveRef` (which leaves
-    // the spacer sized). Collapsing it lets the bottom-anchored layout settle a
-    // finished short turn against the composer instead of below a dead gap.
-    if (was && !streaming) {
-      anchorActiveRef.current = false;
-      resetTailSpacer();
-    }
-  }, [streaming]);
-
-  useEffect(() => {
-    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
-    const el = logRef.current;
-    if (!el) return;
-    // Auto-scroll only when the user was already pinned near the bottom,
-    // so a scrollback session reading earlier output isn't yanked to the
-    // latest message. We key off the pre-content `pinnedToBottomRef`
-    // (a ref so it doesn't itself re-fire this effect on scroll) instead
-    // of recomputing distance from the just-grown scrollHeight: a single
-    // streamed chunk can add 100+ px in one render, which made the
-    // post-content distance check skip auto-scroll even when the user
-    // was glued to the bottom. We deliberately use the tighter 80px
-    // cutoff tracked by the ref (not the wider 120px jump-button
-    // threshold) so a deliberate ~90px scroll-up isn't snapped back the
-    // next time content streams in. Issue #983.
-
-    // A brand-new user turn from a local send: switch to "anchor to top"
-    // mode and smooth-scroll their message to the top of the viewport.
-    const prevUserId = prevLastUserIdRef.current;
-    prevLastUserIdRef.current = lastUser?.id;
-    if (anchorPendingRef.current && lastUser && lastUser.id !== prevUserId) {
-      jumpingToLatestRef.current = false;
-      anchorPendingRef.current = false;
-      resetTailSpacer();
-      anchorActiveRef.current = true;
-      pinnedToBottomRef.current = false;
-      setScrolledFromBottom(true);
-      requestAnimationFrame(() => {
-        if (!anchorActiveRef.current || logRef.current !== el) return;
-        sizeAnchorSpacer();
-        scrollAnchorToTop();
-      });
-      return;
-    }
-    // While anchored, the message stays at the top on its own (nothing above
-    // it changes), so we only shrink the spacer as the reply grows — never
-    // re-scroll. This is what keeps scrolling down and the final settle smooth.
-    if (anchorActiveRef.current) {
-      requestAnimationFrame(sizeAnchorSpacer);
-      return;
-    }
-
-    if (pinnedToBottomRef.current && !jumpingToLatestRef.current) {
-      // If the last assistant message contains a question form, scroll to
-      // the form instead of the bottom, so the user lands on the form.
-      if (lastAssistantMsg?.content.includes('<question-form')) {
-        const assistantEls = el.querySelectorAll('.msg.assistant');
-        const lastAssistantEl = assistantEls[assistantEls.length - 1];
-        const formEl = lastAssistantEl?.querySelector<HTMLElement>('[data-form-id]');
-        if (formEl && !scrolledToFormRef.current.has(formEl.dataset.formId!)) {
-          scrolledToFormRef.current.add(formEl.dataset.formId!);
-          formEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-          pinnedToBottomRef.current = false;
-          setScrolledFromBottom(true);
-          return;
-        }
-        // Form tag in content but the DOM element isn't ready yet (partial
-        // stream) — skip bottom-scroll to avoid a jarring jump that gets
-        // undone when the form finishes rendering.
-        if (streaming) return;
-      }
-      // Streaming bottom-pin must be instant — smooth scrollTo emits
-      // intermediate scroll events that flip pinnedToBottomRef to false,
-      // breaking auto-follow for subsequent chunks.
-      el.scrollTop = el.scrollHeight;
-    }
-  }, [messages, error, streaming]);
-
-  // Saved chat-log scroll state, preserved across tab switches. The
-  // chat-log <div> is conditionally rendered so it unmounts when the
-  // user switches to Comments. On remount it would default to
-  // scrollTop: 0 and the initial-bottom-scroll effect skips because
-  // didInitialScrollRef is already true. We capture either the absolute
-  // scrollTop or a "pinned to bottom" flag while Chat is visible, so
-  // bottom-followers stay pinned even when new messages stream in
-  // off-tab. Issue #790.
-  const savedChatScrollRef = useRef<
-    { pinnedToBottom: true } | { pinnedToBottom: false; scrollTop: number } | null
-  >(null);
-  useEffect(() => {
-    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
-    if (tab !== 'chat') return;
-    const el = logRef.current;
-    if (!el) return;
-
-    function syncScrollable(target: HTMLDivElement) {
-      const next = target.scrollHeight - target.clientHeight > 1;
-      setChatLogScrollable((prev) => (prev === next ? prev : next));
-      if (!next) setChatLogScrolling(false);
-    }
-
-    function markScrolling() {
-      setChatLogScrolling(true);
-      if (chatLogScrollIdleTimerRef.current !== null) {
-        window.clearTimeout(chatLogScrollIdleTimerRef.current);
-      }
-      chatLogScrollIdleTimerRef.current = window.setTimeout(() => {
-        chatLogScrollIdleTimerRef.current = null;
-        setChatLogScrolling(false);
-      }, 650);
-    }
-
-    // Restore previously-saved position on remount. Defer to the next
-    // frame so the conditional <> contents finish layout before the
-    // scrollTop write lands.
-    const saved = savedChatScrollRef.current;
-    if (saved !== null) {
-      requestAnimationFrame(() => {
-        const target = logRef.current;
-        if (!target) return;
-        if (saved.pinnedToBottom) {
-          target.scrollTop = target.scrollHeight;
-        } else {
-          target.scrollTop = saved.scrollTop;
-        }
-        syncScrollable(target);
-        // Resync the jump-to-latest affordance with the restored
-        // position. Without this, a user who left Chat ~60px from the
-        // bottom and returns to find new messages stacked underneath
-        // would land hundreds of pixels above the latest turn while
-        // scrolledFromBottom remained false until they scrolled.
-        const distance =
-          target.scrollHeight - target.scrollTop - target.clientHeight;
-        setScrolledFromBottom(distance > 120);
-        pinnedToBottomRef.current = distance < 80;
-      });
-    }
-
-    function snapshot(target: HTMLDivElement) {
-      const distance =
-        target.scrollHeight - target.scrollTop - target.clientHeight;
-      savedChatScrollRef.current =
-        distance < 50
-          ? { pinnedToBottom: true }
-          : { pinnedToBottom: false, scrollTop: target.scrollTop };
-    }
-
-    function onScroll() {
-      const target = logRef.current;
-      if (!target) return;
-      syncScrollable(target);
-      markScrolling();
-      snapshot(target);
-      const distance =
-        target.scrollHeight - target.scrollTop - target.clientHeight;
-      // Functional updater bails out when the value is unchanged so a flood
-      // of scroll events (e.g. programmatic scrollTop + ResizeObserver
-      // follow-up during streaming) does not schedule a re-render per tick
-      // and trip React's "Maximum update depth exceeded" guard.
-      const next = distance > 120;
-      setScrolledFromBottom((prev) => (prev === next ? prev : next));
-      if (!jumpingToLatestRef.current) pinnedToBottomRef.current = distance < 80;
-    }
-    syncScrollable(el);
-    const releaseAnchor = () => {
-      anchorActiveRef.current = false;
-      jumpingToLatestRef.current = false;
-    };
-    function finishJump() {
-      if (!jumpingToLatestRef.current) return;
-      jumpingToLatestRef.current = false;
-      const target = logRef.current;
-      if (!target) return;
-      target.scrollTop = target.scrollHeight;
-      pinnedToBottomRef.current = true;
-      setScrolledFromBottom(false);
-    }
-    const releaseOnKey = (event: KeyboardEvent) => {
-      if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key)) releaseAnchor();
-    };
-    // Native smooth scrolling also emits intermediate scroll events. Release
-    // the turn only on user input, otherwise the animation cancels its anchor.
-    el.addEventListener('wheel', releaseAnchor, { passive: true });
-    el.addEventListener('touchstart', releaseAnchor, { passive: true });
-    el.addEventListener('pointerdown', releaseAnchor, { passive: true });
-    el.addEventListener('keydown', releaseOnKey);
-    el.addEventListener('scroll', onScroll);
-    el.addEventListener('scrollend', finishJump);
-    return () => {
-      // Capture final scroll state before unmount; the ref normally
-      // tracks via onScroll, but programmatic scrolls or layout shifts
-      // right before unmount can leave it stale.
-      snapshot(el);
-      jumpingToLatestRef.current = false;
-      el.removeEventListener('scrollend', finishJump);
-      el.removeEventListener('wheel', releaseAnchor);
-      el.removeEventListener('touchstart', releaseAnchor);
-      el.removeEventListener('pointerdown', releaseAnchor);
-      el.removeEventListener('keydown', releaseOnKey);
-      el.removeEventListener('scroll', onScroll);
-      if (chatLogScrollIdleTimerRef.current !== null) {
-        window.clearTimeout(chatLogScrollIdleTimerRef.current);
-        chatLogScrollIdleTimerRef.current = null;
-      }
-      setChatLogScrolling(false);
-    };
-  }, [tab]);
-
-  useEffect(() => {
-    if (logRef.current?.dataset.slot === 'message-scroller-viewport') return;
-    if (tab !== 'chat') return;
-    const el = logRef.current;
-    if (!el) return;
-
-    let followFrame: number | null = null;
-    const followLatestIfPinned = () => {
-      // While anchored, only shrink the tail spacer as the reply grows
-      // (resize-only, never scroll) so the user message stays put without
-      // fighting a manual scroll-down.
-      if (anchorActiveRef.current) {
-        if (followFrame !== null) return;
-        followFrame = requestAnimationFrame(() => {
-          followFrame = null;
-          if (!anchorActiveRef.current) return;
-          sizeAnchorSpacer();
-        });
-        return;
-      }
-      if (!pinnedToBottomRef.current || jumpingToLatestRef.current || followFrame !== null) return;
-      followFrame = requestAnimationFrame(() => {
-        followFrame = null;
-        const target = logRef.current;
-        if (!target || !pinnedToBottomRef.current || jumpingToLatestRef.current) return;
-        target.scrollTop = target.scrollHeight;
-        setScrolledFromBottom(false);
-      });
-    };
-
-    const resizeObserver =
-      typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(() => {
-            const target = logRef.current;
-            if (target) {
-              const next = target.scrollHeight - target.clientHeight > 1;
-              setChatLogScrollable((prev) => (prev === next ? prev : next));
-              if (!next) setChatLogScrolling(false);
-            }
-            followLatestIfPinned();
-          })
-        : null;
-    const observedChildren = new Set<Element>();
-    const syncObservedChildren = () => {
-      if (!resizeObserver) return;
-      const currentChildren = new Set(Array.from(el.children));
-      // The tail spacer's height is driven by the anchor logic; observing it
-      // would feed its own resize back into followLatestIfPinned.
-      if (tailSpacerRef.current) currentChildren.delete(tailSpacerRef.current);
-      for (const child of currentChildren) {
-        if (observedChildren.has(child)) continue;
-        resizeObserver.observe(child);
-        observedChildren.add(child);
-      }
-      for (const child of observedChildren) {
-        if (currentChildren.has(child)) continue;
-        resizeObserver.unobserve(child);
-        observedChildren.delete(child);
-      }
-    };
-
-    let observedQueuedSendStrip: Element | null = null;
-    const syncQueuedSendStrip = () => {
-      if (!resizeObserver) return;
-      const queuedEl = queuedSendStripRef.current;
-      if (queuedEl && observedQueuedSendStrip !== queuedEl) {
-        if (observedQueuedSendStrip) {
-          resizeObserver.unobserve(observedQueuedSendStrip);
-        }
-        resizeObserver.observe(queuedEl);
-        observedQueuedSendStrip = queuedEl;
-      } else if (!queuedEl && observedQueuedSendStrip) {
-        resizeObserver.unobserve(observedQueuedSendStrip);
-        observedQueuedSendStrip = null;
-      }
-    };
-
-    syncObservedChildren();
-    syncQueuedSendStrip();
-
-    const mutationObserver =
-      typeof MutationObserver !== 'undefined'
-        ? new MutationObserver(records => {
-            if (records.some(record => record.target === el)) syncObservedChildren();
-            syncQueuedSendStrip();
-            followLatestIfPinned();
-          })
-        : null;
-    // Row resize already covers nested markdown and tool disclosures.
-    // Only row additions/removals change which elements need observing.
-    mutationObserver?.observe(el, {
-      childList: true,
-      subtree: !resizeObserver,
-    });
-    // QueuedSendStrip lives outside the chat-log subtree (it is a sibling of
-    // .chat-log-wrap inside .pane). The MutationObserver above only fires for
-    // changes inside el, so it cannot detect that surface mounting or
-    // unmounting. Watch the nearest common ancestor (.pane) with childList-only
-    // to keep its observer current.
-    const paneEl = el.parentElement?.parentElement ?? null;
-    if (paneEl && mutationObserver) {
-      mutationObserver.observe(paneEl, { childList: true });
-    }
-
-    return () => {
-      if (followFrame !== null) cancelAnimationFrame(followFrame);
-      mutationObserver?.disconnect();
-      resizeObserver?.disconnect();
-    };
-  }, [tab]);
-
-  function resetTailSpacer() {
-    const s = tailSpacerRef.current;
-    if (s) s.style.height = '0px';
-  }
-
-  // Content offset (distance from the top of the scroll content) of the most
-  // recent user message. Invariant to the current scrollTop, so it's safe to
-  // call regardless of where the user has scrolled.
-  function lastUserMsgTopInContent(el: HTMLDivElement): number | null {
-    const userEls = el.querySelectorAll<HTMLElement>('.msg.user');
-    const msgEl = userEls[userEls.length - 1];
-    if (!msgEl) return null;
-    const elRect = el.getBoundingClientRect();
-    const msgRect = msgEl.getBoundingClientRect();
-    return el.scrollTop + (msgRect.top - elRect.top);
-  }
-
-  // Resize the tail spacer so the anchored message can sit at the top with
-  // just enough room below it — no more. This is a resize ONLY (never a
-  // scroll): shrinking empty space below the fold can't shift what's visible
-  // while the user is pinned near the top, so it never causes jitter. As the
-  // reply streams in, `needed` shrinks monotonically toward 0.
-  function sizeAnchorSpacer() {
-    const el = logRef.current;
-    const spacer = tailSpacerRef.current;
-    if (!el || !spacer) return;
-    const msgTopInContent = lastUserMsgTopInContent(el);
-    if (msgTopInContent === null) return;
-    const spacerH = spacer.offsetHeight;
-    const contentBelow = el.scrollHeight - spacerH - msgTopInContent;
-    const needed = Math.max(0, el.clientHeight - contentBelow - ANCHOR_TOP_PADDING);
-    spacer.style.height = `${needed}px`;
-    if (!needed && el.scrollHeight - el.clientHeight - el.scrollTop <= 2) {
-      anchorActiveRef.current = false;
-      pinnedToBottomRef.current = true;
-    }
-  }
-
-  // Smooth-scroll the anchored message to the top. Called ONCE per turn (on
-  // send). The message then stays at the top on its own as the reply streams
-  // below it, so we never re-scroll — re-scrolling each chunk is what caused
-  // the scroll-down fight and the settle jitter.
-  function scrollAnchorToTop() {
-    const el = logRef.current;
-    if (!el) return;
-    const msgTopInContent = lastUserMsgTopInContent(el);
-    if (msgTopInContent === null) return;
-    const target = Math.max(0, msgTopInContent - ANCHOR_TOP_PADDING);
-    el.scrollTo({ top: target, behavior: chatScrollBehavior() });
-  }
-
-  function jumpToBottom() {
-    const el = logRef.current;
-    if (!el) return;
-    anchorActiveRef.current = false;
-    pinnedToBottomRef.current = true;
-    resetTailSpacer();
-    const behavior = chatScrollBehavior();
-    jumpingToLatestRef.current = behavior === 'smooth' && 'onscrollend' in el
-      && el.scrollHeight - el.clientHeight - el.scrollTop > 2;
-    el.scrollTo({ top: el.scrollHeight, behavior });
-  }
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -1628,7 +1134,6 @@ export function ChatPane({
       commentAttachments={commentsToAttachments(attachedComments)}
       onRemoveCommentAttachment={onDetachComment}
       onSend={async (prompt, attachments, commentAttachments, meta): Promise<SharedChatSendOutcome> => {
-        scrolledToFormRef.current = new Set();
         if (editingQueuedSendId && onUpdateQueuedSend) {
           const original = queuedItems.find((item) => item.id === editingQueuedSendId);
           const update: QueuedSendUpdate = {
@@ -1642,14 +1147,6 @@ export function ChatPane({
           setEditingQueuedSendId(null);
           return;
         }
-        // Arm "anchor to top": the messages effect promotes this once
-        // the new user turn renders, pinning it to the top of the view.
-        // Clear any stale reserve from the previous turn first so a resend
-        // doesn't strand the new turn below a leftover gap (release #3653).
-        anchorActiveRef.current = false;
-        resetTailSpacer();
-        anchorPendingRef.current = !bottomAligned;
-        if (bottomAligned && !streaming && !meta?.queueOnly) pinnedToBottomRef.current = true;
         const started = await onSend(prompt, attachments, commentAttachments, meta);
         return started === false && !meta?.queueOnly ? 'restore-draft' : undefined;
       }}
@@ -1850,7 +1347,6 @@ export function ChatPane({
       forkingMessageId={forkingMessageId}
       t={t}
       onOpenQuestions={onOpenQuestions}
-      scrollContainerRef={logRef}
     />
   );
 
@@ -1974,20 +1470,6 @@ export function ChatPane({
     />
   ) : null;
 
-  const handleChatLogClickCapture = (e: ReactMouseEvent<HTMLDivElement>) => {
-    // Expanding an accordion (tool card / thinking block) should grow downward
-    // with the clicked header staying put. While a run is glued to the bottom,
-    // unpin the moment the user toggles one open.
-    const toggle = (e.target as HTMLElement).closest(
-      '.thinking-toggle, .action-card-toggle, button.op-card-head, [aria-expanded]',
-    );
-    if (toggle && logRef.current?.contains(toggle)) {
-      pinnedToBottomRef.current = false;
-      anchorActiveRef.current = false;
-      setScrolledFromBottom(true);
-    }
-  };
-
   return (
     <div className="pane">
       <div className="chat-project-header">
@@ -2010,30 +1492,20 @@ export function ChatPane({
       {tab === 'chat' ? (
         <>
           <SharedMessageStream
-        modernScroller={sharedPanelChat}
-        scrollSessionKey={activeConversationId}
+            scrollSessionKey={activeConversationId}
             logRef={logRef}
             loading={loading}
-            chatLogScrollable={chatLogScrollable}
-            chatLogScrolling={chatLogScrolling}
-            onLogClickCapture={handleChatLogClickCapture}
+            historyLoading={loading && messages.length === 0}
             emptyState={emptyChatState}
-            rows={<>
-              {olderHistory ? <ChatHistoryControls hasMore loading={olderHistory.loading} error={olderHistory.error ? 'load' : null} retry={() => { void olderHistory.load(); }} loadEarlier={() => {
-                  const log = logRef.current;
-                  if (log) historyScrollAnchor.current = { height: log.scrollHeight, top: log.scrollTop };
-                  pinnedToBottomRef.current = false;
-                  anchorActiveRef.current = false;
+            historyControls={olderHistory ? <ChatHistoryControls hasMore loading={olderHistory.loading} error={olderHistory.error ? 'load' : null} retry={() => { void olderHistory.load(); }} loadEarlier={() => {
                   void olderHistory.load();
                 }} /> : null}
+            rows={<>
               {chatRowsNode}
-              {historyPersistence ? <ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} conflict={historyPersistence.conflict} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /> : null}
+              {historyPersistence ? <ChatTranscriptItem messageId="history-saving"><ChatHistoryControls hasMore={false} loading={false} error="save" loadEarlier={() => {}} retry={() => { void historyPersistence.retry(); }} conflict={historyPersistence.conflict} recover={historyPersistence.recover} recovering={historyPersistence.recovering} /></ChatTranscriptItem> : null}
             </>}
             errorNode={chatErrorNode}
             guidanceNode={amrGuidanceNode}
-            tailSpacerRef={tailSpacerRef}
-            scrolledFromBottom={scrolledFromBottom}
-            onJumpToBottom={jumpToBottom}
             scrollToLatestLabel={t('chat.scrollToLatest')}
             jumpToLatestLabel={t('chat.jumpToLatest')}
             t={t}
@@ -2162,7 +1634,6 @@ function ChatRows({
   forkingMessageId,
   t,
   onOpenQuestions,
-  scrollContainerRef,
 }: {
   messages: ChatMessage[];
   streaming: boolean;
@@ -2203,7 +1674,6 @@ function ChatRows({
   forkingMessageId?: string | null;
   t: TranslateFn;
   onOpenQuestions?: (request?: QuestionFormOpenRequest) => void;
-  scrollContainerRef: MutableRefObject<HTMLDivElement | null>;
 }) {
   const conversationTodoInput = useMemo(
     () => latestTodoWriteInputForPinnedCard(messages),
@@ -2217,20 +1687,6 @@ function ChatRows({
     () => buildChatRenderItems(messages),
     [messages],
   );
-  const virtualized = items.length > CHAT_MESSAGE_VIRTUALIZE_THRESHOLD;
-  const virtualWindow = useMeasuredVirtualWindow(items, {
-    enabled: virtualized,
-    containerRef: scrollContainerRef,
-    estimateSize: estimateChatRenderItemHeight,
-    overscanPx: CHAT_MESSAGE_OVERSCAN_PX,
-    resetKey: activeConversationKey,
-    initialTailRows: CHAT_VIRTUAL_INITIAL_TAIL_ROWS,
-    alwaysIncludeKey:
-      conversationTodoInput != null && conversationTodoAnchorMessageId
-        ? `message:${conversationTodoAnchorMessageId}`
-        : undefined,
-  });
-
   const renderItem = (item: ChatRenderItem) => {
     const m = item.message;
     const messageStreaming = isAssistantMessageStreaming(
@@ -2320,72 +1776,11 @@ function ChatRows({
 
   if (items.length === 0) return null;
 
-  if (!virtualized) {
-    return (
-      <>
-        {items.map((item) => (
-          <Fragment key={item.key}>{renderItem(item)}</Fragment>
-        ))}
-      </>
-    );
-  }
-
-  return (
-    <div
-      className="chat-virtual-spacer"
-      data-testid="chat-virtual-spacer"
-      style={{ height: virtualWindow.totalHeight }}
-    >
-      {virtualWindow.rows.map((row) => (
-        <VirtualChatRow
-          key={row.item.key}
-          itemKey={row.item.key}
-          top={row.top}
-          onMeasure={virtualWindow.onMeasure}
-        >
-          {renderItem(row.item)}
-        </VirtualChatRow>
-      ))}
-    </div>
-  );
-}
-
-function VirtualChatRow({
-  itemKey,
-  top,
-  onMeasure,
-  children,
-}: {
-  itemKey: string;
-  top: number;
-  onMeasure: (key: string, height: number) => void;
-  children: ReactNode;
-}) {
-  const rowRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const node = rowRef.current;
-    if (!node) return;
-    const measure = () => {
-      const height = node.getBoundingClientRect().height;
-      onMeasure(itemKey, height);
-    };
-    measure();
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [itemKey, onMeasure]);
-
-  return (
-    <div
-      ref={rowRef}
-      className="chat-virtual-row"
-      style={{ transform: `translateY(${top}px)` }}
-    >
-      {children}
-    </div>
-  );
+  const lastUserId = [...messages].reverse().find(message => message.role === 'user')?.id;
+  return <>{items.map(item => <ChatTranscriptItem key={item.key} messageId={item.message.id} data-message-role={item.message.role}
+    scrollAnchor={item.message.role === 'user'} animateNew={item.message.id === lastUserId}>
+    {renderItem(item)}
+  </ChatTranscriptItem>)}</>;
 }
 
 function buildChatRenderItems(messages: ChatMessage[]): ChatRenderItem[] {
@@ -2410,182 +1805,6 @@ function firstTodoWriteAssistantMessageId(messages: ChatMessage[]): string | nul
       ),
   );
   return message?.id ?? null;
-}
-
-function estimateChatRenderItemHeight(item: ChatRenderItem): number {
-  const message = item.message;
-  const contentLength = message.content?.length ?? 0;
-  const attachmentCount = (message.attachments?.length ?? 0) + (message.commentAttachments?.length ?? 0);
-  const eventCount = message.events?.length ?? 0;
-  const fileCount = message.producedFiles?.length ?? 0;
-  const base = message.role === 'user' ? 82 : 118;
-  const contentRows = Math.min(18, Math.ceil(contentLength / 120));
-  return (
-    base
-    + contentRows * 18
-    + attachmentCount * 34
-    + eventCount * 28
-    + fileCount * 32
-    + CHAT_VIRTUAL_ROW_GAP_PX
-  );
-}
-
-function useMeasuredVirtualWindow<T extends { key: string }>(
-  items: T[],
-  {
-    enabled,
-    containerRef,
-    estimateSize,
-    overscanPx,
-    resetKey,
-    initialTailRows,
-    alwaysIncludeKey,
-  }: {
-    enabled: boolean;
-    containerRef: MutableRefObject<HTMLDivElement | null>;
-    estimateSize: (item: T) => number;
-    overscanPx: number;
-    resetKey: string;
-    initialTailRows: number;
-    alwaysIncludeKey?: string;
-  },
-) {
-  const measuredHeightsRef = useRef<Map<string, number>>(new Map());
-  const [measureVersion, setMeasureVersion] = useState(0);
-  const [viewport, setViewport] = useState({ scrollTop: 0, height: 0 });
-
-  useEffect(() => {
-    measuredHeightsRef.current.clear();
-    setMeasureVersion((version) => version + 1);
-    setViewport({ scrollTop: 0, height: 0 });
-  }, [resetKey]);
-
-  useEffect(() => {
-    if (!enabled) return undefined;
-    const el = containerRef.current;
-    if (!el) return undefined;
-    let frame: number | null = null;
-    const readViewport = () => {
-      frame = null;
-      setViewport((current) => {
-        const next = {
-          scrollTop: el.scrollTop,
-          height: el.clientHeight || CHAT_VIRTUAL_DEFAULT_VIEWPORT_PX,
-        };
-        return current.scrollTop === next.scrollTop && current.height === next.height
-          ? current
-          : next;
-      });
-    };
-    const scheduleRead = () => {
-      if (frame !== null) return;
-      frame = requestAnimationFrame(readViewport);
-    };
-    scheduleRead();
-    el.addEventListener('scroll', scheduleRead, { passive: true });
-    const observer =
-      typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(scheduleRead)
-        : null;
-    observer?.observe(el);
-    return () => {
-      if (frame !== null) cancelAnimationFrame(frame);
-      el.removeEventListener('scroll', scheduleRead);
-      observer?.disconnect();
-    };
-  }, [containerRef, enabled]);
-
-  const layout = useMemo(() => {
-    const offsets: number[] = [];
-    const sizes: number[] = [];
-    let cursor = 0;
-    for (const item of items) {
-      offsets.push(cursor);
-      const measured = measuredHeightsRef.current.get(item.key);
-      const size = Math.max(
-        CHAT_VIRTUAL_MIN_ROW_HEIGHT,
-        measured ?? estimateSize(item),
-      );
-      sizes.push(size);
-      cursor += size;
-    }
-    return { offsets, sizes, totalHeight: cursor };
-  }, [estimateSize, items, measureVersion]);
-
-  const rows = useMemo(() => {
-    if (!enabled || items.length === 0) return [];
-    const height = viewport.height || CHAT_VIRTUAL_DEFAULT_VIEWPORT_PX;
-    if (viewport.scrollTop === 0 && viewport.height === 0) {
-      const start = Math.max(0, items.length - initialTailRows);
-      const rows = items.slice(start).map((item, offset) => {
-        const index = start + offset;
-        return { item, index, top: layout.offsets[index] ?? 0 };
-      });
-      return includeVirtualRowByKey(rows, items, layout.offsets, alwaysIncludeKey);
-    }
-    const startTarget = Math.max(0, viewport.scrollTop - overscanPx);
-    const endTarget = viewport.scrollTop + height + overscanPx;
-    let start = 0;
-    while (
-      start < items.length - 1
-      && (layout.offsets[start] ?? 0) + (layout.sizes[start] ?? 0) < startTarget
-    ) {
-      start += 1;
-    }
-    let end = start;
-    while (end < items.length && (layout.offsets[end] ?? 0) <= endTarget) {
-      end += 1;
-    }
-    const rows = items.slice(start, end).map((item, offset) => {
-      const index = start + offset;
-      return { item, index, top: layout.offsets[index] ?? 0 };
-    });
-    return includeVirtualRowByKey(rows, items, layout.offsets, alwaysIncludeKey);
-  }, [
-    alwaysIncludeKey,
-    enabled,
-    initialTailRows,
-    items,
-    layout.offsets,
-    layout.sizes,
-    overscanPx,
-    viewport.height,
-    viewport.scrollTop,
-  ]);
-
-  const onMeasure = useCallback((key: string, height: number) => {
-    if (!Number.isFinite(height) || height <= 0) return;
-    const next = Math.max(CHAT_VIRTUAL_MIN_ROW_HEIGHT, Math.ceil(height));
-    const previous = measuredHeightsRef.current.get(key);
-    if (previous !== undefined && Math.abs(previous - next) < 2) return;
-    measuredHeightsRef.current.set(key, next);
-    setMeasureVersion((version) => version + 1);
-  }, []);
-
-  return {
-    rows,
-    totalHeight: layout.totalHeight,
-    onMeasure,
-  };
-}
-
-function includeVirtualRowByKey<T extends { key: string }>(
-  rows: Array<{ item: T; index: number; top: number }>,
-  items: T[],
-  offsets: number[],
-  key: string | undefined,
-): Array<{ item: T; index: number; top: number }> {
-  if (!key || rows.some((row) => row.item.key === key)) return rows;
-  const index = items.findIndex((item) => item.key === key);
-  if (index === -1) return rows;
-  return [
-    ...rows,
-    {
-      item: items[index]!,
-      index,
-      top: offsets[index] ?? 0,
-    },
-  ].sort((a, b) => a.index - b.index);
 }
 
 function QueuedSendStrip({

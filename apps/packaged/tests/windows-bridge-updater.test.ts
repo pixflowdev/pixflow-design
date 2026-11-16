@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWindowsBridgeUpdater } from '../src/windows-bridge-updater.js';
 
@@ -12,9 +12,9 @@ afterEach(async () => {
 const installer = 'disposable installer fixture';
 const sha = createHash('sha256').update(installer).digest('hex');
 
-async function fixture(options: { version?: string; digest?: string; busy?: boolean; badUrl?: boolean } = {}) {
-  const root = await mkdtemp(join(tmpdir(), 'pixflow-bridge-update-'));
-  roots.push(root);
+async function fixture(options: { version?: string; digest?: string; busy?: boolean; badUrl?: boolean; root?: string } = {}) {
+  const root = options.root ?? await mkdtemp(join(tmpdir(), 'pixflow-bridge-update-'));
+  if (!options.root) roots.push(root);
   const version = options.version ?? '2.3.3';
   const url = `https://pixflow.dev/downloads/pixflow-design-bridge/packages/pixflow-design-bridge-${version}-win-x64-setup.exe`;
   const fetchImpl = vi.fn<typeof fetch>(async input => String(input) === url ? new Response(installer) : Response.json({
@@ -28,7 +28,7 @@ async function fixture(options: { version?: string; digest?: string; busy?: bool
   });
   const shutdown = vi.fn(async () => {});
   const updater = createWindowsBridgeUpdater({ version: '2.3.2', arch: 'x64', downloadRoot: root, canInstall, fetch: fetchImpl, openWindow: async () => ({ install: launch, publish: () => {} }), shutdown });
-  return { updater, launch, canInstall, fetchImpl, shutdown };
+  return { updater, launch, canInstall, fetchImpl, shutdown, root, url };
 }
 
 describe('WordPress Windows Bridge updater', () => {
@@ -69,5 +69,41 @@ describe('WordPress Windows Bridge updater', () => {
     updater.start();
     await vi.waitFor(() => expect(updater.status().state).toBe('failed'));
     expect(launch).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])('redownloads a missing cached installer on the next attempt (restarted: %s)', async restarted => {
+    const first = await fixture({ busy: true });
+    first.updater.start();
+    await vi.waitFor(() => expect(first.updater.status().state).toBe('busy'));
+    const metadata = JSON.parse(await readFile(join(first.root, 'metadata.json'), 'utf8'));
+    const installerPath = join(first.root, metadata.active.artifactPath);
+    await rm(installerPath);
+
+    const retry = restarted ? await fixture({ root: first.root }) : first;
+    retry.canInstall.mockResolvedValue(true);
+    retry.fetchImpl.mockClear();
+    retry.updater.start();
+    await vi.waitFor(() => expect(retry.shutdown).toHaveBeenCalledOnce());
+    expect(retry.fetchImpl.mock.calls.filter(([url]) => url === retry.url)).toHaveLength(1);
+    expect(retry.launch).toHaveBeenCalledWith(installerPath, '2.3.3');
+    expect(await readFile(installerPath, 'utf8')).toBe(installer);
+  });
+
+  it('preserves unrecognized files in a stale release directory', async () => {
+    const first = await fixture({ busy: true });
+    first.updater.start();
+    await vi.waitFor(() => expect(first.updater.status().state).toBe('busy'));
+    const metadata = JSON.parse(await readFile(join(first.root, 'metadata.json'), 'utf8'));
+    const installerPath = join(first.root, metadata.active.artifactPath);
+    const extraFile = join(dirname(installerPath), 'unrecognized.txt');
+    await writeFile(extraFile, 'preserve me');
+    await rm(installerPath);
+
+    const restarted = await fixture({ root: first.root });
+    restarted.updater.start();
+    await vi.waitFor(() => expect(restarted.updater.status().state).toBe('failed'));
+    expect(restarted.fetchImpl).not.toHaveBeenCalled();
+    expect(restarted.launch).not.toHaveBeenCalled();
+    expect(await readFile(extraFile, 'utf8')).toBe('preserve me');
   });
 });

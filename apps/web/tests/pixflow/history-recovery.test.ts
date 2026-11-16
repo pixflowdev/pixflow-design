@@ -55,3 +55,15 @@ it('does not continue after the account changes', async () => {
   await expect(preserveHistoryCopies(source,[copy],'Recovery')).rejects.toThrow();
   expect(state.import).not.toHaveBeenCalled();
 });
+it('verifies a zero-argument tool input after WordPress decodes its empty object as an array', async () => {
+  const incoming = {...copy, events:[{kind:'tool_use',id:'tool-1',name:'pixflow_plan_read',input:{}}]};
+  const saved = {...incoming, events:[{...incoming.events[0],input:[]}]};
+  state.import.mockResolvedValue({messages:[saved]}); state.read.mockResolvedValue({messages:[saved]});
+  await expect(preserveHistoryCopies(source,[incoming],'Recovery')).resolves.toBeUndefined();
+  expect(state.import).toHaveBeenCalledWith(expect.anything(),[incoming]);
+});
+it('still rejects changed tool arguments during recovery', async () => {
+  const incoming = {...copy, events:[{kind:'tool_use',id:'tool-1',name:'pixflow_plan_read',input:{planId:'one'}}]};
+  state.import.mockResolvedValue({messages:[{...incoming,events:[{...incoming.events[0],input:[]}]}]});
+  await expect(preserveHistoryCopies(source,[incoming],'Recovery')).rejects.toThrow();
+});

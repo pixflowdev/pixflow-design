@@ -8,6 +8,24 @@ export function historicalRecoveryCopy(copy: HistoryMessage) {
     resumable:false, historyRecoverySnapshot:copy};
 }
 
+/** PHP's associative JSON decoder represents a zero-argument tool object as
+ * an empty array. Accept that transport-only difference when verifying a copy;
+ * do not change fingerprints, source payloads, or normal revision checks.
+ */
+function recoveryCopyMatches(saved: HistoryMessage, original: HistoryMessage): boolean {
+  const normalize = (message: HistoryMessage): HistoryMessage => {
+    const row = message as HistoryMessage & {events?: unknown[]};
+    if (!Array.isArray(row.events)) return message;
+    return {...row, events:row.events.map(event => {
+      if (!event || typeof event !== 'object') return event;
+      const tool = event as {kind?:string; input?:unknown};
+      return tool.kind === 'tool_use' && Array.isArray(tool.input) && tool.input.length === 0
+        ? {...tool,input:{}} : event;
+    })};
+  };
+  return historyMessageFingerprint(normalize(saved)) === historyMessageFingerprint(normalize(original));
+}
+
 /** Copy each divergent snapshot into its own private, idempotent recovery chat.
  * Never overwrite the source or treat a recovered assistant response as a new run.
  * Callers must retain their local copies until every returned payload is verified.
@@ -28,13 +46,13 @@ export async function preserveHistoryCopies(source: ChatHistoryBinding, copies: 
     checkOwner();
     const result = await importChatHistory(target, [copy]);
     checkOwner();
-    if (!result.messages.some(saved => saved.id === copy.id && historyMessageFingerprint(saved) === fingerprint)) {
+    if (!result.messages.some(saved => saved.id === copy.id && recoveryCopyMatches(saved, copy))) {
       throw new Error('The recovery copy could not be verified. The original remains unchanged.');
     }
     // Read back independently: an import acknowledgement alone must not clear an outbox.
     const saved = await readChatHistory(target);
     checkOwner();
-    if (!saved.messages.some(message => message.id === copy.id && historyMessageFingerprint(message) === fingerprint)) {
+    if (!saved.messages.some(message => message.id === copy.id && recoveryCopyMatches(message, copy))) {
       throw new Error('The saved recovery copy could not be read back.');
     }
   }

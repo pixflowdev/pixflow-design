@@ -52,3 +52,27 @@ The v2.3.3 WordPress seamless updater is implemented for Windows. Treat Mac upda
 3. Run on arm64 and x64 environments and state whether x64 was native or Rosetta. Keep manual DMG installation coverage and seamless update coverage separate. Return logs and a verdict. If unattended updating fails, needs another approval prompt, cannot be tested on the intended path, or relies on weakening macOS security, keep seamless updating Windows-only until notarisation is available. Mac DMGs can still use the normal manual install path, subject to build and smoke checks.
 
 Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and may still target the earlier candidate. Do not upload to it until its target is explicitly updated to the verified Core commit above. Old draft assets must be rebuilt from this source pair. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.
+
+## Mac acceptance in progress — 16 November 2026
+
+Release remains on hold. The seven prerequisite PRs are merged and all reported checks passed. The exact source pair above built both ad hoc signed DMGs. Both passed read-only DMG verification, architecture checks, portable configuration, Node 24.22.3 plus SQLite, strict code signing and isolated production-ID Chrome registration. Gatekeeper rejected both, as expected for these unnotarised artifacts. Intel coverage is Rosetta only.
+
+Do not publish or treat these initial artifacts as accepted: live testing found two Core issues, now in focused draft PRs:
+
+- [Core #159](https://github.com/pixflowdev/pixflow-design/pull/159): Codex 0.169.0 / GPT-6.1 Sol Medium could not call even discovery or plan-read tools because its non-interactive approval policy rejected the unconfigured MCP tools. The original natural Bricks brief stopped without content changes after 21.55 seconds. The fix configures the known run-bound built-in tools only; external MCP and WordPress authorization remain unchanged. Live repeat pending.
+- [Core #160](https://github.com/pixflowdev/pixflow-design/pull/160): Mac absolute run-file paths using `/var` aliases failed containment validation against `/private/var`. The unchanged candidate failed the existing absolute input test. The fix canonicalizes the parent and retains file containment; 18 structured-tool tests pass, including alias acceptance and symlink-escape rejection.
+
+The combined focused suites pass 32 tests. Initial native adapter PHP checks pass. Full live Bricks, recovery, Plan, scrolling, preview and Gutenberg acceptance is still in progress; no claim of release readiness is made.
+
+The running arm64 candidate returns HTTP 404 for `/api/pixflow/bridge-update`. The tray wires that endpoint only to its Windows updater. An intended-path unattended Mac update is therefore unavailable; keep seamless updating Windows-only. Manual migration and GUI smoke coverage must be reported separately.
+
+The designated draft was still unpublished but targeted `7b6e70f9de07288ee7382f5281d9b6b2bf96ff23` at the first check. No assets were uploaded. After reviewed fixes, provide a refreshed exact Core/Pro pin and update the draft target before final rebuild/upload.
+
+Initial artifact inventory (not final accepted release assets):
+
+| Architecture | Bytes | SHA-256 |
+| --- | ---: | --- |
+| arm64 | 253769453 | `b23b6be86345dbd8474d0a623c26eb140b4241830a8366afb843a01d4bda589d` |
+| x64 | 266961553 | `c1378aefcadc8e36421d53f77ced37e4a7cd07c87cfbe0e6e3a86cc406045120` |
+
+Local evidence is under `outputs/mac233`; the validation build combining the two PRs uses separate output paths and is not a release-source approval. QA plugins were backed up and replaced with freshly built v2.3.3 ZIPs from the designated pair. Published feeds and live sites were not modified.

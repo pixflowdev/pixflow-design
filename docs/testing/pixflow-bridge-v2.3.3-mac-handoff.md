@@ -1,54 +1,46 @@
-# Pixflow Design Bridge v2.3.3 Mac handoff
+# Pixflow Design Bridge v2.3.3 production Mac handoff
 
-Build the Apple Silicon and Intel release candidates and report back before publication. Use ad hoc signing for the Mac update experiment. Keep the published downloads, feed and live sites untouched. Return any runtime fixes in focused PRs before rebuilding the affected artifacts.
+## Release hold and scope
 
-## Source
+Build fresh production Apple Silicon and Intel DMGs from the exact reviewed pair below. Upload only to the existing unpublished Bridge draft; do not publish releases, change updater feeds, replace live packages or change website downloads. Ad hoc signing without notarisation is explicitly authorized for v2.3.3. Seamless updating remains Windows-only: the Mac experiment required another manual Gatekeeper approval.
 
-| Repository | Branch | Commit |
-| --- | --- | --- |
-| pixflowdev/pixflow-design | `codex/v233-core-candidate` | `7ef664f9c231163e60bb0274cc633c8b95824209` |
-| pixflowdev/pixflow-design-pro | `codex/v233-pro-candidate` | `4f1f06c275492e859b83405f0e157fdd705e396d` |
+**Start gate:** begin production builds only after Pro #92 and the PR containing this refreshed handoff are merged with successful CI. The exact Pro commit below is the tested source commit included by #92; do not substitute an unreviewed branch tip.
 
-This replaces the earlier handoff. Do not build from the old source pair or reuse its plugin ZIPs or Bridge binaries. Begin only after Core #153/#155/#156/#158 and Pro #85/#87/#88 have merged with passing checks. The release inventory is in `docs/qa/v233-source-inventory.json`; unfinished Team and comments/Feedback work and the Tauri experiment are excluded.
+## Exact source pair
 
-Pro pins that Core commit. This documentation branch is separate from the build source. Read both repositories' AGENTS.md and Core's tools/pack/AGENTS.md. Use clean, isolated, architecture-specific worktrees, Node 24 and pnpm 10.33.2 with frozen installs. Point each checkout at its exact partner with `PIXFLOW_DESIGN_CORE_ROOT` and `PIXFLOW_DESIGN_PRO_ROOT`.
+| Repository | Revision |
+| --- | --- |
+| pixflowdev/pixflow-design | `a4e7741732881a0e7c7c435731b208f0a38ae6d8` |
+| pixflowdev/pixflow-design-pro | `2c19c1b6719dc90981721f61d2b79274e82dad54` |
 
-## Build and verify each DMG
+Pro's pixflow-pro.json must pin a4e7741732881a0e7c7c435731b208f0a38ae6d8. Use clean detached architecture-specific checkouts and explicit PIXFLOW_DESIGN_CORE_ROOT / PIXFLOW_DESIGN_PRO_ROOT. Do not build from earlier validation branches, candidate binaries or the archival acceptance report's old pins. Read both AGENTS.md files and Core tools/pack/AGENTS.md. Use Node 24 and pinned pnpm 10.33.2.
 
-Build `arm64` with arm64 Node and `x64` with x64 Node, using Rosetta on Apple Silicon if needed. Use separate native dependencies. Generate the production Chrome native host payload with `pnpm exec tsx tools/pixflow-design-bridge/native-messaging/store-build.ts hbnbiboohlelmngadeolikeejamjlbkh`, export `PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR` to the generated `.tmp/chrome-store/native`, and run `pnpm bridge:mac` using the pinned source. Reuse the v2.3.2 package verification checklist in [the previous handoff](https://github.com/pixflowdev/pixflow-design/blob/codex/v232-mac-handoff/docs/testing/pixflow-bridge-v2.3.2-mac-handoff.md) where available.
+All eight Core fixes (#159–#166), three Pro fixes (#89–#91), and the accompanying changelog/pin PRs are included. Core #161 and #165 test failures were corrected, and #165/#166 were tested together. Team, comments/Feedback and the Tauri prototype remain excluded.
 
-- Verify the DMG read-only with `hdiutil verify`. Check app version 2.3.3, bundle ID `dev.pixflow.bridge`, architecture of the executable, Electron framework, bundled Node and SQLite binding, and that the app has no build-machine runtime paths.
-- Verify the bundled standalone Node reports 24.22.3 and can open an in-memory SQLite database. Check native messaging and Chrome extension identity.
-- Record `codesign --verify --deep --strict` and `spctl --assess` results as observed, including any initial Gatekeeper prompt. Preserve quarantine and normal Mac security settings. Compute SHA-256 after final signing and packaging. Name the artifacts `pixflow-design-bridge-2.3.3-mac-arm64.dmg` and `pixflow-design-bridge-2.3.3-mac-x64.dmg`.
-- Report native Intel hardware coverage separately from Rosetta coverage.
+## Production build and draft destination
 
-## Verify the native Bricks MCP adapter
+- Generate the production Chrome native host payload with `pnpm exec tsx tools/pixflow-design-bridge/native-messaging/store-build.ts hbnbiboohlelmngadeolikeejamjlbkh`. Set PIXFLOW_DESIGN_NATIVE_PAYLOAD_DIR to the generated `.tmp/chrome-store/native` directory.
+- Build arm64 with native arm64 Node, and x64 with x64 Node under Rosetta if native Intel is unavailable. Use separate dependencies. Run the maintained `pnpm bridge:mac` packaging flow from the exact paired sources.
+- Verify each DMG with `hdiutil verify`. Check version 2.3.3, bundle ID dev.pixflow.bridge, Electron/Node/SQLite architecture, standalone Node 24.22.3, SQLite in-memory database, production native host identity and absence of build-machine paths.
+- Record `codesign --verify --deep --strict` and `spctl --assess` results honestly. Preserve quarantine and normal security settings. Ad hoc packages are not notarised; manual Gatekeeper approval may be required.
+- Name final assets `pixflow-design-bridge-2.3.3-mac-arm64.dmg` and `pixflow-design-bridge-2.3.3-mac-x64.dmg`. Calculate SHA-256 after final signing and packaging.
+- Upload to repository **pixflowdev/pixflow-design**, existing release draft ID **446489613**, tag **bridge-v2.3.3**. First verify it is still a draft with that tag. Preserve all unrelated assets. Do not create a separate release or publish the draft. Re-download both uploaded DMGs and verify their hashes.
 
-Use local WordPress with the paired v2.3.3 plugins, supported Bricks and the real floating panel. On Apple Silicon run fresh natural briefs with Codex and Claude. Give them a full page brief and a complex brief with queries, dynamic data and conditions. Record provider, model and reasoning separately from each prompt.
+## Final packaged acceptance
 
-- Confirm traces show the native Bricks ability being discovered and selected through Pixflow. Verify a structural write and a compound changeset, including moving or reordering elements, a shared style change and an in-canvas follower update. Verify native Undo restores the previous state and the saved frontend matches the canvas after a reload.
-- Test recovery with unsaved canvas edits and a reload or interrupted connection. Confirm stale mutations are rejected and retries do not duplicate edits. Verify draft previews, pagination, conditional visibility and interactive behavior in the saved result.
-- Confirm the adapter respects WordPress and Bricks role permissions. Where feasible, exercise the fallback with an unsupported Bricks version and record the tools selected. Keep Bricksforge integration testing separate so it cannot be mistaken for native Bricks MCP coverage.
-- Inspect traces for failed commands, repeated discovery, unnecessary retries and file or database searches. Record meaningful timings and why any repeated calls were required. Fix reproducible issues in focused PRs and rerun the original natural brief.
-- Smoke test GUI launch, provider detection, native messaging, pairing and normal update/migration with each final architecture. Verify that prior pairing, settings and chats survive. Restore the original local routing after testing.
+Run on the final packaged Apple Silicon app, not the earlier development Bridge:
 
-## Additional checks for this refreshed candidate
+1. Fresh install and v2.3.2-to-v2.3.3 upgrade in isolated data roots. Verify GUI launch, provider detection, Chrome native messaging, pairing, reconnect and preservation of settings/chats. Test x64 launch under Rosetta; distinguish this from native Intel testing.
+2. Codex and Claude in the real local floating panel: natural full-page and complex Bricks briefs, without tool recipes or prescribed layout. Saved design context must guide the agent. Inspect commands, repeated discovery, retries and timing. Verify live canvas, follower, saved preview and native Undo/Redo, including a compound edit on a query page and pagination after Undo/Redo.
+3. Workspace-to-Bricks handoff in the same conversation: original saved Plan progresses and completes, no duplicate failed assistant row, no false history conflict. Reload both surfaces and verify the same full transcript. Stop and queued follow-ups must work with a saved Plan card.
+4. Check tool/reasoning details stay closed until clicked, preserve manual choice while streaming, and remain functional after reload. Verify preview screenshots work without embedding image payloads in saved history.
+5. Recheck permission rejection, stale revision recovery and repeated request idempotency on disposable drafts. Do not relax access control, TLS trust or macOS security settings to make a test pass.
+6. Restore original test routing/services and leave client/live sites untouched. Return focused PRs for any new reproducible defect before replacing candidate artifacts.
 
-- Use natural customer prompts, without prescribing bento, editorial or another layout. The selected styling mode, builder styles and saved DESIGN.md must supply the design direction. Verify component consistency and meaningful page coverage, not only successful saving or absence of overflow.
-- Confirm the shared Plan card records the outline and progress. Test a fresh chat, reload during a run, recovery and Workspace-to-builder handoff. The same plan must remain attached to the same conversation; completed steps must reflect verified work.
-- Verify follow-at-live-edge scrolling, scrollback while streaming, Jump to latest, queued-message clearance and opening saved chats at the end. Check narrow and wide panel sizes with the real Mac browser.
-- Exercise `browser.preview` on the connected saved draft at desktop/mobile widths, including a supported disclosure interaction. Confirm the provider receives real screenshot images and that expiry, revocation and a different page are rejected. Do not publish a draft or obtain browser login cookies for verification.
-- Exercise a large tool result through `pixflow_result_read`. Confirm exact-path reads work without shell-parsing provider transcripts, and that results cannot be reused after the originating tool session ends. Check that screenshot base64 data is not copied into durable chat history.
-- Include one Gutenberg title/excerpt edit with native Undo and one batch of block-schema reads. Keep document and style revisions distinct.
-- Test blank-site guidance in a disposable fixture: enough business context should produce a sensible scoped design; missing essential context should produce a focused question before building. Preserve the user's global styles and documents. Ordinary website images should not acquire unnecessary captions.
-- Specifically inspect macOS launch paths, quoting, permissions, missing tools, repeated discovery and retries. Retest failures with the original natural prompt after fixing their cause. Do not count corrective user prompts as first-pass success.
+## Retained evidence and limits
 
-## Ad hoc update feasibility
+The full chronological Mac report and screenshots are preserved in [Mac acceptance evidence](pixflow-bridge-v2.3.3-mac-acceptance.md). Its earlier failed checks are superseded only where later sections explicitly retest them. Do not use its old source pairs for production.
 
-The v2.3.3 WordPress seamless updater is implemented for Windows. Treat Mac updating as a separate feasibility experiment using a disposable install and local fixture feed or existing test harness. A manual DMG replacement is a migration check and does not establish seamless updating.
+Remaining known limits: an exact future-proof condition distinguishing an editor-supplied excerpt from WordPress-generated fallback text was not established; older-Bricks fallback and native Intel hardware coverage were unavailable. Do not report these as passed or silently substitute hard-coded post IDs. The ad hoc updater experiment demonstrated replacement and reconnect after manual approval, not unattended Mac updating or complete pairing/settings migration; keep manual DMG delivery for Mac.
 
-1. Install v2.3.2 in an isolated Mac user/profile, keeping normal quarantine. Approve only the ordinary initial macOS user flow and record it. Start the Bridge from the GUI and pair to the local WordPress fixture. If the existing app has no way to start the required update mechanism, report that limitation and document any isolated experimental updater used.
-2. Attempt a verified v2.3.3 update through that mechanism, including replacing the running app safely, restarting it and reconnecting the original WordPress tab. Check if macOS requests approval again, blocks first launch of the replacement, or changes Chrome native-host access or credential access. Confirm preserved pairing and settings, correct architecture, installed signature and version.
-3. Run on arm64 and x64 environments and state whether x64 was native or Rosetta. Keep manual DMG installation coverage and seamless update coverage separate. Return logs and a verdict. If unattended updating fails, needs another approval prompt, cannot be tested on the intended path, or relies on weakening macOS security, keep seamless updating Windows-only until notarisation is available. Mac DMGs can still use the normal manual install path, subject to build and smoke checks.
-
-Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and may still target the earlier candidate. Do not upload to it until its target is explicitly updated to the verified Core commit above. Old draft assets must be rebuilt from this source pair. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.
+Report exact Core/Pro revisions, architecture, provider/model/reasoning, final package test results, checksums, asset URLs, signing/Gatekeeper results and any remaining limitations. **Publication stays on hold pending Windows-side final artifact and release review.**

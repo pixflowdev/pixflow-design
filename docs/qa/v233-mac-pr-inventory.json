@@ -1,0 +1,260 @@
+{
+  "release": "2.3.3",
+  "publication": "on hold",
+  "pullRequests": [
+    {
+      "repository": "pixflow-design",
+      "number": 159,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/159",
+      "title": "Fix Codex approval for run-bound Pixflow MCP tools",
+      "head": "ed8cd2316e6a890cef9fb040563abc4396c78996",
+      "mergeCommit": "26ef24748a4a9e065fabcf3834076abfa22f6435",
+      "checks": [
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Unified chat validation",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 160,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/160",
+      "title": "Fix Mac canonical run-file path aliases",
+      "head": "a727b9b928dbd7b200e4d472fc77bb494fba9635",
+      "mergeCommit": "f3d5762cf44e94d18690be4aab85aa86938aacc4",
+      "checks": [
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 161,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/161",
+      "title": "fix(chat): keep streaming traces collapsed until user expansion",
+      "head": "b1329961672448314d8b5fddc0bb47086a0e3121",
+      "mergeCommit": "a2abda7ddad0d808d126d95337f65bd7a39a03a7",
+      "checks": [
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Unified chat validation",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 162,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/162",
+      "title": "fix(bridge): retain system certificate trust in MCP children",
+      "head": "c7e898974ce28ef822f1c79e6439aa79c327ee4c",
+      "mergeCommit": "18fb2b286a7d01bc4ca4c73c757aef2742701738",
+      "checks": [
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 163,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/163",
+      "title": "fix(bridge): execute Workspace helper through path aliases",
+      "head": "4a27adb24ae1b4a095eb6dd22e3aaf11e001fb76",
+      "mergeCommit": "3389a8891a02cb7cf727f901f2330e3de789f206",
+      "checks": [
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 164,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/164",
+      "title": "fix(workspace): bound session header to connection credentials",
+      "head": "2e6601917273f542417b45eb929113726dfa2a34",
+      "mergeCommit": "4ec24a9b581092d76307bfc494b9298d23827c31",
+      "checks": [
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Unified chat validation",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 165,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/165",
+      "title": "fix(workspace): retain chat and Plan across agent handoff",
+      "head": "e6972c9c60331fa87603389671e341abecc74c3f",
+      "mergeCommit": "75cc06a6bdde2d35ec9d514c65866ea1b6ae995b",
+      "checks": [
+        {
+          "name": "Unified chat validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design",
+      "number": 166,
+      "url": "https://github.com/pixflowdev/pixflow-design/pull/166",
+      "title": "fix(chat): keep builder handoff recovery with its owner",
+      "head": "2f3a43b28b7f5394ad1dbafcd43396221a46d90a",
+      "mergeCommit": "c2866153c47e2052e68599261e6d9127189633ed",
+      "checks": [
+        {
+          "name": "Unified chat validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Free validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "validate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design-pro",
+      "number": 89,
+      "url": "https://github.com/pixflowdev/pixflow-design-pro/pull/89",
+      "title": "fix(bricks): exclude saved Plan cards from active run detection",
+      "head": "e1f33f7d43b670e61e2975a753fcd527674e9c76",
+      "mergeCommit": "eb9f33e77d76d8cb4dc579885df1d9bc573982eb",
+      "checks": [
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pro unified chat validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Bridge diagnostics validation",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design-pro",
+      "number": 90,
+      "url": "https://github.com/pixflowdev/pixflow-design-pro/pull/90",
+      "title": "fix(bricks): reject malformed new IDs before fallback mutations",
+      "head": "5663a3c2a636e513d5a29450f906c763a8877b3b",
+      "mergeCommit": "cbb124d1bce98671d918c9c27cc666e20b857052",
+      "checks": [
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pro unified chat validation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Bridge diagnostics validation",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "repository": "pixflow-design-pro",
+      "number": 91,
+      "url": "https://github.com/pixflowdev/pixflow-design-pro/pull/91",
+      "title": "fix(bricks): preserve query elements across compound Undo",
+      "head": "fd08980ca83ce142212a3e5ef8fa628f3aa3c2fd",
+      "mergeCommit": "54bd98519ea4a6e3deda578475a9f182d66329cd",
+      "checks": [
+        {
+          "name": "validate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pro unified chat validation",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

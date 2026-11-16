@@ -27,7 +27,7 @@ async function snapshot(wp: GutenbergApi) {
   const styleSnapshot = editorStyleSnapshot({ editor: 'gutenberg', site: editorStyleSite(), documentId: entity.type + ':' + entity.id,
     native: Object.fromEntries(['colors', 'fontSizes', 'spacingSizes', 'styles', '__experimentalFeatures', '__experimentalStyles', 'layout', 'disableCustomColors', 'disableCustomFontSizes'].map(key => [key, nativeSettings[key] ?? null])),
     rendered: renderedEditorStyles('iframe[name="editor-canvas"]', '.editor-styles-wrapper') });
-  const settings = () => [editor.getEditedPostAttribute('meta'), editor.getEditedPostAttribute('status')];
+  const settings = () => [editor.getEditedPostAttribute('meta'), editor.getEditedPostAttribute('status'), editor.getEditedPostAttribute('excerpt')];
   const serialized = JSON.stringify([entity, tree, content, title, settings()]);
   const bytes = new TextEncoder().encode(serialized);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -62,7 +62,7 @@ function attributes(wp: GutenbergApi, name: string, input: any): Record<string, 
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Block attributes must be an object.');
   const schema = wp.blocks.getBlockType(name)?.attributes ?? {};
   for (const [key, value] of Object.entries(input)) {
-    if (!schema[key]) throw new Error(`Unknown ${name} attribute: ${key}. Read gutenberg.schema.`);
+    if (!schema[key]) throw new Error(`Unknown ${name} attribute: ${key}. Available attributes: ${Object.keys(schema).sort().join(", ")}. No edit was applied. Read gutenberg.schema for types and allowed values.`);
     // Some installed blocks declare object attributes with an empty-array default.
     // Accept their own canonical default when copying a native read result.
     if ('default' in schema[key] && JSON.stringify(value) === JSON.stringify(schema[key].default)) continue;
@@ -82,11 +82,12 @@ export async function executeGutenberg(wp: GutenbergApi, command: GutenbergComma
   assertSiteAuthoring(tool, shared);
   const view = wp.data.select('core/block-editor'), edit = wp.data.dispatch('core/block-editor');
   const editor = wp.data.select('core/editor'), post = wp.data.dispatch('core/editor');
-  if (tool === 'gutenberg.schema') return wp.blocks.getBlockTypes().filter((type: any) => (!args.name || type.name === args.name) && (() => { try { blockExtension(type.name); return true; } catch { return false; } })()).map((type: any) => ({ name: type.name, title: type.title, attributes: type.attributes, supports: type.supports, parent: type.parent, ancestor: type.ancestor, allowedBlocks: type.allowedBlocks, usesContext: type.usesContext, providesContext: type.providesContext, ...(blockExtension(type.name)?.schema(wp, type.name, !!args.name) ?? {}) }));
+  if (tool === 'gutenberg.schema' && args.names !== undefined && (args.name !== undefined || !Array.isArray(args.names) || args.names.length < 1 || args.names.length > 30 || args.names.some((name: unknown) => typeof name !== 'string'))) throw new Error('Supply either name or names (1–30 registered block names).');
+  if (tool === 'gutenberg.schema') return wp.blocks.getBlockTypes().filter((type: any) => (args.names ? args.names.includes(type.name) : !args.name || type.name === args.name) && (() => { try { blockExtension(type.name); return true; } catch { return false; } })()).map((type: any) => ({ name: type.name, title: type.title, attributes: type.attributes, supports: type.supports, parent: type.parent, ancestor: type.ancestor, allowedBlocks: type.allowedBlocks, usesContext: type.usesContext, providesContext: type.providesContext, ...(blockExtension(type.name)?.schema(wp, type.name, !!args.name) ?? {}) }));
   const before = await snapshot(wp);
   const reader = (window as any).PixflowGutenbergReadCommands?.[tool];
   if (reader) return reader(wp, args);
-  if (tool === 'gutenberg.read') return before;
+  if (tool === 'gutenberg.read') return { ...before, blockAttributeKeys: Object.fromEntries((wp.blocks.getBlockTypes?.() ?? []).filter((type: any) => type.name?.startsWith('core/')).slice(0, 100).map((type: any) => [type.name, Object.keys(type.attributes ?? {}).sort()])) };
   if (tool === 'gutenberg.entities') return siteAuthoring().documents(wp, tool, args);
   if (tool === 'gutenberg.styles' && ['list', 'read'].includes(args.action)) return integrationStyles(wp, args);
   assertIntegrationTree(before.blocks);
@@ -110,6 +111,15 @@ export async function executeGutenberg(wp: GutenbergApi, command: GutenbergComma
     if (dirty.some((item: any) => item.kind !== 'postType' || item.name !== entity.type || String(item.key) !== entity.id)) throw new Error('Other documents have unsaved changes. Use native Undo/Redo to review the shared editor history.');
   }
   switch (tool) {
+    case 'gutenberg.document': {
+      const values = args.attributes;
+      if (!values || typeof values !== 'object' || Array.isArray(values) || !Object.keys(values).length
+        || Object.entries(values).some(([key,value]) => !['title','excerpt'].includes(key) || typeof value !== 'string' || value.length > (key === 'title' ? 300 : 10000))) {
+        throw new Error('Document attributes support only title and excerpt strings (300 and 10000 characters). Publication status and content are unchanged.');
+      }
+      await post.editPost(values);
+      break;
+    }
     case 'gutenberg.insert': {
       const parent = args.rootClientId || '';
       if (parent && !view.getBlock(parent)) throw new Error('The parent block no longer exists.');

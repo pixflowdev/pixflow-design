@@ -293,6 +293,33 @@ export function buildPixflowBrowserScreenshotArgs({
   ];
 }
 
+/** Keep a preview grant on its exact document request, never on redirects or resources. */
+export async function scopeSavedPreviewRequests(page: Page, url: string, savedPreview: NonNullable<PixflowVisualCaptureRequest['savedPreview']>): Promise<void> {
+      const target = new URL(url);
+      if (!/^[a-f0-9]{64}$/.test(savedPreview.token) || !Number.isSafeInteger(savedPreview.postId)
+          || (target.searchParams.get('page_id') ?? target.searchParams.get('p')) !== String(savedPreview.postId) || target.searchParams.get('preview') !== 'true'
+          || [...target.searchParams].length !== 2 || /\/wp-(admin|json)(\/|$)/.test(target.pathname)) throw new Error('Invalid saved preview scope.');
+      // Only this exact main-document GET receives the ephemeral read ticket.
+      // Redirects, subresources, forms and third-party requests never receive it.
+      await page.route('**/*', async route => {
+        const request = route.request();
+        if (request.method() !== 'GET' && request.method() !== 'HEAD') return route.abort();
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+          if (request.method() !== 'GET' || request.url() !== target.href || request.redirectedFrom()) return route.abort();
+          try {
+            const response = await route.fetch({ maxRedirects: 0, headers: { ...request.headers(), 'X-Pixflow-Preview': savedPreview.token } });
+            if (response.status() >= 300 && response.status() < 400) return route.abort();
+            return route.fulfill({ response });
+          } catch {
+            // Playwright request errors can contain request headers. Surface only
+            // the failed navigation, never an exception containing the grant.
+            return route.abort();
+          }
+        }
+        return route.continue();
+      });
+}
+
 async function runExactViewportCapture(
   browser: Browser,
   url: string,
@@ -303,15 +330,18 @@ async function runExactViewportCapture(
   reducedMotion: 'reduce' | 'no-preference' = 'reduce',
   themeStylePreviewCss = '',
   renderEnvironmentProfile?: PixflowVisualRenderEnvironmentProfile,
+  savedPreview?: PixflowVisualCaptureRequest['savedPreview'],
 ): Promise<PixflowDomFidelitySnapshot> {
   const resolvedRenderEnvironment = resolvePixflowVisualRenderEnvironment(renderEnvironmentProfile);
   const context = await browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
     deviceScaleFactor: 1,
     reducedMotion,
+    ...(savedPreview ? { serviceWorkers: 'block' as const, acceptDownloads: false } : {}),
   });
   try {
     const page = await context.newPage();
+    if (savedPreview) await scopeSavedPreviewRequests(page, url, savedPreview);
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
     const failedRequests: string[] = [];
@@ -357,7 +387,16 @@ async function runExactViewportCapture(
       await stabilizePixflowCaptureAnimations(page);
     }
     await suppressPixflowCaptureNonCloneableOverlays(page);
-    await applyPixflowCaptureActions(page, viewport.actions);
+    for (const action of viewport.actions ?? []) {
+      if (savedPreview) {
+        if (!['hover', 'waitFor', 'click'].includes(action.type)) throw new Error('Saved previews support read-only hover, waitFor and disclosure clicks.');
+        if (action.type === 'click') {
+          const safe = await page.locator(action.selector).evaluate(element => element.matches('summary') || (element.matches('button[type="button"]') && element.hasAttribute('aria-expanded')));
+          if (!safe) throw new Error('Saved preview clicks are limited to disclosure controls; form submissions and navigation are not supported.');
+        }
+      }
+      await applyPixflowCaptureActions(page, [action]);
+    }
     await page.waitForTimeout(100);
     const snapshot = await capturePixflowDomFidelitySnapshot(page, url, viewport);
     const layout = await capturePixflowLayoutEvidence(page, viewport, {
@@ -583,6 +622,10 @@ async function capturePixflowLayoutEvidence(
       typography,
       headings,
       headingsTruncated: headingCount > 100,
+      disclosures: Array.from(document.querySelectorAll('details > summary, button[aria-expanded]')).slice(0, 40).map(element => ({
+        text: element.textContent?.trim().slice(0, 180) || '',
+        expanded: element.tagName.toLowerCase() === 'summary' ? element.parentElement?.getAttribute('open') != null : element.getAttribute('aria-expanded') === 'true',
+      })),
       images,
     };
   }, viewport.id);
@@ -1312,6 +1355,7 @@ export async function capturePixflowBrowserScreenshots(
           targetMotionMode,
           typeof request.themeStylePreviewCss === 'string' ? request.themeStylePreviewCss : '',
           request.renderEnvironmentProfile,
+          request.savedPreview,
         );
         const bytes = await readFile(screenshotPath);
         if (bytes.length < 100) throw new Error('Browser returned an empty screenshot.');

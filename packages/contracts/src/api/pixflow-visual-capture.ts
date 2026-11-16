@@ -20,6 +20,8 @@ import type {
 } from './pixflow-bricks-render-environment.js';
 
 export type PixflowVisualCaptureRequest = {
+  /** Internal header-only grant for the exact saved WordPress document. Never exposed in receipts. */
+  savedPreview?: { token: string; postId: number };
   /** Anonymous, bounded DOM inspection; no screenshots, input actions or agent. */
   inspectionOnly?: boolean;
   url: string;
@@ -144,6 +146,8 @@ export type PixflowVisualTypographyStyle = Pick<PixflowVisualTypographySample,
 
 /** Bounded browser observations shared by Direct capture and visual comparison. */
 export type PixflowVisualLayoutEvidence = {
+  /** Observed disclosure state after requested interactions; not a general accessibility verdict. */
+  disclosures?: Array<{ text: string; expanded: boolean }>;
   viewport: string;
   viewportWidth: number;
   viewportHeight: number;

@@ -1,7 +1,7 @@
 import {afterEach,expect,it} from 'vitest';
 import {createServer} from 'node:http';
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process';
-import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {stageWorkspaceBuilderHelper} from '../../src/pixflow/workspace-builder-session.js';
@@ -18,7 +18,7 @@ function client(command:string,args:string[]) {
  cleanup.push(async()=>{child.stdin.end();await new Promise<void>(resolve=>{if(child.exitCode!==null || child.signalCode!==null)return resolve();child.once('close',()=>resolve());setTimeout(()=>child.kill(),2000).unref();});});
  return {child,request(method:string,params:any={}){const id=++seq;return {id,promise:new Promise<any>((resolve,reject)=>{pending.set(id,{resolve,reject});child.stdin.write(JSON.stringify({jsonrpc:'2.0',id,method,params})+'\n');})};},notify(method:string,params:any){child.stdin.write(JSON.stringify({jsonrpc:'2.0',method,params})+'\n');}};
 }
-async function fixture(scope:'site'|'workspace'='workspace', skillContent?: string) {
+async function fixture(scope:'site'|'workspace'='workspace', skillContent?: string, capture=false) {
  const root=await mkdtemp(path.join(tmpdir(),'pixflow-mcp-'));cleanup.push(()=>rm(root,{recursive:true,force:true}));
  let deny=false,delay=false,readOnly=false;let allowedToken='pfdirect_'+'a'.repeat(64);const calls:any[]=[];
  const server = createServer(async (req, res) => {
@@ -48,6 +48,7 @@ async function fixture(scope:'site'|'workspace'='workspace', skillContent?: stri
      res.end(JSON.stringify({ ok: true, references: [{ path: 'design.md', content: skillContent }] }));
      return;
    }
+   if(body.tool==='fixture.large'){res.end(JSON.stringify({ok:true,result:{revision:'document-revision',content:'x'.repeat(14000)}}));return;}
    res.end(JSON.stringify({
      ok: true, tool: body.tool, handoff: { id: 'receipt' },
      tools: { 'bricks.read': { description: 'Read canvas' } },
@@ -58,10 +59,50 @@ async function fixture(scope:'site'|'workspace'='workspace', skillContent?: stri
  let helper:string,connection:string;
  if(scope==='workspace'){const staged=await stageWorkspaceBuilderHelper(root,session);helper=JSON.parse(staged.discovery).helper.replace(/\.cmd$/,'.mjs');connection=path.join(path.dirname(helper),'connection.json');}
  else {helper=path.join(root,'site-tool.mjs');connection=path.join(root,'site-connection.json');await writeFile(helper,DIRECT_SITE_TOOL_SOURCE);await writeFile(connection,JSON.stringify({...session,runId:'first'}));await writeFile(path.join(root,'visual-capture.mjs'),'export const captureAgentPage=()=>({ok:true});');}
+ if(capture){
+  const folder=path.join(root,'capture-fixture');await mkdir(folder);
+  await writeFile(path.join(folder,'1.png'),Buffer.from('89504e470d0a1a0a','hex'));
+  await writeFile(path.join(root,'visual-capture.mjs'),'export const captureAgentPage=()=>('+JSON.stringify({ok:true,captures:[{viewport:'mobile',path:path.join(folder,'1.png')},{viewport:'forbidden',path:connection}]})+');');
+ }
  const staged=await stagePixflowMcp(helper,scope);const rpc=client(staged.server.command,staged.server.args);
  return {root,helper,connection,rpc,calls,staged,deny:()=>{deny=true;},readOnly:()=>{readOnly=true;},renewAuth:()=>{allowedToken='pfdirect_'+'b'.repeat(64);},delay:()=>{delay=true;}};
 }
 const payload=(reply:any)=>JSON.parse(reply.result.content[0].text);
+it('pages oversized results through MCP without repeating site calls and rejects another run receipt',async()=>{
+ const f=await fixture('site');
+ const receipt=payload(await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'fixture.large'}}).promise);
+ expect(receipt.resultId).toMatch(/^result-/);expect(receipt.ok).toBe(true);expect(receipt.read).toContain('pixflow_result_read');
+ const revision=payload(await f.rpc.request('tools/call',{name:'pixflow_result_read',arguments:{resultId:receipt.resultId,path:['result','revision']}}).promise);
+ expect(revision.text).toBe('"document-revision"');
+ const first=payload(await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'result.read',arguments:{resultId:receipt.resultId,path:['result','content']}}}).promise);
+ expect(first.nextOffset).toBe(6000);expect(f.calls).toHaveLength(1);
+ const other=await fixture('site');
+ const unavailable=await other.rpc.request('tools/call',{name:'pixflow_result_read',arguments:{resultId:receipt.resultId}}).promise;
+ expect(unavailable.result.isError).toBe(true);expect(other.calls).toHaveLength(0);
+ const connection=JSON.parse(await readFile(f.connection,'utf8'));await writeFile(f.connection,JSON.stringify({...connection,runId:'next'}));
+ const expired=await f.rpc.request('tools/call',{name:'pixflow_result_read',arguments:{resultId:receipt.resultId}}).promise;
+ expect(expired.result.isError).toBe(true);expect(f.calls).toHaveLength(1);
+});
+it('delivers run-owned screenshots as MCP images, supports text-only models and excludes other files',async()=>{
+ const f=await fixture('site',undefined,true);
+ const response=await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'browser.capture',arguments:{}}}).promise;
+ expect(response.result.content.filter((item:any)=>item.type==='image')).toEqual([{type:'image',mimeType:'image/png',data:'iVBORw0KGgo='}]);
+ const textOnly=await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'browser.capture',arguments:{includeImages:false}}}).promise;
+ expect(textOnly.result.content).toHaveLength(1);
+});
+for (const scope of ['workspace', 'site'] as const) it(`exposes the same saved plan tools in ${scope}, including handoff continuation`, async () => {
+ const f=await fixture(scope);
+ const list=await f.rpc.request('tools/list').promise;
+ expect(list.result.tools.map((tool:any)=>tool.name)).toEqual(expect.arrayContaining(['pixflow_plan_read','pixflow_plan_update']));
+ const plan={id:'build',title:'Build page',summary:'Approved brief',revision:0,steps:[{id:'build',content:'Build page',status:'pending'}]};
+ expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_update',arguments:plan}).promise).ok).toBe(true);
+ expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).ok).toBe(true);
+ expect(f.calls).toEqual([{tool:'plan.update',arguments:plan},{tool:'plan.read',arguments:{}}]);
+ const denied=await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{conversationId:'other'}}).promise;
+ expect(denied.result.isError).toBe(true);expect(f.calls).toHaveLength(2);
+ for(const provider of ['codex','claude','grok-build','antigravity'])expect(supportsPixflowMcp(provider)).toBe(true);
+ f.deny();expect((await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).result.isError).toBe(true);
+});
 it('forwards one native Bricks call through a repeated matching envelope',async()=>{
  const f=await fixture('site');
  const tool='bricks.native';
@@ -198,18 +239,4 @@ it('normalizes a script filename supplied with the native tool arguments', async
   expect((await invoke({ codeFile: 'design.js' }, 'other.js')).result.isError).toBe(true);
   expect((await invoke({ codeFile: 'design.js', code: 'return 1;' })).result.isError).toBe(true);
   expect(f.calls).toHaveLength(1);
-});
-
-for (const scope of ['workspace', 'site'] as const) it(`exposes the same saved plan tools in ${scope}, including handoff continuation`, async () => {
- const f=await fixture(scope);
- const list=await f.rpc.request('tools/list').promise;
- expect(list.result.tools.map((tool:any)=>tool.name)).toEqual(expect.arrayContaining(['pixflow_plan_read','pixflow_plan_update']));
- const plan={id:'build',title:'Build page',summary:'Approved brief',revision:0,steps:[{id:'build',content:'Build page',status:'pending'}]};
- expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_update',arguments:plan}).promise).ok).toBe(true);
- expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).ok).toBe(true);
- expect(f.calls).toEqual([{tool:'plan.update',arguments:plan},{tool:'plan.read',arguments:{}}]);
- const denied=await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{conversationId:'other'}}).promise;
- expect(denied.result.isError).toBe(true);expect(f.calls).toHaveLength(2);
- for(const provider of ['codex','claude','grok-build','antigravity'])expect(supportsPixflowMcp(provider)).toBe(true);
- f.deny();expect((await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).result.isError).toBe(true);
 });

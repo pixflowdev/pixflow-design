@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
@@ -112,4 +112,26 @@ describe('Workspace CLI builder connection', () => {
       expect(calls[1]).toMatchObject({ method: 'DELETE' });
     } finally { await new Promise<void>(resolve => server.close(() => resolve())); await rm(root, { recursive: true, force: true }); }
   });
+});
+
+
+it.skipIf(process.platform === 'win32')('executes the Workspace helper through a directory alias without dispatching on import', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'pixflow-workspace-alias-'));
+  const alias = root + '-alias with spaces';
+  const server = createServer((_request, response) => response.end(JSON.stringify({ok:true})));
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    await symlink(root, alias, 'dir');
+    const staged = await stageWorkspaceBuilderHelper(alias, {...session, endpoint:`http://127.0.0.1:${(server.address() as {port:number}).port}/tools`});
+    const helper = JSON.parse(staged.discovery).helper;
+    const result = await promisify(execFile)(process.execPath, [helper, 'builder.destinations', '--builder', 'bricks']);
+    expect(JSON.parse(result.stdout)).toEqual({ok:true});
+    const imported = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify('file://' + helper)}); console.log('imported');`]);
+    expect(imported.stdout.trim()).toBe('imported');
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    await rm(alias, {force:true});
+    await rm(root, {recursive:true,force:true});
+  }
 });

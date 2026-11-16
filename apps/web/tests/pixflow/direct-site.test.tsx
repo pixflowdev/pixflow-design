@@ -836,9 +836,9 @@ it('creates a binding on first Send from a genuinely new chat before opening pla
   const session = requests.wordpress.mock.calls.find(call => String(call[0]).includes('/direct/sessions'));
   expect(JSON.parse(session![1].body).historyBinding).toEqual(binding);
 });
-it('does not admit a new-chat run when its saved identity cannot be established', async () => {
+it.each([[], [{ id: 'prior', role: 'user' as const, content: 'Saved plan context' }]])('does not admit a run when its saved identity cannot be established (%j)', async messages => {
   requests.wordpress.mockResolvedValue(Response.json({message:'Chat unavailable'}, {status:503}));
-  await expect(runDirectSite({agentId:'claude',prompt:'Build a homepage',history:[],historySource:{sessionKey:'new-session',messages:[]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('Chat unavailable');
+  await expect(runDirectSite({agentId:'claude',prompt:'Build a homepage',history:[],historySource:{sessionKey:'new-session',messages},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('Chat unavailable');
   expect(requests.daemon).not.toHaveBeenCalled();
   expect(requests.wordpress.mock.calls.every(call => !String(call[0]).includes('/direct/sessions'))).toBe(true);
 });

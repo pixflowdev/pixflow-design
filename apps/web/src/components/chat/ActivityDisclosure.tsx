@@ -17,10 +17,10 @@ export function groupActivity<T>(blocks: T[], eligible: (block: T) => boolean) {
 export function ActivityDisclosure({ label, icon = 'tools', active, live = active, soloReasoning = false, issueLabel, stepLabel, children }: {
   label: string; icon?: ActivityIconKind; active: boolean; live?: boolean; soloReasoning?: boolean; issueLabel?: string; stepLabel?: string; children: () => ReactNode;
 }) {
-  const [override, setOverride] = useState<boolean>();
-  // A live summary is useful; expanding every command/output is not. Preserve
-  // the user's explicit choice across subsequent events and completion.
-  const open = soloReasoning || (override ?? active);
+  const [override, setOverride] = useState(false);
+  // Stream updates only change the summary, never the user's disclosure choice.
+  // Solo reasoning has its own disclosure inside this transparent wrapper.
+  const open = soloReasoning || override;
   const [visited, setVisited] = useState(open);
   const [displayed, setDisplayed] = useState({ label, icon });
   const changedAt = useRef(Date.now());

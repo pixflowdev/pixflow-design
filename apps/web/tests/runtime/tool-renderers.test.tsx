@@ -198,6 +198,9 @@ describe('ToolCard dispatch', () => {
     const view = render(
       <ToolCard use={use({ command: 'ls' }, 'Bash')} runStreaming={true} />,
     );
+    const toggle = screen.getByRole('button', { name: 'Terminal', expanded: false });
+    expect(view.container.querySelector('[data-slot="code-block"]')).toBeNull();
+    fireEvent.click(toggle);
     expect(screen.getByRole('button', { name: 'Terminal', expanded: true })).toBeTruthy();
     expect(view.container.querySelector('[data-slot="code-block"]')).toBeTruthy();
     expect(view.container.textContent).toContain('ls');
@@ -261,6 +264,9 @@ describe('ToolCard dispatch', () => {
     const view = render(
       <ToolCard use={use({ command: 'ls' }, 'Bash')} runStreaming={true} />,
     );
+    const toggle = screen.getByRole('button', { name: 'Terminal', expanded: false });
+    expect(view.container.querySelector('[data-slot="code-block"]')).toBeNull();
+    fireEvent.click(toggle);
     expect(screen.getByRole('button', { name: 'Terminal', expanded: true })).toBeTruthy();
     expect(view.container.querySelector('[data-slot="code-block"]')).toBeTruthy();
     expect(view.container.textContent).toContain('ls');

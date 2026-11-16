@@ -2474,9 +2474,9 @@ function ThinkingBlock({
   onLinkClick?: MarkdownLinkClickHandler;
 }) {
   const t = useT();
-  const [override, setOverride] = useState<boolean>();
+  const [override, setOverride] = useState(false);
   const isThinking = streaming === true;
-  const open = override ?? isThinking;
+  const open = override;
   // Thinking events carry no server timestamps, so the "用时 X 秒" duration is
   // measured client-side: stamp the start when streaming begins and freeze the
   // elapsed once it ends. Blocks restored from history never stream, so they

@@ -39,8 +39,7 @@ it('keeps details lazy, retains the user toggle while streaming and removes hidd
   vi.useFakeTimers();
   const body = () => <a href="#details">Details</a>;
   const ui = render(<ActivityDisclosure label="Reading" icon="read" active>{body}</ActivityDisclosure>);
-  expect(ui.getByRole('button', { name: 'Reading', expanded: true })).toBeTruthy();
-  fireEvent.click(ui.getByRole('button'));
+  expect(ui.getByRole('button', { name: 'Reading', expanded: false })).toBeTruthy();
   expect(ui.queryByRole('link')).toBeNull();
   fireEvent.click(ui.getByRole('button'));
   expect(ui.getByRole('link')).toBeTruthy();
@@ -83,7 +82,7 @@ it('keeps failed tool details inside activity while exposing an error summary', 
   expect(ui.container.querySelector('[data-trace-kind="reasoning"]')?.closest('[data-activity-group]')).toBeNull();
 });
 
-it('shows supplied reasoning separately and expands active work as in shadcn', () => {
+it('shows supplied reasoning separately and opens active details only on request', () => {
   const ui = render(<AssistantMessage projectId={null} streaming message={{id:'reasoning-tools',role:'assistant',content:'',events:[
     {kind:'thinking',text:'I will check the published title against the saved title.'},
     {kind:'tool_use',id:'read-title',name:'Bash',input:{command:'private diagnostic command',description:'Checking the published title'}},
@@ -91,6 +90,9 @@ it('shows supplied reasoning separately and expands active work as in shadcn', (
   const reasoning = ui.container.querySelector('[data-trace-kind="reasoning"]');
   expect(reasoning).toBeTruthy();
   expect(reasoning?.closest('[data-activity-group]')).toBeNull();
+  expect(ui.queryByText('private diagnostic command')).toBeNull();
+  fireEvent.click(ui.container.querySelector('[data-activity-group] > button')!);
+  fireEvent.click(ui.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) > button')!);
   expect(ui.getAllByRole('button', {name:/Checking the published title/,expanded:true}).length).toBeGreaterThan(0);
   expect(ui.getByText('private diagnostic command')).toBeTruthy();
 });

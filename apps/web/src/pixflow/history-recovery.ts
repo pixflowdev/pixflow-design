@@ -13,7 +13,7 @@ export function historicalRecoveryCopy(copy: HistoryMessage) {
  * do not change fingerprints, source payloads, or normal revision checks.
  */
 function recoveryCopyMatches(saved: HistoryMessage, original: HistoryMessage): boolean {
-  const normalize = (message: HistoryMessage): HistoryMessage => {
+  const normalize = (message: HistoryMessage): HistoryMessage & {events?: unknown[]} => {
     const row = message as HistoryMessage & {events?: unknown[]};
     if (!Array.isArray(row.events)) return message;
     return {...row, events:row.events.map(event => {

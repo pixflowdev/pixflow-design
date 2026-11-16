@@ -1,2 +1,0 @@
-English trained data (4.0.0_best_int), distributed by naptha/tessdata.
-Source and licence: https://github.com/naptha/tessdata (Apache-2.0, included in tesseract-core.txt).

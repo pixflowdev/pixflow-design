@@ -6,6 +6,8 @@ import { isTokenExpired, readAllTokens } from '../mcp-tokens.js';
 
 export type CodexMcpServers = Record<string, Record<string, unknown>>;
 
+const pixflowToolNames = ['pixflow_tools', 'pixflow_call', 'pixflow_result_read', 'pixflow_builder_destinations', 'pixflow_builder_handoff', 'pixflow_builder_handoff_status', 'pixflow_plan_read', 'pixflow_plan_update'];
+
 /** Each new native process gets the current Bridge configuration, never a global CLI file. */
 export function directMcpConfiguration(agentId: string, servers: McpServerConfig[], tokens: Record<string, string> = {}) {
   const enabled = servers.filter(server => server.enabled);
@@ -59,8 +61,7 @@ export async function configureDirectMcpProcess(config: ReturnType<typeof direct
   const server = config.claude?.mcpServers[PIXFLOW_MCP_NAME];
   if (!server) return;
   if (agentId === 'antigravity') {
-    const toolNames = ['pixflow_tools', 'pixflow_call', 'pixflow_result_read', 'pixflow_builder_destinations', 'pixflow_builder_handoff', 'pixflow_builder_handoff_status', 'pixflow_plan_read', 'pixflow_plan_update'];
-    const tools = Object.fromEntries(toolNames.map(name => [name, { eager: true }]));
+    const tools = Object.fromEntries(pixflowToolNames.map(name => [name, { eager: true }]));
     return stageProjectMcpConfig(project, '.agents/mcp_config.json', JSON.stringify({
       mcpServers: { [PIXFLOW_MCP_NAME]: { ...server, cwd: project, tools } },
     }));
@@ -107,7 +108,12 @@ export function withPixflowTools(config: ReturnType<typeof directMcpConfiguratio
     throw new Error('The external MCP name pixflow_builtin is reserved for connected site tools. Rename that external server before continuing.');
   }
   return {...config,
-    codex: {...config.codex, [PIXFLOW_MCP_NAME]: {...server, enabled:true}},
+    // The connected site's run-bound dispatcher owns authorization and change
+    // review. Codex cannot display a second approval UI in these non-interactive
+    // sessions. Apply this only to our known tools, never external MCP servers.
+    codex: {...config.codex, [PIXFLOW_MCP_NAME]: {...server, enabled:true,
+      tools: Object.fromEntries(pixflowToolNames.map(name => [name, {approval_mode:'approve'}])),
+    }},
     claude: {mcpServers:{...config.claude?.mcpServers, [PIXFLOW_MCP_NAME]: server}},
     opencode: JSON.stringify({...open,mcp:{...open.mcp,[PIXFLOW_MCP_NAME]:{type:'local',command:[server.command,...server.args],enabled:true}}}),
   };

@@ -55,7 +55,7 @@ async function readRunFile(filename, extensions) {
  const runDirectory=path.dirname(fileURLToPath(import.meta.url));
  const directory=await realpath(runDirectory);
  if(filename!==name && (!path.isAbsolute(filename) ||
-   (path.relative(runDirectory,filename)!==name && path.relative(directory,filename)!==name))) throw new Error('The file is outside this run.');
+   await realpath(path.dirname(filename))!==directory)) throw new Error('The file is outside this run.');
  const file = await realpath(path.join(directory, name));
  if (path.dirname(file) !== directory) throw new Error('The file is outside this run.');
  const info = await stat(file);

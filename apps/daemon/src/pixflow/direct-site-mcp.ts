@@ -59,7 +59,7 @@ export async function configureDirectMcpProcess(config: ReturnType<typeof direct
   const server = config.claude?.mcpServers[PIXFLOW_MCP_NAME];
   if (!server) return;
   if (agentId === 'antigravity') {
-    const toolNames = ['pixflow_tools', 'pixflow_call', 'pixflow_builder_destinations', 'pixflow_builder_handoff', 'pixflow_builder_handoff_status'];
+    const toolNames = ['pixflow_tools', 'pixflow_call', 'pixflow_result_read', 'pixflow_builder_destinations', 'pixflow_builder_handoff', 'pixflow_builder_handoff_status', 'pixflow_plan_read', 'pixflow_plan_update'];
     const tools = Object.fromEntries(toolNames.map(name => [name, { eager: true }]));
     return stageProjectMcpConfig(project, '.agents/mcp_config.json', JSON.stringify({
       mcpServers: { [PIXFLOW_MCP_NAME]: { ...server, cwd: project, tools } },

@@ -7,6 +7,20 @@ import { captureAgentPage } from '../../src/pixflow/agent-visual-capture.js';
 let directory: string | undefined;
 afterEach(async () => { vi.unstubAllGlobals(); if (directory) await fs.rm(directory, { recursive: true, force: true }); });
 
+it('returns concise saved-preview findings and disclosure state without exposing the grant', async () => {
+  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'preview-summary-'));
+  const token = 'a'.repeat(64);
+  const layout = { horizontalOverflowPx:0, documentHeight:3200, disclosures:[{text:'Appointments?',expanded:true}], typography:{samples:[]} };
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({ok:true,captures:[{viewport:'mobile',base64:'iVBORw==',layout}]}))));
+  const result=await captureAgentPage('http://capture.test',{url:'https://site.example/?page_id=9&preview=true',savedPreview:{token,postId:9},viewports:[{id:'mobile',width:390,height:844}]},directory);
+  expect(result.captures[0]).toMatchObject({horizontalOverflowPx:0,disclosures:layout.disclosures});
+  expect(result.captures[0]).not.toHaveProperty('typography');
+  expect(JSON.stringify(result)).not.toContain(token);
+  const evidence=await fs.readFile(result.captures[0]!.evidencePath,'utf8');
+  expect(JSON.parse(evidence).layout).toEqual(layout);
+  expect(evidence).not.toContain(token);
+});
+
 it('shows every distinct measured style compactly and keeps complete records in the evidence file', async () => {
   directory = await fs.mkdtemp(path.join(os.tmpdir(), 'capture-summary-'));
   const normal = { selector: '.copy', text: 'First', fontSize: '16px', fontWeight: '400', color: 'rgb(0,0,0)',

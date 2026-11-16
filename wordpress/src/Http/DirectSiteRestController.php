@@ -168,6 +168,11 @@ final class DirectSiteRestController
             $tool = (string) ($body['tool'] ?? '');
             if (str_starts_with($tool, 'bricks.')) \PixflowDesign\WordPress\Modules\BuilderIntegrations::require_service('bricks', 'active');
             $args = is_array($body['arguments'] ?? null) ? $body['arguments'] : [];
+            if ($tool === 'preview.issue') return SavedPreviewAccess::issue($this->session, $this->key($this->token($request)), (int)($args['postId'] ?? 0));
+            if ($tool === 'preview.revoke') {
+                SavedPreviewAccess::revoke((string)($args['token'] ?? ''), $this->key($this->token($request)));
+                return ['ok'=>true];
+            }
             if ($tool === 'plan.read' || $tool === 'plan.update') {
                 $binding = $this->session['planBinding'] ?? $this->session['workspaceSource'] ?? null;
                 if (!$binding) return new \WP_Error('pixflow_plan_unbound', 'Start this request from a saved chat to use its plan.', ['status' => 400]);

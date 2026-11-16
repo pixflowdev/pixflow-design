@@ -150,7 +150,7 @@ final class DirectCanvasRelay
         if ($canvas['seenAt'] < time() - 30) return ['ok' => false, 'code' => 'canvas_disconnected', 'accepted' => false,
             'error' => 'The originating editor tab is disconnected. Reconnecting in place; no command has been applied.'];
         $allowed = \PixflowDesign\WordPress\Modules\BuilderIntegrations::get($this->builder, 'commands', []);
-        if ($this->builder === 'gutenberg') $allowed = array_merge(Gutenberg\GutenbergExtensions::contributions('gutenbergCommands'), ['gutenberg.read', 'gutenberg.schema', 'gutenberg.insert', 'gutenberg.update', 'gutenberg.remove', 'gutenberg.move', 'gutenberg.save', 'gutenberg.undo', 'gutenberg.redo']);
+        if ($this->builder === 'gutenberg') $allowed = array_merge(Gutenberg\GutenbergExtensions::contributions('gutenbergCommands'), ['gutenberg.read', 'gutenberg.schema', 'gutenberg.document', 'gutenberg.insert', 'gutenberg.update', 'gutenberg.remove', 'gutenberg.move', 'gutenberg.save', 'gutenberg.undo', 'gutenberg.redo']);
         if ($this->builder === 'gutenberg') Gutenberg\GutenbergExtensions::assert_command($tool, $args, (int) $canvas['postId'], $canvas['entity'] ?? null);
         if (!in_array($tool, $allowed, true)) {
             throw new \RuntimeException('Unknown live builder tool.');

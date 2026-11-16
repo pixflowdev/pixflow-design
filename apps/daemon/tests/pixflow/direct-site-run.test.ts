@@ -59,6 +59,45 @@ afterEach(async () => {
 });
 
 describe('direct site agent connection', () => {
+  it.each([false, true])('advertises run-owned batch and available anonymous capture tools (capture: %s)', async capture => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-catalogue-')); dirs.push(dir);
+    const app=express();app.use(express.json());app.post('/tools',(_req,res)=>res.json({tools:{'gutenberg.read':{description:'Native read'}}}));
+    const url=await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),'export function captureAgentPage() {}');
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:url+'/tools',token:'fixture',...(capture?{captureEndpoint:url+'/capture',editorTarget:{builder:'gutenberg',postId:9}}:{})}));
+    const {stdout}=await promisify(execFile)(process.execPath,['site-tool.mjs','help'],{cwd:dir});
+    const catalogue=JSON.parse(stdout);
+    expect(catalogue.tools['gutenberg.read']).toBeDefined();
+    expect(catalogue.localTools.batch.description).toContain('independent reads');
+    expect(Boolean(catalogue.localTools['browser.capture'])).toBe(capture);
+    expect(Boolean(catalogue.localTools['browser.preview'])).toBe(capture);
+    if(capture){expect(catalogue.localTools['browser.capture'].description).toContain('anonymous');expect(catalogue.localTools['browser.preview'].connectedPostId).toBe(9);expect(catalogue.localTools['browser.preview'].description).toContain('other pages');}
+  });
+
+  it.each(['success','capture-failed','wrong-origin'])('keeps saved-preview grants private and revokes them (%s)', async scenario => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-preview-')); dirs.push(dir);
+    const token = 'a'.repeat(64);
+    const calls: string[] = [];
+    const app = express(); app.use(express.json());
+    let origin = '';
+    app.post('/tools',(req,res)=> {
+      calls.push(req.body.tool);
+      if (req.body.tool === 'preview.issue') return res.json({token,postId:9,url:(scenario==='wrong-origin'?'https://other.example':origin)+'/?page_id=9&preview=true'});
+      expect(req.body.arguments.token).toBe(token);
+      return res.json({ok:true});
+    });
+    origin = await listen(app);
+    await fs.writeFile(path.join(dir,'site-tool.mjs'),DIRECT_SITE_TOOL_SOURCE);
+    await fs.writeFile(path.join(dir,'visual-capture.mjs'),`export function captureAgentPage(endpoint,input) { if(input.savedPreview.token!==${JSON.stringify(token)}||input.savedPreview.postId!==9)throw Error('missing grant'); ${scenario==='capture-failed'?"throw Error('capture failed');":"return {captures:[{path:'capture/1.png'}]};"} }`);
+    await fs.writeFile(path.join(dir,'site-connection.json'),JSON.stringify({endpoint:origin+'/tools',token:'fixture',captureEndpoint:origin+'/capture'}));
+    const result = await promisify(execFile)(process.execPath,['site-tool.mjs','browser.preview',JSON.stringify({postId:9,url:'https://ignored.example',savedPreview:{token:'injected'}})],{cwd:dir}).catch(error=>({stdout:error.stdout,stderr:error.stderr}));
+    expect(calls).toEqual(['preview.issue','preview.revoke']);
+    expect(result.stdout+result.stderr).not.toContain(token);
+    if(scenario==='success') expect(JSON.parse(result.stdout).captures[0].path).toBe('capture/1.png');
+    else expect(JSON.parse(result.stdout).error).toContain(scenario==='capture-failed'?'capture failed':'did not match');
+  });
+
   it.each([false,true])('gives agents readable skill files without parsing JSON or using site paths as filenames (batch: %s)', async batched => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'direct-skills-')); dirs.push(dir);
     const refs=[{path:'../../outside.md',content:'# Native classes\nUse the existing API.\n'},{path:'bricks/query.md',content:'# Queries\nPreserve the filter.'}];
@@ -127,7 +166,12 @@ describe('direct site agent connection', () => {
     }
     expect(await fs.readFile(path.join(dir,'EDITOR-STYLES.md'),'utf8')).toBe('rootFontSize: first');
     revision='changed';
-    await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    const refreshed = await promisify(execFile)(process.execPath,['site-tool.mjs','gutenberg.read'],{cwd:dir});
+    const summary = JSON.parse(refreshed.stdout).result.styleSnapshot;
+    expect(summary.revision).toBe('changed');
+    expect(summary.files.markdown).toBe('EDITOR-STYLES.md');
+    expect(summary).not.toHaveProperty('native');
+    expect(summary).not.toHaveProperty('rendered');
     expect(JSON.parse(await fs.readFile(path.join(dir,'EDITOR-STYLES.json'),'utf8')).revision).toBe('changed');
   });
 

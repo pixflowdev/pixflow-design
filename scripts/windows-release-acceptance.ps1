@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
-$qaRoot = Join-Path $env:RUNNER_TEMP 'pixflow-232-qa'
-$appRoot = Join-Path $env:RUNNER_TEMP 'px232'
+$qaRoot = Join-Path $env:RUNNER_TEMP 'pixflow-233-qa'
+$appRoot = Join-Path $env:RUNNER_TEMP 'px233'
 $registry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Pixflow Design Bridge-release-stable-win'
 $nativeKey = 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\dev.pixflow.bridge'
 if ($env:GITHUB_ACTIONS -ne 'true' -or (Test-Path $appRoot) -or (Test-Path $registry) -or (Test-Path $nativeKey)) {
@@ -10,17 +10,17 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or (Test-Path $appRoot) -or (Test-Path $regi
 New-Item -ItemType Directory -Path $qaRoot | Out-Null
 $repo = 'https://api.github.com/repos/pixflowdev/pixflow-design'
 $headers = @{ Authorization = 'Bearer ' + $env:GH_TOKEN; Accept = 'application/vnd.github+json' }
-$draft = Invoke-RestMethod -Uri "$repo/releases/445657482" -Headers $headers
-if (!$draft.draft -or $draft.target_commitish -ne 'c2a655ca7e45861de14ea074d138fe3fdd58f857') { throw 'Unexpected draft release' }
-$asset = $draft.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.2-win-x64-setup.exe'
-$expectedHash = '5746ae643dbed24ad171597b32681f0801d67b4ddbb85aa7d13c051a1b1405d5'
+$draft = Invoke-RestMethod -Uri "$repo/releases/446489613" -Headers $headers
+if (!$draft.draft -or $draft.target_commitish -ne '7b6e70f9de07288ee7382f5281d9b6b2bf96ff23') { throw 'Unexpected draft release' }
+$asset = $draft.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.3-win-x64-setup.exe'
+$expectedHash = '7325eca6aa7ffdb4d978b8aec38d967c931e697ec9953d65b734d61fb34bcb80'
 if (!$asset -or $asset.digest -ne "sha256:$expectedHash") { throw 'Unexpected draft installer digest' }
 $candidate = Join-Path $qaRoot 'candidate.exe'
 $previous = Join-Path $qaRoot 'stable.exe'
 Invoke-WebRequest -Uri "$repo/releases/assets/$($asset.id)" -Headers @{ Authorization = $headers.Authorization; Accept = 'application/octet-stream' } -OutFile $candidate
 if ((Get-FileHash $candidate).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'Downloaded candidate hash mismatch' }
-$stable = Invoke-RestMethod -Uri "$repo/releases/tags/bridge-v2.3.1" -Headers $headers
-$oldAsset = $stable.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.1-win-x64-setup.exe'
+$stable = Invoke-RestMethod -Uri "$repo/releases/tags/bridge-v2.3.2" -Headers $headers
+$oldAsset = $stable.assets | Where-Object name -eq 'pixflow-design-bridge-2.3.2-win-x64-setup.exe'
 if ($stable.draft -or !$oldAsset.digest) { throw 'Published stable installer is missing' }
 Invoke-WebRequest -Uri $oldAsset.browser_download_url -OutFile $previous
 if ($oldAsset.digest -ne ('sha256:' + (Get-FileHash $previous).Hash.ToLowerInvariant())) { throw 'Downloaded stable hash mismatch' }
@@ -65,21 +65,21 @@ function Test-BridgeHealth([string]$version) {
     }
 }
 
-Install-Bridge $candidate '2.3.2'
-Test-BridgeHealth '2.3.2'
+Install-Bridge $candidate '2.3.3'
+Test-BridgeHealth '2.3.3'
 $uninstall = Start-Process -FilePath (Join-Path $appRoot 'Uninstall Pixflow Design Bridge.exe') -ArgumentList '/currentuser /S' -WindowStyle Hidden -PassThru -Wait
 if ($uninstall.ExitCode -ne 0 -or (Test-Path $registry)) { throw 'Fresh install cleanup failed' }
-Install-Bridge $previous '2.3.1'
-Test-BridgeHealth '2.3.1'
+Install-Bridge $previous '2.3.2'
+Test-BridgeHealth '2.3.2'
 $dataRoot = Join-Path $env:APPDATA 'Pixflow Design Bridge/namespaces/release-stable-win/data'
 New-Item -ItemType Directory -Path $dataRoot -Force | Out-Null
 $marker = Join-Path $dataRoot 'qa-upgrade-marker.txt'
-Set-Content -LiteralPath $marker -Value 'Pixflow v2.3.1 upgrade fixture' -Encoding utf8
+Set-Content -LiteralPath $marker -Value 'Pixflow v2.3.2 upgrade fixture' -Encoding utf8
 $markerHash = (Get-FileHash $marker).Hash
-Install-Bridge $candidate '2.3.2'
-Test-BridgeHealth '2.3.2'
+Install-Bridge $candidate '2.3.3'
+Test-BridgeHealth '2.3.3'
 if ((Get-FileHash $marker).Hash -ne $markerHash) { throw 'Upgrade changed the existing data marker' }
-@{ installerSha256 = $expectedHash; previousInstallerSha256 = $oldAsset.digest; freshInstall = 'passed'; upgradeFrom = '2.3.1'; upgrade = 'passed'; installedHealth = 'passed'; chromeNativeHost = 'passed'; namespaceDataPreserved = 'passed' } |
+@{ installerSha256 = $expectedHash; previousInstallerSha256 = $oldAsset.digest; freshInstall = 'passed'; upgradeFrom = '2.3.2'; upgrade = 'passed'; installedHealth = 'passed'; chromeNativeHost = 'passed'; namespaceDataPreserved = 'passed' } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $qaRoot 'receipt.json') -Encoding utf8
 
 

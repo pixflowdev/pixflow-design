@@ -1,7 +1,7 @@
-name: Windows v2.3.2 installer acceptance
+name: Windows v2.3.3 installer acceptance
 on:
   push:
-    branches: [codex/windows-2.3.2-acceptance]
+    branches: [codex/windows-2.3.3-acceptance]
   workflow_dispatch:
 permissions:
   contents: write # GitHub requires write permission to read unpublished release assets.
@@ -20,8 +20,8 @@ jobs:
         run: ./scripts/windows-release-acceptance.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-2.3.2-acceptance
-          path: ${{ runner.temp }}/pixflow-232-qa/receipt.json
+          name: windows-2.3.3-acceptance
+          path: ${{ runner.temp }}/pixflow-233-qa/receipt.json
           if-no-files-found: error
 
 

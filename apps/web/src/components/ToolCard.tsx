@@ -370,7 +370,7 @@ function ToolTrace({ title, description, result, runStreaming, runSucceeded, det
   kind?: string; title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
   runSucceeded: boolean; detail?: (() => ReactNode) | undefined; hideOutput?: boolean;
 }) {
-  const [open, setOpen] = useState<boolean>();
+  const [open, setOpen] = useState(false);
   const t = useT();
   const status = result?.isError ? 'error' : !result && runStreaming ? 'running' : !result && !runSucceeded ? 'pending' : undefined;
   const label = result?.isError ? `${title} · ${t('tool.error')}` : title;
@@ -380,7 +380,7 @@ function ToolTrace({ title, description, result, runStreaming, runSucceeded, det
     {description ? <TraceDescription>{description}</TraceDescription> : null}
   </TraceLine>;
   if (!detail && !result?.content) return <div data-trace-kind={kind}>{line}</div>;
-  return <TraceCollapsible data-trace-kind={kind} open={open ?? status === 'running'}
+  return <TraceCollapsible data-trace-kind={kind} open={open}
     onOpenChange={setOpen}>
     <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
     <TraceCollapsibleContent className={styles.detail}>

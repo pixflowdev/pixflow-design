@@ -191,6 +191,8 @@ export const fr: Dict = {
   "guidance.chooseAgent": "Choisissez d’abord un agent dans les paramètres d’exécution.",
   "guidance.incomplete": "L’agent n’a pas terminé le brouillon. Vos documents restent inchangés.",
   "guidance.title": "Consignes produit et design",
+  "guidance.clientBrief": "Brief client",
+  "guidance.clientBriefHint": "Collez le brief du client ou importez un document. L’agent peut s’en servir pour rédiger PRODUCT.md et DESIGN.md.",
   "guidance.subtitle": "Donnez à votre agent un brief cohérent et une direction visuelle.",
   "guidance.generateAgent": "Générer avec l’agent",
   "guidance.conflict": "Une version plus récente est enregistrée. Comparez-la à votre brouillon avant de choisir laquelle conserver.",

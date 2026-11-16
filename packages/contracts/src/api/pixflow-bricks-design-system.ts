@@ -6,6 +6,8 @@ export interface PixflowBricksDesignSystem {
   revision: number;
   updatedAt: string;
   profile: PixflowFrameworkDesignSystemProfile;
+  guidanceRevision?: number;
+  reviewNotes?: string;
   history?: Omit<PixflowBricksDesignSystem, 'history'>[];
 }
 

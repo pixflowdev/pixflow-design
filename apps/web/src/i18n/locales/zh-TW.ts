@@ -191,6 +191,8 @@ export const zhTW: Dict = {
   "guidance.chooseAgent": "請先在執行設定中選擇代理。",
   "guidance.incomplete": "代理未完成草稿。你的文件未被修改。",
   "guidance.title": "產品與設計指引",
+  "guidance.clientBrief": "客戶簡報",
+  "guidance.clientBriefHint": "貼上客戶簡報或匯入文件。代理程式可依此草擬 PRODUCT.md 和 DESIGN.md。",
   "guidance.subtitle": "為代理提供一致的需求簡述與視覺方向。",
   "guidance.generateAgent": "使用代理產生",
   "guidance.conflict": "已儲存更新的版本。請與草稿比較後選擇要保留的版本。",

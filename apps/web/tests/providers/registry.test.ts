@@ -11,6 +11,7 @@ import {
   fetchAgentsStream,
   fetchCloudflarePagesZones,
   fetchDeployConfig,
+  fetchDesignSystemsResult,
   fetchAppVersionInfo,
   invalidateAppVersionCache,
   fetchConnectorDetail,
@@ -29,6 +30,28 @@ import {
   uploadProjectFiles,
   writeProjectTextFileDetailed,
 } from '../../src/providers/registry';
+
+describe('the design-system catalogue', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('authenticates the WordPress catalogue request with the site REST nonce', async () => {
+    vi.stubGlobal('window', {
+      location: { pathname: '/wp-admin/plugins.php', hash: '', search: '' },
+      __PIXFLOW_DESIGN_WORDPRESS__: {
+        apiBaseUrl: 'https://example.test/wp-json/pixflow-design/v1/od',
+        restBaseUrl: 'https://example.test/wp-json/pixflow-design/v1',
+        restNonce: 'nonce-1',
+      },
+    });
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ designSystems: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchDesignSystemsResult()).resolves.toEqual({ ok: true, designSystems: [] });
+    const [url, options] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('https://example.test/wp-json/pixflow-design/v1/od/design-systems');
+    expect(new Headers(options?.headers).get('X-WP-Nonce')).toBe('nonce-1');
+  });
+});
 
 describe('fetchProjectFiles', () => {
   afterEach(() => {

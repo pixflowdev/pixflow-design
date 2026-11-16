@@ -888,7 +888,9 @@ export type DesignSystemsResult =
 
 export async function fetchDesignSystemsResult(): Promise<DesignSystemsResult> {
   try {
-    const resp = await fetch(toPixflowRuntimeUrl('/api/design-systems'));
+    const resp = hasPixflowWordPressContext()
+      ? await pixflowWordPressRestFetch('od/design-systems')
+      : await fetch(toPixflowRuntimeUrl('/api/design-systems'));
     if (!resp.ok) return { ok: false };
     const json = (await resp.json()) as { designSystems?: DesignSystemSummary[] };
     return { ok: true, designSystems: json.designSystems ?? [] };

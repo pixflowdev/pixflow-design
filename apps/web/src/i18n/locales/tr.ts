@@ -191,6 +191,8 @@ export const tr: Dict = {
   "guidance.chooseAgent": "Önce Yürütme ayarlarından bir ajan seçin.",
   "guidance.incomplete": "Ajan taslağı tamamlamadı. Belgeleriniz değiştirilmedi.",
   "guidance.title": "Ürün ve tasarım rehberi",
+  "guidance.clientBrief": "Müşteri brifi",
+  "guidance.clientBriefHint": "Müşteri brifini yapıştırın veya bir belge içe aktarın. Aracı, PRODUCT.md ve DESIGN.md taslaklarını hazırlamak için bunu kullanabilir.",
   "guidance.subtitle": "Ajanınıza tutarlı bir özet ve görsel yön verin.",
   "guidance.generateAgent": "Ajanla oluştur",
   "guidance.conflict": "Daha yeni bir sürüm kaydedilmiş. Hangisini tutacağınıza karar vermeden önce taslağınızla karşılaştırın.",

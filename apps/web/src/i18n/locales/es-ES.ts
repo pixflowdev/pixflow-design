@@ -191,6 +191,8 @@ export const esES: Dict = {
   "guidance.chooseAgent": "Primero elige un agente en los ajustes de ejecución.",
   "guidance.incomplete": "El agente no terminó el borrador. Tus documentos no han cambiado.",
   "guidance.title": "Instrucciones de producto y diseño",
+  "guidance.clientBrief": "Brief del cliente",
+  "guidance.clientBriefHint": "Pega el brief del cliente o importa un documento. El agente puede usarlo para redactar PRODUCT.md y DESIGN.md.",
   "guidance.subtitle": "Dale a tu agente un briefing coherente y una dirección visual.",
   "guidance.generateAgent": "Generar con el agente",
   "guidance.conflict": "Hay una versión guardada más reciente. Compárala con tu borrador antes de elegir cuál conservar.",

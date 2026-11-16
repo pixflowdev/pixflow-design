@@ -191,6 +191,8 @@ export const fa: Dict = {
   "guidance.chooseAgent": "ابتدا یک عامل در تنظیمات اجرا انتخاب کنید.",
   "guidance.incomplete": "عامل پیش‌نویس را کامل نکرد. اسناد شما تغییر نکردند.",
   "guidance.title": "راهنمای محصول و طراحی",
+  "guidance.clientBrief": "شرح پروژهٔ مشتری",
+  "guidance.clientBriefHint": "شرح پروژهٔ مشتری را جای‌گذاری کنید یا سندی وارد کنید. عامل می‌تواند با آن پیش‌نویس PRODUCT.md و DESIGN.md را بنویسد.",
   "guidance.subtitle": "خلاصه‌ای منسجم و جهت بصری مشخص به عامل بدهید.",
   "guidance.generateAgent": "تولید با عامل",
   "guidance.conflict": "نسخه جدیدتری ذخیره شده است. پیش از انتخاب، آن را با پیش‌نویس مقایسه کنید.",

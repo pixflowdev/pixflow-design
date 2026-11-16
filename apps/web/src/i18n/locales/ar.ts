@@ -191,6 +191,8 @@ export const ar: Dict = {
   "guidance.chooseAgent": "اختر وكيلاً في إعدادات التنفيذ أولاً.",
   "guidance.incomplete": "لم يكمل الوكيل المسودة. لم تتغير مستنداتك.",
   "guidance.title": "إرشادات المنتج والتصميم",
+  "guidance.clientBrief": "موجز العميل",
+  "guidance.clientBriefHint": "الصق موجز العميل أو استورد مستندًا. يمكن للوكيل استخدامه لصياغة PRODUCT.md وDESIGN.md.",
   "guidance.subtitle": "امنح وكيلك موجزاً متسقاً واتجاهاً بصرياً.",
   "guidance.generateAgent": "إنشاء باستخدام الوكيل",
   "guidance.conflict": "تم حفظ إصدار أحدث. قارنه بمسودتك قبل اختيار الإصدار الذي تريد الاحتفاظ به.",

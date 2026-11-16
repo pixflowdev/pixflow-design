@@ -191,6 +191,8 @@ export const de: Dict = {
   "guidance.chooseAgent": "Wählen Sie zuerst einen Agenten in den Ausführungseinstellungen.",
   "guidance.incomplete": "Der Agent hat den Entwurf nicht abgeschlossen. Ihre Dokumente bleiben unverändert.",
   "guidance.title": "Produkt- und Designvorgaben",
+  "guidance.clientBrief": "Kundenbriefing",
+  "guidance.clientBriefHint": "Füge das Kundenbriefing ein oder importiere ein Dokument. Der Agent kann daraus PRODUCT.md und DESIGN.md entwerfen.",
   "guidance.subtitle": "Geben Sie Ihrem Agenten ein einheitliches Briefing und eine visuelle Richtung.",
   "guidance.generateAgent": "Mit Agent erstellen",
   "guidance.conflict": "Eine neuere Version wurde gespeichert. Vergleichen Sie sie mit Ihrem Entwurf, bevor Sie eine auswählen.",

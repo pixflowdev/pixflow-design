@@ -191,6 +191,8 @@ export const ja: Dict = {
   "guidance.chooseAgent": "まず実行設定でエージェントを選択してください。",
   "guidance.incomplete": "エージェントは下書きを完了しませんでした。文書は変更されていません。",
   "guidance.title": "製品とデザインのガイダンス",
+  "guidance.clientBrief": "クライアントの依頼内容",
+  "guidance.clientBriefHint": "クライアントの依頼内容を貼り付けるか、文書をインポートします。エージェントはこれを基に PRODUCT.md と DESIGN.md の下書きを作成できます。",
   "guidance.subtitle": "一貫した概要と視覚的な方向性をエージェントに伝えます。",
   "guidance.generateAgent": "エージェントで生成",
   "guidance.conflict": "新しいバージョンが保存されています。下書きと比較して、どちらを残すか選択してください。",

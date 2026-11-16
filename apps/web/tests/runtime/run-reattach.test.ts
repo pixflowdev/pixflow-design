@@ -15,6 +15,12 @@ describe('reload run recovery', () => {
     expect(isDaemonRecoveryMessage({ ...direct, id: 'workspace-message' })).toBe(true);
     expect(isDaemonRecoveryMessage({ ...direct, role: 'user' })).toBe(false);
   });
+  it('leaves active builder handoffs with their floating-panel recovery owner', () => {
+    const handoff = { id: 'handoff-' + 'a'.repeat(64), role: 'assistant', content: '', runStatus: 'running', runId: 'bridge-run' } as const;
+    expect(isDaemonRecoveryMessage(handoff)).toBe(false);
+    expect(hasActiveWorkspaceRun([handoff])).toBe(false);
+    expect(isDaemonRecoveryMessage({...handoff, runStatus: 'succeeded'})).toBe(false);
+  });
   it('recognizes only the replayable failed-assistant shape', () => {
     const base = { id: 'm1', role: 'assistant', content: '', runStatus: 'failed', runId: 'r1' } as const;
     expect(isSpuriouslyFailedAssistantMessage(base as never)).toBe(true);

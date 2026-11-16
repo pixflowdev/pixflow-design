@@ -8,11 +8,13 @@ export function hasActiveWorkspaceRun(messages: readonly ChatMessage[]): boolean
 }
 
 /** Direct floating-panel runs have their own persisted stream receipt and
- * recovery owner. They are visible in unified Workspace chats but never appear
+ * recovery owner, including Workspace-originated builder handoff replies. They are visible in unified Workspace chats but never appear
  * in the daemon /api/runs index; absence there is not evidence of failure.
  */
 export function isDaemonRecoveryMessage(message: ChatMessage): boolean {
-  return message.role === 'assistant' && !message.id.startsWith('direct:');
+  return message.role === 'assistant'
+    && !message.id.startsWith('direct:')
+    && !message.id.startsWith('handoff-');
 }
 
 /** Empty failed rows with a daemon run may be browser-disconnect artifacts. */

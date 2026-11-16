@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.3]
+
 ### Added
 
 - Let assistants inspect screenshots of the connected saved page, including drafts, without publishing it or accessing browser login cookies.

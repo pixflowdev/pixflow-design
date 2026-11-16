@@ -12,3 +12,9 @@ export interface PixflowBridgeSitesResponse {
   idleGraceMs: number;
 }
 export interface PixflowBridgeSiteActionResponse { ok: boolean; reason?: string }
+
+/** Status safe to expose to a local client. Omit installer paths and credentials. */
+export type PixflowBridgeUpdateStatus = {
+  state: 'idle' | 'checking' | 'downloading' | 'opening' | 'installing' | 'up-to-date' | 'busy' | 'failed';
+  percent?: number;
+};

@@ -184,6 +184,7 @@ import {
   subscribePixflowBridgeStatus,
   type PixflowBridgeStatus,
 } from '../pixflow/bridge-update-gate';
+import { BridgeUpdateAction, isWindowsBridgeClient } from '../pixflow/bridge-update-action';
 import {
   fetchPixflowResourcePacks,
   mutatePixflowResourcePack,
@@ -4776,6 +4777,8 @@ export function SettingsDialog({
                               {bridgeUpdateAvailable ? translateUi("automations.proposalActionUpdate") : bridgeHasInstalledVersion ? translateUi("ui.settingsDialog.repair") : translateUi("plugins.availableDetails.install")}  {translateUi("ui.settingsDialog.intel")} </button>
                           ) : null}
                         </>
+                      ) : bridgeUpdateAvailable && isWindowsBridgeClient() ? (
+                        <BridgeUpdateAction onDownload={handleInstallLatestBridge} />
                       ) : (
                         <button type="button" className="secondary" onClick={handleInstallLatestBridge}>
                           {bridgeUpdateAvailable ? translateUi("automations.proposalActionUpdate") : bridgeHasInstalledVersion ? translateUi("ui.settingsDialog.repair") : translateUi("plugins.availableDetails.install")}

@@ -157,6 +157,7 @@ export type DesktopUpdaterDeps = {
   logger?: DesktopUpdaterLogger;
   now?: () => Date;
   openPath?: (path: string) => Promise<string>;
+  scheduleWindowsInstaller?: (path: string, version: string) => Promise<void>;
   processExecPath?: string;
   processPid?: number;
   spawnDetached?: SpawnInstallerHelper;
@@ -2911,6 +2912,16 @@ export function createDesktopUpdater(
           DESKTOP_UPDATE_STATES.ERROR,
           createError("launcher-payload-apply-failed", applyError instanceof Error ? applyError.message : String(applyError)),
         );
+      }
+    }
+    if (config.platform === "win32" && deps.scheduleWindowsInstaller) {
+      try {
+        await deps.scheduleWindowsInstaller(resolvedDownload, activeRelease.ref.version);
+        // The tray owns shutdown, installation and restart. Keep the
+        // verified artifact retryable if installation does not complete.
+        return setState(DESKTOP_UPDATE_STATES.DOWNLOADED);
+      } catch (error) {
+        return setState(DESKTOP_UPDATE_STATES.ERROR, createError("open-installer-failed", String(error)));
       }
     }
     let observation: InstallerObservationHandle | null = null;

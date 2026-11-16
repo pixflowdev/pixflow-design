@@ -24,6 +24,10 @@ final class DirectSiteRestController
                 'permission_callback' => [$this, 'owner_permission'],
             ]);
         }
+        register_rest_route('pixflow-design/v1', '/wp-admin/direct/bridge-update', [
+            'methods' => 'POST', 'callback' => [$this, 'consume_bridge_update_ticket'],
+            'permission_callback' => [$this, 'session_permission'],
+        ]);
         register_rest_route('pixflow-design/v1', '/wp-admin/direct/tools', [
             'methods' => 'POST', 'callback' => [$this, 'tools'],
             'permission_callback' => [$this, 'session_permission'],
@@ -54,6 +58,12 @@ final class DirectSiteRestController
     public function sessions(\WP_REST_Request $request): array|\WP_Error
     {
         $body = $request->get_json_params();
+        if (($body['purpose'] ?? '') === 'bridge-update') {
+            $token = 'pfdirect_' . bin2hex(random_bytes(32));
+            set_transient($this->key($token), ['purpose' => 'bridge-update', 'userId' => get_current_user_id(),
+                'blogId' => get_current_blog_id(), 'expiresAt' => time() + 120], 120);
+            return ['token' => $token];
+        }
         if (($body['purpose'] ?? '') !== 'guidance-draft' && get_user_meta(get_current_user_id(), $this->setting_key(), true)) update_user_meta(get_current_user_id(), $this->setting_key(), false);
         $token = 'pfdirect_' . bin2hex(random_bytes(32));
         // Legacy mode values are accepted but no longer restrict a new session.
@@ -133,10 +143,20 @@ final class DirectSiteRestController
         if (!preg_match('/^pfdirect_[a-f0-9]{64}$/D', $token)) return false;
         $session = get_transient($this->key($token));
         if (!is_array($session) || $session['expiresAt'] <= time() || $session['blogId'] !== get_current_blog_id()) return false;
+        $is_update = $request->get_route() === '/pixflow-design/v1/wp-admin/direct/bridge-update';
+        if ($is_update !== (($session['purpose'] ?? '') === 'bridge-update')) return false;
         wp_set_current_user((int) $session['userId']);
         if (!current_user_can('manage_options')) return false;
         $this->session = $session;
         return true;
+    }
+
+    public function consume_bridge_update_ticket(\WP_REST_Request $request): array|\WP_Error
+    {
+        if (!delete_transient($this->key($this->token($request)))) {
+            return new \WP_Error('bridge_update_ticket_used', 'The Bridge update ticket has expired.', ['status' => 403]);
+        }
+        return ['authorized' => true];
     }
 
     public function tools(\WP_REST_Request $request): mixed

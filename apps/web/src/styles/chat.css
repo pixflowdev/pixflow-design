@@ -1040,6 +1040,12 @@
   font-weight: 650;
   line-height: 1.35;
 }
+.pixflow-bridge-update-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
 .pixflow-bridge-update-notice.is-compact {
   margin: 8px 12px;
   width: auto;

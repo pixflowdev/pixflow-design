@@ -2,12 +2,14 @@ import { createServer, request as httpRequest, type IncomingMessage, type Server
 import { request as httpsRequest } from "node:https";
 import type { AddressInfo } from "node:net";
 import { URL } from "node:url";
+import type { WindowsBridgeUpdater } from './windows-bridge-updater.js';
 import type { PixflowBridgeSitesResponse, PixflowSiteRuntimeState } from '@open-design/contracts';
 
 type BridgeGatewayState = "starting" | "running" | "stopped" | "stopping" | "failed";
 
 export interface PixflowBridgeGatewayOptions {
   port?: number;
+  windowsUpdate?: WindowsBridgeUpdater;
   version: string;
   getState(): BridgeGatewayState;
   getDaemonUrl(): string | null;
@@ -115,6 +117,22 @@ async function handleRequest(
 
   const siteKey = typeof req.headers['x-pixflow-site-key'] === 'string' ? req.headers['x-pixflow-site-key'].trim().toLowerCase() : '';
   const origin = typeof req.headers.origin === 'string' ? req.headers.origin : '';
+  if (requestUrl.pathname === '/api/pixflow/bridge-update') {
+    const updater = options.windowsUpdate;
+    if (!updater) { writeJson(res, 404, { ok: false }); return; }
+    const local = !origin && req.headers['x-pixflow-local-update'] === '1' && !req.headers['sec-fetch-site'];
+    const site = siteKey && origin ? options.resolveSite?.(siteKey, origin)?.getSite?.() : null;
+    if (!local && (!site || site.key !== siteKey || site.origin !== origin)) {
+      writeJson(res, 403, { ok: false }); return;
+    }
+    if (req.method === 'GET') { writeJson(res, 200, updater.status()); return; }
+    if (req.method !== 'POST') { writeJson(res, 405, { ok: false }); return; }
+    if (!local && (!site || !await verifyBridgeUpdateTicket(site, req.headers.authorization))) {
+      writeJson(res, 403, { ok: false }); return;
+    }
+    writeJson(res, 202, updater.start());
+    return;
+  }
   if (requestUrl.pathname === '/api/pixflow/runtime-idle') { writeJson(res, 403, { ok: false }); return; }
   if (options.resolveSite && (siteKey || origin) && requestUrl.pathname !== '/api/pixflow/site-context/switch') {
     const selected = options.resolveSite(siteKey, origin);
@@ -173,6 +191,7 @@ async function handleRequest(
       ...(runtimeState ? { runtimeState } : {}),
       product: "pixflow-design-bridge",
       transport: "tray-gateway",
+      ...(options.windowsUpdate ? { windowsUpdate: true } : {}),
       state: options.getState(),
       version: options.version,
       site: daemon?.site ?? options.getSite?.() ?? null,
@@ -180,6 +199,9 @@ async function handleRequest(
     return;
   }
 
+  if (options.windowsUpdate?.isInstalling()) {
+    writeJson(res, 409, { ok: false, code: 'PIXFLOW_BRIDGE_UPDATING' }); return;
+  }
   if (req.method === "POST" && requestUrl.pathname === "/api/pixflow/site-context/switch" && options.switchSite != null) {
     const body = await readJsonBody(req);
     const site = {
@@ -210,6 +232,9 @@ async function handleRequest(
   }
   try {
   if (res.destroyed || req.aborted) return;
+  if (options.windowsUpdate?.isInstalling()) {
+    writeJson(res, 409, { ok: false, code: 'PIXFLOW_BRIDGE_UPDATING' }); return;
+  }
   const targetBase = isApi ? options.getDaemonUrl() : options.getWebUrl();
 
   if (targetBase == null || options.getState() !== "running") {
@@ -226,6 +251,25 @@ async function handleRequest(
     timeoutMs: proxyTimeoutForPath(requestUrl),
   });
   } finally { release?.(); }
+}
+
+async function verifyBridgeUpdateTicket(site: PixflowBridgeGatewaySite, authorization?: string): Promise<boolean> {
+  if (!authorization || !/^Bearer pfdirect_[a-f0-9]{64}$/.test(authorization)) return false;
+  try {
+    const url = new URL(site.url);
+    if (url.origin !== site.origin || !['http:', 'https:'].includes(url.protocol) || url.username || url.password) return false;
+    url.pathname = url.pathname.replace(/\/*$/, '/');
+    url.hash = '';
+    url.search = '';
+    url.searchParams.set('rest_route', '/pixflow-design/v1/wp-admin/direct/bridge-update');
+    const response = await fetch(url, {
+      method: 'POST', headers: { Authorization: authorization, Accept: 'application/json' },
+      redirect: 'error', signal: AbortSignal.timeout(8_000),
+    });
+    return response.ok && (await response.json())?.authorized === true;
+  } catch {
+    return false;
+  }
 }
 
 function listen(server: Server, port: number): Promise<void> {

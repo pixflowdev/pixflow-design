@@ -102,12 +102,13 @@ for (const surface of ['workspace', 'floating'] as const) {
     events.push({ kind: 'thinking', text: 'Checking the supplied page structure.' });
     view.rerender(tree(message(true), true));
     expect(view.container.querySelector('[data-activity-group] > button')).toBeNull();
-    expect(view.container.querySelector('[data-trace-kind="reasoning"] > button')?.getAttribute('aria-expanded')).toBe('true');
+    expect(view.container.querySelector('[data-trace-kind="reasoning"] > button')?.getAttribute('aria-expanded')).toBe('false');
     expect(view.container.querySelector('[data-trace-kind="reasoning"]')).not.toBeNull();
     events.push({ kind: 'tool_use', id: 'read-1', name: scenario.tool, input: { command: 'read-only inspection' } });
     view.rerender(tree(message(true), true));
     expect(view.container.querySelector('[data-activity-group] > button [data-status="running"]')).not.toBeNull();
-    expect(view.container.querySelector('[data-activity-group] > button')?.getAttribute('aria-expanded')).toBe('true');
+    expect(view.container.querySelector('[data-activity-group] > button')?.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
     expect(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) [data-status="running"]')).not.toBeNull();
     fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
     expect(view.container.querySelector('[data-trace-kind="reasoning"] [data-status="running"]')).toBeNull();

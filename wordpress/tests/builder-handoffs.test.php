@@ -240,6 +240,7 @@ namespace {
     $GLOBALS['destination_calls'] = [];
     $agent = $service->agent_prepare($source, $agent_body);
     check(is_array($agent) && $agent['handoff']['origin'] === 'agent' && $agent['handoff']['sourceRequestId'] === $source['requestId'], 'Agent receipt records trusted source message');
+    check(($agent['handoff']['continueConversation'] ?? false) === true && $agent['handoff']['projectId'] === $source['projectId'] && $agent['handoff']['conversationId'] === $source['conversationId'], 'Agent handoff retains its trusted source chat and Plan');
     check(str_contains($agent['handoff']['brief'], 'Build in the selected live editor.') && str_contains($agent['handoff']['brief'], 'do not publish'), 'Host appends live-editor and publication preservation rules');
     check(str_contains($agent['handoff']['brief'], 'Save completed edits through the native editor') && str_contains($agent['handoff']['brief'], 'verify the save succeeded'), 'Automatic handoff requires persisted completion rather than an unsaved canvas');
     check(str_starts_with($agent['handoff']['brief'], 'The handoff has already opened the destination page ' . $agent['handoff']['destination']['postId']) && str_contains($agent['handoff']['brief'], 'do not create another page'), 'Destination identity precedes the brief and prevents interpreting it as another creation request');
@@ -255,6 +256,8 @@ namespace {
     check($service->agent_prepare($source, $agent_body)['handoff']['status'] === 'cancelled', 'Terminal retry does not restart the handoff');
     $opened_agent = $service->agent_prepare([...$source, 'requestId' => 'user-message-00000003'], ['action' => 'open', 'builder' => 'etch', 'postId' => 42, 'brief' => 'Change only the headline.']);
     check(is_array($opened_agent) && end($GLOBALS['destination_calls']) === ['action' => 'open', 'builder' => 'etch', 'postId' => 42], 'Existing-page handoff delegates read-only destination opening');
+
+    check(($opened_agent['handoff']['continueConversation'] ?? false) === true, 'Opening an existing editor also continues the source chat');
 
     $bound_tools = new \PixflowDesign\WordPress\Admin\DirectSiteWorkspace($source);
     check($bound_tools->call('builder.handoff.status', [], true)['handoff']['id'] === $opened_agent['handoff']['id'], 'Tool status uses its bound source chat');

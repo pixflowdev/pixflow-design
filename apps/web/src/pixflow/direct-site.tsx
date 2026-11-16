@@ -736,14 +736,15 @@ export async function runDirectSite(request: Parameters<typeof executeDirectSite
   // Always observe failures, including when context preparation fails first.
   void authorization.catch(() => undefined);
   let source = request.historySource;
-  // Empty panels deliberately avoid creating chats on open. First Send must
-  // establish the same durable identity used by persistence and saved plans.
-  if (!request.resume && source && !source.binding && !source.messages.length) {
+  // Resolve the durable identity before session admission on every turn,
+  // including handoffs and follow-ups that already contain local messages.
+  if (!request.resume && source && !source.binding) {
     if (!source.sessionKey) throw new Error('The chat identity is unavailable. Reopen this conversation before continuing.');
     const binding = await resolveChatHistory({ sessionKey: source.sessionKey });
     request.signal.throwIfAborted();
     if (chatHistoryOwnerScope() !== historyOwner) throw new Error('The signed-in account changed. Reopen this chat before continuing.');
     source = { ...source, binding };
+    request = { ...request, historySource: source };
   }
   // Chat ownership also binds saved plans on the first turn, before a history
   // prefix exists. Only acknowledged prefixes may replace local prompt history.

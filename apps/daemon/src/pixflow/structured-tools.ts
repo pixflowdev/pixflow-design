@@ -55,7 +55,7 @@ async function readRunFile(filename, extensions) {
  const runDirectory=path.dirname(fileURLToPath(import.meta.url));
  const directory=await realpath(runDirectory);
  if(filename!==name && (!path.isAbsolute(filename) ||
-   (path.relative(runDirectory,filename)!==name && path.relative(directory,filename)!==name))) throw new Error('The file is outside this run.');
+   await realpath(path.dirname(filename))!==directory)) throw new Error('The file is outside this run.');
  const file = await realpath(path.join(directory, name));
  if (path.dirname(file) !== directory) throw new Error('The file is outside this run.');
  const info = await stat(file);
@@ -221,5 +221,9 @@ export async function stagePixflowMcp(helper: string, scope: 'workspace' | 'site
   const source = PIXFLOW_MCP_SOURCE.replace('HELPER_URL',JSON.stringify(pathToFileURL(helper).href))
     .replace('BINDING',JSON.stringify(binding)).replace('WORKSPACE',JSON.stringify(scope==='workspace'));
   await writeFile(file,source,{mode:0o600});
-  return {server:{command:process.execPath,args:[file]} satisfies PixflowMcpCommand,cleanup:()=>rm(file,{force:true})};
+  // MCP hosts can filter inherited environment variables, including
+  // NODE_USE_SYSTEM_CA. Carry the daemon's desktop host-trust policy in the
+  // Node invocation so trusted local sites work without disabling TLS checks.
+  const trustArgs = process.platform === 'darwin' || process.platform === 'win32' ? ['--use-system-ca'] : [];
+  return {server:{command:process.execPath,args:[...trustArgs,file]} satisfies PixflowMcpCommand,cleanup:()=>rm(file,{force:true})};
 }

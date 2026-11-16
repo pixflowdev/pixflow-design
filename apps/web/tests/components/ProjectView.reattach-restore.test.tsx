@@ -246,6 +246,28 @@ describe('ProjectView daemon reattach restore', () => {
     ).toBe(false);
   });
 
+  it.each(['running', 'succeeded'] as const)('does not rewrite a builder-owned %s handoff while Workspace is open', async (runStatus) => {
+    const id = 'handoff-' + 'a'.repeat(64);
+    listConversations.mockResolvedValue([{ id: 'conv-1', title: 'Conversation' }]);
+    listMessages.mockResolvedValue([{ id, role: 'assistant', content: '', runId: 'bridge-run', runStatus }]);
+    fetchPreviewComments.mockResolvedValue([]);
+    loadTabs.mockResolvedValue({ tabs: [], activeTabId: null });
+    fetchProjectFiles.mockResolvedValue([]);
+    fetchLiveArtifacts.mockResolvedValue([]);
+    fetchSkill.mockResolvedValue(null);
+    fetchDesignSystem.mockResolvedValue(null);
+    getTemplate.mockResolvedValue(null);
+    fetchChatRunStatus.mockResolvedValue(null);
+
+    renderProjectView();
+
+    await waitFor(() => expect(listMessages).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchProjectFiles).toHaveBeenCalled());
+    expect(fetchChatRunStatus).not.toHaveBeenCalled();
+    expect(reattachDaemonRun).not.toHaveBeenCalled();
+    expect(saveMessage.mock.calls.some(call => (call[2] as ChatMessage)?.id === id)).toBe(false);
+  });
+
   it('fully replays a terminal succeeded run whose persisted assistant turn is empty', async () => {
     const startedAt = Date.now();
     listConversations.mockResolvedValue([{ id: 'conv-1', title: 'Conversation' }]);

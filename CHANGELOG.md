@@ -13,8 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Let assistants filter WordPress posts by category or tag and sort by publication date when building or checking query loops.
 - Give local assistants including Grok Build and Antigravity direct access to Pixflow site tools through MCP, with WordPress permissions and native helpers available when needed.
 
+### Changed
+
+- Use the current Workspace provider and model when drafting site guidance or generating a design system.
+
 ### Fixed
 
+- Fix sign-in errors when Workspace loads the design system and template catalogues in WordPress.
 - Fix Antigravity failing to start when a model variant specifies a reasoning level that conflicts with the saved setting.
 - Let the open assistant panel reconnect during a Bridge restart and send the waiting message once the Bridge is ready.
 - Fix Stop after reloading a page while a Bridge assistant is still running.

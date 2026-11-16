@@ -35,6 +35,16 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 
 = Unreleased =
 
+**Changed**
+
+* Use the current Workspace provider and model when drafting site guidance or generating a design system.
+
+**Fixed**
+
+* Fix sign-in errors when Workspace loads the design system and template catalogues in WordPress.
+
+= Unreleased =
+
 **Added**
 
 * Update the Windows Bridge from WordPress. Follow download, installation and restart progress in a Pixflow desktop window.

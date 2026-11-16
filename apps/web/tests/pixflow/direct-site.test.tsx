@@ -784,6 +784,18 @@ it('opens the authorized site session while loading history and revokes it if hi
   } finally { loading.mockRestore(); }
 });
 
+it('binds the first turn of an empty saved chat so providers can save its plan', async () => {
+  const binding = { projectId: 'a'.repeat(36), conversationId: 'new-chat' };
+  requests.wordpress.mockResolvedValue(Response.json({ endpoint: 'https://site.example/tools', token: 'temporary', writable: true,
+    historyPage: { messages: [], hasMore: false, nextCursor: null } }));
+  requests.daemon.mockResolvedValue(new Response('{"type":"done","ok":true}\n'));
+  await runDirectSite({ agentId: 'codex', prompt: 'Build a page', history: [], historySource: {
+    binding, checkSavedPageFirst: false, messages: [],
+  }, mode: 'build', signal: new AbortController().signal, onUpdate: vi.fn() });
+  expect(JSON.parse(requests.wordpress.mock.calls[0]![1].body).historyBinding).toEqual(binding);
+  expect(JSON.parse(requests.daemon.mock.calls[0]![1].body).history).toEqual([]);
+});
+
 it('prepares an acknowledged follow-up with one WordPress request and sends only prompt history to the Bridge', async () => {
   const binding = { projectId: 'a'.repeat(36), conversationId: 'saved-chat' };
   const messages = [{ id: 'prior', role: 'user' as const, content: 'Recall maple' }];
@@ -815,4 +827,18 @@ it('refreshes once before admission and forwards the saved correction with the s
   const [initial, retry] = requests.daemon.mock.calls.map(([, options]) => JSON.parse(options.body));
   expect(retry.continuation).toEqual(initial.continuation);
   expect(retry.history).toEqual([{ role: 'user', content: 'Corrected' }]);
+});
+it('creates a binding on first Send from a genuinely new chat before opening plan tools', async () => {
+  const binding = { projectId: 'a'.repeat(36), conversationId: 'new-chat' };
+  requests.wordpress.mockImplementation(async (path) => Response.json(String(path).includes('/chat-history/resolve') ? binding : {endpoint:'https://site.example/tools',token:'temporary',writable:true}));
+  requests.daemon.mockResolvedValue(new Response('{"type":"done","ok":true}\n'));
+  await runDirectSite({agentId:'codex',prompt:'Build my homepage',history:[],historySource:{sessionKey:'new-session',messages:[]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()});
+  const session = requests.wordpress.mock.calls.find(call => String(call[0]).includes('/direct/sessions'));
+  expect(JSON.parse(session![1].body).historyBinding).toEqual(binding);
+});
+it('does not admit a new-chat run when its saved identity cannot be established', async () => {
+  requests.wordpress.mockResolvedValue(Response.json({message:'Chat unavailable'}, {status:503}));
+  await expect(runDirectSite({agentId:'claude',prompt:'Build a homepage',history:[],historySource:{sessionKey:'new-session',messages:[]},mode:'ask',signal:new AbortController().signal,onUpdate:vi.fn()})).rejects.toThrow('Chat unavailable');
+  expect(requests.daemon).not.toHaveBeenCalled();
+  expect(requests.wordpress.mock.calls.every(call => !String(call[0]).includes('/direct/sessions'))).toBe(true);
 });

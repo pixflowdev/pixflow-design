@@ -67,7 +67,8 @@ body.pixflow-admin-workspace-open.pixflow-blog-panel-open #pixflow-wp-admin-agen
   position: fixed;
   z-index: 100100;
   display: none;
-  min-width: 450px;
+  min-width: min(450px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
   min-height: min(560px, calc(100vh - 64px));
   overflow: hidden;
   color: var(--od-text, #172033);

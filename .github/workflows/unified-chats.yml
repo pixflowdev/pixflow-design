@@ -23,7 +23,8 @@ permissions:
 jobs:
   validate:
     name: Unified chat validation
-    runs-on: ubuntu-latest
+    # Keep browser dependencies on an OS supported by the pinned Playwright.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6.0.2
@@ -40,13 +41,15 @@ jobs:
         run: |
           pnpm --filter @open-design/daemon test pixflow/direct-codex-worker pixflow/codex-turn pixflow/direct-site-session pixflow/direct-site-native-context
           php wordpress/tests/chat-history-sqlite.test.php
+          php wordpress/tests/saved-plan.test.php
+          pnpm --filter @open-design/daemon test pixflow/structured-tools
           php wordpress/tests/direct-session-features.test.php
       - run: pnpm guard
       - run: pnpm typecheck
       - run: pnpm --filter @open-design/web test ConversationActions FloatingChatMenu last-active-chat last-active-restoration floating-conversation composer-draft ChatComposer.infinite-render durable-history ProjectView.api-empty-response ProjectView.run-isolation ProjectView.run-cleanup daemon-workspace-handoff daemon-sse-reconnect completed-workspace-run
       - run: pnpm --filter @open-design/web test tests/pixflow/direct-site.test.tsx tests/pixflow/working-context.test.ts tests/components/SharedChatRows.test.tsx
       - run: pnpm --filter @open-design/web test bridge-connection-route AvatarMenu WorkspaceBridgeStatus
-      - run: pnpm --filter @open-design/web test agent-trace activity-label live-prose-reveal inline-citation floating-chat-scroll activity-disclosure assistant-message-tool-status assistant-message-thinking-volume ChatPane.streaming run-reattach
+      - run: pnpm --filter @open-design/web test agent-trace activity-label live-prose-reveal inline-citation stream-elements activity-disclosure assistant-message-tool-status assistant-message-thinking-volume ChatPane.streaming run-reattach
       - run: pnpm --filter @open-design/daemon test claude-stream-tools
       - name: Shared shadcn controls, scrolling and saved history
         run: |
@@ -62,4 +65,9 @@ jobs:
       - run: pnpm exec tsx --test tools/pixflow-design-bridge/tests/native-route-label.test.ts
       - run: pnpm --filter @open-design/web test agent-surface-outlet resource-draft user-message-context-reference floating-panel-drag
       - run: pnpm i18n:check
+      - name: Message scrolling in Chromium
+        working-directory: e2e
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test --config resources/message-scroller.config.ts
       - run: pnpm wordpress:web

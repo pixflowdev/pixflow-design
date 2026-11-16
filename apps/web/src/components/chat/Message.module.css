@@ -1,9 +1,7 @@
-.message { position: relative; min-width: 0; max-width: 100%; }
-@media (prefers-reduced-motion: no-preference) {
-  .message[data-align="end"] { animation: prompt-enter 260ms cubic-bezier(.16, 1, .3, 1) both; }
-  @keyframes prompt-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-}
-.message[data-align="end"] { margin-inline-start: auto; }
-.content { display: flex; flex-direction: column; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
-.header { display: flex; align-items: center; min-width: 0; max-width: 100%; }
-.footer { display: flex; align-items: center; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.message { --prose-font-size:14px; --prose-line-height:1.625; position:relative; display:flex; width:100%; min-width:0; gap:8px; font-family:var(--sans,system-ui,sans-serif); font-size:14px; font-weight:400; line-height:20px; }
+.message[data-align=end] { flex-direction:row-reverse; }
+.content { display:flex; width:100%; min-width:0; flex-direction:column; gap:10px; overflow-wrap:break-word; }
+.message[data-align=end] .content > [data-slot] { align-self:flex-end; }
+.header,.footer { display:flex; max-width:100%; min-width:0; align-items:center; padding-inline:12px; font-size:12px; font-weight:500; color:var(--text-muted); }
+.message:has([data-variant=ghost]) .header,.message:has([data-variant=ghost]) .footer { padding-inline:0; }
+.message[data-align=end] .footer { justify-content:flex-end; }

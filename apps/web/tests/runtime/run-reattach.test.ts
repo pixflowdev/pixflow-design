@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../../src/runtime/run-reattach';
+import { hasActiveWorkspaceRun, isDaemonRecoveryMessage, isSpuriouslyFailedAssistantMessage } from '../../src/runtime/run-reattach';
 
 describe('reload run recovery', () => {
+  it('allows opening the owner panel for a saved active direct run, but blocks a live Workspace run', () => {
+    const direct = {id:'direct:1',role:'assistant',content:'Working',runStatus:'running'} as const;
+    expect(hasActiveWorkspaceRun([direct])).toBe(false);
+    expect(hasActiveWorkspaceRun([{...direct,id:'workspace-1'}])).toBe(true);
+    expect(hasActiveWorkspaceRun([{...direct,id:'workspace-1',runStatus:'succeeded'}])).toBe(false);
+  });
   it('does not fail another panel’s active Direct run when daemon run discovery has no match', () => {
     const direct = { id: 'direct:1793583024888', role: 'assistant', content: 'Reading the pages.', runStatus: 'running' } as const;
     expect(isDaemonRecoveryMessage(direct)).toBe(false);

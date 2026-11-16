@@ -1,4 +1,7 @@
-import { IconListCheck, IconCircle } from '@tabler/icons-react';
+import { PlanCard } from './chat/Plan';
+import { IconCircleCheck, IconAlertCircle, IconPlayerPause, IconLoader2 } from '@tabler/icons-react';
+import { activityAction } from './chat/activity-label';
+import { StreamToolResult } from './chat/StreamToolResult';
 import { Button } from '@open-design/components';
 import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent } from './chat/CodeBlock';
 import type { ReactNode } from 'react';
@@ -18,7 +21,7 @@ import { useT as usePixflowUiTranslation } from '../i18n';
 import { useMemo, useState } from 'react';
 import styles from './ToolCard.module.css';
 import { useT } from '../i18n';
-import { isTodoWriteToolName, parseTodoWriteInput } from '../runtime/todos';
+import { isTodoWriteToolName } from '../runtime/todos';
 import { getToolRenderer, toRenderProps } from '../runtime/tool-renderers';
 import type { AgentEvent } from '../types';
 import { Icon } from './Icon';
@@ -67,14 +70,14 @@ export function ToolCard({
     }
   }
   const ctx: FileToolCtx = { projectFileNames, onRequestOpenFile };
-  if (isTodoWriteToolName(name)) return <TodoCard input={use.input} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
+  if (isTodoWriteToolName(name)) return <PlanCard input={use.input} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'Write' || name === 'write' || name === 'create_file' || name === 'write_file')
     return <FileWriteCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
   if (name === 'Edit' || name === 'str_replace_edit' || name === 'edit_file')
     return <FileEditCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
   if (name === 'Read' || name === 'read_file')
     return <FileReadCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} ctx={ctx} />;
-  if (name === 'Bash' || name === 'run_command') return <BashCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
+  if (activityAction(name) === 'command') return <BashCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'Glob' || name === 'list_files') return <GlobCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'Grep') return <GrepCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
   if (name === 'WebFetch' || name === 'web_fetch' || name === 'webfetch') return <WebFetchCard input={use.input} result={result} runStreaming={isStreaming} runSucceeded={isSucceeded} />;
@@ -182,15 +185,8 @@ function LegacyAskUserQuestionCard({
     })
     .filter(Boolean)
     .join(' · ');
-  return (
-    <div className="op-card op-generic">
-      <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{title}</span>
-        {summary ? <span className="op-meta">{truncate(summary, 240)}</span> : null}
-      </div>
-    </div>
-  );
+  return <ToolTrace title={title} description={summary} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 interface FileToolCtx {
@@ -208,71 +204,17 @@ function OpenInTabButton({ filePath, ctx }: { filePath: string; ctx: FileToolCtx
   if (ctx.projectFileNames && !ctx.projectFileNames.has(baseName)) return null;
   const open = ctx.onRequestOpenFile;
   return (
-    <button
-      type="button"
-      className="op-open"
+    <Button
+      variant="ghost"
+      className={styles.open}
       onClick={() => open(baseName)}
       title={t('tool.openInTab', { name: baseName })}
     >
       {t('tool.open')}
-    </button>
+    </Button>
   );
 }
 
-export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { input: unknown; runStreaming: boolean; runSucceeded: boolean; onDismiss?: () => void }) {
-  const t = useT();
-  const todos = parseTodoWriteInput(input);
-  // Mirror the pattern other agent UIs (Cursor, Codex) use: default the
-  // todo list to expanded while there is in-progress work or anything
-  // pending, collapse it to a one-line summary when everything is done.
-  // The user can flip it manually via the header button — that local
-  // override sticks for the lifetime of this card.
-  const hasInProgress = todos.some((todo) => todo.status === 'in_progress');
-  const hasPending = todos.some((todo) => todo.status === 'pending' || todo.status === 'in_progress');
-  const defaultExpanded = todos.length > 0 && (hasInProgress || hasPending || runStreaming);
-  const [overrideExpanded, setOverrideExpanded] = useState<boolean | null>(null);
-  const expanded = overrideExpanded ?? defaultExpanded;
-  if (todos.length === 0) return <GenericCard name="TodoWrite" input={input} runStreaming={runStreaming} runSucceeded={runSucceeded} />;
-  // The counter reads as "active progress / total" — a task that is
-  // currently in_progress counts toward the numerator alongside completed
-  // ones, matching how Cursor / Codex tally tasks. Without this the user
-  // sees 0/4 the entire time the first task is being worked, which is
-  // confusing because something is clearly underway.
-  const inProgressTodo = todos.find((todo) => todo.status === 'in_progress');
-  const completed = todos.filter((todo) => todo.status === 'completed').length;
-  const done = todos.filter(
-    (todo) => todo.status === 'completed' || todo.status === 'in_progress',
-  ).length;
-  // All-complete state surfaces the Done dismiss button (when wired) so the
-  // pinned task list can be cleared once the whole plan is finished.
-  const allComplete = completed === todos.length;
-  const showDismiss = !!onDismiss && allComplete;
-  return (
-    <Trace className="op-todo" data-trace-kind="plan">
-      <TraceCollapsible open={expanded} onOpenChange={setOverrideExpanded}>
-        <div className={styles.planHeading}>
-          <TraceCollapsibleTrigger title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}>
-            <TraceLine><TraceIcon><IconListCheck size={14} /></TraceIcon>
-              <TraceTitle>{t('tool.todos')}</TraceTitle><TraceDescription>{done}/{todos.length}</TraceDescription>
-              {!expanded && inProgressTodo ? <TraceDescription>{inProgressTodo.activeForm || inProgressTodo.content}</TraceDescription> : null}
-            </TraceLine>
-          </TraceCollapsibleTrigger>
-          {showDismiss ? <Button variant="subtle" onClick={() => onDismiss?.()} title={t('tool.todosDismiss')}>{t('tool.todosDone')}</Button> : null}
-        </div>
-        <TraceCollapsibleContent keepMounted>
-          <ul className="todo-list">
-            {todos.map((todo, i) => <li key={i} className={`todo-item todo-${todo.status}`}>
-              <TraceLine className={styles.planItem} status={todo.status === 'in_progress' ? 'running' : todo.status === 'stopped' ? 'error' : todo.status === 'pending' ? 'pending' : undefined}>
-                <TraceIcon>{todo.status === 'pending' ? <IconCircle size={14} /> : <Icon name={todo.status === 'completed' ? 'check' : todo.status === 'in_progress' ? 'spinner' : 'close'} size={14} />}</TraceIcon>
-                <TraceTitle>{todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}</TraceTitle>
-              </TraceLine>
-            </li>)}
-          </ul>
-        </TraceCollapsibleContent>
-      </TraceCollapsible>
-    </Trace>
-  );
-}
 
 function FileWriteCard({
   input,
@@ -293,7 +235,7 @@ function FileWriteCard({
   const baseName = file.split(/[\\/]/).pop() ?? file;
   const lines = typeof obj.content === 'string' ? obj.content.split('\n').length : null;
   return <ToolTrace title={t('tool.write')} description={<>{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</>} result={result}
-    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className={styles.path}>{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function FileEditCard({
@@ -330,9 +272,9 @@ function FileEditCard({
   return <ToolTrace title={t('tool.edit')} description={first ? <>{first.split(/[\\/]/).pop()} · {count} {t(count === 1 ? 'tool.changeSingular' : 'tool.changePlural')}</> : null}
     result={result} hideOutput={parsed.length > 0} runStreaming={runStreaming} runSucceeded={runSucceeded}
     detail={first ? () => changes.length ? changes.map((row, index) => <div key={index}>
-      <code className="op-path">{row.path}</code>{typeof row.kind?.type === 'string' && <> · {row.kind.type}</>}<OpenInTabButton filePath={row.path} ctx={ctx} />
-      {row.diff && <pre className="op-output">{truncate(row.diff, 4000)}</pre>}
-    </div>) : <><code className="op-path">{first}</code><OpenInTabButton filePath={first} ctx={ctx} /></> : undefined} />;
+      <code className={styles.path}>{row.path}</code>{typeof row.kind?.type === 'string' && <> · {row.kind.type}</>}<OpenInTabButton filePath={row.path} ctx={ctx} />
+      {row.diff && <CodeBlock size="sm"><CodeBlockContent>{truncate(row.diff, 4000)}</CodeBlockContent></CodeBlock>}
+    </div>) : <><code className={styles.path}>{first}</code><OpenInTabButton filePath={first} ctx={ctx} /></> : undefined} />;
 }
 
 function fileChanges(value: unknown): { path: string; diff?: string; kind?: { type?: string } }[] {
@@ -359,16 +301,16 @@ function FileReadCard({
   const file = obj.file_path ?? obj.filePath ?? obj.path ?? obj.Path ?? '(unnamed)';
   const baseName = file.split(/[\\/]/).pop() ?? file;
   return <ToolTrace title={t('tool.read')} description={baseName} result={result}
-    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className="op-path">{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<><code className={styles.path}>{file}</code><OpenInTabButton filePath={file} ctx={ctx} /></>)} />;
 }
 
 function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
   const t = useT();
-  const obj = (input ?? {}) as { command?: string; CommandLine?: string; description?: string };
-  const command = obj.command ?? obj.CommandLine ?? '';
+  const obj = (input ?? {}) as { command?: string; cmd?: string; CommandLine?: string; description?: string };
+  const command = obj.command ?? obj.cmd ?? obj.CommandLine ?? '';
   const desc = obj.description;
-  return <ToolTrace title={desc || t('chat.designToolbox.context.terminal')} result={result}
-    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<CodeBlock><CodeBlockContent><pre className="op-command"><code>{truncate(command, 400)}</code></pre></CodeBlockContent></CodeBlock>)} />;
+  return <ToolTrace kind="terminal" title={desc || t('chat.designToolbox.context.terminal')} result={result}
+    runStreaming={runStreaming} runSucceeded={runSucceeded} detail={() => (<CodeBlock size="sm"><CodeBlockContent>{truncate(command, 4000)}</CodeBlockContent></CodeBlock>)} />;
 }
 
 function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknown; result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
@@ -415,32 +357,35 @@ function GenericCard({
   runSucceeded: boolean;
 }) {
   const summary = describeInput(input);
-  return <ToolTrace title={name} description={summary ? truncate(summary, 200) : undefined} result={result}
+  const kind = /^(?:Task|Agent|spawn_agent|delegate_task|researchAgent)$/i.test(name) ? 'subagent' : 'tool';
+  const metadata = input && typeof input === 'object' ? input as Record<string, unknown> : {};
+  const title = kind === 'subagent' && typeof metadata.description === 'string' ? metadata.description : name;
+  return <ToolTrace kind={kind} title={title} description={summary ? truncate(summary, 200) : undefined} result={result}
     runStreaming={runStreaming} runSucceeded={runSucceeded} />;
 }
 
 /** A tool only expands when there is real input detail or output to inspect.
  * Keep large output unmounted until requested; source events remain untouched. */
-function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail, hideOutput }: {
-  title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
+function ToolTrace({ title, description, result, runStreaming, runSucceeded, detail, hideOutput, kind = 'tool' }: {
+  kind?: string; title: string; description?: ReactNode; result?: Props['result']; runStreaming: boolean;
   runSucceeded: boolean; detail?: (() => ReactNode) | undefined; hideOutput?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>();
   const t = useT();
-  const status = result?.isError ? 'error' : !result && runStreaming ? 'running' : undefined;
+  const status = result?.isError ? 'error' : !result && runStreaming ? 'running' : !result && !runSucceeded ? 'pending' : undefined;
   const label = result?.isError ? `${title} · ${t('tool.error')}` : title;
   const line = <TraceLine status={status}>
     <ResultBadge className={styles.status} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
     <TraceTitle title={label}>{label}</TraceTitle>
     {description ? <TraceDescription>{description}</TraceDescription> : null}
   </TraceLine>;
-  if (!detail && !result?.content) return <div data-trace-kind="tool">{line}</div>;
-  return <TraceCollapsible data-trace-kind="tool" open={open}
+  if (!detail && !result?.content) return <div data-trace-kind={kind}>{line}</div>;
+  return <TraceCollapsible data-trace-kind={kind} open={open ?? status === 'running'}
     onOpenChange={setOpen}>
     <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
     <TraceCollapsibleContent className={styles.detail}>
       {detail ? <ToolInput render={detail} /> : null}
-      {result?.content && !hideOutput ? <ToolOutput content={result.content} /> : null}
+      {result?.content && !hideOutput ? <ToolOutput content={result.content} failed={result.isError} kind={kind} /> : null}
     </TraceCollapsibleContent>
   </TraceCollapsible>;
 }
@@ -451,7 +396,7 @@ function ToolInput({ render }: { render: () => ReactNode }) {
 
 // Formatting is presentation-only: persisted provider output is never rewritten.
 // Bound parsing as well as rendering so unusually large results cannot stall a stream.
-function ToolOutput({ content }: { content: string }) {
+function ToolOutput({ content, failed, kind }: { content: string; failed?: boolean; kind: string }) {
   const t = useT();
   const formatted = useMemo(() => {
     let value = content;
@@ -460,18 +405,19 @@ function ToolOutput({ content }: { content: string }) {
     }
     return truncate(value, 4000);
   }, [content]);
-  return <CodeBlock className={styles.output} size="sm">
-    <CodeBlockHeader><CodeBlockTitle className={styles.outputLabel}>{t('tool.output')}</CodeBlockTitle></CodeBlockHeader>
-    <CodeBlockContent><pre className="op-output"><code>{formatted}</code></pre></CodeBlockContent>
-  </CodeBlock>;
+  return <StreamToolResult content={content} failed={failed} kind={kind}><CodeBlock size="sm" variant={failed ? 'destructive' : 'default'}>
+    <CodeBlockHeader><CodeBlockTitle>{t('tool.output')}</CodeBlockTitle></CodeBlockHeader>
+    <CodeBlockContent>{formatted}</CodeBlockContent>
+  </CodeBlock></StreamToolResult>;
 }
 
 function ResultBadge({ result, runStreaming, runSucceeded, className = '' }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean; className?: string }) {
   const t = useT();
-  if (!result && runStreaming) return <span className={`op-status op-status-running ${className}`} title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
-  if (!result && !runSucceeded) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
-  if (result?.isError) return <span className={`op-status op-status-error ${className}`} title={t('tool.error')}><Icon name="close" size={14} /></span>;
-  return <span className={`op-status op-status-ok ${className}`} title={t('tool.done')}><Icon name="check" size={14} /></span>;
+  const Glyph = !result && runStreaming ? IconLoader2 : result?.isError ? IconAlertCircle
+    : !result && !runSucceeded ? IconPlayerPause : IconCircleCheck;
+  return <TraceIcon data-tool-status={!result && runStreaming ? 'running' : result?.isError ? 'error' : !result && !runSucceeded ? 'pending' : 'done'} className={className} title={t(!result && runStreaming ? 'tool.running' : result?.isError || !result && !runSucceeded ? 'tool.error' : 'tool.done')}>
+    <Glyph size={16} className={!result && runStreaming ? styles.spinner : undefined} />
+  </TraceIcon>;
 }
 
 function describeInput(input: unknown): string {

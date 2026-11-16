@@ -258,6 +258,7 @@ it('retains current-run save evidence after compaction instead of replaying the 
   return Response.json(body.tool==='help'?{integrations:{bricks:false}}:{ok:true,saved:true,revision:'saved-revision-2'});
  }));
  await runByokSite({config,prompt:'Change the heading',history:[],historySource:{binding,messages:[]},signal:new AbortController().signal,onUpdate:vi.fn()});
+ expect(JSON.parse(requests.wordpress.mock.calls.at(-1)![1].body).historyBinding).toEqual(binding);
  expect(context.run).toHaveBeenCalledOnce();
 });
 it.each(['direct', 'composio'] as const)('keeps an unavailable advanced action a normal result in %s', async apiTransport => {

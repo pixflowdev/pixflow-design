@@ -19,10 +19,10 @@ it('keeps a manually opened tool detail when the outer timeline is folded and re
   }} />);
   const group = view.container.querySelector('[data-activity-group] > button')!;
   fireEvent.click(group);
-  fireEvent.click(view.container.querySelector('[data-trace-kind="tool"] > button')!);
+  fireEvent.click(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) > button')!);
   fireEvent.click(group);
   fireEvent.click(group);
-  expect(view.container.querySelector('[data-trace-kind="tool"] > button')?.getAttribute('aria-expanded')).toBe('true');
+  expect(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) > button')?.getAttribute('aria-expanded')).toBe('true');
   expect(view.getByText('Ready')).toBeTruthy();
 });
 
@@ -35,7 +35,7 @@ it('renders repeated saved tool identities once while retaining distinct executi
   const before = JSON.stringify(message);
   const view = render(<AssistantMessage projectId={null} streaming={false} message={message} />);
   fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
-  expect(view.container.querySelectorAll('[data-trace-kind="tool"]')).toHaveLength(2);
+  expect(view.container.querySelectorAll(':is([data-trace-kind="tool"],[data-trace-kind="terminal"])')).toHaveLength(2);
   expect(view.getByText('error · 1')).toBeTruthy();
   expect(JSON.stringify(message)).toBe(before);
 });
@@ -73,7 +73,7 @@ it.each([{}, []])('omits an empty generic tool input instead of displaying JSON 
     ],
   }} />);
   fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
-  expect(view.container.querySelector('[data-trace-kind="tool"] [data-slot="trace-description"]')).toBeNull();
+  expect(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) [data-slot="trace-description"]')).toBeNull();
 });
 const scenarios = [
   { agentId: 'codex', mode: 'cli', tool: 'functions.exec_command' },
@@ -107,9 +107,8 @@ for (const surface of ['workspace', 'floating'] as const) {
     events.push({ kind: 'tool_use', id: 'read-1', name: scenario.tool, input: { command: 'read-only inspection' } });
     view.rerender(tree(message(true), true));
     expect(view.container.querySelector('[data-activity-group] > button [data-status="running"]')).not.toBeNull();
-    expect(view.container.querySelector('[data-activity-group] > button')?.getAttribute('aria-expanded')).toBe('false');
-    fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
-    expect(view.container.querySelector('[data-trace-kind="tool"] [data-status="running"]')).not.toBeNull();
+    expect(view.container.querySelector('[data-activity-group] > button')?.getAttribute('aria-expanded')).toBe('true');
+    expect(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) [data-status="running"]')).not.toBeNull();
     fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
     expect(view.container.querySelector('[data-trace-kind="reasoning"] [data-status="running"]')).toBeNull();
     events.push({ kind: 'tool_result', toolUseId: 'read-1', content: 'PAGE_READ_CONFIRMED', isError: false });
@@ -119,7 +118,7 @@ for (const surface of ['workspace', 'floating'] as const) {
     expect(view.container.querySelector('[data-activity-group] > button')?.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
     expect(view.container.querySelector('[data-status="running"]')).toBeNull();
-    const toggle = view.container.querySelector('[data-trace-kind="tool"] > button')!;
+    const toggle = view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) > button')!;
     fireEvent.click(toggle);
     expect(view.getByText('PAGE_READ_CONFIRMED')).toBeTruthy();
     expect(view.getByText('The page is ready.')).toBeTruthy();
@@ -141,7 +140,7 @@ it('keeps unknown CLI tools inspectable without treating their output as HTML', 
   }} />);
   fireEvent.click(view.container.querySelector('[data-activity-group] > button')!);
   expect(view.container.querySelector('[data-status="error"]')).not.toBeNull();
-  fireEvent.click(view.container.querySelector('[data-trace-kind="tool"] > button')!);
+  fireEvent.click(view.container.querySelector(':is([data-trace-kind="tool"],[data-trace-kind="terminal"]) > button')!);
   expect(view.getByText('<script>unsafe()</script>')).toBeTruthy();
   expect(view.container.querySelector('script')).toBeNull();
 });

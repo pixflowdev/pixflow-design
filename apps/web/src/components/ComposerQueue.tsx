@@ -1,3 +1,4 @@
+import { Trace, TraceCollapsible, TraceCollapsibleTrigger, TraceCollapsibleContent, TraceLine, TraceIcon, TraceTitle, TraceDescription } from './chat/Trace';
 import { useT as usePixflowUiTranslation } from '../i18n';
 import { useRef, useState } from 'react';
 import { Button } from '@open-design/components';
@@ -38,7 +39,9 @@ export function ComposerQueue({ queue, canSteer, busy = false, onEdit, canEdit =
   const needsClaudeSignIn = Boolean(queue.clearClaudeSignIn && items.some(item => item.requiresClaudeSignIn));
   const editable = !needsClaudeSignIn && canReorder && items.every(item => item.state === 'queued');
   return <section className={styles.queue} aria-label={translateUi("ui.composerQueue.queuedMessages")}>
-    <ol className={styles.list}>{items.map(item => <li key={item.id} className={styles.item} data-queue-id={item.id} data-dragging={drag?.id === item.id || undefined}
+    <Trace><TraceCollapsible defaultOpen>
+      <TraceCollapsibleTrigger><TraceLine><TraceIcon><Icon name="file" size={16}/></TraceIcon><TraceTitle>{translateUi("ui.composerQueue.queuedMessages")}</TraceTitle><TraceDescription>{items.length}</TraceDescription></TraceLine></TraceCollapsibleTrigger>
+      <TraceCollapsibleContent keepMounted><ol className={styles.list}>{items.map(item => <li key={item.id} className={styles.item} data-queue-id={item.id} data-dragging={drag?.id === item.id || undefined}
       style={drag ? { transform: `translateY(${drag.id === item.id ? drag.offset : drag.shifts[item.id] ?? 0}px)` } : undefined}
       onDragOver={event => { if (editable) event.preventDefault(); }}
       onDrop={event => { event.preventDefault(); if (dragId.current && editable) queue.reorder(dragId.current, item.id); dragId.current = null; }}>
@@ -101,7 +104,7 @@ export function ComposerQueue({ queue, canSteer, busy = false, onEdit, canEdit =
           <Button variant="ghost" className={styles.iconAction} disabled={!canRemove || item.state === 'sending'} aria-label={translateUi("ui.composerQueue.deleteQueuedMessage")} onClick={() => queue.remove(item.id)}><Icon name="trash" size={14}/></Button>
           {item.state === 'queued' && <Button variant="ghost" className={styles.iconAction} disabled={!canEdit} aria-label={translateUi("ui.composerQueue.editQueuedMessage")} title={canEdit ? translateUi("ui.composerQueue.editInComposer") : translateUi("ui.composerQueue.sendOrClearYourCurrentDraftFirst")} onClick={() => onEdit(item)}><Icon name="edit" size={14}/></Button>}
         </div>
-    </li>)}</ol>
+    </li>)}</ol></TraceCollapsibleContent></TraceCollapsible></Trace>
     {needsClaudeSignIn && !busy && queue.clearClaudeSignIn && <ClaudeSignIn
       requireFreshSignIn onConnected={queue.clearClaudeSignIn}
     />}

@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { PixflowDirectSiteSession, PixflowDirectSiteAuthorization, PixflowWorkspaceSource } from '@open-design/contracts';
-import { pixflowWorkspaceBuilderHandoffInstructions } from '@open-design/contracts';
+import { pixflowWorkspaceBuilderHandoffInstructions, pixflowSavedPlanInstructions } from '@open-design/contracts';
 import { directSessionUrl, revokeDirectSession, readDirectAuthorizationResponse } from './direct-site-session.js';
 import { windowsHelperLauncher } from './windows-helper-launcher.js';
 
@@ -23,7 +23,7 @@ export async function authorizeWorkspaceBuilderSession(raw: string | undefined, 
 }
 
 /** Generated compatibility helper. Its private neighbour is outside project exports and file synchronization. */
-const workspaceTools = ['builder.destinations', 'builder.handoff', 'builder.handoff.status'];
+const workspaceTools = ['builder.destinations', 'builder.handoff', 'builder.handoff.status', 'plan.read', 'plan.update'];
 export const workspaceBuilderHelperSource = `import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -113,5 +113,5 @@ export async function stageWorkspaceBuilderHelper(root: string, session: Pixflow
     await writeFile(helper, `const workspace = ${discovery};\nif (['context','help','--help','-h'].includes(process.argv[2]) && process.argv.length === 3) { console.log(JSON.stringify(workspace)); process.exit(0); }\n` + workspaceBuilderHelperSource, { mode: 0o600 });
     if (windows) await writeFile(launcher, windowsHelperLauncher('builder-tool.mjs'));
   } catch (error) { await cleanup(); throw error; }
-  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\n${windows ? `For a PowerShell terminal use ${command} TOOL '@arguments.json'. For a Bash terminal use ${bashCommand} TOOL '@arguments.json' (no PowerShell & prefix). Use the syntax of your terminal; do not switch shells or copy argument files to a temporary directory.` : `Use ${command} TOOL '@arguments.json' for this turn.`} ${windows ? 'This native command launcher works under restrictive PowerShell settings and uses the Bridge runtime directly; do not call node, change execution policy, or set runtime environment variables. ' : ''}For Bricks page discovery use builder.destinations --builder bricks with that launcher. For other calls write UTF-8 JSON to an argument file and quote the @file path. Use context for the verified site identity and help for the tool list. builder.destinations also accepts --search with a quoted search string, optionally alongside --builder, or the same fields in JSON. builder.handoff accepts action create (title) or open (postId), builder, brief, and optional assets. If a handoff result is uncertain, read builder.handoff.status before retrying. WordPress supplies the source chat and request identity. Never read or expose connection.json. Pixflow opens the live editor from the receipt; do not launch a second editor. Current source request: ${session.workspaceSource?.requestId}.` };
+  return { cleanup, discovery, prompt: `${pixflowWorkspaceBuilderHandoffInstructions}\n\n${pixflowSavedPlanInstructions}\n\n${windows ? `For a PowerShell terminal use ${command} TOOL '@arguments.json'. For a Bash terminal use ${bashCommand} TOOL '@arguments.json' (no PowerShell & prefix). Use the syntax of your terminal; do not switch shells or copy argument files to a temporary directory.` : `Use ${command} TOOL '@arguments.json' for this turn.`} ${windows ? 'This native command launcher works under restrictive PowerShell settings and uses the Bridge runtime directly; do not call node, change execution policy, or set runtime environment variables. ' : ''}For Bricks page discovery use builder.destinations --builder bricks with that launcher. For other calls write UTF-8 JSON to an argument file and quote the @file path. Use context for the verified site identity and help for the tool list. builder.destinations also accepts --search with a quoted search string, optionally alongside --builder, or the same fields in JSON. builder.handoff accepts action create (title) or open (postId), builder, brief, and optional assets. If a handoff result is uncertain, read builder.handoff.status before retrying. WordPress supplies the source chat and request identity. Never read or expose connection.json. Pixflow opens the live editor from the receipt; do not launch a second editor. Current source request: ${session.workspaceSource?.requestId}.` };
 }

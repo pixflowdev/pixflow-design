@@ -1,4 +1,4 @@
-import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockActions, CodeBlockContent } from '../components/chat/CodeBlock';
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockActions, CodeBlockHighlightedContent } from '../components/chat/CodeBlock';
 
 import { useT as usePixflowUiTranslation } from '../i18n';
 /**
@@ -484,7 +484,7 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
           </button>
         </CodeBlockActions>
       </CodeBlockHeader>
-      <CodeBlockContent className="md-code-body">
+      <CodeBlockHighlightedContent className="md-code-body">
         {highlightedHtml ? (
           <div
             className="md-code md-code-highlighted"
@@ -495,7 +495,7 @@ function MarkdownCodeBlock({ body, lang }: { body: string; lang: string | null }
             <code data-lang={lang ?? undefined}>{body}</code>
           </pre>
         )}
-      </CodeBlockContent>
+      </CodeBlockHighlightedContent>
     </CodeBlock>
   );
 }

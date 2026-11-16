@@ -27,7 +27,7 @@ describe('AssistantMessage tool status', () => {
         {kind:'text',text:'Building the layout while the image generates.'},
         {kind:'thinking',text:'Checking native controls.'},
       ]),endedAt:undefined,runStatus:'running'}} />);
-    const labels=[...container.querySelectorAll('[data-activity-group] > button')].map(el=>el.textContent);
+    const labels=[...container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]')].map(el=>el.textContent);
     expect(labels.some(label=>/^error/i.test(label ?? ''))).toBe(false);
   });
 
@@ -138,10 +138,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
-    expect(container.querySelector('.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.op-status-running')).toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=running]')).toBeNull();
   });
 
   it('keeps legacy completed messages without runStatus as Done', () => {
@@ -164,10 +164,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
-    expect(container.querySelector('.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.op-status-running')).toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=running]')).toBeNull();
   });
 
   it('shows Done in a grouped completed run when tool results are missing', () => {
@@ -193,10 +193,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
     expect(container.querySelector('.action-card-toggle.running')).toBeNull();
-    expect(container.querySelector('.op-status-ok, .action-card-status.op-status-ok')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).not.toBeNull();
   });
 
   it('does not show Done when a failed run is missing a tool result', () => {
@@ -219,10 +219,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-status=pending]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).toBeNull();
   });
 
   it('does not show Done when a canceled run is missing a tool result', () => {
@@ -245,10 +245,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-status=pending]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).toBeNull();
   });
 
   it('keeps Running for a streaming tool use that has no tool result', () => {
@@ -272,10 +272,10 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
-    expect(container.querySelector('.op-status-running')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-status=running]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-status=done]')).toBeNull();
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {
@@ -294,7 +294,7 @@ describe('AssistantMessage tool status', () => {
         projectId="project-1"
       />,
     );
-    container.querySelectorAll('[data-activity-group] > button').forEach(button => fireEvent.click(button));
+    container.querySelectorAll('[data-activity-group] > button[aria-expanded=false]').forEach(button => fireEvent.click(button));
 
     const link = container.querySelector('.status-detail a.md-link');
     expect(link?.getAttribute('href')).toBe('https://github.com/nexu-io/example-plugin');

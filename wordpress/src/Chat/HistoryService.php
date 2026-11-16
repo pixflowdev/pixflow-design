@@ -104,7 +104,15 @@ final class HistoryService
     public function page(string $project, string $conversation, ?int $limit = 50, string $before = '', bool $ownerOnly = true): array|\WP_Error
     {
         $prepared = $this->prepare($project, $conversation, $ownerOnly, false);
-        return is_wp_error($prepared) ? $prepared : $this->history->page($project, $conversation, $limit, $before);
+        if (is_wp_error($prepared)) return $prepared;
+        $page = $this->history->page($project, $conversation, $limit, $before);
+        // Keep the durable plan available even after the initial message leaves
+        // the visible window. Do not alter the one-row latest-message probe.
+        if (!is_wp_error($page) && $before === '' && ($limit === null || $limit > 1)) {
+            $plan = $this->history->message($project, $conversation, SavedPlan::MESSAGE_ID);
+            if ($plan && !in_array(SavedPlan::MESSAGE_ID, array_column($page['messages'], 'id'), true)) array_unshift($page['messages'], $plan);
+        }
+        return $page;
     }
 
     public function export_page(string $project, string $conversation, string $cursor = '', int $limit = 100): array|\WP_Error
@@ -123,7 +131,25 @@ final class HistoryService
     {
         if (!is_string($message['id'] ?? null) || $message['id'] === '' || strlen($message['id']) > 191) return new \WP_Error('pixflow_history_invalid', 'Invalid message identifier.', ['status' => 400]);
         $prepared = $this->prepare($project, $conversation, $ownerOnly, true);
+        if (!is_wp_error($prepared) && $message['id'] === SavedPlan::MESSAGE_ID) {
+            $saved = $this->history->message($project, $conversation, SavedPlan::MESSAGE_ID);
+            // Browser transcript saves must not overwrite server-owned progress.
+            return $saved ? ['ok' => true, 'message' => $saved, 'revision' => $saved['historyRevision']]
+                : new \WP_Error('pixflow_plan_reserved', 'Use the saved plan tool to create this record.', ['status' => 400]);
+        }
         return is_wp_error($prepared) ? $prepared : $this->history->write($project, $conversation, $message, $importOnly);
+    }
+
+    public function plan(string $project, string $conversation, ?array $input = null): array|\WP_Error
+    {
+        $prepared = $this->prepare($project, $conversation, true, $input !== null);
+        if (is_wp_error($prepared)) return $prepared;
+        $previous = $this->history->message($project, $conversation, SavedPlan::MESSAGE_ID);
+        if ($input === null) return ['ok' => true, 'plan' => SavedPlan::from_message($previous)];
+        $plan = SavedPlan::validate($input);
+        if ($plan['revision'] !== (int) ($previous['historyRevision'] ?? 0)) return new \WP_Error('pixflow_plan_conflict', 'The plan changed. Read plan.read before updating it.', ['status' => 409]);
+        $saved = $this->history->write($project, $conversation, SavedPlan::message($plan, $previous));
+        return is_wp_error($saved) ? $saved : ['ok' => true, 'plan' => SavedPlan::from_message($saved['message'])];
     }
 
     public function remove(string $project, string $conversation, string $message, bool $ownerOnly = true): array|\WP_Error

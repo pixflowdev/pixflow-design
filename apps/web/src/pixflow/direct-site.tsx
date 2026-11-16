@@ -20,7 +20,7 @@ import { SiteAccessError, siteAccessError } from './site-access-error';
 import { createFrameCheckpoint } from '../runtime/frame-checkpoint';
 import { recoverDirectStream, StreamAttachmentHttpError } from './direct-stream-recovery';
 import { withoutTranscriptEvents } from './direct-history-storage';
-import { chatHistoryOwnerScope, readChatHistory, type ChatHistoryBinding } from './chat-history-client';
+import { chatHistoryOwnerScope, readChatHistory, resolveChatHistory, type ChatHistoryBinding } from './chat-history-client';
 import { prepareDocumentAttachments, siteDocumentRead } from './document-attachments';
 import type { SavedHistoryPage } from './working-context';
 const SITE_ACCESS_CHANGED = 'pixflow:site-access-changed';
@@ -218,7 +218,10 @@ async function createPanelSession(options: SessionOptions, signal?: AbortSignal,
   const { historyWindow, historyThrough, ...value } = await response.json();
   if (!response.ok) throw new Error(value.message || 'Could not connect to this WordPress site.');
   if (onRestore && historyWindow && value.historyRevision && Array.isArray(value.historyPage?.messages)) {
-    onRestore({ ...historyWindow, messages: value.historyPage.messages.slice(-50) }, historyThrough);
+    const recent = value.historyPage.messages.slice(-50);
+    const plan = value.historyPage.messages.find((message: {id?: string}) => message.id === 'pixflow-saved-plan');
+    if (plan && !recent.some((message: {id?: string}) => message.id === plan.id)) recent.unshift(plan);
+    onRestore({ ...historyWindow, messages: recent }, historyThrough);
   }
   // Complete a paginated snapshot before Send whenever the panel is already open.
   // WordPress verifies its original revision during Bridge admission.
@@ -732,10 +735,22 @@ export async function runDirectSite(request: Parameters<typeof executeDirectSite
   const authorization = authorize();
   // Always observe failures, including when context preparation fails first.
   void authorization.catch(() => undefined);
-  const source = request.historySource;
-  const historyBinding = !request.resume && source?.checkSavedPageFirst && source.binding && source.messages.at(-1)?.id
-    ? { ...source.binding, throughMessageId: source.messages.at(-1)!.id } : undefined;
-  const separateHistory = historyBinding ? undefined : prepareHistory();
+  let source = request.historySource;
+  // Empty panels deliberately avoid creating chats on open. First Send must
+  // establish the same durable identity used by persistence and saved plans.
+  if (!request.resume && source && !source.binding && !source.messages.length) {
+    if (!source.sessionKey) throw new Error('The chat identity is unavailable. Reopen this conversation before continuing.');
+    const binding = await resolveChatHistory({ sessionKey: source.sessionKey });
+    request.signal.throwIfAborted();
+    if (chatHistoryOwnerScope() !== historyOwner) throw new Error('The signed-in account changed. Reopen this chat before continuing.');
+    source = { ...source, binding };
+  }
+  // Chat ownership also binds saved plans on the first turn, before a history
+  // prefix exists. Only acknowledged prefixes may replace local prompt history.
+  const historyBinding: HistoryPrefix | undefined = !request.resume && source?.binding
+    ? { ...source.binding, ...(source.checkSavedPageFirst && source.messages.at(-1)?.id
+      ? { throughMessageId: source.messages.at(-1)!.id } : {}) } : undefined;
+  const separateHistory = historyBinding?.throughMessageId ? undefined : prepareHistory();
   void separateHistory?.catch(() => undefined);
   const history = (page?: SavedHistoryPage, revision?: string) => separateHistory ?? prepareHistory(page, revision);
   const prepared = await prepareEditor();

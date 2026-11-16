@@ -31,6 +31,10 @@ const tools = workspace ? [
  {name:'pixflow_tools',description:'Discover the connected site tools. Use tools to get several named schemas in one request, or tool for just one. Discovery never executes a named tool.',inputSchema:schema({tool:{type:'string'},tools:{type:'array',items:{type:'string'},minItems:1,maxItems:12}})},
  {name:'pixflow_call',description:'Call an existing Pixflow site tool. For large inputs write a run-local JSON argument file or, for a script tool, a run-local code file. Current WordPress permissions apply. Inspect uncertain results before retrying writes.',inputSchema:{...schema({tool:{type:'string'},arguments:{type:'object'},argumentFile:{type:'string',description:'JSON filename or absolute path inside this run instead of inline arguments'},codeFile:{type:'string',description:'JS or PHP filename or absolute path inside this run for a script tool'}}),required:['tool']}}
 ];
+tools.push(
+ {name:'pixflow_plan_read',description:'Read the durable plan bound to this chat. Use after reload, recovery or handoff.',inputSchema:schema({})},
+ {name:'pixflow_plan_update',description:'Save a full plan and verified progress. Read first and retain stable step IDs. Revision conflicts require rereading.',inputSchema:{...schema({id:{type:'string'},title:{type:'string'},summary:{type:'string'},revision:{type:'integer',minimum:0},steps:{type:'array',minItems:1,maxItems:40,items:{type:'object',properties:{id:{type:'string'},content:{type:'string'},status:{type:'string',enum:['pending','in_progress','completed','stopped']}},required:['id','content','status'],additionalProperties:false}}}),required:['id','title','summary','revision','steps']}}
+);
 function reply(id,result,error) {
  if(stopped.signal.aborted)return;
  process.stdout.write(JSON.stringify({jsonrpc:'2.0',id,...(error?{error}:{result})})+'\\n');
@@ -112,7 +116,7 @@ async function handle(q) {
  try {
   let argv;
   try {
-   argv=workspace ? [name.replace('pixflow_builder_','builder.').replace('handoff_status','handoff.status'),JSON.stringify(args)]
+   argv=name==='pixflow_plan_read' || name==='pixflow_plan_update' ? [name==='pixflow_plan_read'?'plan.read':'plan.update',JSON.stringify(args)] : workspace ? [name.replace('pixflow_builder_','builder.').replace('handoff_status','handoff.status'),JSON.stringify(args)]
     : name==='pixflow_tools' ? ['help'] : [args.tool,JSON.stringify(await siteArguments(args))];
   } catch (error) {
    const detail=error?.code==='ENOENT'

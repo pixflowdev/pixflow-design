@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow Codex to use the paired site tools without unnecessary approval prompts, while keeping other connected tools subject to their existing permissions.
 - Fix helper and saved-file access on macOS when temporary folders use an alternative system path.
-- Use the operating system’s trusted certificates for secure assistant tool connections on Windows and macOS.
+- Use the operating system's trusted certificates for secure assistant tool connections on Windows and macOS.
 - Avoid oversized Workspace session requests when a conversation has extensive guidance or history.
 - Keep the same conversation and saved plan when continuing from Workspace into a builder.
 - Prevent duplicate failed replies and false save-conflict warnings after a builder handoff.

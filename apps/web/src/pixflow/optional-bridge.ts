@@ -25,6 +25,7 @@ export type PixflowOptionalBridgeHealth = {
   version?: string;
   requiredVersion?: string;
   status: 'ready' | 'missing' | 'error';
+  windowsUpdate?: boolean;
   error?: string;
 };
 
@@ -545,7 +546,7 @@ export async function probePixflowOptionalBridge(options?: {
       options?.timeoutMs ?? SITE_HEALTH_TIMEOUT_MS,
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const json = (await response.json()) as { ok?: boolean; code?: string; error?: string; version?: string; runtimeState?: string };
+    const json = (await response.json()) as { ok?: boolean; code?: string; error?: string; version?: string; runtimeState?: string; windowsUpdate?: boolean };
     if (json.ok === false || json.code === 'PIXFLOW_SITE_NOT_CONNECTED') {
       throw new Error(json.error || PIXFLOW_OPTIONAL_BRIDGE_UNAVAILABLE_MESSAGE);
     }
@@ -554,6 +555,7 @@ export async function probePixflowOptionalBridge(options?: {
       available: true,
       runtimeState: json.runtimeState,
       version: json.version,
+      ...(json.windowsUpdate === true ? { windowsUpdate: true } : {}),
       requiredVersion: readBridgeConfig()?.bridgeRequiredVersion,
       status: 'ready',
     };

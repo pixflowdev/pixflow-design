@@ -6,6 +6,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { BridgeUpdateAction, isWindowsBridgeClient } from './bridge-update-action';
 import { fetchPixflowBridgeReleaseManifest } from './bridge-update';
 import { getPixflowWordPressConfig } from './wordpress-context';
 
@@ -274,6 +275,7 @@ export function PixflowBridgeUpdateNotice({
       role="alert"
     >
       <span>{translateUi("ui.bridge-update-gate.pleaseUpdateThePixflowDesignBridgeTo")}</span>
+      {isWindowsBridgeClient() ? <BridgeUpdateAction /> : null}
     </div>
   );
 }

@@ -437,3 +437,44 @@ it.each(['ready','working','unavailable'] as const)('answers paired health from 
   expect(await response.json()).toMatchObject({ ok: state !== 'unavailable', runtimeState: state, site: { key: site.key } });
   expect(worker).not.toHaveBeenCalled();
 });
+
+it('starts a Windows update only with a ticket from the paired WordPress origin or from the local CLI', async () => {
+  const token = 'pfdirect_' + 'a'.repeat(64);
+  const verify = vi.fn();
+  let authorized = true;
+  const wp = createServer((req, res) => {
+    verify(req.method, new URL(req.url!, 'http://localhost').searchParams.get('rest_route'));
+    expect(req.headers.authorization).toBe(`Bearer ${token}`);
+    res.writeHead(authorized ? 200 : 403, { 'Content-Type': 'application/json' })
+      .end(JSON.stringify({ authorized }));
+    authorized = false;
+  });
+  servers.push(wp);
+  await new Promise<void>(resolve => wp.listen(0, '127.0.0.1', resolve));
+  const address = wp.address();
+  if (!address || typeof address === 'string') throw new Error('No fixture address');
+  const origin = `http://127.0.0.1:${address.port}`;
+  const site = { key: 'site-one', origin, url: `${origin}/wordpress`, label: 'WordPress', dataDir: '', syncRoot: '' };
+  const start = vi.fn(() => ({ state: 'checking' as const }));
+  const baseOptions = { version: 'test', getState: () => 'running' as const, getDaemonUrl: () => null, getWebUrl: () => null };
+  const gateway = await startGateway({
+    ...baseOptions,
+    resolveSite: (key, caller) => key === site.key && caller === origin ? { ...baseOptions, getSite: () => site } : null,
+    windowsUpdate: { start, status: () => ({ state: 'idle' }), isInstalling: () => false },
+  });
+  const url = `${gateway}/api/pixflow/bridge-update`;
+  const headers = { Origin: origin, 'X-Pixflow-Site-Key': site.key };
+  const post = (initial: Record<string, string>) => fetch(url, { method: 'POST', headers: initial });
+  expect((await post(headers)).status).toBe(403);
+  expect((await post({ ...headers, Origin: 'https://other.test', Authorization: `Bearer ${token}` })).status).toBe(403);
+  expect((await post({ ...headers, 'X-Pixflow-Local-Update': '1' })).status).toBe(403);
+  expect(await (await fetch(url, { headers })).json()).toEqual({ state: 'idle' });
+  expect(start).not.toHaveBeenCalled();
+  const request = { ...headers, Authorization: `Bearer ${token}` };
+  expect((await post(request)).status).toBe(202);
+  expect((await post(request)).status).toBe(403);
+  expect(verify).toHaveBeenCalledWith('POST', '/pixflow-design/v1/wp-admin/direct/bridge-update');
+  expect((await post({ 'X-Pixflow-Local-Update': '1', 'Sec-Fetch-Site': 'same-origin' })).status).toBe(403);
+  expect((await post({ 'X-Pixflow-Local-Update': '1' })).status).toBe(202);
+  expect(start).toHaveBeenCalledTimes(2);
+});

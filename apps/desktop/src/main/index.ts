@@ -48,6 +48,9 @@ import {
   registerDesktopDiagnosticsIpc,
 } from "./diagnostics.js";
 
+// The packaged Windows tray uses the same verified updater as the desktop.
+export { createDesktopUpdater };
+
 // Re-export pure URL-policy helpers so the packaged workspace's
 // vitest can pin their behaviour without spinning up a full Electron
 // runtime. They are part of the security boundary for child-window

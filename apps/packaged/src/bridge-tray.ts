@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -33,6 +33,8 @@ import { resolvePackagedNamespacePaths } from './paths.js';
 import { BridgeSiteRuntimes } from './bridge-site-runtimes.js';
 import { startPixflowBridgeHttpGateway, type PixflowBridgeGatewayHandle } from "./pixflow-bridge-http.js";
 import { startPackagedSidecars, type PackagedSidecarHandle, type PixflowPackagedSiteContext } from "./sidecars.js";
+import { openWindowsBridgeUpdateWindow } from './windows-bridge-update-launcher.js';
+import { createWindowsBridgeUpdater } from './windows-bridge-updater.js';
 import { createBridgeLifecycleQueue } from './bridge-lifecycle-queue.js';
 import { syncWindowsUninstallDisplayVersion } from "./windows-lifecycle.js";
 
@@ -211,6 +213,7 @@ export async function runPixflowBridgeTray({
     if (state === "starting" || state === "running") return;
     setState("starting");
     try {
+      const runtimeControlToken = randomBytes(32).toString('hex');
       sidecars = await startPackagedSidecars(runtime, paths, {
         appVersion: activeConfig.appVersion,
         amrProfile: activeConfig.amrProfile,
@@ -220,10 +223,12 @@ export async function runPixflowBridgeTray({
         telemetryRelayUrl: activeConfig.telemetryRelayUrl,
         pixflowSite: activeSite,
         requireDesktopAuth: false,
+        runtimeControlToken,
         webSidecarEntry: activeConfig.webSidecarEntry,
         webStandaloneRoot: activeConfig.webStandaloneRoot,
         webOutputMode: activeConfig.webOutputMode,
       });
+      runtimeTokens.set(sidecars, runtimeControlToken);
       unselectedSidecars = sidecars;
       writeBridgeTrayLog("bridge tray sidecars ready", {
         daemonUrl: sidecars.daemon.url,
@@ -247,6 +252,7 @@ export async function runPixflowBridgeTray({
     siteOrigin?: string;
     siteUrl?: string;
   }): Promise<unknown> => lifecycle.run(async () => {
+    if (windowsUpdate?.isInstalling()) return { ok: false, error: 'A Bridge update is in progress.' };
     const key = site.siteKey.trim().toLowerCase();
     if (!/^[a-zA-Z0-9._-]{8,128}$/.test(key)) {
       return { ok: false, error: "Invalid Pixflow Design site key." };
@@ -357,7 +363,23 @@ export async function runPixflowBridgeTray({
   if (process.platform === "darwin") {
     app.dock?.hide();
   }
+  const updateWindowExe = join(activeConfig.resourceRoot, 'bin', 'pixflow-bridge-updater.exe');
+  const launcher = launcherRuntime.installedLaunchPath;
+  const windowsUpdate = process.platform === 'win32' && namespace === 'release-stable-win' && activeConfig.appVersion && launcher && existsSync(updateWindowExe)
+    ? createWindowsBridgeUpdater({
+        version: activeConfig.appVersion, arch: process.arch, downloadRoot: join(paths.updateRoot, 'wordpress'),
+        openWindow: () => openWindowsBridgeUpdateWindow(updateWindowExe, launcher),
+        shutdown,
+        canInstall: () => lifecycle.run(async () => {
+          if (state === 'starting' || state === 'stopping') return false;
+          const sites = await Promise.all([...connectedSites.keys()].map(key => siteRuntimes.status(key)));
+          if (sites.some(site => site && site.state !== 'ready' && site.state !== 'sleeping')) return false;
+          return !unselectedSidecars || !(await inspectIdle(unselectedSidecars).catch(() => ({busy: true}))).busy;
+        }),
+      })
+    : undefined;
   httpGateway = await startPixflowBridgeHttpGateway({
+    windowsUpdate,
     version: activeConfig.appVersion ?? "0.0.0",
     getState: () => state,
     getDaemonUrl: () => sidecars?.daemon.url ?? null,

@@ -1,6 +1,8 @@
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { promisify } from "node:util";
 
 import { hashJson, hashPath, ToolPackCache } from "../cache.js";
 import type { ToolPackConfig } from "../config.js";
@@ -14,6 +16,7 @@ import type { WinPaths, ResourceTreeCacheMetadata } from "./types.js";
 import { PRODUCT_BRIDGE_TRAY_MODE } from "./constants.js";
 
 const RESOURCE_TREE_CACHE_SCHEMA_VERSION = 8;
+const updaterSource = "tools/pack/resources/windows-bridge-updater/UpdaterWindow.cs";
 const bridgeNodeVersion = "24.22.3";
 const bridgeNodeFiles = [
   {
@@ -44,6 +47,7 @@ async function createResourceTreeCacheKey(config: ToolPackConfig): Promise<strin
     }))),
     node: "win.resource-tree",
     bridgeNode: PRODUCT_BRIDGE_TRAY_MODE ? bridgeNodeFiles : null,
+    bridgeUpdater: PRODUCT_BRIDGE_TRAY_MODE ? await hashPath(join(config.workspaceRoot, updaterSource)) : null,
     schemaVersion: RESOURCE_TREE_CACHE_SCHEMA_VERSION,
     proWebClone: process.env.PIXFLOW_DESIGN_PRO_ROOT
       ? await hashPath(join(resolve(process.env.PIXFLOW_DESIGN_PRO_ROOT), "skills", "web-clone"))
@@ -86,6 +90,13 @@ export async function prepareResourceTree(
       await cp(winResources.sevenZipExe, join(resourceRoot, "bin", "7z.exe"));
       await cp(winResources.sevenZipDll, join(resourceRoot, "bin", "7z.dll"));
       if (PRODUCT_BRIDGE_TRAY_MODE) {
+        const compiler = join(process.env.SystemRoot ?? "C:\\Windows", "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
+        await promisify(execFile)(compiler, [
+          "/nologo", "/target:winexe", "/platform:anycpu", "/optimize+",
+          "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Web.Extensions.dll",
+          `/out:${join(resourceRoot, "bin", "pixflow-bridge-updater.exe")}`,
+          join(config.workspaceRoot, updaterSource),
+        ], { windowsHide: true });
         await Promise.all(bridgeNodeFiles.map(async ({ name, url, sha256 }) => {
           const response = await fetch(url, { signal: AbortSignal.timeout(120_000) });
           if (!response.ok) throw new Error(`Could not download Bridge runtime file ${name}: HTTP ${response.status}`);

@@ -46,6 +46,11 @@ jobs:
           pnpm --filter @open-design/daemon test tests/runtimes/executables.test.ts tests/runtimes/env-and-detection.test.ts tests/runtimes/detection-diagnostics.test.ts
           pnpm --filter @open-design/daemon test discovery-health
           pnpm --filter @open-design/packaged test pixflow-bridge-http
+      - name: Windows Bridge update regression
+        run: |
+          pnpm --filter @open-design/packaged test windows-bridge-updater
+          pnpm --filter @open-design/web test tests/pixflow/bridge-update-action.test.tsx
+          php wordpress/tests/direct-session-features.test.php
       - name: Claude runtime selection and Workspace diagnostics
         run: pnpm --filter @open-design/daemon test tests/runtimes/claude-desktop.test.ts tests/runtimes/claude-models.test.ts tests/runtimes/claude-sign-in.test.ts tests/pixflow/workspace-builder-session.test.ts
       - name: Provider usage regression

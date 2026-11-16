@@ -26,6 +26,7 @@ import { runDirectSiteCli } from './pixflow/direct-site-cli.js';
 import { runUpscalerCli } from './pixflow/upscaler-cli.js';
 import { runDictationCli } from './pixflow/dictation-cli.js';
 import { runBridgePairingCli } from './bridge-pairing-cli.js';
+import { runBridgeUpdateCli } from './bridge-update-cli.js';
 import { runBridgeSitesCli } from './bridge-sites-cli.js';
 import { runBuilderDestinationsCli } from './pixflow/builder-destinations-cli.js';
 import { runSiteTranslationsCli } from './pixflow/site-translations-cli.js';
@@ -319,6 +320,7 @@ const SUBCOMMAND_MAP = {
   'upscaler': runUpscalerCli,
   'bridge-pair': runBridgePairingCli,
   'bridge-sites': runBridgeSitesCli,
+  'bridge-update': runBridgeUpdateCli,
   builder: runBuilderDestinationsCli,
   'site-translations': runSiteTranslationsCli,
   'agent-text': runAgentTextCli,

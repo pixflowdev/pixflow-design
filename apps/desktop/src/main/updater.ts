@@ -11,6 +11,7 @@ import {
   realpath,
   rename,
   rm,
+  rmdir,
   stat,
   writeFile,
 } from "node:fs/promises";
@@ -157,6 +158,7 @@ export type DesktopUpdaterDeps = {
   logger?: DesktopUpdaterLogger;
   now?: () => Date;
   openPath?: (path: string) => Promise<string>;
+  scheduleWindowsInstaller?: (path: string, version: string) => Promise<void>;
   processExecPath?: string;
   processPid?: number;
   spawnDetached?: SpawnInstallerHelper;
@@ -2161,11 +2163,30 @@ function incomingSnapshot(incoming: IncomingRef, progress?: DesktopUpdateProgres
   };
 }
 
+// Only discard files in the release directory that this updater would create.
+async function discardMissingInstaller(root: string, active: UpdateReleaseRef, artifactPath: string): Promise<boolean> {
+  const releaseDir = join(root, RELEASES_DIR, releaseKey(active, active.checksum));
+  if (artifactPath !== join(releaseDir, artifactFileName(active))) return false;
+  const canonicalDir = await realpath(releaseDir).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (canonicalDir == null) return true;
+  if (canonicalDir !== releaseDir) return false;
+
+  const entries = await readdir(releaseDir, { withFileTypes: true });
+  if (entries.some(entry => !entry.isFile() || !["metadata.json", "checksum.json"].includes(entry.name))) return false;
+  for (const entry of entries) await rm(join(releaseDir, entry.name), { force: true });
+  await rmdir(releaseDir);
+  return true;
+}
+
 async function loadActiveRelease(
   root: OwnedRoot & { ok: true },
   metadata: UpdateStoreMetadata,
   config: DesktopUpdaterConfig,
   logger: DesktopUpdaterLogger,
+  recoverMissingInstaller: boolean,
 ): Promise<{ active: LoadedRelease | null; ok: true } | { error: DesktopUpdateErrorSnapshot; ok: false }> {
   const active = metadata.active;
   if (active == null) return { ok: true, active: null };
@@ -2184,6 +2205,11 @@ async function loadActiveRelease(
       return { ok: false, error };
     }
   } catch (error) {
+    if (recoverMissingInstaller && active.artifact.type === "installer" &&
+        (error as NodeJS.ErrnoException).code === "ENOENT" &&
+        await discardMissingInstaller(root.realRoot, active, artifactPath)) {
+      return { ok: true, active: null };
+    }
     const storeError = storeShapeError(root.realRoot, "active release artifact is missing", {
       artifactPath,
       reason: error instanceof Error ? error.message : String(error),
@@ -2253,6 +2279,7 @@ export function createDesktopUpdater(
   deps: DesktopUpdaterDeps = {},
 ): DesktopUpdater {
   const config = resolveDesktopUpdaterConfig(configInput);
+  const recoverMissingInstaller = config.platform === "win32" && deps.scheduleWindowsInstaller != null;
   const fetchImpl = deps.fetch ?? globalThis.fetch;
   const logger = deps.logger ?? console;
   const now = deps.now ?? (() => new Date());
@@ -2418,7 +2445,7 @@ export function createDesktopUpdater(
     const opened = await openStore();
     if (!opened.ok) return opened.status;
     const restoredMetadata = await clearInterruptedIncomingDownload(opened.root, opened.metadata, logger);
-    const loadedActive = await loadActiveRelease(opened.root, restoredMetadata, config, logger);
+    const loadedActive = await loadActiveRelease(opened.root, restoredMetadata, config, logger, recoverMissingInstaller);
     if (!loadedActive.ok) return setState(DESKTOP_UPDATE_STATES.ERROR, loadedActive.error);
     activeRelease = loadedActive.active;
     // If the app now runs at or beyond the stored active release, the
@@ -2490,7 +2517,7 @@ export function createDesktopUpdater(
     const unsupported = unsupportedStatus();
     if (unsupported != null) return unsupported;
     if (installFrozen || installResult != null) return snapshot();
-    if (state === DESKTOP_UPDATE_STATES.IDLE) {
+    if (state === DESKTOP_UPDATE_STATES.IDLE || (recoverMissingInstaller && activeRelease != null)) {
       const restored = await restoreStoreState();
       if (restored?.state === DESKTOP_UPDATE_STATES.ERROR) return restored;
       if (installFrozen || installResult != null) return snapshot();
@@ -2911,6 +2938,16 @@ export function createDesktopUpdater(
           DESKTOP_UPDATE_STATES.ERROR,
           createError("launcher-payload-apply-failed", applyError instanceof Error ? applyError.message : String(applyError)),
         );
+      }
+    }
+    if (config.platform === "win32" && deps.scheduleWindowsInstaller) {
+      try {
+        await deps.scheduleWindowsInstaller(resolvedDownload, activeRelease.ref.version);
+        // The tray owns shutdown, installation and restart. Keep the
+        // verified artifact retryable if installation does not complete.
+        return setState(DESKTOP_UPDATE_STATES.DOWNLOADED);
+      } catch (error) {
+        return setState(DESKTOP_UPDATE_STATES.ERROR, createError("open-installer-failed", String(error)));
       }
     }
     let observation: InstallerObservationHandle | null = null;

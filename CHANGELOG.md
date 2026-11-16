@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Update the Windows Bridge from WordPress. Follow download, installation and restart progress in a Pixflow desktop window.
 - Let assistants filter WordPress posts by category or tag and sort by publication date when building or checking query loops.
 - Give local assistants including Grok Build and Antigravity direct access to Pixflow site tools through MCP, with WordPress permissions and native helpers available when needed.
 

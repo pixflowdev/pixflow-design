@@ -86,7 +86,9 @@ try {
 }
 return output;
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Node resolves module paths through aliases such as macOS /var -> /private/var.
+const invokedFile = process.argv[1] ? await fs.realpath(process.argv[1]).catch(() => null) : null;
+if (invokedFile && await fs.realpath(fileURLToPath(import.meta.url)) === invokedFile) {
   const result = await invokePixflowTool(process.argv.slice(2));
   console.log(JSON.stringify(result));
   if (result?.ok === false) process.exitCode = 1;

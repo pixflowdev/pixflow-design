@@ -330,6 +330,18 @@ describe('AssistantMessage status badge updates (Bug A)', () => {
 });
 
 describe('AssistantMessage thinking blocks', () => {
+  it('keeps streamed reasoning closed until the user opens it and preserves that choice on completion', () => {
+    const draw = (text: string, streaming: boolean) => <AssistantMessage message={baseMessage({content:'',events:[{kind:'thinking',text} as ChatMessage['events'][number]]})} streaming={streaming} projectId="proj-1" />;
+    const view = render(draw('Inspecting', true));
+    const toggle = () => view.container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-trigger]')!;
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    view.rerender(draw('Inspecting the page', true));
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(toggle());
+    view.rerender(draw('Inspecting the page', false));
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('does not render an empty thinking block for whitespace-only thinking deltas', () => {
     const { container } = render(
       <AssistantMessage

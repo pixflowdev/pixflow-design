@@ -6,10 +6,10 @@ Build the Apple Silicon and Intel release candidates and report back before publ
 
 | Repository | Branch | Commit |
 | --- | --- | --- |
-| pixflowdev/pixflow-design | `codex/v233-core-candidate` | `284fd660cf2b3e41ec71981529f6228e43ff51f9` |
-| pixflowdev/pixflow-design-pro | `codex/v233-pro-candidate` | `c7b7459c6f8104337437ed6874572c9ca82cb4d8` |
+| pixflowdev/pixflow-design | `codex/v233-core-candidate` | `7ef664f9c231163e60bb0274cc633c8b95824209` |
+| pixflowdev/pixflow-design-pro | `codex/v233-pro-candidate` | `4f1f06c275492e859b83405f0e157fdd705e396d` |
 
-This replaces the earlier handoff. Do not build from the old source pair or reuse its plugin ZIPs or Bridge binaries. Begin only after Core #153/#155/#156 and Pro #85/#87/#88 have merged with passing checks. The release inventory is in `docs/qa/v233-source-inventory.json`; unfinished Team and comments/Feedback work and the Tauri experiment are excluded.
+This replaces the earlier handoff. Do not build from the old source pair or reuse its plugin ZIPs or Bridge binaries. Begin only after Core #153/#155/#156/#158 and Pro #85/#87/#88 have merged with passing checks. The release inventory is in `docs/qa/v233-source-inventory.json`; unfinished Team and comments/Feedback work and the Tauri experiment are excluded.
 
 Pro pins that Core commit. This documentation branch is separate from the build source. Read both repositories' AGENTS.md and Core's tools/pack/AGENTS.md. Use clean, isolated, architecture-specific worktrees, Node 24 and pnpm 10.33.2 with frozen installs. Point each checkout at its exact partner with `PIXFLOW_DESIGN_CORE_ROOT` and `PIXFLOW_DESIGN_PRO_ROOT`.
 
@@ -51,4 +51,4 @@ The v2.3.3 WordPress seamless updater is implemented for Windows. Treat Mac upda
 2. Attempt a verified v2.3.3 update through that mechanism, including replacing the running app safely, restarting it and reconnecting the original WordPress tab. Check if macOS requests approval again, blocks first launch of the replacement, or changes Chrome native-host access or credential access. Confirm preserved pairing and settings, correct architecture, installed signature and version.
 3. Run on arm64 and x64 environments and state whether x64 was native or Rosetta. Keep manual DMG installation coverage and seamless update coverage separate. Return logs and a verdict. If unattended updating fails, needs another approval prompt, cannot be tested on the intended path, or relies on weakening macOS security, keep seamless updating Windows-only until notarisation is available. Mac DMGs can still use the normal manual install path, subject to build and smoke checks.
 
-Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and targets the Core commit above. Use it for verified DMG assets if the source pair passes. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.
+Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and may still target the earlier candidate. Do not upload to it until its target is explicitly updated to the verified Core commit above. Old draft assets must be rebuilt from this source pair. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.

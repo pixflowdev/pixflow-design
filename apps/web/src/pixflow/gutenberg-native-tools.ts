@@ -82,7 +82,7 @@ export async function executeGutenberg(wp: GutenbergApi, command: GutenbergComma
   assertSiteAuthoring(tool, shared);
   const view = wp.data.select('core/block-editor'), edit = wp.data.dispatch('core/block-editor');
   const editor = wp.data.select('core/editor'), post = wp.data.dispatch('core/editor');
-  if (tool === 'gutenberg.schema' && args.names !== undefined && (args.name !== undefined || !Array.isArray(args.names) || args.names.length < 1 || args.names.length > 30 || args.names.some((name: unknown) => typeof name !== 'string'))) throw new Error('Supply either name or names (1–30 registered block names).');
+  if (tool === 'gutenberg.schema' && args.names !== undefined && (args.name !== undefined || !Array.isArray(args.names) || args.names.length < 1 || args.names.length > 30 || args.names.some((name: unknown) => typeof name !== 'string'))) throw new Error('Supply either name or names (1-30 registered block names).');
   if (tool === 'gutenberg.schema') return wp.blocks.getBlockTypes().filter((type: any) => (args.names ? args.names.includes(type.name) : !args.name || type.name === args.name) && (() => { try { blockExtension(type.name); return true; } catch { return false; } })()).map((type: any) => ({ name: type.name, title: type.title, attributes: type.attributes, supports: type.supports, parent: type.parent, ancestor: type.ancestor, allowedBlocks: type.allowedBlocks, usesContext: type.usesContext, providesContext: type.providesContext, ...(blockExtension(type.name)?.schema(wp, type.name, !!args.name) ?? {}) }));
   const before = await snapshot(wp);
   const reader = (window as any).PixflowGutenbergReadCommands?.[tool];

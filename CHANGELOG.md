@@ -11,12 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Let assistants inspect screenshots of the connected saved page, including drafts, without publishing it or accessing browser login cookies.
+- Follow a saved build plan in the assistant panel, with progress retained when you reload, recover a run or continue in a builder.
 - Update the Windows Bridge from WordPress. Follow download, installation and restart progress in a Pixflow desktop window.
 - Let assistants filter WordPress posts by category or tag and sort by publication date when building or checking query loops.
 - Give local assistants including Grok Build and Antigravity direct access to Pixflow site tools through MCP, with WordPress permissions and native helpers available when needed.
 
+### Changed
+
+- Read large tool results in focused parts and reuse compact editor style snapshots, reducing repeated lookups and shell commands.
+- Use consistent shadcn message, reasoning, tool, source, queue and plan displays across shared chats.
+- Follow streaming replies while at the live edge, keep your place when reading earlier messages and return with Jump to latest.
+- Use the current Workspace provider and model when drafting site guidance or generating a design system.
+
 ### Fixed
 
+- Edit Gutenberg titles and excerpts through the live editor, discover several block schemas together and distinguish document revisions from style revisions.
+- Keep screenshot data out of saved chat events to avoid unnecessarily large histories.
+- Keep queued messages clear of the transcript and preserve chat position as content changes.
+- Attach the plan to a new conversation before its first request, so planning works in a fresh chat.
+- Fix sign-in errors when Workspace loads the design system and template catalogues in WordPress.
 - Fix Antigravity failing to start when a model variant specifies a reasoning level that conflicts with the saved setting.
 - Let the open assistant panel reconnect during a Bridge restart and send the waiting message once the Bridge is ready.
 - Fix Stop after reloading a page while a Bridge assistant is still running.

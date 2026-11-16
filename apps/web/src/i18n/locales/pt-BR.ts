@@ -191,6 +191,8 @@ export const ptBR: Dict = {
   "guidance.chooseAgent": "Primeiro escolha um agente nas configurações de execução.",
   "guidance.incomplete": "O agente não concluiu o rascunho. Seus documentos não foram alterados.",
   "guidance.title": "Orientações de produto e design",
+  "guidance.clientBrief": "Briefing do cliente",
+  "guidance.clientBriefHint": "Cole o briefing do cliente ou importe um documento. O agente pode usá-lo para criar rascunhos de PRODUCT.md e DESIGN.md.",
   "guidance.subtitle": "Dê ao agente um briefing consistente e uma direção visual.",
   "guidance.generateAgent": "Gerar com o agente",
   "guidance.conflict": "Uma versão mais recente foi salva. Compare-a com seu rascunho antes de escolher qual manter.",

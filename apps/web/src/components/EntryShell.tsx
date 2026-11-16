@@ -747,6 +747,7 @@ export function EntryShell({
                     <h1 className="entry-section__title">{t('entry.navDesignSystems')}</h1>
                   </header>
                   <DesignSystemsTab
+                    config={config}
                     systems={designSystems}
                     templates={templates}
                     selectedId={defaultDesignSystemId}

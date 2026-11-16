@@ -1,3 +1,5 @@
+import streamStyles from './chat/Stream.module.css';
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent } from './chat/CodeBlock';
 import { getPixflowWordPressConfig } from '../pixflow/wordpress-context';
 import { ChatMediaAttachment } from './chat/ChatMediaAttachment';
 import { Message, MessageContent, MessageHeader, MessageFooter } from './chat/Message';
@@ -694,11 +696,11 @@ function AssistantMessageImpl({
 
   return (
     <Message className="msg assistant">
+      <MessageContent className="assistant-flow">
       <MessageHeader className="role">
         {isVoiceMessage ? <VoiceOrb small shared phase={streaming ? voiceStatus?.kind === 'status' && voiceStatus.label === 'connecting' ? 'connecting' : voiceStatus?.kind === 'status' && voiceStatus.label === 'ending' ? 'ending' : 'connected' : 'idle'}/> : <AgentIcon id={roleIconId} size={20} className="role-agent-icon" />}
         <span className="role-name">{isVoiceMessage ? translateUi("ui.assistantMessage.codexVoice") : roleName}</span>
       </MessageHeader>
-      <MessageContent className="assistant-flow">
         {groupActivity(blocks, isCollapsibleActivity).map((section) => {
           const renderSection = () => section.blocks.map((b, offset) => {
           const i = section.start + offset;
@@ -2499,19 +2501,17 @@ function ThinkingBlock({
   // bounded prefix as partial so a protocol tag cut at the boundary stays hidden.
   const showDetail = open;
   const decoded = useMemo(() => splitRichAnswer(stripArtifact(showDetail ? text : text.slice(0, 2000)), isThinking || !showDetail), [text, isThinking, showDetail]);
-  const preview = decoded.map(segment => segment.kind === 'text' ? segment.text : segment.form.title).join(' ').replace(/\s+/g, ' ').trim().slice(0, 160);
   return (
-    <TraceCollapsible className="thinking-block" data-trace-kind="reasoning" open={open}
+    <TraceCollapsible data-trace-kind="reasoning" open={open}
       onOpenChange={setOverride}>
-      <TraceCollapsibleTrigger className="thinking-toggle">
+      <TraceCollapsibleTrigger>
         <TraceLine status={isThinking ? 'running' : undefined}>
           <TraceIcon><Icon name={isThinking ? 'spinner' : 'sparkles'} size={14} /></TraceIcon>
           <TraceTitle>{label}</TraceTitle>
-          {!open && preview ? <TraceDescription className="thinking-preview">{preview}</TraceDescription> : null}
         </TraceLine>
       </TraceCollapsibleTrigger>
       <TraceCollapsibleContent>
-        <div className="thinking-body">{showDetail ? decoded.map((segment, index) => <Fragment key={index}>{segment.kind === 'text' ? <StreamingMarkdown text={segment.text} live={open && isThinking} onLinkClick={onLinkClick} /> : <div className="status-pill">{segment.form.title}</div>}</Fragment>) : null}</div>
+        <div className={streamStyles.reasoning}>{showDetail ? decoded.map((segment, index) => <Fragment key={index}>{segment.kind === 'text' ? <StreamingMarkdown text={segment.text} live={open && isThinking} onLinkClick={onLinkClick} /> : <div className="status-pill">{segment.form.title}</div>}</Fragment>) : null}</div>
       </TraceCollapsibleContent>
     </TraceCollapsible>
   );
@@ -2731,23 +2731,10 @@ function StreamingCodeCard({
     if (el) el.scrollTop = el.scrollHeight;
   }, [code]);
   return (
-    <div className="op-card op-file live-code-box">
-      <div className="op-card-head live-code-head">
-        <span className="action-card-status op-status-running" aria-hidden>
-          <Icon name="spinner" size={14} />
-        </span>
-        <span className="op-title pixflow-shimmer-text">{titleLabel}</span>
-        {metaLabel ? <span className="op-meta">{metaLabel}</span> : null}
-      </div>
-      {code ? (
-        <pre className="live-code-pre" ref={preRef}>
-          <code>
-            {code}
-            <span className="live-code-caret" aria-hidden />
-          </code>
-        </pre>
-      ) : null}
-    </div>
+    <CodeBlock size="sm" data-trace-kind="streaming-code">
+      <CodeBlockHeader><CodeBlockTitle>{titleLabel}{metaLabel ? ` · ${metaLabel}` : ''}</CodeBlockTitle></CodeBlockHeader>
+      {code ? <CodeBlockContent ref={preRef}>{code}</CodeBlockContent> : null}
+    </CodeBlock>
   );
 }
 
@@ -2803,7 +2790,7 @@ function ToolGroupCard({
     rows.push(<TraceCollapsible key={batch[0]!.use.id} data-trace-kind="commands">
       <TraceCollapsibleTrigger><TraceLine><TraceTitle>{t('activity.completed.command')}</TraceTitle>
         <TraceDescription>{batch.length}</TraceDescription></TraceLine></TraceCollapsibleTrigger>
-      <TraceCollapsibleContent keepMounted>{batch.map(card)}</TraceCollapsibleContent>
+      <TraceCollapsibleContent keepMounted><Trace>{batch.map(card)}</Trace></TraceCollapsibleContent>
     </TraceCollapsible>);
   }
   for (const item of dedupeSnapshotToolRetries(items)) {

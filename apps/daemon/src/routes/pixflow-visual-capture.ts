@@ -28,6 +28,7 @@ export function registerPixflowVisualCaptureRoutes(
     const result = await capturePixflowBrowserScreenshots({
       url: String(body.url || ''),
       viewports: Array.isArray(body.viewports) ? body.viewports : [],
+      ...(body.savedPreview ? { savedPreview: body.savedPreview } : {}),
       ...(body.captureMode === 'live-reference' ? { captureMode: body.captureMode } : {}),
       ...(body.fidelityProfile === 'visual-clone' ? { fidelityProfile: body.fidelityProfile } : {}),
       ...(Array.isArray(body.references) ? { references: body.references } : {}),

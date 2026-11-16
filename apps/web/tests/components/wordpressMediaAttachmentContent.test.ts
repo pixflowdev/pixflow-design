@@ -35,6 +35,8 @@ function get_attached_file($id) { global $attachment_file; return $attachment_fi
 function get_post_mime_type($id) { return 'text/html'; }
 function sanitize_file_name($value) { return (string) $value; }
 function sanitize_mime_type($value) { return (string) $value; }
+function admin_url($path) { return 'https://example.test/wp-admin/' . ltrim($path, '/'); }
+function add_query_arg($key, $value, $url) { return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query([$key => $value]); }
 require '${phpServicePath}';
 use PixflowDesign\\WordPress\\Media\\MediaLibraryService;
 $service = new MediaLibraryService();
@@ -54,6 +56,8 @@ echo json_encode($result);
 `);
 
     expect(result).toEqual(expect.objectContaining({
+      attachmentId: 321,
+      libraryUrl: 'https://example.test/wp-admin/index.php?pixflow_media_id=321',
       filename: 'Billow-⋅-Run-on-facts.html',
       mimeType: 'text/html',
       contentBase64: Buffer.from('<!doctype html><title>Billow</title>').toString('base64'),

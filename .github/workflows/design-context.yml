@@ -31,4 +31,9 @@ jobs:
       - run: pnpm --filter @open-design/daemon test tests/pixflow/codex-image-fallback.test.ts tests/pixflow/direct-site-run.test.ts tests/pixflow/direct-workspace-path.test.ts tests/pixflow/windows-helper-working-directory.test.ts tests/pixflow/bricks-context-mirror.test.ts
       - run: pnpm --filter @open-design/web test tests/pixflow/editor-style-snapshot.test.ts tests/pixflow/direct-site-byok.test.ts tests/components/assistant-message-tool-status.test.tsx
       - run: php wordpress/tests/design-images.test.php
+      - name: Structured results and saved preview scope
+        run: |
+          pnpm --filter @open-design/daemon test pixflow/structured-tools pixflow/agent-visual-capture pixflow/saved-preview-scope pixflow/direct-site-session
+          pnpm --filter @open-design/web test gutenberg-document enhanced-design-guidance site-result-store
+          php wordpress/tests/saved-preview-access.test.php
       - run: pnpm wordpress:web

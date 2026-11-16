@@ -1811,6 +1811,11 @@ function AppInner(props: AppProps) {
           welcome={settingsWelcome}
           initialSection={settingsInitialSection}
           openManualDesignSystem={toolbarWorkspaceTool === 'design-system'}
+          onOpenWorkspaceDesignSystems={() => {
+            setToolbarWorkspaceTool(null);
+            setSettingsOpen(false);
+            navigate({ kind: 'home', view: 'design-systems' });
+          }}
           initialHighlight={settingsHighlight}
           composioConfigLoading={composioConfigLoading}
           onPersist={handleConfigPersist}

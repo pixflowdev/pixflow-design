@@ -2,23 +2,27 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { SiteResultStore } from '@open-design/contracts';
 
 export const PIXFLOW_MCP_NAME = 'pixflow_builtin';
 export const supportsPixflowMcp = (agent: string, streamFormat?: string) =>
   streamFormat === 'acp-json-rpc' ||
   ['codex', 'claude', 'opencode', 'mimo', 'grok-build', 'antigravity', 'cursor-agent', 'qwen', 'qoder', 'copilot'].includes(agent);
 export type PixflowMcpCommand = { command: string; args: string[] };
-export const pixflowMcpInstructions = 'Use the connected pixflow_builtin MCP server for Pixflow operations. Its site tools are pixflow_tools (pass up to 12 exact schema names in tools) and pixflow_call (dispatch by tool name and arguments). Resolve slash-delimited names with pixflow_tools before invoking them as native WordPress abilities. In Workspace use the dedicated builder destinations, handoff and handoff status tools. Reuse tool schemas and skill references already read in this run. Native command helpers remain a compatibility fallback if structured tools are unavailable before dispatch. Never replay a failed or interrupted write through another transport; inspect the operation receipt, builder result or handoff status first. A tool session-ended error means use the current run tools, not saved credentials.';
+export const pixflowMcpInstructions = 'Use the connected pixflow_builtin MCP server for Pixflow operations. Its site tools are pixflow_tools (pass up to 12 exact schema names in tools) and pixflow_call (dispatch by tool name and arguments). Resolve slash-delimited names with pixflow_tools before invoking them as native WordPress abilities. In Workspace use the dedicated builder destinations, handoff and handoff status tools. Reuse tool schemas and skill references already read in this run. Oversized results include resultId and readPaths: use pixflow_result_read with exact paths instead of shell-parsing provider transcripts or rerunning the original operation. Result IDs belong to this run; after reconnecting, obtain current state rather than guessing an old ID. Native command helpers remain a compatibility fallback if structured tools are unavailable before dispatch. Never replay a failed or interrupted write through another transport; inspect the operation receipt, builder result or handoff status first. A tool session-ended error means use the current run tools, not saved credentials.';
 
 /** Run-local stdio compatibility output. Tool implementation stays in the helper
  * module; importing it performs no operation and exposes no credentials. */
 export const PIXFLOW_MCP_SOURCE = `import { createInterface } from 'node:readline';
+import { randomUUID, createHash } from 'node:crypto';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { invokePixflowTool } from HELPER_URL;
 const binding = BINDING;
 const workspace = WORKSPACE;
+const SiteResultStore = ${SiteResultStore.toString()};
+const results = new SiteResultStore(6000, 'result-'+randomUUID());
 const pending = new Map();
 const stopped = new AbortController();
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -31,6 +35,11 @@ const tools = workspace ? [
  {name:'pixflow_tools',description:'Discover the connected site tools. Use tools to get several named schemas in one request, or tool for just one. Discovery never executes a named tool.',inputSchema:schema({tool:{type:'string'},tools:{type:'array',items:{type:'string'},minItems:1,maxItems:12}})},
  {name:'pixflow_call',description:'Call an existing Pixflow site tool. For large inputs write a run-local JSON argument file or, for a script tool, a run-local code file. Current WordPress permissions apply. Inspect uncertain results before retrying writes.',inputSchema:{...schema({tool:{type:'string'},arguments:{type:'object'},argumentFile:{type:'string',description:'JSON filename or absolute path inside this run instead of inline arguments'},codeFile:{type:'string',description:'JS or PHP filename or absolute path inside this run for a script tool'}}),required:['tool']}}
 ];
+if(!workspace)tools.push({name:'pixflow_result_read',description:'Read a complete stored tool result without shell commands. Use the returned resultId, path array of exact keys/indexes and optional nextOffset. Reads never repeat the original site operation.',inputSchema:{...schema({resultId:{type:'string'},path:{type:'array',items:{anyOf:[{type:'string'},{type:'integer'}]}},offset:{type:'integer',minimum:0}}),required:['resultId']}});
+tools.push(
+ {name:'pixflow_plan_read',description:'Read the durable plan bound to this chat. Use after reload, recovery or handoff.',inputSchema:schema({})},
+ {name:'pixflow_plan_update',description:'Save a full plan and verified progress. Read first and retain stable step IDs. Revision conflicts require rereading.',inputSchema:{...schema({id:{type:'string'},title:{type:'string'},summary:{type:'string'},revision:{type:'integer',minimum:0},steps:{type:'array',minItems:1,maxItems:40,items:{type:'object',properties:{id:{type:'string'},content:{type:'string'},status:{type:'string',enum:['pending','in_progress','completed','stopped']}},required:['id','content','status'],additionalProperties:false}}}),required:['id','title','summary','revision','steps']}}
+);
 function reply(id,result,error) {
  if(stopped.signal.aborted)return;
  process.stdout.write(JSON.stringify({jsonrpc:'2.0',id,...(error?{error}:{result})})+'\\n');
@@ -85,6 +94,9 @@ async function handle(q) {
  if(q.method!=='tools/call')return reply(q.id,undefined,{code:-32601,message:'Unknown method'});
  if(pending.has(q.id))return reply(q.id,undefined,{code:-32600,message:'Duplicate active request ID'});
  let name=q.params?.name, args=q.params?.arguments ?? {};
+ if(!workspace && name==='pixflow_call' && object(args) && args.tool==='result.read' && Object.keys(args).every(key=>key==='tool'||key==='arguments')) {
+  name='pixflow_result_read';args=args.arguments??{};
+ }
  if(!workspace && name==='pixflow_call' && object(args) && args.tool==='pixflow_tools') {
   if(Object.keys(args).some(key=>key!=='tool'&&key!=='arguments'))return reply(q.id,failed('Use discovery arguments to look up schemas. No operation was dispatched.'));
   name='pixflow_tools';
@@ -110,10 +122,19 @@ async function handle(q) {
  const catalogueNames=names?.filter(isToolName);
  const controller=new AbortController();pending.set(q.id,controller);
  try {
-  let argv;
+  if(name==='pixflow_result_read') {
+   try {
+    const current=JSON.parse(await readFile(new URL('./site-connection.json',import.meta.url),'utf8'));
+    if(createHash('sha256').update(JSON.stringify(current)).digest('hex')!==binding)throw new Error('This result belongs to an ended tool session. Read current state through the current run tools.');
+    return reply(q.id,{content:[{type:'text',text:JSON.stringify(results.read(args))}]});
+   }
+   catch(error) { return reply(q.id,failed(error.message)); }
+  }
+  let argv, toolArguments;
   try {
-   argv=workspace ? [name.replace('pixflow_builder_','builder.').replace('handoff_status','handoff.status'),JSON.stringify(args)]
-    : name==='pixflow_tools' ? ['help'] : [args.tool,JSON.stringify(await siteArguments(args))];
+   if(!workspace && name==='pixflow_call')toolArguments=await siteArguments(args);
+   argv=name==='pixflow_plan_read' || name==='pixflow_plan_update' ? [name==='pixflow_plan_read'?'plan.read':'plan.update',JSON.stringify(args)] : workspace ? [name.replace('pixflow_builder_','builder.').replace('handoff_status','handoff.status'),JSON.stringify(args)]
+    : name==='pixflow_tools' ? ['help'] : [args.tool,JSON.stringify(toolArguments)];
   } catch (error) {
    const detail=error?.code==='ENOENT'
     ? 'The run input file does not exist. Write the file and wait for the write to finish before calling the tool.'
@@ -154,8 +175,31 @@ async function handle(q) {
     result.hint = 'Read each localPath for the complete Markdown. The reference path is a site catalogue identifier, not a local path. Reuse these files for this run.';
    }
   }
-  const text=JSON.stringify(result);
-  reply(q.id,text.length>3000000?failed('The result is too large to display. The operation was dispatched: inspect its status and request a narrower read; do not repeat the write.'): {isError:result?.ok===false,content:[{type:'text',text}]});
+  let presented = !workspace && name==='pixflow_call' && !['plan.read','plan.update'].includes(args.tool) ? results.present(result) : result;
+  if(presented!==result && object(presented)) {
+   presented={...Object.fromEntries(['ok','error','code','commandId','pending','accepted'].filter(key=>Object.hasOwn(result,key)).map(key=>[key,result[key]])),...presented,
+    read:presented.read.replace('Call result.read','Call pixflow_result_read')};
+  }
+  const text=JSON.stringify(presented);
+  const content=[{type:'text',text}];
+  if (!workspace && name==='pixflow_call' && ['browser.preview','browser.capture'].includes(args.tool) && toolArguments?.includeImages!==false && Array.isArray(result?.captures)) {
+   const root=await realpath(path.dirname(fileURLToPath(import.meta.url)));
+   let remaining=12_000_000;
+   for(const capture of result.captures.slice(0,6)) {
+    try {
+     const file=await realpath(capture.path);
+     const relative=path.relative(root,file);
+     if(relative.startsWith('..') || path.isAbsolute(relative) || !/^capture-[^/\\\\]+[/\\\\][0-9]+[.]png$/.test(relative))continue;
+     const info=await stat(file);
+     if(!info.isFile() || info.size>remaining || info.size>4_000_000)continue;
+     const bytes=await readFile(file);
+     if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')continue;
+     remaining-=bytes.length;
+     content.push({type:'text',text:'Screenshot: '+capture.viewport},{type:'image',mimeType:'image/png',data:bytes.toString('base64')});
+    } catch { /* Text paths and evidence remain available when an image is unavailable. */ }
+   }
+  }
+  reply(q.id,text.length>3000000?failed('The result is too large to display. The operation was dispatched: inspect its status and request a narrower read; do not repeat the write.'): {isError:result?.ok===false,content});
  } catch {
   reply(q.id,failed('The tool session ended or the operation could not be confirmed. Inspect the latest site state and operation receipt before retrying; do not replay the write through the helper.'));
  } finally {pending.delete(q.id);}

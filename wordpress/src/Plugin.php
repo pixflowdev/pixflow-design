@@ -73,6 +73,7 @@ final class Plugin
 
     public function register(): void
     {
+        \PixflowDesign\WordPress\Http\SavedPreviewAccess::register();
         // Separately packaged add-ons register after all plugin files load.
         // Bundled integrations stay in place until their extraction is verified.
         (new \PixflowDesign\WordPress\Modules\ModuleHost())->register();

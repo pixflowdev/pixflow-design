@@ -1,5 +1,12 @@
 import type { ChatMessage } from '../types';
 
+/** A direct run belongs to the floating panel; opening that owner must remain
+ * possible while its saved transcript is active or awaiting recovery. */
+export function hasActiveWorkspaceRun(messages: readonly ChatMessage[]): boolean {
+  return messages.some(message => isDaemonRecoveryMessage(message)
+    && (message.runStatus === 'running' || message.runStatus === 'queued'));
+}
+
 /** Direct floating-panel runs have their own persisted stream receipt and
  * recovery owner. They are visible in unified Workspace chats but never appear
  * in the daemon /api/runs index; absence there is not evidence of failure.

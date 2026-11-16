@@ -191,6 +191,8 @@ export const id: Dict = {
   "guidance.chooseAgent": "Pilih agen di pengaturan Eksekusi terlebih dahulu.",
   "guidance.incomplete": "Agen belum menyelesaikan draf. Dokumen Anda tidak berubah.",
   "guidance.title": "Panduan produk dan desain",
+  "guidance.clientBrief": "Brief klien",
+  "guidance.clientBriefHint": "Tempel brief klien atau impor dokumen. Agen dapat menggunakannya untuk membuat draf PRODUCT.md dan DESIGN.md.",
   "guidance.subtitle": "Berikan ringkasan yang konsisten dan arah visual kepada agen Anda.",
   "guidance.generateAgent": "Buat dengan agen",
   "guidance.conflict": "Versi yang lebih baru telah disimpan. Bandingkan dengan draf sebelum memilih yang akan dipertahankan.",

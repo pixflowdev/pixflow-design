@@ -7,8 +7,8 @@ afterEach(cleanup);
 it('keeps malformed protocol out of answer and thinking while preserving literal examples',()=>{
   const text='Before <od-card>{"type":"unknown"}</od-card> after';
   const {container}=render(<AssistantMessage streaming={false} projectId={null} message={{id:'rich',role:'assistant',content:text,events:[{kind:'thinking',text},{kind:'text',text}]}} />);
-  fireEvent.click(container.querySelector('.thinking-toggle')!);
-  expect(container.querySelector('.thinking-body')!.textContent).toContain('Before  after');
+  fireEvent.click(container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-trigger]')!);
+  expect(container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-content-inner]')!.textContent).toContain('Before  after');
   expect(container.querySelector('.prose-block')!.textContent).toContain('Before  after');
   expect(container.textContent).not.toContain('"type"');
 });
@@ -19,14 +19,13 @@ it('keeps large collapsed output out of the DOM until requested and preserves di
     events: [{ kind: 'thinking', text }], startedAt: 1000, endedAt: 2000,
   }} />);
   expect(container.querySelector('[data-activity-group] > button')).toBeNull();
-  const preview = container.querySelector('.thinking-preview')!;
-  expect(preview.textContent!.length).toBeLessThan(600);
+  expect(container.querySelector('.thinking-preview')).toBeNull();
   expect(container.textContent).not.toContain('END_OF_CANVAS');
-  const toggle = container.querySelector('.thinking-toggle')!;
+  const toggle = container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-trigger]')!;
   fireEvent.click(toggle);
-  expect(container.querySelector('.thinking-body')!.textContent).toContain('END_OF_CANVAS');
+  expect(container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-content-inner]')!.textContent).toContain('END_OF_CANVAS');
   fireEvent.click(toggle);
   expect(toggle.getAttribute('aria-expanded')).toBe('false');
   fireEvent.click(toggle);
-  expect(container.querySelector('.thinking-body')!.textContent).toContain('END_OF_CANVAS');
+  expect(container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-content-inner]')!.textContent).toContain('END_OF_CANVAS');
 });

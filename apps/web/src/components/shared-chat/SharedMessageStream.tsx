@@ -1,6 +1,5 @@
-import { MessageScroller, MessageScrollerProvider, MessageScrollerViewport, MessageScrollerContent, MessageScrollerButton, supportsMessageScroller } from '../chat/MessageScroller';
+import { MessageScroller, MessageScrollerProvider, MessageScrollerViewport, MessageScrollerContent, MessageScrollerButton, ChatTranscriptItem } from '../chat/MessageScroller';
 import type {
-  MouseEventHandler,
   MutableRefObject,
   ReactNode,
 } from 'react';
@@ -14,93 +13,54 @@ type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => 
 // source of truth until the Bricks Agent has its own conversation state.
 export function SharedMessageStream({
   scrollSessionKey,
-  modernScroller = true,
   logRef,
   loading,
-  chatLogScrollable,
-  chatLogScrolling,
-  onLogClickCapture,
+  historyLoading = false,
   emptyState,
   rows,
+  historyControls,
   errorNode,
   guidanceNode,
-  tailSpacerRef,
-  scrolledFromBottom,
-  onJumpToBottom,
   scrollToLatestLabel,
   jumpToLatestLabel,
   loadingLabel,
   t,
 }: {
   scrollSessionKey?: string | null;
-  modernScroller?: boolean;
   logRef: MutableRefObject<HTMLDivElement | null>;
   loading: boolean;
-  chatLogScrollable: boolean;
-  chatLogScrolling: boolean;
-  onLogClickCapture?: MouseEventHandler<HTMLDivElement>;
+  historyLoading?: boolean;
   emptyState?: ReactNode;
   rows: ReactNode;
+  historyControls?: ReactNode;
   errorNode?: ReactNode;
   guidanceNode?: ReactNode;
-  tailSpacerRef: MutableRefObject<HTMLDivElement | null>;
-  scrolledFromBottom: boolean;
-  onJumpToBottom: () => void;
   scrollToLatestLabel: string;
   jumpToLatestLabel: string;
   loadingLabel?: string;
   t: TranslateFn;
 }) {
-  if (modernScroller && supportsMessageScroller) return (
+  if (historyLoading) return <SharedChatConversationLoading t={t} label={loadingLabel} />;
+  return (
     <MessageScrollerProvider key={scrollSessionKey} autoScroll defaultScrollPosition="end">
       <MessageScroller className="chat-log-wrap">
+        {historyControls}
         <MessageScrollerViewport ref={logRef} className={`chat-log${loading ? ' is-loading' : ''}`}
-          aria-busy={loading} aria-label={jumpToLatestLabel} onClickCapture={onLogClickCapture}>
+          aria-busy={loading} aria-label={jumpToLatestLabel}>
           <MessageScrollerContent>
-            {loading ? <SharedChatConversationLoading t={t} label={loadingLabel} /> : null}
-            {emptyState}{rows}{errorNode}{guidanceNode}
+            {emptyState && <ChatTranscriptItem messageId="empty">{emptyState}</ChatTranscriptItem>}{rows}
+            {loading ? <ChatTranscriptItem messageId="preparing"><SharedChatConversationLoading t={t} label={loadingLabel} /></ChatTranscriptItem> : null}
+            {errorNode && <ChatTranscriptItem messageId="error">{errorNode}</ChatTranscriptItem>}
+            {guidanceNode && <ChatTranscriptItem messageId="guidance">{guidanceNode}</ChatTranscriptItem>}
           </MessageScrollerContent>
         </MessageScrollerViewport>
-        <MessageScrollerButton direction="end" className="chat-jump-btn chat-jump-btn-active"
+        <MessageScrollerButton direction="end"
           title={scrollToLatestLabel} aria-label={jumpToLatestLabel}>
           <Icon name="arrow-up" size={12} style={{ transform: 'rotate(180deg)' }} />
           <span>{jumpToLatestLabel}</span>
         </MessageScrollerButton>
       </MessageScroller>
     </MessageScrollerProvider>
-  );
-  return (
-    <div className="chat-log-wrap">
-      <div
-        className={[
-          'chat-log',
-          loading ? 'is-loading' : '',
-          chatLogScrollable ? 'is-scrollable' : '',
-          chatLogScrolling ? 'is-scrolling' : '',
-        ].filter(Boolean).join(' ')}
-        ref={logRef}
-        aria-busy={loading}
-        onClickCapture={onLogClickCapture}
-      >
-        {loading ? <SharedChatConversationLoading t={t} label={loadingLabel} /> : null}
-        {emptyState}
-        {rows}
-        {errorNode}
-        {guidanceNode}
-        <div className="chat-log-tail-spacer" ref={tailSpacerRef} aria-hidden />
-      </div>
-      <button
-        type="button"
-        className={`chat-jump-btn${scrolledFromBottom ? ' chat-jump-btn-active' : ''}`}
-        onClick={onJumpToBottom}
-        title={scrollToLatestLabel}
-        aria-hidden={!scrolledFromBottom}
-        tabIndex={scrolledFromBottom ? 0 : -1}
-      >
-        <Icon name="arrow-up" size={12} style={{ transform: 'rotate(180deg)' }} />
-        <span>{jumpToLatestLabel}</span>
-      </button>
-    </div>
   );
 }
 

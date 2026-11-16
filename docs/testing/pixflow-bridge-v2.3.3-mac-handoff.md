@@ -6,8 +6,10 @@ Build the Apple Silicon and Intel release candidates and report back before publ
 
 | Repository | Branch | Commit |
 | --- | --- | --- |
-| pixflowdev/pixflow-design | `codex/v233-core-candidate` | `7b6e70f9de07288ee7382f5281d9b6b2bf96ff23` |
-| pixflowdev/pixflow-design-pro | `codex/v233-pro-candidate` | `17fbd37f28cc51eda86505ea2c30a358d818ee31` |
+| pixflowdev/pixflow-design | `codex/v233-core-candidate` | `7ef664f9c231163e60bb0274cc633c8b95824209` |
+| pixflowdev/pixflow-design-pro | `codex/v233-pro-candidate` | `4f1f06c275492e859b83405f0e157fdd705e396d` |
+
+This replaces the earlier handoff. Do not build from the old source pair or reuse its plugin ZIPs or Bridge binaries. Begin only after Core #153/#155/#156/#158 and Pro #85/#87/#88 have merged with passing checks. The release inventory is in `docs/qa/v233-source-inventory.json`; unfinished Team and comments/Feedback work and the Tauri experiment are excluded.
 
 Pro pins that Core commit. This documentation branch is separate from the build source. Read both repositories' AGENTS.md and Core's tools/pack/AGENTS.md. Use clean, isolated, architecture-specific worktrees, Node 24 and pnpm 10.33.2 with frozen installs. Point each checkout at its exact partner with `PIXFLOW_DESIGN_CORE_ROOT` and `PIXFLOW_DESIGN_PRO_ROOT`.
 
@@ -30,6 +32,17 @@ Use local WordPress with the paired v2.3.3 plugins, supported Bricks and the rea
 - Inspect traces for failed commands, repeated discovery, unnecessary retries and file or database searches. Record meaningful timings and why any repeated calls were required. Fix reproducible issues in focused PRs and rerun the original natural brief.
 - Smoke test GUI launch, provider detection, native messaging, pairing and normal update/migration with each final architecture. Verify that prior pairing, settings and chats survive. Restore the original local routing after testing.
 
+## Additional checks for this refreshed candidate
+
+- Use natural customer prompts, without prescribing bento, editorial or another layout. The selected styling mode, builder styles and saved DESIGN.md must supply the design direction. Verify component consistency and meaningful page coverage, not only successful saving or absence of overflow.
+- Confirm the shared Plan card records the outline and progress. Test a fresh chat, reload during a run, recovery and Workspace-to-builder handoff. The same plan must remain attached to the same conversation; completed steps must reflect verified work.
+- Verify follow-at-live-edge scrolling, scrollback while streaming, Jump to latest, queued-message clearance and opening saved chats at the end. Check narrow and wide panel sizes with the real Mac browser.
+- Exercise `browser.preview` on the connected saved draft at desktop/mobile widths, including a supported disclosure interaction. Confirm the provider receives real screenshot images and that expiry, revocation and a different page are rejected. Do not publish a draft or obtain browser login cookies for verification.
+- Exercise a large tool result through `pixflow_result_read`. Confirm exact-path reads work without shell-parsing provider transcripts, and that results cannot be reused after the originating tool session ends. Check that screenshot base64 data is not copied into durable chat history.
+- Include one Gutenberg title/excerpt edit with native Undo and one batch of block-schema reads. Keep document and style revisions distinct.
+- Test blank-site guidance in a disposable fixture: enough business context should produce a sensible scoped design; missing essential context should produce a focused question before building. Preserve the user's global styles and documents. Ordinary website images should not acquire unnecessary captions.
+- Specifically inspect macOS launch paths, quoting, permissions, missing tools, repeated discovery and retries. Retest failures with the original natural prompt after fixing their cause. Do not count corrective user prompts as first-pass success.
+
 ## Ad hoc update feasibility
 
 The v2.3.3 WordPress seamless updater is implemented for Windows. Treat Mac updating as a separate feasibility experiment using a disposable install and local fixture feed or existing test harness. A manual DMG replacement is a migration check and does not establish seamless updating.
@@ -38,4 +51,4 @@ The v2.3.3 WordPress seamless updater is implemented for Windows. Treat Mac upda
 2. Attempt a verified v2.3.3 update through that mechanism, including replacing the running app safely, restarting it and reconnecting the original WordPress tab. Check if macOS requests approval again, blocks first launch of the replacement, or changes Chrome native-host access or credential access. Confirm preserved pairing and settings, correct architecture, installed signature and version.
 3. Run on arm64 and x64 environments and state whether x64 was native or Rosetta. Keep manual DMG installation coverage and seamless update coverage separate. Return logs and a verdict. If unattended updating fails, needs another approval prompt, cannot be tested on the intended path, or relies on weakening macOS security, keep seamless updating Windows-only until notarisation is available. Mac DMGs can still use the normal manual install path, subject to build and smoke checks.
 
-Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and targets the Core commit above. Use it for verified DMG assets if the source pair passes. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.
+Return both DMGs with SHA-256 and sizes, exact commit pair, signing/Gatekeeper evidence, Bricks MCP traces and results, and the updater verdict. The designated [Bridge v2.3.3 GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/edit/untagged-08d0de5e62fba4ef1469) has release ID `446489613` and may still target the earlier candidate. Do not upload to it until its target is explicitly updated to the verified Core commit above. Old draft assets must be rebuilt from this source pair. Recheck the draft flag, target commit and GitHub asset digests. Publication and production feeds remain on hold.

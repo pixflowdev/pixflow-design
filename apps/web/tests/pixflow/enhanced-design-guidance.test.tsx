@@ -1,43 +1,35 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { PlanningContribution } from '../../src/pixflow/planning-contract';
 import { EnhancedDesignGuidance } from '../../src/pixflow/EnhancedDesignGuidance';
-const api = vi.hoisted(() => ({read:vi.fn(),write:vi.fn()}));
-vi.mock('../../src/pixflow/optional-bridge',()=>({fetchPixflowOptionalBridgeConfig:api.read,persistPixflowOptionalBridgeConfig:api.write}));
-afterEach(()=>{cleanup();vi.clearAllMocks();});
-it('keeps the saved preference when saving fails and displays an error',async()=>{
- api.read.mockResolvedValue({enhancedDesignGuidance:false});api.write.mockRejectedValue(new Error('offline'));
- render(<EnhancedDesignGuidance/>);
- const toggle=screen.getByRole('switch');
- await waitFor(()=>expect(api.read).toHaveBeenCalled());
- fireEvent.click(toggle);
- await waitFor(()=>expect(screen.getByRole('alert')).toBeTruthy());
- expect(toggle.getAttribute('aria-checked')).toBe('false');
+const runtime = vi.hoisted(() => ({ enabled: false, load: vi.fn() }));
+vi.mock('../../src/pixflow/feature-runtime', () => ({
+  pixflowFeatureEnabled: () => runtime.enabled,
+  usePixflowFeatureAsset: runtime.load,
+}));
+const scope = window as Window & { PixflowPlanningFactory?: () => PlanningContribution };
+afterEach(() => { cleanup(); runtime.enabled = false; delete scope.PixflowPlanningFactory; vi.clearAllMocks(); });
+it('does not expose the premium preference without the planning feature', () => {
+  const factory = vi.fn(); scope.PixflowPlanningFactory = factory;
+  render(<EnhancedDesignGuidance />);
+  expect(screen.queryByRole('switch')).toBeNull();
+  expect(factory).not.toHaveBeenCalled();
 });
-it('hydrates from the shared service and saves the independent preference',async()=>{
- api.read.mockResolvedValue({enhancedDesignGuidance:true});api.write.mockResolvedValue({enhancedDesignGuidance:false});
- render(<EnhancedDesignGuidance/>);const toggle=screen.getByRole('switch');
- await waitFor(()=>expect(toggle.getAttribute('aria-checked')).toBe('true'));
- fireEvent.click(toggle);
- await waitFor(()=>expect(toggle.getAttribute('aria-checked')).toBe('false'));
- expect(api.write).toHaveBeenCalledWith({enhancedDesignGuidance:false});
+it('waits for the optional planning contribution instead of fabricating a local setting', () => {
+  runtime.enabled = true;
+  render(<EnhancedDesignGuidance />);
+  expect(screen.queryByRole('switch')).toBeNull();
+  expect(runtime.load).toHaveBeenCalledWith('pixflow-planning');
 });
-
-it('does not overwrite a saved choice with an older hydration response',async()=>{
- let resolveRead!:(value:unknown)=>void;
- api.read.mockReturnValue(new Promise(resolve=>{resolveRead=resolve;}));
- api.write.mockResolvedValue({enhancedDesignGuidance:true});
- render(<EnhancedDesignGuidance enabled={false}/>);const toggle=screen.getByRole('switch');
- fireEvent.click(toggle);
- await waitFor(()=>expect(toggle.getAttribute('aria-checked')).toBe('true'));
- resolveRead({enhancedDesignGuidance:false});
- await waitFor(()=>expect(api.write).toHaveBeenCalled());
- expect(toggle.getAttribute('aria-checked')).toBe('true');
-});
-
-it('defaults on when no preference is saved',async()=>{
- api.read.mockResolvedValue({});
- render(<EnhancedDesignGuidance/>);
- await waitFor(()=>expect(api.read).toHaveBeenCalled());
- expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true');
+it('forwards the saved preference and surface to the loaded contribution', () => {
+  runtime.enabled = true;
+  const component = vi.fn(({enabled, surface}) => <button role="switch" aria-checked={enabled} data-surface={surface}>Guidance</button>);
+  scope.PixflowPlanningFactory = () => ({EnhancedDesignGuidance:component}) as unknown as PlanningContribution;
+  const {rerender} = render(<EnhancedDesignGuidance enabled={false} surface="wp_admin" />);
+  expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
+  expect(screen.getByRole('switch').getAttribute('data-surface')).toBe('wp_admin');
+  rerender(<EnhancedDesignGuidance enabled surface="bricks_builder" />);
+  expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true');
+  expect(screen.getByRole('switch').getAttribute('data-surface')).toBe('bricks_builder');
 });

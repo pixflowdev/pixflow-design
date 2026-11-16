@@ -2,8 +2,29 @@
 .viewport { min-height: 0; min-width: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .viewport[data-pending-scroll] { visibility: hidden; }
 .content { display: flex; flex-direction: column; flex-shrink: 0; min-width: 0; gap: 12px; }
-.item { display: flex; flex-direction: column; min-width: 0; flex-shrink: 0; }
-.button[data-active=false] { opacity: 0; pointer-events: none; transform: translateY(8px); }
-.button[data-active=true] { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.item { display: flex; flex-direction: column; min-width: 0; flex-shrink: 0; content-visibility: auto; contain-intrinsic-size: auto 120px; }
+.button[data-active=false] { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(8px); }
+.button[data-active=true] { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0); }
 .button { transition: opacity 200ms cubic-bezier(.23,1,.32,1), transform 200ms cubic-bezier(.23,1,.32,1); }
 @media (prefers-reduced-motion: reduce) { .button { transition: none; } }
+
+/* New user turns rise into place; restored history and streaming replies do not animate. */
+.item[data-message-enter] { animation: message-enter 200ms cubic-bezier(.23,1,.32,1) both; }
+@keyframes message-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .item[data-message-enter] { animation: none; } }
+
+
+
+.button {
+  position: absolute; bottom: 12px; left: 0; right: 0; margin: 0 auto; width: max-content;
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border-radius: var(--radius-pill); background: var(--bg-panel); border: 1px solid var(--border-strong);
+  color: var(--text); font-size: 12px; box-shadow: var(--shadow-sm); cursor: pointer; z-index: 6;
+}
+.button:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+
+/* Do not let the growing live row become the browser's reading anchor. */
+.viewport[data-reader-held] .item:has(+ [data-message-scroller-spacer]) { overflow-anchor: none; }
+
+/* Separate turns without loosening the content within a reply. */
+.item[data-message-role=assistant] + .item[data-message-role=user] { margin-block-start: 16px; }

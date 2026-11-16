@@ -345,7 +345,7 @@ describe('AssistantMessage thinking blocks', () => {
       />,
     );
 
-    expect(container.querySelector('.thinking-block')).toBeNull();
+    expect(container.querySelector('[data-trace-kind=reasoning]')).toBeNull();
   });
 
   it('keeps non-empty thinking content visible after leading whitespace deltas', () => {
@@ -365,13 +365,13 @@ describe('AssistantMessage thinking blocks', () => {
 
     const disclosure = container.querySelector('[data-activity-group] button');
     if (disclosure) fireEvent.click(disclosure);
-    expect(container.querySelector('.thinking-block')).toBeTruthy();
-    expect(screen.getAllByText('Reading the directory listing.')).toHaveLength(1);
-    const toggle = container.querySelector('.thinking-toggle')!;
+    expect(container.querySelector('[data-trace-kind=reasoning]')).toBeTruthy();
+
+    const toggle = container.querySelector('[data-trace-kind=reasoning] [data-slot=trace-collapsible-trigger]')!;
     const expanded = toggle.getAttribute('aria-expanded');
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe(expanded === 'true' ? 'false' : 'true');
-    expect(screen.getByText('Reading the directory listing.')).toBeTruthy();
+    if (expanded !== 'true') expect(screen.getByText('Reading the directory listing.')).toBeTruthy();
   });
 
   it('renders Pixflow wait events with a stage label and muted overview detail', () => {

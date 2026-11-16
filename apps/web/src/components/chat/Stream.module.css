@@ -1,0 +1,4 @@
+.reasoning { font-size:14px; line-height:1.625; overflow-wrap:break-word; }
+.reasoning > :first-child { margin-top:0; }
+.reasoning > :last-child { margin-bottom:0; }
+.path { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }

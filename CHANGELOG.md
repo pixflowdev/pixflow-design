@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Keep reasoning and tool details collapsed until you choose to open them, without changing your choice during streaming.
 - Read large tool results in focused parts and reuse compact editor style snapshots, reducing repeated lookups and shell commands.
 - Use consistent shadcn message, reasoning, tool, source, queue and plan displays across shared chats.
 - Follow streaming replies while at the live edge, keep your place when reading earlier messages and return with Jump to latest.
@@ -26,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Allow Codex to use the paired site tools without unnecessary approval prompts, while keeping other connected tools subject to their existing permissions.
+- Fix helper and saved-file access on macOS when temporary folders use an alternative system path.
+- Use the operating system’s trusted certificates for secure assistant tool connections on Windows and macOS.
+- Avoid oversized Workspace session requests when a conversation has extensive guidance or history.
+- Keep the same conversation and saved plan when continuing from Workspace into a builder.
+- Prevent duplicate failed replies and false save-conflict warnings after a builder handoff.
 - Edit Gutenberg titles and excerpts through the live editor, discover several block schemas together and distinguish document revisions from style revisions.
 - Keep screenshot data out of saved chat events to avoid unnecessarily large histories.
 - Keep queued messages clear of the transcript and preserve chat position as content changes.

@@ -240,3 +240,9 @@ it('normalizes a script filename supplied with the native tool arguments', async
   expect((await invoke({ codeFile: 'design.js', code: 'return 1;' })).result.isError).toBe(true);
   expect(f.calls).toHaveLength(1);
 });
+
+
+it.skipIf(process.platform !== 'darwin' && process.platform !== 'win32')('retains host certificate trust when a provider filters the MCP child environment', async () => {
+  const f = await fixture('site');
+  expect(f.staged.server.args[0]).toBe('--use-system-ca');
+});

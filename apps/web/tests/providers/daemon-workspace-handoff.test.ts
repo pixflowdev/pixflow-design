@@ -38,9 +38,9 @@ describe('Workspace CLI source-bound session transport', () => {
     expect(state.session.mock.calls[0]?.[1].signal).toBe(cancel.signal);
   });
 
-  it.each(['Plain site', 'Café — 設計 👋'])('preserves session data for %s in an HTTP-safe header', async (siteLabel) => {
+  it.each(['Plain site', 'Café — 設計 👋'])('keeps the authorization header bounded with large guidance and %s metadata', async (siteLabel) => {
     const workspaceSource = { projectId: 'project', conversationId: 'chat', requestId: 'user-message' };
-    const session = { siteLabel, endpoint: 'https://site.test/?rest_route=/pixflow-design/v1/wp-admin/direct/tools', token: 'pfdirect_' + 'a'.repeat(64), workspaceSource, expiresAt: 9999999999, writable: true };
+    const session = { siteLabel, endpoint: `https://site.test/${siteLabel}/?rest_route=/pixflow-design/v1/wp-admin/direct/tools`, token: 'pfdirect_' + 'a'.repeat(64), workspaceSource, expiresAt: 9999999999, writable: true, designGuidance: { content: 'x'.repeat(22074) } };
     state.session.mockResolvedValue(Response.json(session));
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -55,7 +55,10 @@ describe('Workspace CLI source-bound session transport', () => {
     expect(state.session).toHaveBeenCalledWith('/wp-admin/direct/sessions', expect.objectContaining({ body: JSON.stringify({ workspaceSource }) }));
     const call = fetcher.mock.calls.find(([url, init]) => String(url).endsWith('/api/runs') && init?.method === 'POST');
     expect(call).toBeDefined();
-    expect(JSON.parse(new Headers(call![1]?.headers).get('X-Pixflow-Workspace-Session')!)).toEqual(session);
+    const header = new Headers(call![1]?.headers).get('X-Pixflow-Workspace-Session')!;
+    expect(header.length).toBeLessThan(8192);
+    expect(header).toMatch(/^[\x00-\x7f]*$/);
+    expect(JSON.parse(header)).toEqual({ endpoint: session.endpoint, token: session.token, expiresAt: session.expiresAt });
     expect(String(call![1]?.body)).not.toContain(session.token);
     expect(JSON.parse(String(call![1]?.body))).toMatchObject({ projectId: 'project', conversationId: 'chat', currentPrompt: 'Build a new page in Gutenberg.' });
   });

@@ -48,6 +48,18 @@ it('removes disabled servers from a fresh process configuration',()=>{
 
 const builtIn = { command: 'C:/Program Files/nodejs/node.exe', args: ['D:/Run folder/pixflow-tools.mjs'] };
 
+it('allows only the run-bound Pixflow tool surface in non-interactive Codex sessions', () => {
+  const external = directMcpConfiguration('codex', servers);
+  const config = withPixflowTools(external, builtIn);
+  expect(config.codex.pixflow_builtin?.tools).toEqual(Object.fromEntries([
+    'pixflow_tools', 'pixflow_call', 'pixflow_result_read', 'pixflow_builder_destinations',
+    'pixflow_builder_handoff', 'pixflow_builder_handoff_status', 'pixflow_plan_read', 'pixflow_plan_update',
+  ].map(name => [name, { approval_mode: 'approve' }])));
+  expect(config.codex.local).toEqual(external.codex.local);
+  expect(config.codex.remote).toEqual(external.codex.remote);
+  expect(config.claude?.mcpServers.pixflow_builtin).toEqual(builtIn);
+});
+
 it('stages Antigravity MCP in the caller workspace and preserves existing configuration', async () => {
   const project = await mkdtemp(path.join(tmpdir(), 'pixflow-agy-mcp-'));
   try {

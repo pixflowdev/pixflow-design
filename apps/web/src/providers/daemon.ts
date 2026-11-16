@@ -381,7 +381,9 @@ function daemonApiUrl(path: string): string {
 
 /** HTTP headers are byte strings; JSON escapes preserve Unicode session metadata losslessly. */
 function sessionHeader(value: PixflowDirectSiteSession): string {
-  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, character =>
+  // The Bridge reauthorizes the token with WordPress and reads its source binding there.
+  // Guidance/history are response payloads, not credentials, and can exceed header limits.
+  return JSON.stringify({ endpoint: value.endpoint, token: value.token, expiresAt: value.expiresAt }).replace(/[\u007f-\uffff]/g, character =>
     '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 

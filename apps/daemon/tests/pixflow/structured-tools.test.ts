@@ -199,3 +199,17 @@ it('normalizes a script filename supplied with the native tool arguments', async
   expect((await invoke({ codeFile: 'design.js', code: 'return 1;' })).result.isError).toBe(true);
   expect(f.calls).toHaveLength(1);
 });
+
+for (const scope of ['workspace', 'site'] as const) it(`exposes the same saved plan tools in ${scope}, including handoff continuation`, async () => {
+ const f=await fixture(scope);
+ const list=await f.rpc.request('tools/list').promise;
+ expect(list.result.tools.map((tool:any)=>tool.name)).toEqual(expect.arrayContaining(['pixflow_plan_read','pixflow_plan_update']));
+ const plan={id:'build',title:'Build page',summary:'Approved brief',revision:0,steps:[{id:'build',content:'Build page',status:'pending'}]};
+ expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_update',arguments:plan}).promise).ok).toBe(true);
+ expect(payload(await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).ok).toBe(true);
+ expect(f.calls).toEqual([{tool:'plan.update',arguments:plan},{tool:'plan.read',arguments:{}}]);
+ const denied=await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{conversationId:'other'}}).promise;
+ expect(denied.result.isError).toBe(true);expect(f.calls).toHaveLength(2);
+ for(const provider of ['codex','claude','grok-build','antigravity'])expect(supportsPixflowMcp(provider)).toBe(true);
+ f.deny();expect((await f.rpc.request('tools/call',{name:'pixflow_plan_read',arguments:{}}).promise).result.isError).toBe(true);
+});

@@ -1,9 +1,11 @@
+// Geometry-dependent follow, prepend and queue coverage: e2e/ui/message-scroller.test.ts
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { readFileSync } from 'node:fs';
 import queueStyles from '../../src/components/ComposerQueue.module.css';
 import { ChatPane, buildRunErrorDiagnosticText, retryableAssistantMessage } from '../../src/components/ChatPane';
 import { DESIGN_SYSTEM_WORKSPACE_PROMPT_PREFIX } from '../../src/design-system-auto-prompt';
@@ -217,28 +219,6 @@ afterEach(() => {
 });
 
 describe('ChatPane streaming state', () => {
-  it('preserves the reading position when an older history page is prepended', () => {
-    const load = vi.fn(async () => {});
-    const recent: ChatMessage[] = [{ id: 'recent', role: 'user', content: 'Recent message' }];
-    const pane = (messages: ChatMessage[], loading = false) => <ChatPane messages={messages} streaming={false} error={null}
-      projectId="history-scroll" projectFiles={[]} onEnsureProject={async () => 'history-scroll'} onSend={vi.fn()} onStop={vi.fn()}
-      conversations={[]} activeConversationId="history-scroll" onSelectConversation={vi.fn()} onDeleteConversation={vi.fn()}
-      olderHistory={{loading,error:false,load}} />;
-    const view = render(pane(recent));
-    const log = view.container.querySelector('.chat-log') as HTMLElement;
-    let height = 800;
-    Object.defineProperty(log,'scrollHeight',{get:()=>height,configurable:true});
-    Object.defineProperty(log,'clientHeight',{get:()=>400,configurable:true});
-    log.scrollTop = 80;
-    fireEvent.click(screen.getByRole('button',{name:'history.loadEarlier'}));
-    expect(load).toHaveBeenCalledOnce();
-    view.rerender(pane(recent,true));
-    height = 1400;
-    view.rerender(pane([{id:'older',role:'user',content:'Older message'},...recent]));
-    expect(log.scrollTop).toBe(680);
-    expect(screen.getByText('Older message')).toBeTruthy();
-    expect(screen.getByText('Recent message')).toBeTruthy();
-  });
 
   it('updates Voice availability in the mounted composer without a reload', () => {
     const pane = (enabled: boolean) => <ChatPane messages={[]} streaming={false} error={null}
@@ -287,8 +267,8 @@ describe('ChatPane streaming state', () => {
   it('keeps composer popovers above the chat jump button', () => {
     const css = readExpandedIndexCss();
 
-    expect(css).toContain('.chat-jump-btn');
-    expect(css).toContain('z-index: 6;');
+    const scrollerCss = readFileSync('src/components/chat/MessageScroller.module.css', 'utf8');
+    expect(scrollerCss).toContain('z-index: 6;');
     expect(css).toContain('.composer:has(.composer-tools-menu)');
     expect(css).toContain('.composer:has(.composer-design-toolbox-menu)');
     expect(css).toContain('.composer:has(.composer-import-menu)');
@@ -686,7 +666,7 @@ Expected output:
     expect(screen.getByTestId('assistant-streaming-assistant-1').textContent).toBe('streaming');
   });
 
-  it('keeps a newly sent Workspace turn at the bottom without reserving blank space', () => {
+  it('registers a newly sent Workspace turn with the shared upstream scroller', () => {
     const pane = (messages: ChatMessage[], streaming = false) => <ChatPane
       messages={messages} streaming={streaming} error={null} projectId="project-1" projectFiles={[]}
       onEnsureProject={async () => 'project-1'} onSend={vi.fn()} onStop={vi.fn()} conversations={[]}
@@ -698,12 +678,12 @@ Expected output:
     log.scrollTo = vi.fn();
     fireEvent.click(screen.getByTestId('composer-submit'));
     view.rerender(pane([{ id: 'new-user', role: 'user', content: 'Hello', createdAt: 1 }], true));
-    expect(log.scrollTo).not.toHaveBeenCalled();
-    expect(log.scrollTop).toBe(900);
-    expect(view.container.querySelector<HTMLElement>('.chat-log-tail-spacer')!.style.height).toBe('0px');
+    expect(log.dataset.slot).toBe('message-scroller-viewport');
+    expect(view.container.querySelector('[data-message-id="new-user"]')?.getAttribute('data-scroll-anchor')).toBe('true');
+    expect(view.container.querySelector('.chat-log-tail-spacer')).toBeNull();
   });
 
-  it('clears stale anchor spacer before sending another local turn', () => {
+  it('sends another local turn without retaining a legacy spacer', () => {
     const onSend = vi.fn();
     const { container } = render(
       <ChatPane
@@ -728,13 +708,12 @@ Expected output:
     );
 
     const spacer = container.querySelector<HTMLElement>('.chat-log-tail-spacer');
-    expect(spacer).not.toBeNull();
-    spacer!.style.height = '320px';
+    expect(spacer).toBeNull();
 
     fireEvent.click(screen.getByTestId('composer-submit'));
 
     expect(onSend).toHaveBeenCalledOnce();
-    expect(spacer!.style.height).toBe('0px');
+    expect(container.querySelector('[data-slot="message-scroller-viewport"]')).not.toBeNull();
   });
 
   it('passes a stopped inline todo after a terminal run without a final TodoWrite', () => {
@@ -803,19 +782,6 @@ Expected output:
     expect(screen.queryByRole('button', { name: 'chat.send' })).toBeNull();
   });
 
-  it('rejoins bottom-follow when sending a new Workspace turn after reading older messages', () => {
-    const pane = (messages: ChatMessage[]) => <ChatPane bottomAligned messages={messages} streaming={false} error={null}
-      projectId="project-1" projectFiles={[]} onEnsureProject={async () => 'project-1'} onSend={vi.fn()}
-      onStop={vi.fn()} conversations={[]} activeConversationId="conv-1" onSelectConversation={vi.fn()} onDeleteConversation={vi.fn()} />;
-    const view = render(pane([{ id: 'old-turn', role: 'user', content: 'Earlier', createdAt: 0 }]));
-    const log = view.container.querySelector<HTMLElement>('.chat-log')!;
-    Object.defineProperty(log, 'scrollHeight', { configurable: true, get: () => 1600 });
-    Object.defineProperty(log, 'clientHeight', { configurable: true, get: () => 600 });
-    log.scrollTop = 200; fireEvent.scroll(log);
-    fireEvent.click(screen.getByTestId('composer-submit'));
-    view.rerender(pane([{ id: 'new-turn', role: 'user', content: 'Continue', createdAt: 1 }]));
-    expect(log.scrollTop).toBe(1600);
-  });
 
   it('shows several queued prompts above the composer with compact controls', () => {
     const onRemoveQueuedSend = vi.fn();
@@ -1001,49 +967,7 @@ Expected output:
     expect(screen.getByText('Queued follow-up')).toBeTruthy();
   });
 
-  it('auto-follows when the queued strip resizes while pinned to bottom', () => {
-    const { container } = render(
-      <ChatPane
-        messages={[]}
-        streaming
-        error={null}
-        projectId="project-1"
-        projectFiles={[]}
-        queuedItems={[{ id: 'queued-1', prompt: 'First queued follow-up' }]}
-        onEnsureProject={async () => 'project-1'}
-        onSend={vi.fn()}
-        onStop={vi.fn()}
-        conversations={conversations}
-        activeConversationId="conv-1"
-        onSelectConversation={vi.fn()}
-        onDeleteConversation={vi.fn()}
-        projectMetadata={projectMetadata}
-      />,
-    );
 
-    const log = container.querySelector('.chat-log') as HTMLDivElement | null;
-    const strip = screen.getByTestId('chat-queued-send-strip');
-    expect(log).not.toBeNull();
-    expect(strip).toBeTruthy();
-
-    Object.defineProperty(log!, 'scrollHeight', { configurable: true, get: () => 600 });
-    Object.defineProperty(log!, 'clientHeight', { configurable: true, get: () => 200 });
-    Object.defineProperty(log!, 'scrollTop', {
-      configurable: true,
-      get() {
-        return (this as HTMLDivElement).dataset.scrollTop
-          ? Number((this as HTMLDivElement).dataset.scrollTop)
-          : 400;
-      },
-      set(value: number) {
-        (this as HTMLDivElement).dataset.scrollTop = String(value);
-      },
-    });
-
-    MockResizeObserver.triggerObserved(strip);
-
-    expect(log!.scrollTop).toBe(600);
-  });
 });
 
 const conversations: Conversation[] = [

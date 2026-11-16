@@ -66,7 +66,6 @@ import { SharedComposerDock } from '../components/shared-chat/SharedComposerDock
 import { isLegacyBuilderHandoffNotice, SharedChatRows, type SharedChatAgentIdentity, type SharedChatInputMessage } from '../components/shared-chat/SharedChatRows';
 import { SharedMessageStream } from '../components/shared-chat/SharedMessageStream';
 import { FloatingChatEmpty } from '../components/shared-chat/FloatingChatEmpty';
-import { useFloatingChatScroll } from '../components/shared-chat/use-floating-chat-scroll';
 import { QuestionRequestCard, latestQuestionRequest } from '../components/QuestionRequestCard';
 import type { QuestionFormOpenRequest } from '../components/AssistantMessage';
 import { loadConfig, saveConfig, syncComposioConfigToDaemon } from '../state/config';
@@ -3185,7 +3184,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   useResourceDraft(composerRef);
   const ensureDirectAttachmentProject = useDirectAttachmentProject();
   const logRef = useRef<HTMLDivElement | null>(null);
-  const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const nativeSessionKey = siteAccess.guarded ? contextStorageKey(runtime, contextIdentity) : builderHandoffConversationKey(`pixflow-direct:${contextSiteHash(runtime)}:${contextUserId(context)}`, nativePersistenceSurface, handoffBuilder);
   const handoffHistory = useBuilderHandoffHistory(nativeSessionKey, nativePersistenceSurface);
   const { historyKey: sessionKey, surface: persistenceSurface, continuing, restoring, selectionPending } = useFloatingConversation(handoffHistory.key, nativePersistenceSurface, streaming);
@@ -3290,7 +3288,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
   const reattachedDirectRunRef = useRef('');
   const lastHydratedSessionKeyRef = useRef<string | null>(null);
   const visibleMessages = useMemo(() => durableHistory.messages.filter(message => !isLegacyBuilderHandoffNotice(message)), [durableHistory.messages]);
-  const chatScroll = useFloatingChatScroll(logRef, tailSpacerRef, sessionKey, visibleMessages, streaming);
   const contextUrl = runtime.contextUrl || '';
   const abortRef = useRef<AbortController | null>(null);
   const [workspaceStops,setWorkspaceStops]=useState<Array<() => void>>([]);
@@ -4751,13 +4748,13 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
       <SharedMessageStream
         scrollSessionKey={sessionKey}
         logRef={logRef as MutableRefObject<HTMLDivElement | null>}
+        historyControls={<ChatHistoryControls {...durableHistory} />}
+        historyLoading={!durableHistory.ready && !visibleMessages.length && !durableHistory.error}
         loading={streamLoading && !continuing && !navigationReconnecting}
-        chatLogScrollable={chatScroll.scrollable}
-        chatLogScrolling={chatScroll.scrolling}
         emptyState={durableHistory.ready && !streamLoading && !streaming && !durableHistory.loading && !durableHistory.error && !visibleMessages.length ? <FloatingChatEmpty/> : null}
         rows={(
           <>
-          <ChatHistoryControls {...durableHistory} />
+
           <SharedChatRows
             messages={visibleMessages}
             projectId={outputProjectId}
@@ -4784,9 +4781,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
           />
           </>
         )}
-        tailSpacerRef={tailSpacerRef as MutableRefObject<HTMLDivElement | null>}
-        scrolledFromBottom={chatScroll.away}
-        onJumpToBottom={chatScroll.jump}
         scrollToLatestLabel={t('chat.scrollToLatest')}
         jumpToLatestLabel={t('chat.jumpToLatest')}
         loadingLabel="Thinking..."
@@ -4855,7 +4849,6 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               requireQueueAcceptance={!siteAccess.guarded}
               recoverClaudeSignIn={!siteAccess.guarded && config.mode === 'daemon'}
               onSend={(prompt, attachments, comments, meta, onAccepted, onClaudeSignInRequired) => {
-                if (!streaming && !meta?.queueOnly) chatScroll.followOnSend();
                 const sent = sendPrompt(prompt, attachments, comments, meta, undefined, onAccepted, onClaudeSignInRequired);
                 if (onAccepted || onClaudeSignInRequired) return sent;
                 void sent;
@@ -4891,4 +4884,3 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
     </PixflowAgentSurfaceShell>
   );
 }
-

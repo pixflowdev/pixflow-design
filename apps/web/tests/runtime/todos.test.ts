@@ -4,8 +4,37 @@ import {
   latestTodoWriteInputForPinnedCard,
   parseTodoWriteInput,
   unfinishedTodosFromEvents,
+  withSavedPlanEvents,
 } from '../../src/runtime/todos';
 import type { AgentEvent } from '../../src/types';
+
+describe('saved plan receipts', () => {
+  const plan = { revision: 2, title: 'Service page', summary: 'Approved content outline', steps: [{id: 'build', content: 'Build page', status: 'in_progress'}] };
+  it('keeps the highest saved revision over stale receipts and provider-local todos', () => {
+    const saved = {savedPlanRevision:3,title:'Durable',todos:[{content:'Verify page',status:'pending'}]};
+    const events = (input: unknown): AgentEvent[] => [{kind:'tool_use',id:'todo',name:'TodoWrite',input}];
+    expect(latestTodoWriteInputForPinnedCard([
+      {events:events(saved)},
+      {events:events({...saved,savedPlanRevision:2})},
+      {events:events({todos:[{content:'Everything complete',status:'completed'}]})},
+    ])).toEqual(saved);
+  });
+  for (const name of ['pixflow_plan_update', 'mcp__pixflow_builtin__pixflow_plan_update', 'plan.update', 'pixflow_call']) {
+    it(`renders confirmed ${name} progress and survives reload`, () => {
+      const events: AgentEvent[] = [
+        {kind:'tool_use',id:'p',name,input:{tool:'plan.update'}},
+        {kind:'tool_result',toolUseId:'p',isError:false,content:JSON.stringify({content:[{type:'text',text:JSON.stringify({ok:true,plan})}]})},
+      ];
+      const normalized = withSavedPlanEvents(JSON.parse(JSON.stringify(events)));
+      expect(normalized).toHaveLength(1);
+      expect(withSavedPlanEvents(normalized)).toEqual(normalized);
+      expect(latestTodosFromEvents(normalized)[0]?.status).toBe('in_progress');
+      expect(unfinishedTodosFromEvents(normalized)).toEqual([]);
+      expect(parseTodoWriteInput(latestTodoWriteInputForPinnedCard([{events:normalized,runStatus:'interrupted'}]))[0]?.status).toBe('stopped');
+      expect(withSavedPlanEvents([{...events[0]!}, {kind:'tool_result',toolUseId:'p',content:JSON.stringify({ok:false,plan}),isError:true}])).toHaveLength(2);
+    });
+  }
+});
 
 const firstTodoInput = {
   todos: [

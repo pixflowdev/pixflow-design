@@ -9,3 +9,5 @@ Bundled for provider identification, without a runtime request to the brand webs
 - SenseAudio: https://www.senseaudio.cn/favicon.png
 - AIHubMix: https://aihubmix.com/apple-touch-icon.png
 - OpenAI and Google Gemini: reuse the existing bundled model marks in `../model-icons/`.
+
+- Grok Build: Grok SVG mark supplied by the project owner, 2026-11-06. Light/dark source variants have identical paths; the shared monochrome mask follows the active theme.

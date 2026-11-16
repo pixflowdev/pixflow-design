@@ -1,14 +1,7 @@
-.list.list { list-style: none; padding: 0; margin: 0; }
-.source.source {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
-  padding: 4px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  text-decoration: none;
-}
-.source:hover, .source:focus-visible { background: var(--bg-hover); }
-.name, .host { overflow-wrap: anywhere; }
-.host { color: var(--text-muted); font-size: .9em; }
+.list.list { display:flex; flex-direction:column; gap:8px; list-style:none; padding:0; margin:0; }
+.source.source { display:flex; width:fit-content; max-width:100%; min-width:0; color:var(--text-muted); text-decoration:none; border-radius:6px; }
+.source:hover { color:var(--text); }
+.source:hover [data-slot=trace-line] { color:var(--text); }
+.source:focus-visible { outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent); }
+.name { min-width:0; }
+.host { color:var(--text-muted); }

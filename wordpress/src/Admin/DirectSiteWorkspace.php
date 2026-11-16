@@ -130,6 +130,8 @@ final class DirectSiteWorkspace
                 'project.file.read' => ['projectId' => 'Pixflow project UUID', 'path' => 'relative uploaded file path; returns base64 content'],
                 'skills.list' => ['query' => 'optional text to find in skill path, title or description; omit to list all references'],
                 'skills.read' => ['path' => 'exact path returned by skills.list', 'paths' => 'optional array of paths to read together; returns references with individual content or error'],
+                'plan.read' => ['description' => 'Read the durable plan for this chat. No arguments. Reuse it after reload, recovery or builder handoff.'],
+                'plan.update' => ['description' => 'Save this chat plan before a substantial build and update after verified progress. Full replacement; retain stable step IDs. Read before retrying an uncertain write. Does not authorize page changes.', 'id' => 'Stable plan identifier; change for a new task', 'title' => 'Short task title', 'summary' => 'Compact agreed page outline, constraints and decisions', 'revision' => 'Revision returned by plan.read/update; 0 if absent', 'steps' => '1–40 objects: id, content, status (pending, in_progress, completed, stopped). At most one active step.'],
                 'abilities.list' => ['query' => 'Optional name/description search', 'namespace' => 'Optional installed provider namespace', 'kind' => 'Optional tool or resource', 'summary' => 'true for compact discovery; omit to read input/output schemas and resource references'],
                 'ability.call' => ['name' => 'registered native WordPress/Bricks ability', 'input' => 'ability arguments'],
             ],

@@ -9,6 +9,43 @@ export interface TodoItem {
   activeForm?: string;
 }
 
+/** Only a successful server receipt may advance a durable plan. Provider-native todos remain compatible. */
+export function withSavedPlanEvents(events: AgentEvent[] | undefined): AgentEvent[] {
+  if (!events) return [];
+  const result: AgentEvent[] = [];
+  const renderedCalls = new Set<string>();
+  for (const event of events) {
+    result.push(event);
+    if (event.kind !== 'tool_result' || event.isError) continue;
+    const call = events.find(e => e.kind === 'tool_use' && e.id === event.toolUseId);
+    if (!call || call.kind !== 'tool_use') continue;
+    const input = call.input as { tool?: string } | undefined;
+    if (!/(?:^|__)pixflow_plan_(?:update|read)$/.test(call.name) && !['plan.update', 'plan.read'].includes(call.name) && !(['plan.update', 'plan.read'].includes(input?.tool ?? '') && /(?:^|__)pixflow_call$/.test(call.name))) continue;
+    const receipt = savedPlanReceipt(event.content);
+    if (!receipt) continue;
+    renderedCalls.add(event.toolUseId);
+    result.push({ kind: 'tool_use', id: `${event.toolUseId}-saved-plan`, name: 'TodoWrite', input: {
+      title: receipt.title, summary: receipt.summary, todos: receipt.steps, savedPlanRevision: receipt.revision,
+    } });
+  }
+  // Successful receipts are represented by the shared Plan card alone. Keep
+  // failed tool calls visible for diagnosis, and leave stored stream events intact.
+  return result.filter(event => !(event.kind === 'tool_use' && renderedCalls.has(event.id))
+    && !(event.kind === 'tool_result' && renderedCalls.has(event.toolUseId)));
+}
+
+function savedPlanReceipt(value: unknown, depth = 0): { title: string; summary: string; steps: unknown[]; revision: number } | null {
+  if (depth > 5) return null;
+  if (typeof value === 'string') { try { return savedPlanReceipt(JSON.parse(value), depth + 1); } catch { return null; } }
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  if (row.isError || row.error || row.ok === false) return null;
+  const plan = row.plan as Record<string, unknown> | undefined;
+  if (row.ok === true && plan && typeof plan.title === 'string' && typeof plan.summary === 'string' && Array.isArray(plan.steps) && typeof plan.revision === 'number') return {title: plan.title, summary: plan.summary, steps: plan.steps, revision: plan.revision};
+  if (Array.isArray(row.content)) for (const block of row.content) { const found = savedPlanReceipt(block?.text, depth + 1); if (found) return found; }
+  return row.result ? savedPlanReceipt(row.result, depth + 1) : null;
+}
+
 export function parseTodoWriteInput(input: unknown): TodoItem[] {
   if (!input || typeof input !== 'object') return [];
   const obj = input as { plan?: unknown; todos?: unknown };
@@ -64,11 +101,19 @@ export function latestTodosFromEvents(events: AgentEvent[] | undefined): TodoIte
 }
 
 export function unfinishedTodosFromEvents(events: AgentEvent[] | undefined): TodoItem[] {
+  // Durable plans span replies, approvals and handoffs. Their pending steps do
+  // not mean the current provider turn stopped before fulfilling its request.
+  const latest = [...(events ?? [])].reverse().find(event => event.kind === 'tool_use' && isTodoWriteToolName(event.name));
+  if (latest?.kind === 'tool_use' && isSavedPlanInput(latest.input)) return [];
   return latestTodosFromEvents(events).filter((todo) => todoStatusIsUnfinished(todo.status));
 }
 
+export function isSavedPlanInput(input: unknown): boolean {
+  return Boolean(input && typeof input === 'object' && typeof (input as {savedPlanRevision?: unknown}).savedPlanRevision === 'number');
+}
+
 // Walk the conversation in reverse to find the most recent TodoWrite
-// tool_use, return its raw input so callers can hand it to a `TodoCard`
+// tool_use, return its raw input so callers can hand it to a `PlanCard`
 // without re-implementing the discovery logic. Returns `null` when no
 // TodoWrite has been emitted yet in this conversation.
 export function latestTodoWriteInputFromMessages(
@@ -98,6 +143,16 @@ export function latestTodoWriteInputForPinnedCard<
   messages: ReadonlyArray<T> | undefined,
 ): unknown | null {
   if (!messages || messages.length === 0) return null;
+  // A durable receipt outranks provider-local todos, including after reload or
+  // an older stream finishing in another tab. Equal revisions prefer the latest run.
+  let saved: { input: unknown; revision: number; message: T } | undefined;
+  for (const message of messages) for (const event of message.events ?? []) {
+    if (event.kind !== 'tool_use' || !isTodoWriteToolName(event.name)) continue;
+    const input = event.input as {savedPlanRevision?: number} | null;
+    if (typeof input?.savedPlanRevision !== 'number') continue;
+    if (!saved || input.savedPlanRevision >= saved.revision) saved = { input, revision: input.savedPlanRevision, message };
+  }
+  if (saved) return hasTerminalRunEnded(saved.message.runStatus, saved.message.endedAt) ? stoppedTodoWriteInput(saved.input) : saved.input;
   for (let mi = messages.length - 1; mi >= 0; mi -= 1) {
     const message = messages[mi];
     const events = message?.events;

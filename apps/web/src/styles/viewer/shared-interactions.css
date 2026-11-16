@@ -412,32 +412,6 @@
   font-style: italic;
 }
 
-/* op-todo card variant (the .op-todo .todo-list rule already exists above) */
-.op-todo {
-  border-color: var(--accent-soft);
-  background: linear-gradient(180deg, var(--accent-tint) 0%, var(--bg-panel) 60%);
-}
-.op-todo .op-card-head {
-  border-bottom: 1px solid color-mix(in srgb, var(--accent-soft) 70%, transparent);
-  background: transparent;
-}
-.op-todo .op-icon {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.op-todo .op-title {
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-size: 11px;
-  color: var(--text-strong);
-}
-.op-todo .op-meta {
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  color: var(--text-strong);
-}
-
 /*
  * Shared accordion expand/collapse motion. `grid-template-rows: 0fr -> 1fr`
  * is the modern way to animate auto-height content; pair it with a
@@ -463,68 +437,6 @@
 .accordion-collapsible-inner {
   min-height: 0;
   overflow: hidden;
-}
-
-/*
- * Make the todo card header a clickable expand/collapse affordance.
- * Default is expanded while work is in flight; the user can flip it via
- * the chevron at the right. Removing the bottom border in the collapsed
- * state keeps the card looking like a single pill rather than an empty
- * disclosure with a hanging line.
- */
-.op-todo .op-todo-head {
-  display: flex;
-  align-items: stretch;
-  padding: 0;
-}
-.op-todo .op-todo-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  padding: 8px 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-}
-.op-todo .op-todo-done {
-  display: inline-flex;
-  align-items: center;
-  margin: 6px 10px 6px 0;
-  padding: 2px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid var(--green-border);
-  border-radius: var(--radius-pill);
-  background: var(--green-bg);
-  color: var(--green);
-  cursor: pointer;
-}
-.op-todo .op-todo-done:hover {
-  filter: brightness(1.05);
-}
-.op-todo-collapsed .op-card-head {
-  border-bottom-color: transparent;
-}
-.op-todo-current {
-  margin-left: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  flex: 1;
-}
-.op-todo-chev {
-  margin-left: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-  transition: transform 120ms var(--ease-out);
 }
 
 /* Question form — interactive form a planning agent can post into chat */
@@ -2256,56 +2168,6 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
    ============================================================ */
 .chat-log-wrap { position: relative; flex: 1; min-height: 0; min-width: 0; display: flex; }
 .chat-log-wrap .chat-log { flex: 1; }
-.chat-jump-btn {
-  position: absolute;
-  bottom: 12px;
-  /* Margin-based centering (instead of `transform: translateX(-50%)`)
-   * so the slide-in / slide-out transition can animate `transform`
-   * without overwriting a centering translate. */
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  width: max-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  font-size: 12px;
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  z-index: 6;
-  /* Default = hidden. The slide tucks below and scales down slightly to
-   * read as folding into the composer. Strong ease-out curve
-   * (cubic-bezier(0.23, 1, 0.32, 1)) replaces both built-in `ease` and
-   * the previous slightly-overshoot variant — Emil Kowalski's framework:
-   * UI animations should use strong custom ease-out, and entrance pills
-   * should not bounce. Exit is faster than enter (asymmetric timing):
-   * the user has already chosen to dismiss; system response should be
-   * decisive. */
-  opacity: 0;
-  transform: translateY(8px) scale(0.9);
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    visibility 0s linear 140ms;
-}
-.chat-jump-btn-active {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  visibility: visible;
-  pointer-events: auto;
-  transition:
-    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    visibility 0s linear 0s;
-}
-.chat-jump-btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
 
 /* ============================================================
    Assistant message footer (bottom-of-message status pill)
@@ -2316,24 +2178,18 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   align-items: flex-start;
   gap: 6px;
 }
+/* Shared Message footer remains visible, as in the shadcn Message pattern. */
 .assistant-footer {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 0;
+  gap: 8px;
+  padding: 0;
   background: none;
   border: none;
-  border-radius: 0;
-  font-size: 11px;
-  color: var(--text);
+  font-size: 12px;
+  color: var(--text-muted);
   width: fit-content;
-  opacity: 0;
-  transition: opacity 150ms var(--ease-out);
 }
-.msg.assistant:hover .assistant-footer,
-.msg.assistant:focus-within .assistant-footer,
-.assistant-footer[data-streaming="true"],
-.assistant-footer[data-last="true"] { opacity: 1; }
 .assistant-footer .dot {
   width: 5px;
   height: 5px;
@@ -2344,16 +2200,8 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   background: var(--green);
   animation: pulse 1.2s ease-in-out infinite;
 }
-.assistant-footer .assistant-label {
-  font-weight: 400;
-  color: var(--text);
-  font-size: 11px;
-}
-.assistant-footer .assistant-stats {
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  font-size: 11px;
-}
+.assistant-footer .assistant-label { font-weight:400; color:inherit; font-size:inherit; }
+.assistant-footer .assistant-stats { font-variant-numeric:tabular-nums; color:inherit; font-size:inherit; }
 .assistant-footer[data-unfinished="true"] {
   background: none;
 }

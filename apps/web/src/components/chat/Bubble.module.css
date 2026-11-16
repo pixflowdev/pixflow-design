@@ -2,8 +2,8 @@
 .bubble { position: relative; display: flex; width: fit-content; max-width: 80%; min-width: 0; flex-direction: column; gap: 4px; }
 .bubble[data-align=end] { align-self: flex-end; margin-inline-start: auto; }
 /* Message owns the transcript width; don't constrain a nested bubble twice. */
-:global([data-slot=message-content]) > .bubble { max-width: 100%; }
-.content { width: fit-content; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; overflow-wrap: anywhere; border: 1px solid transparent; border-radius: 24px; corner-shape: squircle; padding: 12px 16px; font-size: 14.5px; line-height: 1.5; color: var(--text); background: var(--chat-bubble-bg, var(--bg-fill-tertiary)); }
+
+.content { width: fit-content; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; overflow-wrap: anywhere; border: 1px solid transparent; border-radius: 24px; padding: 10px 12px; font-size: 14px; line-height: 1.625; color: var(--text); background: var(--chat-bubble-bg, var(--bg-fill-tertiary)); }
 .bubble[data-align=end] > .content { align-self: flex-end; }
 .bubble[data-variant=secondary] > .content { background: var(--bg-fill-tertiary); }
 .bubble[data-variant=muted] > .content { background: var(--bg-subtle); }

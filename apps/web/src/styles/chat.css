@@ -372,14 +372,6 @@
   background-clip: padding-box;
 }
 
-/* Anchor-to-top tail spacer. Height is driven imperatively by ChatPane; the
-   negative margin cancels the flex `gap` so it contributes nothing when idle
-   (height: 0). */
-.chat-log-tail-spacer {
-  flex: 0 0 auto;
-  height: 0;
-  margin-top: -24px;
-}
 .chat-log.is-loading {
   position: relative;
 }
@@ -475,24 +467,8 @@
 @media (prefers-reduced-motion: reduce) {
   .msg { animation: none; }
 }
-.msg.user {
-  align-self: flex-end;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  max-width: min(78%, 560px);
-}
-.msg .role {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 13.5px;
-  text-transform: none;
-  color: var(--text-strong);
-  margin-bottom: 8px;
-  letter-spacing: 0;
-  font-weight: 600;
-}
+.msg.user { align-self: flex-end; }
+.msg .role { gap:8px; margin:0; font-size:12px; line-height:16px; font-weight:500; color:var(--text-muted); }
 .msg-time {
   color: var(--text);
   font-size: 11px;
@@ -505,18 +481,7 @@
   justify-content: flex-end;
   color: var(--text-muted);
 }
-.msg.user .user-text {
-  white-space: pre-wrap;
-  color: var(--text);
-  background: var(--chat-bubble-bg, var(--bg-fill-tertiary));
-  border: none;
-  border-radius: 24px;
-  corner-shape: squircle;
-  padding: 12px 16px;
-  line-height: 1.5;
-  font-size: 14.5px;
-  box-shadow: none;
-}
+.msg.user .user-text { white-space: pre-wrap; }
 .msg-run-context-row {
   display: flex;
   justify-content: flex-end;
@@ -808,20 +773,8 @@
   color: var(--text-muted);
 }
 
-/* Hover-revealed footer below the user bubble: time + copy (Lobe style) */
-.msg.user .user-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  min-height: 20px;
-  opacity: 0;
-  transition: opacity 140ms var(--ease-out);
-}
-.msg.user .user-text-wrap:hover .user-actions,
-.msg.user .user-text-wrap:focus-within .user-actions {
-  opacity: 1;
-}
+/* Message actions stay visible and aligned with the user bubble. */
+.msg.user .user-actions { display:flex; align-items:center; gap:4px; min-height:20px; }
 .msg.user .user-actions-time {
   font-size: 11px;
   font-weight: 500;

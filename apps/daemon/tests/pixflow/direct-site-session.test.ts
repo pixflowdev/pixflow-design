@@ -92,6 +92,16 @@ describe('Direct recovery authorization',()=>{
     expect(redactDirectEvent({type:'error',token:'secret',nested:{authorization:'Bearer private'},message:'failed using private'},['private'])).toEqual({type:'error',token:'[redacted]',nested:{authorization:'[redacted]'},message:'failed using [redacted]'});
     expect(directSessionUrl('https://site.example/wp-json/pixflow-design/v1/wp-admin/direct/tools').pathname).toContain('/direct/session');
   });
+  it.each(['codex','claude'])('keeps %s screenshot receipts without persisting image bytes', provider => {
+    const image=provider==='codex'?{type:'image',mimeType:'image/png',data:'large-image-payload'}:{type:'image',source:{type:'base64',media_type:'image/png',data:'large-image-payload'}};
+    const content=provider==='codex'?JSON.stringify({content:[{type:'text',text:'verified draft'},image]}):'verified draft\n'+JSON.stringify(image);
+    const original={type:'tool_result',toolUseId:'capture',content};
+    const saved=redactDirectEvent(original,[]);
+    expect(saved.content).toContain('verified draft');
+    expect(saved.content).toContain('Screenshot supplied to the agent');
+    expect(saved.content).not.toContain('large-image-payload');
+    expect(original.content).toBe(content);
+  });
   it('redacts license and provider credentials inside serialized tool output', () => {
     const result = redactDirectEvent({ output: 'Result: {"license_key":"license-private","refresh_token":"refresh-private","tokenCount":7}', nested: { client_secret: 'provider-private' } }, []);
     expect(JSON.stringify(result)).not.toMatch(/license-private|refresh-private|provider-private/);

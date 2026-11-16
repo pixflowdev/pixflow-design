@@ -106,3 +106,5 @@ export * from './api/upscaler.js';
 
 export * from './api/media-folders.js';
 export * from './api/pixflow-saved-plan.js';
+
+export * from './api/site-tool-results.js';

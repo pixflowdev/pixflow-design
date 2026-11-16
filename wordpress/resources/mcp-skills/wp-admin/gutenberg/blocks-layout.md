@@ -7,6 +7,12 @@ Respect parent, ancestor, and allowed-block constraints. Keep child order
 explicit. Prefer semantic grouping over deep decorative nesting, and avoid
 fixed heights or spacer-heavy layouts unless requested.
 
+For a multi-row card or bento layout, verify row gutters after mobile stacking
+as well as the gaps between columns. Gutenberg flow layouts implement blockGap
+through child margins: explicit zero top/bottom margins can cancel that spacing.
+Do not reset every columns row's margins by default. Preserve intentional flush
+sections; use the selected spacing tokens and inspect the saved result.
+
 Variations are runtime evidence, not separate block names. Create the
 registered base block with the variation’s evidenced attributes and allowed
 children. Preserve responsive, alignment, spacing, class, and style attributes

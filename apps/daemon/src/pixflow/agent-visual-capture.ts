@@ -19,6 +19,17 @@ async function capturePage(fs: typeof import('node:fs/promises'), path: typeof i
     const { base64: _bytes, referenceCapture: _reference, ...evidence } = capture;
     const evidencePath = path.join(directory, `${index + 1}.json`);
     await fs.writeFile(evidencePath, JSON.stringify(evidence, null, 2));
+    if (input.savedPreview) {
+      captures.push({ viewport: capture.viewport, width: capture.width, height: capture.height,
+        scrollPosition: capture.scrollPosition, path: filename, evidencePath,
+        horizontalOverflowPx: capture.layout?.horizontalOverflowPx,
+        documentHeight: capture.layout?.documentHeight,
+        missingResources: capture.layout?.missingResources,
+        invalidInteractiveTargets: capture.layout?.invalidInteractiveTargets,
+        disclosures: capture.layout?.disclosures,
+      });
+      continue;
+    }
     const typography = capture.layout?.typography;
     const styles = new Map<string, PixflowVisualTypographyStyle>();
     for (const sample of typography?.documentSamples ?? typography?.samples ?? []) {

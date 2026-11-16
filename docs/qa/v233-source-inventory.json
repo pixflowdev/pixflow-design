@@ -1,0 +1,1199 @@
+{
+  "release": "2.3.3",
+  "auditDate": "2026-11-16",
+  "note": "Source inventory captured before PR preparation. LF hashes permit cross-platform comparison. Later CI fixes are additional commits, not omissions. Published packages were not changed.",
+  "core": [
+    {
+      "path": "AGENTS.md",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "579e758f435d99830e9b3a8036e235a42e958a43ca5b86e5bcbb8430a312cdc5"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/agent-visual-capture.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "c0e93fd72f68b75cd5f94d880b750f48635c60dbc7553558af3f401b8361bed0"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/browser-screenshot.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "42a7581038655f70f188e51eb41086c9eb222712fb075243a92bc273d2b14397"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/direct-site-mcp.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "2946199c0e249606a5dfdc741cddb372984786da03461c2d9830ace0bc335bd8"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/direct-site-run.ts",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "5299db9f1f373571353945efe2bb10a7d926162d7b2e729d7e5415a0d7c96b30"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/direct-site-session.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "f4c7d57c17249567ede7870f9e8a25ece0fc3f33eb62b2a5e14285b0634f222c"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/structured-tools.ts",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "29ccfea6bf57a6d324094292e338d2fa051a633b57c4eb6e3675052fa0b8edc8"
+    },
+    {
+      "path": "apps/daemon/src/pixflow/workspace-builder-session.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "57274a6ca8ad55ee3dc14a67fdec5989c170be2a96cbdf25c98d0ba6c2082d4f"
+    },
+    {
+      "path": "apps/daemon/src/routes/pixflow-visual-capture.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "fa3f647d8bb666987e9979a3717c38663e366037b89005bec3ed11eaf7fc1844"
+    },
+    {
+      "path": "apps/daemon/tests/pixflow/agent-visual-capture.test.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "80b2e4f19482a81830bab1dbb8a8683ee5ff60709895c784a0a4f63f6e9c68ca"
+    },
+    {
+      "path": "apps/daemon/tests/pixflow/direct-site-run.test.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "66eb7acd5a7bfd3cd904c0b2fb70375a27dca21fb6ff8992d2ec1071b033c8ca"
+    },
+    {
+      "path": "apps/daemon/tests/pixflow/direct-site-session.test.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "7dbd98568c542f9f0142508cbee3b7ec5217e1689f1da258e986a573edba6cfc"
+    },
+    {
+      "path": "apps/daemon/tests/pixflow/saved-preview-scope.test.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "027fff51dc959ce05bb1b5c969b2c301b2a9f2cc968cf16ef04aedae6a9cdbcf"
+    },
+    {
+      "path": "apps/daemon/tests/pixflow/structured-tools.test.ts",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "feea351f7acafa1d35307c27c7bc8ded7b35a4c9221546a6cda7e9ad68f9eac0"
+    },
+    {
+      "path": "apps/web/src/components/AssistantMessage.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "38b50c5e71317fd350a7f85e29286422722b62819e19981ce1f78eb4b0dbfbad"
+    },
+    {
+      "path": "apps/web/src/components/ChatPane.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "1ff097f00505c097583528c1fd21c641faaea14f57c335d957ad641a2249e278"
+    },
+    {
+      "path": "apps/web/src/components/ComposerQueue.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "533699481efe14d35d71bb027da1a31d230267135814cd9ca8d23a01c7daf9f2"
+    },
+    {
+      "path": "apps/web/src/components/ComposerQueue.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "b0b31a22b0805dd26f30475385551320886d5ce1d8fce67df15d038664de12a7"
+    },
+    {
+      "path": "apps/web/src/components/ProjectChatLayout.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5690ab34f41e1035c8aaf1f9546ae105207833f5c8fd2866815a7a24fff4fcc4"
+    },
+    {
+      "path": "apps/web/src/components/ProjectView.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "44f3ff16916c24494ae9dc3400e38e53f310f62811f3d4b7582e5dca09365a42"
+    },
+    {
+      "path": "apps/web/src/components/ToolCard.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5ee12a6833fb4dc6c6b3b4e5512c8741f169948bd25e0ba1597458572faa14f5"
+    },
+    {
+      "path": "apps/web/src/components/ToolCard.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5d8c69327e5c882466dc831f06bbfe898670f6c9c523f97c9423c4d104df4455"
+    },
+    {
+      "path": "apps/web/src/components/chat/ActivityDisclosure.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "973d80716ad45bf59917bd9fba4a6c0263fef420e2d9183245b58cd9b3a1d115"
+    },
+    {
+      "path": "apps/web/src/components/chat/Bubble.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "35fab8399488102bda9a2f7799b1f424e41354c7f49caca946eb8c2e70cebf78"
+    },
+    {
+      "path": "apps/web/src/components/chat/CodeBlock.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "96571dfc35e48b4c87bd80a494b0e16556fdf3210bb4be54b71917db0560bd5c"
+    },
+    {
+      "path": "apps/web/src/components/chat/CodeBlock.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "962a9a901a17e046d6f10e4c3e6d8755e80aeec92681d816ad20746425e8b998"
+    },
+    {
+      "path": "apps/web/src/components/chat/InlineCitation.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "c56372de56c1473302b3cb3f6c5dc8ec0448e0f9116fb5900ce5425ccc05a074"
+    },
+    {
+      "path": "apps/web/src/components/chat/Marker.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "3968f779011d5277dfb9fb8e325f30750de969521d479eb7ac4cbc3952b513bd"
+    },
+    {
+      "path": "apps/web/src/components/chat/Message.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "4ade27a070ea7bb89e958459ffc399bd30fa33f136f5a22ac2699efdabac8b96"
+    },
+    {
+      "path": "apps/web/src/components/chat/MessageScroller.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "43799bff845c89be1204c375187146e673c68ad7b695424ff1463d22c3f9c482"
+    },
+    {
+      "path": "apps/web/src/components/chat/MessageScroller.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "f3287e8b98ea7a87005a552516d83c3b5f817db26243ca1d4317ba7b130a63b1"
+    },
+    {
+      "path": "apps/web/src/components/chat/Plan.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "2b83f0a187d5b3d66c48f9e25407713f563c9f2ba6eabc16e88913a5840182d8"
+    },
+    {
+      "path": "apps/web/src/components/chat/Plan.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "119270d275b1743c7b65a6f1970d1923111dc2737e14edb958fab55b5a69caf5"
+    },
+    {
+      "path": "apps/web/src/components/chat/Sources.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5abb80562a0b004ff5f49bc068e34fce5f2eb679f5866e98aeacdffd9905737b"
+    },
+    {
+      "path": "apps/web/src/components/chat/Sources.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d62c036440c145c3c5f2e288e36b8fb577a01d8ee66cdb0e74e1ecb513c97511"
+    },
+    {
+      "path": "apps/web/src/components/chat/Stream.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "97c3ab07385c01aa51c4f20619e6faaa08c0dbe0fd13199337b60518d723a8a3"
+    },
+    {
+      "path": "apps/web/src/components/chat/StreamToolResult.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "c87f820d4dcac7bc0e9e5089a6a9c8a3d4c329a737ea24433303b10a0d0a1527"
+    },
+    {
+      "path": "apps/web/src/components/chat/Trace.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "8cb94aa7a9f916d4f386504b2af959b14321dd1d9d6c777e3ffa4ca66c2114c5"
+    },
+    {
+      "path": "apps/web/src/components/chat/Trace.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "1c341707175801cfb6f78846961d9611f5cd7162380b64f562161ced8234abdd"
+    },
+    {
+      "path": "apps/web/src/components/shared-chat/SharedChatRows.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "487fa4ba69003565bd0da57c5bd3e523f77af8370800d24e55b8975c28519a68"
+    },
+    {
+      "path": "apps/web/src/components/shared-chat/SharedMessageStream.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "bbdeedf9c8cc20e4e474dc7c3ee3e24fbbc521a39c623e457002586541b020e9"
+    },
+    {
+      "path": "apps/web/src/components/shared-chat/index.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "35cbc0b001cbafc07f8a0f6bbc5f47d163051d275bed041fea1008c22487a356"
+    },
+    {
+      "path": "apps/web/src/components/shared-chat/use-floating-chat-scroll.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "remove",
+      "sha256LF": null
+    },
+    {
+      "path": "apps/web/src/pixflow/ChatHistoryBrowser.module.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "73fb94b0626f4337b6ee106d41771ee079d7fe25f8ea17fce0eff85bfccf14b8"
+    },
+    {
+      "path": "apps/web/src/pixflow/ChatHistoryBrowser.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "2fa55df3c54f61113fa49be8da710e4dbfc3766c73bd47328b448a21f326e1b1"
+    },
+    {
+      "path": "apps/web/src/pixflow/WpAdminAgentFrameApp.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5f1e1354a0858a08ee9bad47801ac2d5972b27cfb58c5b52798832de98e20f15"
+    },
+    {
+      "path": "apps/web/src/pixflow/direct-site-byok.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "1c034e24b7f7040e3de9f30391d283a6b2f5b4f72c4766e0fe5314df151467a1"
+    },
+    {
+      "path": "apps/web/src/pixflow/direct-site.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "9228a3f40f7540f788c16a19a5a113e222476ec0f2f55fd4512949685ef581da"
+    },
+    {
+      "path": "apps/web/src/pixflow/gutenberg-native-tools.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "1c1b753212295ac81a37ba8f3062b678580de5128532c7a5ac60699f11184077"
+    },
+    {
+      "path": "apps/web/src/pixflow/site-result-store.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "0308c34f39f8bd5175ce437c93c93685253f7d10264e8d62b4db646dd0134ac7"
+    },
+    {
+      "path": "apps/web/src/runtime/markdown.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "3d7c821aa0886be6224178247f98addcb9c483edee8847ff7a497a9b8670c7e4"
+    },
+    {
+      "path": "apps/web/src/runtime/run-reattach.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "bea28965870005fa1f2ef7b92666a19c1188d69e4989e1632796c5ded0af2a2f"
+    },
+    {
+      "path": "apps/web/src/runtime/todos.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d370a886fd0f8bb457c1f12310b2e386f25551ad5c30f1019f31524f908d98cf"
+    },
+    {
+      "path": "apps/web/src/styles/chat.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "6e409bbc5a19857e3fe35fe5797720acfe92be698917ebf6b74d41936dff8305"
+    },
+    {
+      "path": "apps/web/src/styles/viewer/code.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "525bc8e80387addc95d65767303e030a6daabea36254aff2b8b071b09b1065ca"
+    },
+    {
+      "path": "apps/web/src/styles/viewer/shared-interactions.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "874a55a5544b317dc5f66290d042433eb41027bc0d17403b7ad27b66bef686e1"
+    },
+    {
+      "path": "apps/web/src/styles/viewer/shared-routines.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "8f6196a6bcf024507cf0e86a6bd488c8db4dce108d1c5ded2241bc9739a7c3fc"
+    },
+    {
+      "path": "apps/web/src/styles/viewer/tools.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "7c7abc9c659de06584b6d094327e6cf1f6cc129a1f4a08204e7203ed9129d3a4"
+    },
+    {
+      "path": "apps/web/tests/components/AssistantMessage.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "4a5290431c3d689ccedcbd8fcd9e759a257c146ec758460531a4f1bce0b1697c"
+    },
+    {
+      "path": "apps/web/tests/components/ChatComposer.search.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "c4e07abb0e5c9638fbbdcf5534fd99db892af0bdb8f2e22195580a5afc152168"
+    },
+    {
+      "path": "apps/web/tests/components/ChatPane.streaming.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "b11dac95cace85fcae6d445d84ce425a20a4caea202c41ccb0d31181f4f5f49b"
+    },
+    {
+      "path": "apps/web/tests/components/SharedChatRows.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "7659b9aaa0c4f3be4b70627f4ca568d48a854436c2100a3baeb55e2e4478984e"
+    },
+    {
+      "path": "apps/web/tests/components/activity-disclosure.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "3a597314f6652677602e9eebbf9df443f949b0caf684d3cbbe66826fabbfdd3c"
+    },
+    {
+      "path": "apps/web/tests/components/agent-trace.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d51bab5b9ccf6fd44592c4e5fa3ad4b3acb4c966ad75b2df36640862a7e45630"
+    },
+    {
+      "path": "apps/web/tests/components/assistant-message-thinking-volume.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "89251ac4bfa98c674ebfd6f32a388e3c953b248ef27e272597b0bf85d2dbc6b8"
+    },
+    {
+      "path": "apps/web/tests/components/assistant-message-tool-status.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "f8649f75cd70ce3fb944495937c3e3e71c175890e6cc589f8ef4cac2871cbf18"
+    },
+    {
+      "path": "apps/web/tests/components/chat-scroll-preservation.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "ab4e6f8ebe7606e3de8b107868e47393f4f5c24cdd76f49d5ff438b72446434f"
+    },
+    {
+      "path": "apps/web/tests/components/chat-todo-autoscroll.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "bac549c798af4fe5c798401bbb75a63346d7e865c0f782bf74526dfb1830d646"
+    },
+    {
+      "path": "apps/web/tests/components/floating-chat-scroll.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "remove",
+      "sha256LF": null
+    },
+    {
+      "path": "apps/web/tests/components/shared-message-scroller.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "6e1ab71489aa6732a29856530adc688fed344bcb3ef2dd3aa344336ff36f0308"
+    },
+    {
+      "path": "apps/web/tests/components/stream-elements.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "adfd6e1054ecd5bc8e962ca7b1306d6a932043d59616a3b9f7ce74085a0b3173"
+    },
+    {
+      "path": "apps/web/tests/components/wordpressMediaAttachmentContent.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "215702a89bcda1e88d4d1bcec9c4dfc029835fdcdbd4985a274b3dd2e106af44"
+    },
+    {
+      "path": "apps/web/tests/pixflow/direct-site-byok.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "6c9a039b6d3de32db62af36aa117bd9a77e911a2ceb11837f7f4a2d373dbf0d4"
+    },
+    {
+      "path": "apps/web/tests/pixflow/direct-site.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "b22ee9ca394ee7aa7a6328116d3650bacc313bf36683bb67b5663ff4139e5663"
+    },
+    {
+      "path": "apps/web/tests/pixflow/enhanced-design-guidance.test.tsx",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "2a7462e6504ded39a07240012b4bc4072ac5d80c4980db22ae157f55ad80922c"
+    },
+    {
+      "path": "apps/web/tests/pixflow/floating-panel-drag.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d1524dd58f587f4fb10b6a5f6aca69903fcf4dfa3594b0d7b0c7df594a8d15b7"
+    },
+    {
+      "path": "apps/web/tests/pixflow/gutenberg-document.test.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "b7c4a81af6d94f8e5f64b4b32d2d7687a9ab2fa420a959c169eac1c19aff7e95"
+    },
+    {
+      "path": "apps/web/tests/runtime/run-reattach.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "aae8553c26d08f94f4b698a7e8ff0b8f5021aad4f2991990047cc7b8e9c4c486"
+    },
+    {
+      "path": "apps/web/tests/runtime/todos.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "e2d8feffbf9206809ded961da9324da6235a51915512b22126b1ea54c4e9cf4a"
+    },
+    {
+      "path": "apps/web/tests/runtime/tool-renderers.test.tsx",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "071bf99e43f82ca3f03b6d1c9cae6ebf29c52e7aa233e3c5da9d8778690c1715"
+    },
+    {
+      "path": "docs/qa/blank-site-design-fallback-2026-11-16.md",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "f14fe7a6a5bcaa223db02c7fa81cb93cd60a180f3c5eb8183647094c7236d48a"
+    },
+    {
+      "path": "docs/qa/chat-stream-test-recovery-2026-11-16.md",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "b903a822b683455af6cd016b222ac543c48e3f66e08f6c336afbaea98bc93ceb"
+    },
+    {
+      "path": "docs/qa/design-engine-mcp-verification-2026-11-16.md",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "feaa3becaa5f31c5542ec75b16f872296da0d8fed8b07fecc9057f3363bc82cd"
+    },
+    {
+      "path": "docs/qa/message-scroller-alignment-2026-11-16.md",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "5a5e1a5f231567857c529db67b19eebec31d0c9d7f6cf636e46b5f3a0bbfb3c5"
+    },
+    {
+      "path": "docs/qa/shadcn-stream-alignment-2026-11-16.md",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "bacd94428463d7f1076c4ae46e1de0287cc3678b540dc0d7bd95f721b85439d2"
+    },
+    {
+      "path": "e2e/resources/message-scroller-fixture.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "aa61f4e9b5c8afdf04b334599daac822add86a1ef5ec5060877fa72f703104f5"
+    },
+    {
+      "path": "e2e/ui/message-scroller.test.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d5cc193988b29cc4bc85f9efce6ea8e29cd82602997cd53656d36bce7859428a"
+    },
+    {
+      "path": "packages/contracts/src/api/pixflow-direct-site.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "f298857b92757fc54a8f9a024a5fd74c58378ffa46f08c60d02f3e4da9c6df48"
+    },
+    {
+      "path": "packages/contracts/src/api/pixflow-saved-plan.ts",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "8de021cba1427a96455480c306de7f7f8c05b29ae6ad2a335045403b22edd2ee"
+    },
+    {
+      "path": "packages/contracts/src/api/pixflow-visual-capture.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "f3c762c92951b492b952b8cc4f1b12f844b766a3cebd5ac61746af75bdc75e1d"
+    },
+    {
+      "path": "packages/contracts/src/api/site-tool-results.ts",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "3b8a765ed16793c2b61ceb7c6b3e0b89ef5d68f5469f31809e32442f84ec10b4"
+    },
+    {
+      "path": "packages/contracts/src/index.ts",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "667a45343cc5c1170e3100623dfc6558dc4d299284cc813f56b197cffdb8ad5e"
+    },
+    {
+      "path": "wordpress/assets/admin/wp-admin-floating-panel.css",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "d10dcfb383ea599a50a4dc1b9e63a4faafa16bd082538f0c4d9a1dca74d8de9f"
+    },
+    {
+      "path": "wordpress/assets/pixflow-design-floating-panel.js",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "6f6cf7fe3f2c20747f2d3dea3a4074a9d14e8a12f5505f087d65db69a6683f32"
+    },
+    {
+      "path": "wordpress/resources/mcp-skills/wp-admin/gutenberg/blocks-layout.md",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "d3c4318b0bf2cd15045bccd34a4c89b053b6e9bfcc111f8219c97ed184f9779d"
+    },
+    {
+      "path": "wordpress/src/Admin/DirectCanvasRelay.php",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "02309a263480c8b8e2c5f0cb2f70152907e192d5302c97075a01acfc5f450d24"
+    },
+    {
+      "path": "wordpress/src/Admin/DirectSiteWorkspace.php",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "789d9704c6fc9cc57a86485c49a18a7fb0c88322555bafc35a41474ac409502c"
+    },
+    {
+      "path": "wordpress/src/Chat/HistoryRepository.php",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "634800d03e92edc0ec933f7d431357ec4a57da2269963734fd7aed80e584ff6d"
+    },
+    {
+      "path": "wordpress/src/Chat/HistoryService.php",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "a1184f9059ada039b37e5c72da1cd48cb49adeebffb54592d348f716d9973cf7"
+    },
+    {
+      "path": "wordpress/src/Chat/SavedPlan.php",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "80dabfc7ccbf69cfe563dc0aefb8c2152b1da41022ce7da45f2f82995079281a"
+    },
+    {
+      "path": "wordpress/src/Http/DirectSiteRestController.php",
+      "pullRequests": [
+        155,
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "1b5b521969748c752319df999dd9471f1753fcdf105634ef50b556692f8c8fee"
+    },
+    {
+      "path": "wordpress/src/Http/SavedPreviewAccess.php",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "4d1571c010cd0de55df73f094a2c6b760b69478f71a1650ab13bb482e5f0428c"
+    },
+    {
+      "path": "wordpress/src/Plugin.php",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "1d6ce891c2ffeb7a924b27accd3a3a3b1181e4cdf8ce571df59472d8c6e3b23a"
+    },
+    {
+      "path": "wordpress/tests/saved-plan-wordpress.integration.php",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "22c440ae367ec5ecfaa9c4628c139d2bd3a193c784b9e649674ffce0fdf87d3b"
+    },
+    {
+      "path": "wordpress/tests/saved-plan.test.php",
+      "pullRequests": [
+        155
+      ],
+      "operation": "update",
+      "sha256LF": "b33e7b9372e7315eab0158a13bb708561f76d7177d0035f1bca1ca3659a4f472"
+    },
+    {
+      "path": "wordpress/tests/saved-preview-access.test.php",
+      "pullRequests": [
+        156
+      ],
+      "operation": "update",
+      "sha256LF": "7300bbd54bc59320b0034f151bcdc633a456ec9a5061dc979d58b878598b8f24"
+    }
+  ],
+  "pro": [
+    {
+      "path": "apps/web/src/pro/bricks/bricks-agent-entry.tsx",
+      "pullRequests": [
+        87
+      ],
+      "operation": "update",
+      "sha256LF": "5b736f742e59b619541448077d22169174200aed2011ab3d6365390fd74c7709"
+    },
+    {
+      "path": "apps/web/src/pro/planning/components/sitemap/components/SitemapAgentPanel.tsx",
+      "pullRequests": [
+        87
+      ],
+      "operation": "update",
+      "sha256LF": "8947b5dcfd254fb9202556441aff02b1f1e15bde98778dcd3f4704e4487e0437"
+    },
+    {
+      "path": "apps/web/src/pro/seo-audit/panel-activity.ts",
+      "pullRequests": [
+        87
+      ],
+      "operation": "update",
+      "sha256LF": "7f7737717acf61d054424838586cda639b8f509da94bfa7195cdb017acdcdca5"
+    },
+    {
+      "path": "apps/web/tests/seo-panel-activity.test.ts",
+      "pullRequests": [
+        87
+      ],
+      "operation": "update",
+      "sha256LF": "64f6e4a93223a83aa8ffd428271d8b66e7b2157f977eafc6905b773363cb1065"
+    },
+    {
+      "path": "apps/web/src/pro/design-engine/article-layout.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "9745f64278dac1821e71d0a55f1930edd3970e798ed69a4da8c765c2a1d90ab9"
+    },
+    {
+      "path": "apps/web/src/pro/planning/pixflow/design-guidance.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "07097d1ebb6fe14e6a56aad35235b8c5774e8e3393a586ba07cefd52652ebf23"
+    },
+    {
+      "path": "apps/web/src/pro/planning/pixflow/design-system-proposal.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "978334330952e1c87d49ffd6e15c4dc3a4c940232108d64acaa4f1bfa93c6f2a"
+    },
+    {
+      "path": "apps/web/tests/article-layout.test.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "d259d9d0ea45513aa42dcd8ef34e6785ded778d379800a43d2c649e41ba9b206"
+    },
+    {
+      "path": "apps/web/tests/pixflow/design-system-proposal.test.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "059640e8a42b3d979514d5cdb675942b8fb13ac52f30af687f88d058886170d3"
+    },
+    {
+      "path": "docs/design-engine-boundary.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "1138de4484168bdf88e267871834edd5a0f3bb5ff7656a70b843edcae9699f44"
+    },
+    {
+      "path": "scripts/adapt-impeccable-guidance.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "adcdb0e15a85252e5731805fa5e9f01a2ef261788a8c9047e4fa59875ff9fcc6"
+    },
+    {
+      "path": "scripts/design-foundation.test.ts",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "a93c2f52e2361f5a0278c60854e5be50e81d6f109b1c3afa2181be3658587443"
+    },
+    {
+      "path": "test-lanes.json",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "219e66ee77385ccc8db49eed0b1b6bdf1d24896efed9f3ca6fedb58fc235b364"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/bricks/operations/live-builder.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "41d11ee1502153c159a566d2b526a38b53658bac74033d6a999ef2f3cdeeec80"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/elementor/design-polish.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "9f523b2795d9c766739c2879603e3e0d5059bdee5c953b07d42cbf45f2ad4ae4"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/SKILL.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "117622a7b99a21065aca553a77945e5bcede712595cca60086ca0fd6df1de77a"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/SOURCE.json",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "cd436a92ce0f0d22964ded232b4f7f27e0817a60078cd38fd2ed9b299532aebe"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/adapt.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "2801060ed7236f9231998eedfe2cf2ef10fbcd75ddba24c154bb0ef1a63568d6"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/audit.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "412faa822b579b93cd771f021b0a78ee5bd91f62c814065766ce888db064b7a8"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/clarify.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "b67ab43d301d04d9aa739c47cd926f1299ca807917984fe6a82d0e1ad1c42d43"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/colorize.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "a08851792aae039b66e29ff445e86b4fbf0400086c09403a8797c006f7093295"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/craft-floor.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "f5223e0728788ab9f4fc23b5b5c31cdc75938e38ac8cbc47795f454951ddad98"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/critique.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "7e8afa8c65856b3c518e0e41c9c81274fe282c5614b3346b8a5f05be820598a3"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/harden.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "0e47a62fad7addbe890c9559546dcd5e0c77525f24c4afbce04dc0e48518d69d"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/layout.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "365045d3d36db13024a2fb111feeadd058f8823d8855d1c23a5337a075b733ed"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/optimize.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "712d67dc2ef7b20a84633573ce93f82daebad2a6408b59087c3afaa37ba24989"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/polish.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "7ce600fb0c757cf637825515e58f536cdda9b16873051e57479d006b18bb4a96"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/typeset.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "3415c50357b510748cd9d2f175a7f5138ca209cda09e0c96fb5978aed2982358"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-systems/SKILL.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "16658c6e91d2202164747cc5a5a7559a69cb432d53e841504dd7f02247857576"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/sitemap/generation-prompting.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "061ed9509d8e36404edb9bc4df1db1ea5083b5d65ba8e450c8419e4fe27777e8"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/sitemap/section-recipes.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "c74318aeb0f829078129bef9f0e996e686b669e10e5fa90e2337253d8561da63"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/sitemap/sitemap-builder.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "83b0a47036b4f5eec726a00c4f2ae4f77b82db42f4621b9608386231eb75b642"
+    },
+    {
+      "path": "wordpress-pro/src/Planning/DesignEngine.php",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "3c8ebd42a61f4d34e5a6156f7a485b98dd2233c105402467e3c0d50d2e8f974c"
+    },
+    {
+      "path": "wordpress-pro/src/Planning/DesignGuidance.php",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "f7a957108c6bf726bcf5a3b6a5b6f5d5c16d4c5a19dd0fb483f934c2bcbfb44f"
+    },
+    {
+      "path": "wordpress-pro/tests/design-guidance-run.test.php",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "52ccc6ecb33a26650af32341cbe34ef7fbe816dcc3c3cad79fc821244d939a02"
+    },
+    {
+      "path": "apps/web/tests/pixflow/enhanced-design-guidance.test.tsx",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "fb37acbaa856d777b23226769e2c74dc7cbd32c58b965bf5d84ac4b82e593883"
+    },
+    {
+      "path": "docs/design-guidance-alignment-2026-11-16.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "e447cc85da5d6eeaa8ea2b943461b88a5b91e69b77fa39d2bb95fb781d7bdd76"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/page-patterns.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "e279dc3ff0e0d3433e3780e9bb63ec3fe74f84117689aab2ed52b41c6e099030"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/page-workflow.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "216f63ff53185ca561af639093dd93d823ff2dd74ae58fb879f40c545a6928e5"
+    },
+    {
+      "path": "wordpress-pro/resources/mcp-skills/pixflow/design-engine/references/sources.md",
+      "pullRequests": [
+        88
+      ],
+      "operation": "update",
+      "sha256LF": "534c3ffb07566002896a199b8c01be878fd88f569864c278e5740c97c87d3283"
+    }
+  ],
+  "additionalRecoveredDocs": {
+    "pullRequest": 156,
+    "paths": [
+      "docs/bridge-performance-work/bricks-native-mcp-assessment.md",
+      "docs/bridge-performance-work/provider-launch-and-structured-tools.md"
+    ]
+  },
+  "excluded": [
+    "Unfinished Team work",
+    "Unfinished comments/Feedback work and Pro #13",
+    "Experimental Tauri prototype"
+  ],
+  "releaseCandidates": {
+    "core": 153,
+    "pro": 85
+  }
+}

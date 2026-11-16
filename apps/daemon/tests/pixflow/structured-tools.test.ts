@@ -1,7 +1,7 @@
 import {afterEach,expect,it} from 'vitest';
 import {createServer} from 'node:http';
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process';
-import {mkdtemp,writeFile,readFile,rm,mkdir} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm,mkdir,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {stageWorkspaceBuilderHelper} from '../../src/pixflow/workspace-builder-session.js';
@@ -225,6 +225,23 @@ it('dispatches large input files through the existing tool and rejects unsafe pa
   expect(early.result.content[0].text).toContain('Write the file and wait');
   expect((await invoke({ codeFile: path.join(f.root, '..', 'design.js') })).result.isError).toBe(true);
   expect(f.calls).toHaveLength(2);
+});
+
+it.skipIf(process.platform === 'win32')('accepts a canonical run-directory alias but rejects an escaped file symlink', async () => {
+  const f = await fixture('site');
+  const aliases = await mkdtemp(path.join(tmpdir(), 'pixflow-run-alias-'));
+  cleanup.push(() => rm(aliases, { recursive: true, force: true }));
+  await symlink(f.root, path.join(aliases, 'run'), 'dir');
+  await writeFile(path.join(f.root, 'design.js'), 'return "draft";');
+  const invoke = (codeFile: string) => f.rpc.request('tools/call', {
+    name: 'pixflow_call', arguments: { tool: 'bricks.run', codeFile },
+  }).promise;
+  expect(payload(await invoke(path.join(aliases, 'run', 'design.js'))).ok).toBe(true);
+  await writeFile(path.join(aliases, 'outside.js'), 'return "outside";');
+  await symlink(path.join(aliases, 'outside.js'), path.join(f.root, 'escape.js'));
+  expect((await invoke(path.join(aliases, 'run', 'escape.js'))).result.isError).toBe(true);
+  expect((await invoke(path.join(aliases, 'outside.js'))).result.isError).toBe(true);
+  expect(f.calls).toHaveLength(1);
 });
 
 it('normalizes a script filename supplied with the native tool arguments', async () => {

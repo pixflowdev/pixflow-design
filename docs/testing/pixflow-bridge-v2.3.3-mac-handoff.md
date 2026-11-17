@@ -215,3 +215,20 @@ The original journal builder tab showed “The query element doesn't exist” af
 The journal excerpt filter still compares the first six words against the post body. It can hide a genuine excerpt when the opening words match. Exact editor-supplied excerpt visibility remains open. Earlier limitations for older Bricks and native Intel still apply. Stop/queue and permission/stale/idempotency evidence from earlier validation builds is preserved above. The final-package pass did not rerun those scenarios.
 
 Evidence: [Codex homepage](screenshots/v233-production-codex-bricks.jpg), [Claude journal](screenshots/v233-production-claude-bricks.jpg), [saved Workspace handoff](screenshots/v233-production-workspace-handoff.jpg), [fresh-tab compound Undo](screenshots/v233-production-undo-fresh.jpg).
+
+### Refreshed production DMGs after screenshot history fix — 17 November 2026
+
+[Core #169](https://github.com/pixflowdev/pixflow-design/pull/169) and [Pro #93](https://github.com/pixflowdev/pixflow-design-pro/pull/93) passed GitHub checks and merged. The next production pair is Core `7d9b17b92d99102b7304fb37879c5887c23ae6c6` and Pro `b7dbd0aba408c6b3ebda192ff0fd1fb871b295dc`. Pro pins that exact Core commit. This supersedes the earlier pair for release packaging. The fix is in Bridge daemon history handling. It compacts image blocks in Codex's nested MCP envelope before the event goes to SQLite or the browser. Existing historical rows are outside the fix.
+
+Local Core guard and root typecheck passed. The selected test run had 81 passes and one 45-second browser screenshot test timeout. The same test timed out on the unchanged release baseline. The nested-envelope test itself went red before the fix and passed with it. The Pro guard, paired typecheck and three build-contract checks passed.
+
+The refreshed Apple Silicon app was checked against the audited bundle and launched in the isolated QA runtime. Codex CLI 0.169.0 / GPT-6.1 Sol Medium inspected desktop and mobile screenshots on draft 480 in 28.21s, run `30445da72ea34980866fe32e4d321b55`. Claude Code 2.1.309 / Opus 5.5 Medium inspected both sizes on draft 481 in 21.05s, run `955b64c984304f59bd3c30a3e4b44ad3`. Both completed with zero failed tools and retained their replies after reload. Bridge SQLite and decoded WordPress assistant records each had two screenshot receipts and zero PNG/base64 image markers for each new reply. The prior affected reply remains historical. [Codex evidence](screenshots/v233-refreshed-codex-preview.jpg) · [Claude evidence](screenshots/v233-refreshed-claude-preview.jpg)
+
+Both rebuilt DMGs passed read-only image, strict ad hoc signature, version/bundle identity, architecture, bundled Node 24.22.3 and SQLite, portable configuration and Chrome native host checks. Gatekeeper rejected both. Notarisation was skipped. Intel launch and native-host protocol were checked under Rosetta. The normal QA Bridge was restored.
+
+| Local production asset (under `outputs/mac233/refreshed`) | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `pixflow-design-bridge-2.3.3-mac-arm64.dmg` | 253764002 | `60db9efa94da780daade0f59fc69a97f1c8e90758d6411d44b3f76894d81894f` |
+| `pixflow-design-bridge-2.3.3-mac-x64.dmg` | 266953995 | `1fe562b18ab6b3268208f2af3d442e7018c64472e3c46ccd8447a6865f9642c3` |
+
+**Before publication:** the existing unpublished draft targets the earlier Core commit and still carries the earlier Mac and Windows assets. Rebuild the Windows Bridge from the refreshed pair, verify its updater and align the draft target and assets with that pair. The refreshed local Mac files above are ready for that replacement. Repeat draft download/hash verification after uploading. Review the remaining excerpt limitation and intermittent Bricks canvas observation above. Exact excerpt semantics and native Intel and older-Bricks coverage remain open. Mac distribution stays manual with the Gatekeeper note.

@@ -14,6 +14,8 @@ function sanitize_key($v) { return $v; }
 function sanitize_text_field($v) { return $v; }
 function sanitize_textarea_field($v) { return $v; }
 function esc_url_raw($v) { return $v; }
+function admin_url($path = '') { return 'https://site.test/wp-admin/' . $path; }
+function add_query_arg($key, $value, $url) { return $url . '?' . urlencode($key) . '=' . urlencode((string) $value); }
 function update_post_meta($id, $key, $value) { $GLOBALS['writes'][] = [$id, $key, $value]; }
 class WP_Post { public string $post_excerpt = ''; public string $post_content = ''; public string $post_status = 'inherit'; public string $post_date_gmt = '2026-10-13'; public string $post_modified_gmt = '2026-10-13'; }
 function get_post($id) { return new WP_Post(); }

@@ -49,6 +49,7 @@ async function fixture(scope:'site'|'workspace'='workspace', skillContent?: stri
      return;
    }
    if(body.tool==='fixture.large'){res.end(JSON.stringify({ok:true,result:{revision:'document-revision',content:'x'.repeat(14000)}}));return;}
+   if(body.tool==='fixture.image'){res.end(JSON.stringify({ok:true,images:[{mimeType:'image/webp',data:Buffer.from('RIFF0000WEBPfixture').toString('base64')},{mimeType:'image/svg+xml',data:'unsafe'},{mimeType:'image/webp',data:'invalid'}]}));return;}
    res.end(JSON.stringify({
      ok: true, tool: body.tool, handoff: { id: 'receipt' },
      tools: { 'bricks.read': { description: 'Read canvas' } },
@@ -68,6 +69,13 @@ async function fixture(scope:'site'|'workspace'='workspace', skillContent?: stri
  return {root,helper,connection,rpc,calls,staged,deny:()=>{deny=true;},readOnly:()=>{readOnly=true;},renewAuth:()=>{allowedToken='pfdirect_'+'b'.repeat(64);},delay:()=>{delay=true;}};
 }
 const payload=(reply:any)=>JSON.parse(reply.result.content[0].text);
+it('delivers bounded hosted reference images without repeating base64 in text',async()=>{
+ const f=await fixture('site');
+ const response=await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'fixture.image'}}).promise;
+ expect(payload(response)).toEqual({ok:true,imageCount:1});
+ expect(response.result.content[1]).toEqual({type:'image',mimeType:'image/webp',data:Buffer.from('RIFF0000WEBPfixture').toString('base64')});
+ expect(f.calls).toHaveLength(1);
+});
 it('pages oversized results through MCP without repeating site calls and rejects another run receipt',async()=>{
  const f=await fixture('site');
  const receipt=payload(await f.rpc.request('tools/call',{name:'pixflow_call',arguments:{tool:'fixture.large'}}).promise);

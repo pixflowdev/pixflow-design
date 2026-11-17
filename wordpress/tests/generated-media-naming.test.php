@@ -80,5 +80,8 @@ $explicit = $prepare->invoke($service, [
 assert_naming($explicit['filename'] === 'clay-house-cups-original.png', 'An explicit generated-media filename must survive import instead of becoming prompt boilerplate.');
 $automatic = $prepare->invoke($service, ['source' => 'generated', 'prompt' => $product_prompt], 'unnamed-file', 'image/png');
 assert_naming(str_contains($automatic['filename'], 'cobalt-blue-desk-lamp'), 'Imports without an explicit filename still derive a descriptive name.');
+assert_naming($automatic['caption'] === '', 'Generated images must not manufacture a visible caption.');
+$captioned = $prepare->invoke($service, ['caption'=>'Requested caption'], 'lamp.png', 'image/png');
+assert_naming($captioned['caption'] === 'Requested caption', 'Explicitly supplied captions must survive import.');
 
 echo "Pixflow Design generated media naming tests passed.\n";

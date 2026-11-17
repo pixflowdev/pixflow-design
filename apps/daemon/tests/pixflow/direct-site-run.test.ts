@@ -215,6 +215,8 @@ describe('direct site agent connection', () => {
       expect(prompt).toContain('must not remove imagery');
       expect(prompt).toContain('Explicit placeholder requests override generation');
       expect(prompt).toContain('WordPress file paths belong to the connected server, not the local agent computer');
+      expect(prompt).toContain('Claude Write requires file_path and content');
+      expect(prompt).toContain('Other providers must use their own declared file-tool schema');
       if (process.platform === 'win32') expect(prompt).toContain('Do not switch shells or use Python for JSON/reference discovery');
     }
   });

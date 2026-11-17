@@ -59,6 +59,7 @@ describe('Workspace CLI builder connection', () => {
       const staged = await stageWorkspaceBuilderHelper(root, { ...session, endpoint: `http://127.0.0.1:${address.port}/tools` });
       expect(staged.prompt).not.toContain(session.token);
       expect(staged.prompt).toContain('Default page construction MUST happen visibly');
+      expect(staged.prompt).toContain('Claude Write requires file_path and content');
       const directory = path.join(root, 'workspace-builder-sessions', (await readdir(path.join(root, 'workspace-builder-sessions')))[0]!);
       const helper = path.join(directory, 'builder-tool.mjs');
       const context = await promisify(execFile)(process.execPath, [helper, 'context']);

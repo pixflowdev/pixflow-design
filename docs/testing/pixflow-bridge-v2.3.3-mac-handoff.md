@@ -177,3 +177,18 @@ First attempt correctly stopped before shutdown because ZIP extraction omitted q
 Prototype endpoint is stopped and its temporary control credential removed. The isolated app was stopped. Original working validation3 Bridge was restored and independently confirmed running from its original path, v2.3.3, QA origin connected; QA browser also shows Bridge connected. No production feed, release asset, quarantine removal, notarisation or published install was changed. Local reproducible prototype and evidence: `work/mac233/updater-prototype/` and `outputs/mac233/updater-prototype/`. [Connected after manual approval](screenshots/v233-updater-after-manual-approval.jpg).
 
 **Windows agent may now start PR review:** Core #159–#166 and Pro #89–#91. Retain the previously documented excerpt-condition and coverage limitations; do not infer blanket release acceptance from the updater experiment. After review/merge, provide a new handoff with exact compatible Core/Pro pins and draft target for fresh Apple Silicon and Intel production DMGs. No new DMGs are being built in this turn.
+
+### Production Mac DMGs — 17 November 2026
+
+Built v2.3.3 from Core `a4e7741732881a0e7c7c435731b208f0a38ae6d8` and Pro `2c19c1b6719dc90981721f61d2b79274e82dad54` using separate clean, detached checkouts with frozen dependencies. Core #168 and Pro #92 merged with passing PR checks. The release wrapper omits portable mode, so the build invoked its maintained tools-pack backend directly with `--portable` and the same product identity, icons and production Chrome native host payload. Both builds used Node 24 and pnpm 10.33.2.
+
+Both DMGs passed read-only image verification, version and bundle ID checks, executable/Electron/Node/SQLite architecture checks, Node 24.22.3 with an in-memory SQLite query, portable configuration checks and strict ad hoc signature verification. Gatekeeper rejected both apps. Notarisation was skipped, so a user may need to approve launch in Privacy & Security. Seamless updates remain Windows-only.
+
+Both packaged apps started in isolated roots, paired with local QA, generated the Chrome native-host registration for the production extension ID, and answered a live framed native-host health request. Intel ran under Rosetta on Apple Silicon. Provider listing returned `PIXFLOW_CENTRAL_ENTITLEMENT_REQUIRED` for the isolated installs, so final packaged live provider runs and full v2.3.2 settings/chat migration are still open. Earlier acceptance evidence covers the reviewed fixes on validation builds. The normal QA Bridge was restored after the package smoke tests.
+
+GitHub draft `446489613`, tag `bridge-v2.3.3`, remains unpublished and targets the reviewed Core commit. Both uploads were re-downloaded and their SHA-256 values matched the local files and GitHub asset metadata. The Windows assets were preserved. [GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-87289e4530264b80048c)
+
+| Architecture | Asset ID | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| Apple Silicon | [756940205](https://api.github.com/repos/pixflowdev/pixflow-design/releases/assets/756940205) | 253762763 | `57c4c738afdb1ac0dd5c33d578c3a0c39d6ea42e8001dd9423dcb4b10d77e6fb` |
+| Intel | [756942938](https://api.github.com/repos/pixflowdev/pixflow-design/releases/assets/756942938) | 266962235 | `a455ee870c8d436f6e4d60a855d0e8c3b3cee10c4c6ca1c98a136c070028b3d0` |

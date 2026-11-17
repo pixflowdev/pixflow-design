@@ -4,7 +4,7 @@ Tags: wordpress, gutenberg, design, ai, workflow
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 2.3.3
+Stable tag: 2.4.0
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,6 +32,25 @@ Update the Bridge before updating the plugin. Your existing plugin becomes Free.
 4. For eligible Pro access, download the separate Pro ZIP from your Pixflow account, upload it and activate it while keeping Free active.
 
 == Changelog ==
+
+= 2.4.0 =
+
+**Added**
+
+* Browse separate UI/UX Library and Skills views from Workspace, with catalogue previews below the Home composer.
+* Use a conversation-scoped design reference with either your existing design system or the reference styling.
+
+**Changed**
+
+* Automatically optimise generated still images before adding them to the Media Library, using WebP at 80% quality when it reduces file size.
+
+**Fixed**
+
+* Keep generated and placeholder image captions empty unless requested or required by the saved design.
+* Improve assistant file-tool guidance and distinguish existing Bricks elements from the available element catalogue.
+* Verify native tabs in saved-page previews and wait for visible images to decode before measuring their layout.
+* Show supported reference images directly to assistants without duplicating their encoded data in tool text.
+* Refresh prepared chat guidance when the selected Library reference changes, including changes from another tab.
 
 = 2.3.3 =
 

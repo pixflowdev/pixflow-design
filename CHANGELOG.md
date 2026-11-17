@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0]
+
+### Added
+
+- Browse separate UI/UX Library and Skills views from Workspace, with catalogue previews below the Home composer.
+- Use a conversation-scoped design reference with either your existing design system or the reference styling.
+
+### Changed
+
+- Automatically optimise generated still images before adding them to the Media Library, using WebP at 80% quality when it reduces file size.
+
+### Fixed
+
+- Keep generated and placeholder image captions empty unless requested or required by the saved design.
+- Improve assistant file-tool guidance and distinguish existing Bricks elements from the available element catalogue.
+- Verify native tabs in saved-page previews and wait for visible images to decode before measuring their layout.
+- Show supported reference images directly to assistants without duplicating their encoded data in tool text.
+- Refresh prepared chat guidance when the selected Library reference changes, including changes from another tab.
+
 ## [2.3.3]
 
 ### Added

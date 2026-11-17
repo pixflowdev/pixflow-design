@@ -5,6 +5,6 @@ export function withRunDesignGuidance(context: unknown, session: PixflowDirectSi
   if (!session.designGuidance) return rest;
   // Optional operation instructions are selected separately for the current preference.
   // Never smuggle them into ordinary reference data when the operation is disabled.
-  const { extension: _extension, ...guidance } = session.designGuidance;
+  const { extension: _extension, workflowContext: _workflow, ...guidance } = session.designGuidance;
   return { ...rest, siteDesignGuidance: guidance };
 }

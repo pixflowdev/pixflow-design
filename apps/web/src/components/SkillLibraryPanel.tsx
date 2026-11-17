@@ -1,3 +1,4 @@
+import { LibrarySectionHeader } from './LibrarySectionHeader';
 import { useRef, useState } from 'react';
 import { Button } from '@open-design/components';
 import { IconRefresh, IconTrash, IconSearch } from '@tabler/icons-react';
@@ -10,7 +11,7 @@ import { availableSkillUpdates, useSkillLibraryCatalogue, type SkillLibraryCatal
 import { skillLibraryCategories, skillLibraryCategory, type SkillLibraryCategory } from './skill-library-categories';
 import { SkillLibraryDetails } from './SkillLibraryDetails';
 
-export function SkillLibraryPanel({ onChange, catalogue, presentation = 'rows' }: { onChange: () => Promise<void>; catalogue?: SkillLibraryCatalogue; presentation?: 'rows' | 'cards' }) {
+export function SkillLibraryPanel({ onChange, catalogue, presentation = 'rows', preview = false, onViewAll }: { preview?: boolean; onViewAll?: () => void; onChange: () => Promise<void>; catalogue?: SkillLibraryCatalogue; presentation?: 'rows' | 'cards' }) {
   const t = useT();
   const localCatalogue = useSkillLibraryCatalogue(!catalogue);
   const { state, error, setError, load } = catalogue ?? localCatalogue;
@@ -110,15 +111,15 @@ export function SkillLibraryPanel({ onChange, catalogue, presentation = 'rows' }
       </div></div></div>
     </article>;
   const overlapDetails = <><p>{t('skillLibrary.overlapHint')}</p><ul>{overlaps.map(([first, second]) => <li key={`${first}:${second}`}>{enabledSkills.get(first)} · {enabledSkills.get(second)}</li>)}</ul></>;
-  return <section className={styles.panel} data-presentation={presentation} aria-label={t('skillLibrary.title')}>
-    <header className={styles.header}><div><h3>{t('skillLibrary.title')}</h3><p>{t('skillLibrary.description')}</p></div>
+  return <section className={styles.panel} data-presentation={presentation} data-home-preview={preview || undefined} aria-label={t('skillLibrary.title')}>
+    <LibrarySectionHeader title={t('skillLibrary.title')} description={t('skillLibrary.description')} onViewAll={preview ? onViewAll : undefined} actions={
       <div className={styles.actions}>
-        {updates.length > 0 && <Button className={styles.updateAll} disabled={busy !== null} onClick={() => void updateAll()}>{t('skillLibrary.updateAll')}<span className={styles.updateCount}>{updates.length}</span></Button>}
+        {!preview && updates.length > 0 && <Button className={styles.updateAll} disabled={busy !== null} onClick={() => void updateAll()}>{t('skillLibrary.updateAll')}<span className={styles.updateCount}>{updates.length}</span></Button>}
         <Button variant="ghost" className={styles.iconButton} aria-label={t('designFiles.refresh')} title={t('designFiles.refresh')} disabled={busy !== null} onClick={() => { setError(''); void load(true).catch(e => setError(e.message)); }}><IconRefresh size={16} stroke={1.6} aria-hidden="true" /></Button>
       </div>
-    </header>
-    {presentation === 'cards' && <label className={styles.search}><IconSearch size={17} stroke={1.5} aria-hidden="true" /><input type="search" aria-label={t('ui.chatComposer.searchSkills2')} placeholder={t('ui.chatComposer.searchSkills')} value={search} onChange={event => setSearch(event.target.value)} /></label>}
-    {presentation === 'cards' && categories.length > 0 && <div className={styles.filters} role="group" aria-label={t('pluginsHome.categoryFilterAria')}>
+    } />
+    {!preview && presentation === 'cards' && <label className={styles.search}><IconSearch size={17} stroke={1.5} aria-hidden="true" /><input type="search" aria-label={t('ui.chatComposer.searchSkills2')} placeholder={t('ui.chatComposer.searchSkills')} value={search} onChange={event => setSearch(event.target.value)} /></label>}
+    {!preview && presentation === 'cards' && categories.length > 0 && <div className={styles.filters} role="group" aria-label={t('pluginsHome.categoryFilterAria')}>
       <Button variant="ghost" className={styles.filter} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>{t('common.all')}{' '}<span>{state?.skills.length}</span></Button>
       {categories.map(item => <Button key={item.id} variant="ghost" className={styles.filter} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{t(skillLibraryCategories[item.id].label)}{' '}<span>{item.count}</span></Button>)}
     </div>}
@@ -126,7 +127,7 @@ export function SkillLibraryPanel({ onChange, catalogue, presentation = 'rows' }
     {!state && !error && <p role="status">{t('common.loading')}</p>}
     {state && !state.skills.some(matchesSearch) && <p className={styles.notice} role="status">{t(search.trim() || category !== 'all' ? 'context.noMatches' : 'ui.chatComposer.noSkillsAvailableYet')}</p>}
     {overlaps.length > 0 && overlapping.length === 0 && <aside className={styles.overlapNotice} role="status"><strong>{t('skillLibrary.overlapTitle')}</strong>{overlapDetails}</aside>}
-    <div className={styles.groups}>
+    {preview ? <div className={styles.grid}>{state?.skills.slice(0, 6).map(renderCard)}</div> : <div className={styles.groups}>
       {overlapping.some(matchesSearch) && <section aria-label={t('skillLibrary.overlapTitle')}>
         <div className={styles.groupHeading}><h4>{t('skillLibrary.overlapTitle')}</h4><span>{overlapping.filter(matchesSearch).length}</span></div>
         <div className={styles.overlapDetails} role="status">{overlapDetails}</div>
@@ -140,7 +141,7 @@ export function SkillLibraryPanel({ onChange, catalogue, presentation = 'rows' }
         {availableCount > 0 && <div className={styles.groupHeading}><h4>{t('skillLibrary.availableToInstall')}</h4><span>{availableCount}</span></div>}
         <div className={styles.grid}>{remaining.filter(matchesSearch).map(renderCard)}</div>
       </section>}
-    </div>
+    </div>}
     {selectedItem && <SkillLibraryDetails key={selectedItem.id} item={selectedItem} busy={busy !== null} actionError={error} onClose={() => setSelected(null)} onInstall={() => void change(selectedItem, 'install')} />}
   </section>;
 }

@@ -198,6 +198,7 @@ const AUTHORING_DEFAULT_SCENARIO_INPUTS = {
 
 interface Props {
   isActive?: boolean;
+  onViewAllSkills?: () => void;
   projects: Project[];
   projectsLoading?: boolean;
   designSystems?: DesignSystemSummary[];
@@ -220,6 +221,7 @@ interface Props {
   promptTemplates?: PromptTemplateSummary[];
   catalogLoadAllowed?: boolean;
   executionSwitcher?: ReactNode;
+  libraryPreview?: ReactNode;
   mcpProvider?: string | null;
   codexVoiceEnabled?: boolean;
   onOpenExecutionSettings?: (section?: 'execution' | 'dictation' | 'designSystems') => void;
@@ -232,6 +234,8 @@ const EMPTY_PROMPT_TEMPLATES: PromptTemplateSummary[] = [];
 
 export function HomeView({
   isActive = true,
+  onViewAllSkills,
+  libraryPreview,
   projects,
   projectsLoading,
   designSystems = EMPTY_DESIGN_SYSTEMS,
@@ -1662,7 +1666,8 @@ export function HomeView({
         executionSwitcher={executionSwitcher}
       />}
 
-      {hasPixflowWordPressContext() && isActive && <div className={homeStyles.library}><SkillLibraryPanel presentation="cards" onChange={onSkillsRefresh ?? (async () => {})} /></div>}
+      {libraryPreview}
+      {hasPixflowWordPressContext() && isActive && <div className={homeStyles.library}><SkillLibraryPanel preview onViewAll={onViewAllSkills} presentation="cards" onChange={onSkillsRefresh ?? (async () => {})} /></div>}
       {!hasPixflowWordPressContext() && <RecentProjectsStrip
         projects={projects}
         designSystems={designSystems}

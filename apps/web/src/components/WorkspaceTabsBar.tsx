@@ -156,6 +156,8 @@ function reviveTab(value: unknown): WorkspaceChromeTab | null {
     const view = record.view;
     if (
       view === 'home'
+      || view === 'ui-library'
+      || view === 'skills'
       || view === 'projects'
       || view === 'media'
       || view === 'plugins'
@@ -1172,6 +1174,8 @@ function displayTabFor(
   }
   const entryTitle: Record<EntryHomeView, string> = {
     home: t('entry.navHome'),
+    'ui-library': 'UI/UX Library',
+    skills: t('skillLibrary.title'),
     onboarding: t('settings.welcomeTitle'),
     projects: t('entry.navProjects'),
     media: t('entry.navMedia'),
@@ -1184,6 +1188,8 @@ function displayTabFor(
   };
   const entryIcon: Record<EntryHomeView, IconName> = {
     home: 'home',
+    'ui-library': 'grid',
+    skills: 'sparkles',
     onboarding: 'sparkles',
     projects: 'folder',
     media: 'image',

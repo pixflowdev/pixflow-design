@@ -3,6 +3,7 @@ import { compactTranscriptEvents } from './direct-history-storage';
 import { conversationBinding, conversationDraftKey } from './conversation-address';
 import { useFloatingConversation, normalizeFloatingRunMetadata, withFloatingExecution, rememberFloatingExecution } from './floating-conversation';
 import { rememberLastActiveChat } from './last-active-chat';
+import { UiLibrarySelection } from './planning-contribution';
 import { notifyFloatingCanvasDeparture } from './floating-canvas-departure';
 import { usePixflowFeatureRuntime } from './feature-runtime';
 import { usePixflowLicenseRefresh } from './use-license-refresh';
@@ -4819,7 +4820,7 @@ export function WpAdminAgentFrameApp({ initialConfig }: { initialConfig?: AppCon
               streaming={streaming || workspaceStops.length>0}
               sendDisabled={Boolean(selectionPending || !durableHistory.ready || hydratedSessionKey !== sessionKey || !siteAccess.ready || !!siteAccess.error || (config.mode === 'daemon' && (agents.length === 0 || bridgeUpdateState.required)))}
               sessionMode={mode}
-              sessionModeMenuExtra={<><EnhancedDesignGuidance surface="wp_admin" enabled={config.enhancedDesignGuidance} />{<DesignSystemSwitch />}</>}
+              sessionModeMenuExtra={<><EnhancedDesignGuidance surface="wp_admin" enabled={config.enhancedDesignGuidance} />{<DesignSystemSwitch />}<UiLibrarySelection binding={durableHistory.binding} disabled={streaming}/></>}
               onSessionModeChange={selectSessionMode}
               draftStorageKey={durableHistory.binding || conversationBinding(sessionKey) ? conversationDraftKey((durableHistory.binding || conversationBinding(sessionKey))!) : composerStorageKey('pixflow:draft:' + sessionKey)}
               draftStorageFallbackKey={conversationBinding(sessionKey) ? undefined : composerStorageKey(durableHistory.binding ? 'pixflow:draft:' + sessionKey : 'pixflow-design:wp-admin-agent:draft')}

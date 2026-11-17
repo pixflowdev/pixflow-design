@@ -72,3 +72,5 @@
 @container (max-width: 380px) { .header { flex-wrap: wrap; } .header > .actions { margin-inline-start: auto; } }
 
 .panel .search input::placeholder { color:var(--text-muted); opacity:1; }
+
+@container(max-width:540px) { .panel[data-home-preview="true"] .grid > :nth-child(n+4) { display:none; } }

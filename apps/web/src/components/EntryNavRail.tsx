@@ -19,6 +19,8 @@ import { useT } from '../i18n';
 
 export type EntryView =
   | 'home'
+  | 'ui-library'
+  | 'skills'
   | 'onboarding'
   | 'projects'
   | 'media'

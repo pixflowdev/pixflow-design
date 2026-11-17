@@ -102,7 +102,7 @@ export function redactDirectEvent(event: Record<string, unknown>, secrets: strin
   if (event.type === 'tool_result' && typeof event.content === 'string') {
     // The provider already received these images over MCP. Persist the receipt,
     // not another base64 copy in every streamed/reloaded chat event.
-    const compact = (text: string): string => {
+    const compact = (text: string, depth = 0): string => {
       try {
         let changed = false;
         const value = JSON.parse(text, (_key, value) => {
@@ -110,13 +110,22 @@ export function redactDirectEvent(event: Record<string, unknown>, secrets: strin
             changed = true;
             return {type:'text',text:'[Screenshot supplied to the agent]'};
           }
+          // Codex may wrap the entire MCP result in a text content block.
+          // Follow only structured text blocks and bound nested JSON decoding.
+          if (depth < 8 && value?.type === 'text' && typeof value.text === 'string' && /^[\s]*[\[{]/.test(value.text)) {
+            const nested = compact(value.text, depth + 1);
+            if (nested !== value.text) {
+              changed = true;
+              return { ...value, text: nested };
+            }
+          }
           return value;
         });
         return changed ? JSON.stringify(value) : text;
       } catch { return text; }
     };
     const whole = compact(event.content);
-    event = {...event,content:whole === event.content ? event.content.split('\n').map(compact).join('\n') : whole};
+    event = {...event,content:whole === event.content ? event.content.split('\n').map(line => compact(line)).join('\n') : whole};
   }
   const sensitive = (key: string) => /(?:authorization|cookie|password|token|secret|apikey|accesskey|licensekey|privatekey|pairingcode|recoverycode)$/.test(key.toLowerCase().replace(/[^a-z0-9]/g, ''));
   let json = JSON.stringify(event, (key,value:unknown) => {

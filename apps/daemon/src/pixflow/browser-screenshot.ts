@@ -110,6 +110,7 @@ type PixflowBrowserElement = {
 
 declare const document: {
   baseURI: string;
+  images: Iterable<PixflowBrowserElement & { decode: () => Promise<void> }>;
   documentElement: { scrollWidth: number; scrollHeight: number; clientWidth: number; clientHeight: number };
   body: { scrollWidth: number; scrollHeight: number } | null;
   querySelectorAll: (selector: string) => Iterable<PixflowBrowserElement>;
@@ -389,14 +390,36 @@ async function runExactViewportCapture(
     await suppressPixflowCaptureNonCloneableOverlays(page);
     for (const action of viewport.actions ?? []) {
       if (savedPreview) {
-        if (!['hover', 'waitFor', 'click'].includes(action.type)) throw new Error('Saved previews support read-only hover, waitFor and disclosure clicks.');
+        if (!['hover', 'waitFor', 'click'].includes(action.type)) throw new Error('Saved previews support read-only hover, waitFor, disclosure and tab clicks.');
         if (action.type === 'click') {
-          const safe = await page.locator(action.selector).evaluate(element => element.matches('summary') || (element.matches('button[type="button"]') && element.hasAttribute('aria-expanded')));
-          if (!safe) throw new Error('Saved preview clicks are limited to disclosure controls; form submissions and navigation are not supported.');
+          const safe = await page.locator(action.selector).evaluate(element => {
+            if (element.matches('summary') || (element.matches('button[type="button"]') && element.hasAttribute('aria-expanded'))) return true;
+            // Native tabs only reveal a related panel. Never broaden this to links,
+            // form controls or arbitrary clickable elements carrying a tab role.
+            if (element.closest('a[href],area[href],button:not([type="button"])')) return false;
+            if (!element.matches('button[type="button"][role="tab"],div[role="tab"],span[role="tab"]') || !element.closest('[role="tablist"]')) return false;
+            const panel = element.ownerDocument.getElementById(element.getAttribute('aria-controls') || '');
+            return !!panel?.matches('[role="tabpanel"]');
+          });
+          if (!safe) throw new Error('Saved preview clicks are limited to disclosure controls and native tabs; form submissions and navigation are not supported.');
         }
       }
       await applyPixflowCaptureActions(page, [action]);
     }
+    const imagesReady = await page.evaluate(async () => {
+      const visibleImages = Array.from(document.images).filter(image => {
+        const rect = image.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < document.documentElement.clientHeight;
+      });
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          Promise.all(visibleImages.map(image => image.decode().catch(() => undefined))).then(() => true),
+          new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), 5000); }),
+        ]);
+      } finally { if (timer !== undefined) clearTimeout(timer); }
+    });
+    if (!imagesReady) throw new Error('Visible images are still decoding; this capture is not reliable evidence of image cropping. Retry after the media finishes loading.');
     await page.waitForTimeout(100);
     const snapshot = await capturePixflowDomFidelitySnapshot(page, url, viewport);
     const layout = await capturePixflowLayoutEvidence(page, viewport, {

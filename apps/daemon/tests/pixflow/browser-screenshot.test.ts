@@ -16,6 +16,43 @@ import {
 import type { PixflowDomFidelitySnapshot } from '../../src/pixflow/browser-screenshot.js';
 
 describe('Pixflow browser screenshot capture', () => {
+  it('waits for visible image decoding before measuring the saved page', async (context) => {
+    if (!await resolvePixflowCaptureBrowser()) { context.skip(); return; }
+    const png = PNG.sync.write(new PNG({ width: 1, height: 1 })).toString('base64');
+    const server = createServer((_request, response) => {
+      response.setHeader('Content-Type', 'text/html');
+      response.end(`<h2>Not decoded</h2><img width="120" height="80" src="data:image/png;base64,${png}"><script>HTMLImageElement.prototype.decode=function(){return new Promise(resolve=>setTimeout(()=>{document.querySelector('h2').textContent='Decoded';resolve()},250))}</script>`);
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Missing fixture port');
+      const result = await capturePixflowBrowserScreenshots({ url: `http://127.0.0.1:${address.port}`, viewports: [{ id: 'desktop', width: 800, height: 600 }], waitMs: 0 });
+      expect(result.errors).toEqual([]);
+      expect(result.captures[0]?.layout?.headings).toEqual([{ level: 2, selector: 'h2', text: 'Decoded' }]);
+    } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+  }, 30000);
+  it('allows a saved preview tab while rejecting navigation and submit controls', async (context) => {
+    if (!await resolvePixflowCaptureBrowser()) { context.skip(); return; }
+    const server = createServer((_request, response) => {
+      response.setHeader('Content-Type', 'text/html');
+      response.end(`<div role="tablist"><button id="tab" type="button" role="tab" aria-controls="panel" onclick="document.querySelector('#panel').hidden=false">Graphite</button><div id="native" role="tab" aria-controls="panel" onclick="document.querySelector('#panel').hidden=false">Native tab</div><a href="/outside"><span id="nested" role="tab" aria-controls="panel">Nested navigation</span></a><a id="link" role="tab" href="/outside" aria-controls="panel">Navigate</a><button id="submit" type="submit" role="tab" aria-controls="panel">Submit</button></div><div id="panel" role="tabpanel" hidden><h2>Graphite selected</h2></div>`);
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Missing fixture port');
+      const result = await capturePixflowBrowserScreenshots({
+        url: `http://127.0.0.1:${address.port}/?page_id=1&preview=true`,
+        savedPreview: { token: 'a'.repeat(64), postId: 1 }, waitMs: 0,
+        viewports: ['tab', 'native', 'link', 'submit', 'nested'].map(id => ({ id, width: 390, height: 680, actions: [{ type: 'click' as const, selector: '#' + id }] })),
+      });
+      expect(result.captures.map(capture => capture.viewport)).toEqual(['tab', 'native']);
+      expect(result.captures[0]?.layout?.headings).toEqual([{ level: 2, selector: 'h2', text: 'Graphite selected' }]);
+      expect(result.errors).toHaveLength(3);
+      expect(result.errors.every(error => /not supported/.test(error))).toBe(true);
+    } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+  }, 30000);
   it('measures visible placeholders without exposing entered values or hidden placeholders', async (context) => {
     if (!await resolvePixflowCaptureBrowser()) { context.skip(); return; }
     const server = createServer((_request, response) => {

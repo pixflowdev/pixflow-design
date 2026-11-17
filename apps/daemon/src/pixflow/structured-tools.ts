@@ -175,13 +175,26 @@ async function handle(q) {
     result.hint = 'Read each localPath for the complete Markdown. The reference path is a site catalogue identifier, not a local path. Reuse these files for this run.';
    }
   }
+  // Authorized site tools may return bounded reference images. Never repeat their
+  // base64 payload in text or spool it as an opaque result that the model cannot see.
+  const images=[];
+  if(name==='pixflow_call' && Array.isArray(result?.images)) {
+   for(const image of result.images.slice(0,3)) {
+    if(image?.mimeType!=='image/webp' || typeof image.data!=='string' || image.data.length>5_400_000)continue;
+    const bytes=Buffer.from(image.data,'base64');
+    if(bytes.length>4_000_000 || bytes.subarray(0,4).toString()!=='RIFF' || bytes.subarray(8,12).toString()!=='WEBP')continue;
+    images.push({type:'image',mimeType:'image/webp',data:bytes.toString('base64')});
+   }
+   const {images:_images,...rest}=result;
+   result={...rest,imageCount:images.length};
+  }
   let presented = !workspace && name==='pixflow_call' && !['plan.read','plan.update'].includes(args.tool) ? results.present(result) : result;
   if(presented!==result && object(presented)) {
    presented={...Object.fromEntries(['ok','error','code','commandId','pending','accepted'].filter(key=>Object.hasOwn(result,key)).map(key=>[key,result[key]])),...presented,
     read:presented.read.replace('Call result.read','Call pixflow_result_read')};
   }
   const text=JSON.stringify(presented);
-  const content=[{type:'text',text}];
+  const content=[{type:'text',text},...images];
   if (!workspace && name==='pixflow_call' && ['browser.preview','browser.capture'].includes(args.tool) && toolArguments?.includeImages!==false && Array.isArray(result?.captures)) {
    const root=await realpath(path.dirname(fileURLToPath(import.meta.url)));
    let remaining=12_000_000;

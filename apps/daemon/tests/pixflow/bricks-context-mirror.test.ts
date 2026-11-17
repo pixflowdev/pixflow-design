@@ -23,6 +23,7 @@ it('exposes searchable native records and clears them when the document is lost'
     const matches=(await fs.readFile(path.join(dir,'BRICKS-ELEMENTS.jsonl'),'utf8')).split('\n').filter(line=>line.includes('Studio'));
     expect(matches).toHaveLength(1);expect(JSON.parse(matches[0]!)).toEqual(elements[0]);
     expect(await fs.readFile(path.join(dir,'BRICKS-CONTEXT.md'),'utf8')).toContain('context.sections.elements');
+    expect(await fs.readFile(path.join(dir,'BRICKS-CONTEXT.md'),'utf8')).toContain('not a catalogue of available element types');
     resolve(Response.json({context:null,revision:'',connected:true,postId:12}));
     await vi.waitFor(async()=>expect(await fs.readFile(path.join(dir,'BRICKS-ELEMENTS.jsonl'),'utf8')).not.toContain('Studio'));
   } finally {resolve(Response.json({context:null,revision:'',connected:true,postId:12}));await stop();await fs.rm(dir,{recursive:true,force:true});}

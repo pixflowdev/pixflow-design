@@ -226,9 +226,11 @@ The refreshed Apple Silicon app was checked against the audited bundle and launc
 
 Both rebuilt DMGs passed read-only image, strict ad hoc signature, version/bundle identity, architecture, bundled Node 24.22.3 and SQLite, portable configuration and Chrome native host checks. Gatekeeper rejected both. Notarisation was skipped. Intel launch and native-host protocol were checked under Rosetta. The normal QA Bridge was restored.
 
-| Local production asset (under `outputs/mac233/refreshed`) | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `pixflow-design-bridge-2.3.3-mac-arm64.dmg` | 253764002 | `60db9efa94da780daade0f59fc69a97f1c8e90758d6411d44b3f76894d81894f` |
-| `pixflow-design-bridge-2.3.3-mac-x64.dmg` | 266953995 | `1fe562b18ab6b3268208f2af3d442e7018c64472e3c46ccd8447a6865f9642c3` |
+The two refreshed DMGs are uploaded to the unpublished `bridge-v2.3.3` draft, which targets Core `7d9b17b92d99102b7304fb37879c5887c23ae6c6`. Both files were downloaded from GitHub and matched the local SHA-256 checksums. The two superseded Mac assets were removed. [GitHub draft](https://github.com/pixflowdev/pixflow-design/releases/tag/untagged-e1c77e3c470d07beacf3)
 
-**Before publication:** the existing unpublished draft targets the earlier Core commit and still carries the earlier Mac and Windows assets. Rebuild the Windows Bridge from the refreshed pair, verify its updater and align the draft target and assets with that pair. The refreshed local Mac files above are ready for that replacement. Repeat draft download/hash verification after uploading. Review the remaining excerpt limitation and intermittent Bricks canvas observation above. Exact excerpt semantics and native Intel and older-Bricks coverage remain open. Mac distribution stays manual with the Gatekeeper note.
+| Mac download | Asset ID | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| [Apple Silicon DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-e1c77e3c470d07beacf3/pixflow-design-bridge-2.3.3-mac-arm64.dmg) | 757095672 | 253764002 | `60db9efa94da780daade0f59fc69a97f1c8e90758d6411d44b3f76894d81894f` |
+| [Intel DMG](https://github.com/pixflowdev/pixflow-design/releases/download/untagged-e1c77e3c470d07beacf3/pixflow-design-bridge-2.3.3-mac-x64.dmg) | 757097362 | 266953995 | `1fe562b18ab6b3268208f2af3d442e7018c64472e3c46ccd8447a6865f9642c3` |
+
+**Before publication:** the Windows agent should complete the Windows Bridge asset and updater verification for the refreshed source pair. Review the remaining excerpt limitation and intermittent Bricks canvas observation above. Exact excerpt semantics and native Intel and older-Bricks coverage remain open. Mac distribution stays manual with the Gatekeeper note.

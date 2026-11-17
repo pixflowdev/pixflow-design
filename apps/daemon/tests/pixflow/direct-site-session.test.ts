@@ -102,6 +102,25 @@ describe('Direct recovery authorization',()=>{
     expect(saved.content).not.toContain('large-image-payload');
     expect(original.content).toBe(content);
   });
+  it('compacts image blocks inside a Codex MCP result serialized as text', () => {
+    const receipt = JSON.stringify({ ok: true, captures: [{ width: 1440, height: 900 }] });
+    const inner = JSON.stringify({ content: [
+      { type: 'text', text: receipt },
+      { type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgoExampleImagePayload' },
+    ], isError: false });
+    const content = JSON.stringify({
+      content: [{ type: 'text', text: inner }],
+      structuredContent: null,
+      _meta: null,
+    });
+    const saved = redactDirectEvent({ type: 'tool_result', toolUseId: 'capture', content }, []);
+    const result = JSON.parse(JSON.parse(String(saved.content)).content[0].text);
+    expect(result).toEqual({ content: [
+      { type: 'text', text: receipt },
+      { type: 'text', text: '[Screenshot supplied to the agent]' },
+    ], isError: false });
+    expect(saved.content).not.toContain('iVBORw0KGgo');
+  });
   it('redacts license and provider credentials inside serialized tool output', () => {
     const result = redactDirectEvent({ output: 'Result: {"license_key":"license-private","refresh_token":"refresh-private","tokenCount":7}', nested: { client_secret: 'provider-private' } }, []);
     expect(JSON.stringify(result)).not.toMatch(/license-private|refresh-private|provider-private/);

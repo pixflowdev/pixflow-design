@@ -2793,7 +2793,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             <DictationControl contextKey={queueStorageKey || draftStorageKey} onOpenSettings={() => onOpenSettings?.('dictation')} onTranscript={text => { editorRef.current?.insertText(text + ' '); }}/>
             {codexVoiceEnabled && <CodexVoiceControl disabled={sendDisabled || !!streaming} prepareStart={onPrepareCodexVoice ? () => onPrepareCodexVoice(currentRunContextMeta()) : undefined} startRequested={codexVoiceStartRequested} onStart={voice => { void Promise.resolve(onSend(t('voiceConversation'), [], [], { ...currentRunContextMeta(), voice })).then(outcome => { if (outcome === 'restore-draft') voice.finish(); }).catch(error => voice.finish(String(error))); }}/>}
             {!compactAppearance ? footerAccessory : null}
-            {hideSessionModeToggle || (getPixflowWordPressConfig()?.bricksIntegrationActive === false && getPixflowWordPressConfig()?.etchIntegrationActive !== true && getPixflowWordPressConfig()?.elementorIntegrationActive !== true) ? null : (
+            {hideSessionModeToggle || (!sessionModeMenuExtra && getPixflowWordPressConfig()?.bricksIntegrationActive === false && getPixflowWordPressConfig()?.etchIntegrationActive !== true && getPixflowWordPressConfig()?.elementorIntegrationActive !== true) ? null : (
               <SessionModeToggle
                 menuExtra={sessionModeMenuExtra}
                 mode={sessionMode}

@@ -112,3 +112,12 @@ describe('parseRoute / buildPath (issue #1505)', () => {
     expect(parseRoute('/projects')).toEqual({ kind: 'home', view: 'projects' });
   });
 });
+
+
+describe('Workspace catalogues', () => {
+  it.each(['ui-library', 'skills'] as const)('preserves the %s view across URL round trips', view => {
+    const route: Route = { kind: 'home', view };
+    expect(buildPath(route)).toBe(`/${view}`);
+    expect(roundTrip(route)).toEqual(route);
+  });
+});

@@ -11,6 +11,16 @@ import type { PlanningContribution } from './planning-contract';
 export { planningAvailable } from './planning-availability';
 
 type Contribution = PlanningContribution;
+export function UiLibraryHome(props: { preview?: boolean; onViewAll?: () => void }) {
+  usePixflowFeatureAsset('pixflow-planning');
+  const Component = pixflowFeatureEnabled('planning') && renderer()?.UiLibraryHome;
+  return Component ? <Component {...props} /> : null;
+}
+export function UiLibrarySelection(props: { binding?: {projectId: string; conversationId: string} | null; disabled?: boolean }) {
+  usePixflowFeatureAsset('pixflow-planning');
+  const Component = pixflowFeatureEnabled('planning') && renderer()?.UiLibrarySelection;
+  return Component ? <Component {...props} /> : null;
+}
 type Factory = (host: { modules: Record<string, unknown> }) => Contribution;
 let factory: Factory | undefined;
 let contribution: Contribution | undefined;

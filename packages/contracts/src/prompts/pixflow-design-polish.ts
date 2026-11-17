@@ -2,7 +2,8 @@ import type { PixflowRunDesignGuidance } from '../api/pixflow-direct-site.js';
 /** Generic transport for optional server-owned guidance. No add-on implementation is bundled here. */
 export function optionalRunGuidance(enabled: boolean, guidance: PixflowRunDesignGuidance | null | undefined, prompt: string): string {
   const extension = guidance?.extension;
-  if (!extension) return '';
+  const workflow = guidance?.workflowContext ?? '';
+  if (!extension) return workflow;
   // The composer can place several registered slash commands inside a prompt.
   // Require whitespace boundaries so URLs and longer command names do not match.
   const operations = Object.entries(extension.commands).flatMap(([command, instructions]) => {
@@ -11,6 +12,6 @@ export function optionalRunGuidance(enabled: boolean, guidance: PixflowRunDesign
     return index < 0 ? [] : [{ index, instructions }];
   });
   operations.sort((a, b) => a.index - b.index);
-  if (!enabled && operations.length === 0) return '';
-  return [extension.instructions, ...operations.map(({ instructions }) => instructions)].filter(Boolean).join('\n');
+  if (!enabled && operations.length === 0) return workflow;
+  return [extension.instructions, ...operations.map(({ instructions }) => instructions), workflow].filter(Boolean).join('\n');
 }

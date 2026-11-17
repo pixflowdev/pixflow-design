@@ -14,6 +14,8 @@ import { requestWorkspaceNavigation } from './pixflow/workspace-navigation';
 // state isn't trapped behind a `useState` boundary.
 export type EntryHomeView =
   | 'home'
+  | 'ui-library'
+  | 'skills'
   | 'onboarding'
   | 'projects'
   | 'media'
@@ -51,6 +53,7 @@ export function parseRoute(pathname: string): Route {
   if (hasPixflowWordPressContext() && ['plugins', 'marketplace'].includes(parts[0] ?? '')) {
     return { kind: 'home', view: 'home' };
   }
+  if (parts.length === 1 && (parts[0] === 'ui-library' || parts[0] === 'skills')) return { kind: 'home', view: parts[0] };
   if (parts.length === 0) return { kind: 'home', view: 'home' };
   if (parts[0] === 'onboarding') {
     return { kind: 'home', view: 'onboarding' };
@@ -117,6 +120,7 @@ export function buildPath(route: Route): string {
     if (route.view === 'seo-audit') return '/seo-audit';
     if (route.view === 'blog-studio') return '/blog-studio';
     if (route.view === 'translations') return '/translations';
+    if (route.view === 'ui-library' || route.view === 'skills') return `/${route.view}`;
     if (route.view === 'plugins') return '/plugins';
     if (route.view === 'design-systems') return '/design-systems';
     return '/';

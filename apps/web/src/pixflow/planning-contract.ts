@@ -54,6 +54,8 @@ export interface SitemapViewProps {
 
 /** Public composition boundary; planning implementations and their CSS belong to Pro. */
 export interface PlanningContribution {
+  UiLibraryHome?: ComponentType<{ preview?: boolean; onViewAll?: () => void }>;
+  UiLibrarySelection?: ComponentType<{ binding?: {projectId: string; conversationId: string} | null; disabled?: boolean }>;
   EnhancedDesignGuidance?: ComponentType<{ enabled?: boolean; surface?: import('@open-design/contracts').PixflowSurface }>;
   PixflowDesignSystemLibrary: ComponentType<{ showHeading?: boolean; config?: AppConfig; onBack?: () => void; onChanged?: () => void; initialId?: string; createInitially?: boolean }>;
   PixflowFrameworkDesignSystemBuilder: ComponentType<{ reusable?: { title: string; profile: PixflowDesignSystemProfile; onSave: (profile: PixflowDesignSystemProfile) => Promise<void>; onClose: () => void } }>;

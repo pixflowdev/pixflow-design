@@ -275,6 +275,8 @@ export function preparePanelSession(
   const expiry = window.setTimeout(() => dispose(), 60_000);
   const dispose = () => {
     window.clearTimeout(expiry);
+    window.removeEventListener('pixflow-design:run-guidance-changed', dispose);
+    window.removeEventListener('storage', guidanceStorageChanged);
     disposed = true;
     finishRestore();
     if (credential && !claimed) {
@@ -282,6 +284,11 @@ export function preparePanelSession(
       credential = undefined;
     }
   };
+  const guidanceStorageChanged = (event: StorageEvent) => {
+    if (event.key === 'pixflow-design:library-selection-revision') dispose();
+  };
+  window.addEventListener('storage', guidanceStorageChanged);
+  window.addEventListener('pixflow-design:run-guidance-changed', dispose);
   const ready = target.then(async editorTarget => {
     if (disposed || owner !== chatHistoryOwnerScope()) return;
     preparedTarget = editorTarget;
@@ -306,6 +313,8 @@ export function preparePanelSession(
       }
       claimed = true;
       window.clearTimeout(expiry);
+      window.removeEventListener('pixflow-design:run-guidance-changed', dispose);
+    window.removeEventListener('storage', guidanceStorageChanged);
       return credential;
     },
     invalidateHistory() {

@@ -340,3 +340,13 @@ describe('official skill management', () => {
 });
 
 
+
+it('keeps Home compact and opens the complete skill catalogue explicitly', () => {
+  const onViewAll = vi.fn();
+  const skills = Array.from({ length: 10 }, (_, index) => ({ ...item, id: `skill-${index}`, name: `Skill ${index}` }));
+  render(<SkillLibraryPanel preview presentation="cards" onViewAll={onViewAll} catalogue={{ state: { skills, pro: true, error: null }, error: '', setError: vi.fn(), load: vi.fn() }} onChange={async () => {}} />);
+  expect(screen.getAllByRole('article')).toHaveLength(6);
+  expect(screen.queryByRole('searchbox')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'View all' }));
+  expect(onViewAll).toHaveBeenCalledOnce();
+});

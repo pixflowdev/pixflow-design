@@ -1,3 +1,4 @@
+import { Button } from '@open-design/components';
 import { AvatarMenu } from './AvatarMenu';
 import type { WorkspaceCreateHandoff } from './workspace-first-turn';
 import { PixflowResourcesSection } from './PixflowResourcesSection';
@@ -24,9 +25,11 @@ import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { DesignSystemsTab } from './DesignSystemsTab';
 import { EntryNavRail, type EntryView as EntryViewKind } from './EntryNavRail';
 import { UpdaterPopup } from './UpdaterPopup';
+import { SkillLibraryPanel } from './SkillLibraryPanel';
 import { HomeView } from './HomeView';
 import { createPluginAuthoringHandoff, createPluginUseHandoff, type HomePromptHandoff } from './home-hero/plugin-authoring';
 import type { PluginUseAction } from './plugins-home/useActions';
+import { UiLibraryHome } from '../pixflow/planning-contribution';
 import { Icon } from './Icon';
 import { InlineModelSwitcher } from './InlineModelSwitcher';
 import { MediaView } from './MediaView';
@@ -648,6 +651,8 @@ export function EntryShell({
             <div data-testid="entry-view-home" data-active={view === 'home' ? 'true' : 'false'} {...inactiveViewProps(view === 'home')}>
               <HomeView
                 isActive={view === 'home'}
+                onViewAllSkills={() => changeView('skills')}
+                libraryPreview={view === 'home' && hasPixflowWordPressContext() ? <UiLibraryHome preview onViewAll={() => changeView('ui-library')} /> : null}
                 projects={projects}
                 projectsLoading={projectsLoading}
                 designSystems={designSystems}
@@ -682,6 +687,10 @@ export function EntryShell({
                 catalogLoadAllowed={catalogLoadAllowed}
               />
             </div>
+            {(view === 'ui-library' || view === 'skills') && <div data-testid={`entry-view-${view}`}>
+              <Button variant="ghost" onClick={() => changeView('home')}>{t('entry.navHome')}</Button>
+              {view === 'ui-library' ? <UiLibraryHome /> : <SkillLibraryPanel presentation="cards" onChange={onSkillsRefresh ?? (async () => {})} />}
+            </div>}
             <div data-testid="entry-view-projects" data-active={view === 'projects' ? 'true' : 'false'} {...inactiveViewProps(view === 'projects')}>
               {projectsLoading ? (
                 <CenteredLoader label={t('common.loading')} />

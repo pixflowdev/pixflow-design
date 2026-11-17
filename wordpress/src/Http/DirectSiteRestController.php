@@ -84,7 +84,6 @@ final class DirectSiteRestController
         }
         // Premium guidance is resolved after authorization, never accepted from request JSON.
         // Do not retain an extra copy in the credential transient or expose guidance on draft/audio sessions.
-        $guidance = $session['writable'] ? apply_filters('pixflow_design_run_guidance', null) : null;
         $extra = [];
         if (isset($body['historyBinding'])) {
             $binding = $body['historyBinding'];
@@ -133,6 +132,7 @@ final class DirectSiteRestController
             $extra['historyPage'] = $page;
             $session['planBinding'] = ['projectId' => $binding['projectId'], 'conversationId' => $binding['conversationId']];
         }
+        $guidance = $session['writable'] ? apply_filters('pixflow_design_run_guidance', null, $session['planBinding'] ?? $session['workspaceSource'] ?? null) : null;
         set_transient($this->key($token), $session, 3600);
         return $extra + ['designGuidance' => is_array($guidance) ? $guidance : null, 'token' => $token, 'endpoint' => add_query_arg('rest_route', '/pixflow-design/v1/wp-admin/direct/tools', home_url('/')), 'expiresAt' => $session['expiresAt'], 'writable' => $session['writable'], 'identity' => $this->identity($session), 'editorTarget' => $session['editorTarget'] ?? null, 'workspaceSource' => $session['workspaceSource'] ?? null];
     }
